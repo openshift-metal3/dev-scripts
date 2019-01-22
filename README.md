@@ -2,9 +2,10 @@ MetalKube Installer Dev Scripts
 ===============================
 
 This set of scripts configures some libvirt VMs and associated
-vbmc processes to enable deploying to them as dummy baremetal nodes
-similar to how we do TripleO testing so we actually reuse some roles
-from tripleo-quickstart here to avoid starting from scratch.
+[virtualbmc](https://docs.openstack.org/tripleo-docs/latest/install/environments/virtualbmc.html) processes to enable deploying to them as dummy baremetal nodes.
+
+This is very similar to how we do TripleO testing so we reuse some roles
+from tripleo-quickstart here.
 
 # Pre-requisites
 
