@@ -1,9 +1,10 @@
-OpenShift Installer OpenStack Dev Scripts
-=========================================
+MetalKube Installer Dev Scripts
+===============================
 
 This set of scripts configures some libvirt VMs and associated
 vbmc processes to enable deploying to them as dummy baremetal nodes
-similar to how we do TripleO testing e.g with tripleo-quickstart.
+similar to how we do TripleO testing so we actually reuse some roles
+from tripleo-quickstart here to avoid starting from scratch.
 
 # Pre-requisites
 
