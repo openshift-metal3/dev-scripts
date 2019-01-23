@@ -43,10 +43,9 @@ if ! grep -q zeromq /etc/yum.repos.d/epel.repo; then
   sudo sed -i '/enabled=1/a exclude=zeromq*' /etc/yum.repos.d/epel.repo
 fi
 sudo yum -y update
-sudo yum install -y python-virtualbmc
 
-# make sure that 'dig' is installed
-sudo yum install -y bind-utils
+# make sure additional requirments are installed
+sudo yum install -y bind-utils ansible python-netaddr python-virtualbmc
 
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
     ssh-keygen
