@@ -4,8 +4,9 @@
 # because the undercloud isn't needed in this environment
 - name: Setup dummy baremetal VMs via tripleo-quickstart
   hosts: virthost
-  connection: local
   gather_facts: true
   roles:
     - environment/setup
+    - provision/remote
     - libvirt/setup/overcloud
+    - virtbmc

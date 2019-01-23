@@ -50,3 +50,8 @@ sudo yum install -y bind-utils ansible python-netaddr python-virtualbmc
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
     ssh-keygen
 fi
+
+if ! ssh root@${HOSTNAME} uname -a; then
+  echo "Please configure passwordless ssh before continuing or ansible will fail"
+  exit 1
+fi
