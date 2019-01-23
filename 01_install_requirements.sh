@@ -40,7 +40,7 @@ sudo tripleo-repos current-tripleo
 
 # Work around a conflict with a newer zeromq from epel
 if ! grep -q zeromq /etc/yum.repos.d/epel.repo; then
-  sed -i '/enabled=1/a exclude=zeromq*' /etc/yum.repos.d/epel.repo
+  sudo sed -i '/enabled=1/a exclude=zeromq*' /etc/yum.repos.d/epel.repo
 fi
 sudo yum -y update
 sudo yum install -y python-virtualbmc
