@@ -8,7 +8,7 @@ sudo setenforce permissive
 sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
 sudo yum -y update
 
-sudo yum -y install epel-release
+sudo yum -y install epel-release --enablerepo=extras
 sudo yum -y install curl vim-enhanced wget python-pip patch psmisc figlet golang
 
 sudo pip install lolcat
