@@ -11,7 +11,7 @@ from tripleo-quickstart here.
 
 - CentOS 7
 - ideally on a bare metal host
-- user with passwordless sudo access
+- run as user 'stack' with passwordless sudo access
 
 # Instructions
 
