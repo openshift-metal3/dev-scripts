@@ -25,9 +25,6 @@ fi
 
 # We're reusing some tripleo pieces for this setup so clone them here
 cd
-if [ ! -d tripleo-quickstart ]; then
-  git clone https://git.openstack.org/openstack/tripleo-quickstart
-fi
 if [ ! -d tripleo-repos ]; then
   git clone https://git.openstack.org/openstack/tripleo-repos
 fi
@@ -51,7 +48,8 @@ if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
     ssh-keygen
 fi
 
-if ! ssh root@${HOSTNAME} uname -a; then
-  echo "Please configure passwordless ssh before continuing or ansible will fail"
-  exit 1
+# root needs a private key to talk to libvirt, see configure-vbmc.yml
+if [ ! -f /root/.ssh/id_rsa_virt_power ]; then
+    sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
+    sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
 fi
