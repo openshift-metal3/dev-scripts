@@ -70,7 +70,6 @@
   become: true
 
 - name: Start the Virtual BMCs (virtualbmc >= 1.4.0+)
-  when: release not in ['newton', 'ocata', 'pike', 'queens']
   service:
     name: "virtualbmc"
     state: started
@@ -78,7 +77,6 @@
   become: true
 
 - name: Create the Virtual BMCs
-  when: release not in ['newton']
   command: "vbmc add {{ item.name }} --port {{ item.virtualbmc_port }} --libvirt-uri {{ vbmc_libvirt_uri }}"
   args:
     creates: /root/.vbmc/{{ item.name }}/config
@@ -86,37 +84,7 @@
   become: true
 
 - name: Start the Virtual BMCs (virtualbmc >= 1.4.0+)
-  when: release not in ['newton', 'ocata', 'pike', 'queens']
   command: "vbmc start {{ item.name }}"
   with_items: "{{ overcloud_nodes }}"
   become: true
 
-- name: Create the VirtualBMC systemd service (virtualbmc < 1.4.0)
-  when: release in ['ocata', 'pike', 'queens']
-  copy:
-    mode: 0664
-    dest: "/usr/lib/systemd/system/virtualbmc@.service"
-    content: |
-      [Unit]
-      Description=VirtualBMC %i service
-      After=network.target
-
-      [Service]
-      Type=forking
-      PIDFile=/root/.vbmc/%i/pid
-      ExecStart=/bin/vbmc start %i
-      ExecStop=/bin/vbmc stop %i
-      Restart=always
-
-      [Install]
-      WantedBy=multi-user.target
-  become: true
-
-- name: Start the Virtual BMCs (virtualbmc < 1.4.0)
-  when: release in ['ocata', 'pike', 'queens']
-  service:
-    name: "virtualbmc@{{ item.name }}"
-    state: started
-    enabled: true
-  with_items: "{{ overcloud_nodes }}"
-  become: true
