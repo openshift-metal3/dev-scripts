@@ -9,3 +9,5 @@
   roles:
     - environment/setup
     - libvirt/setup/overcloud
+    - virtbmc
+

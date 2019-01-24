@@ -25,9 +25,6 @@ fi
 
 # We're reusing some tripleo pieces for this setup so clone them here
 cd
-if [ ! -d tripleo-quickstart ]; then
-  git clone https://git.openstack.org/openstack/tripleo-quickstart
-fi
 if [ ! -d tripleo-repos ]; then
   git clone https://git.openstack.org/openstack/tripleo-repos
 fi
