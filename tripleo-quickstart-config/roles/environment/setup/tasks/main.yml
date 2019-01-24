@@ -93,7 +93,7 @@
 # [helper]: http://wiki.qemu.org/Features-Done/HelperNetworking
 - name: Whitelist bridges for unprivileged access
   lineinfile:
-    dest: "{{ qemu_bridge_conf }}"
+    dest: '/etc/qemu-kvm/bridge.conf' # Needs to be /etc/qemu/bridge.conf if supporting Fedora
     line: "allow {{ item.bridge }}"
   with_items: "{{ networks }}"
   become: true
