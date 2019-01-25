@@ -13,8 +13,8 @@ ansible-playbook -e roles_path=$PWD/roles -b -vvv tripleo-quickstart-config/meta
 
 # Allow local non-root-user access to libvirt ref
 # https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#make-sure-you-have-permissions-for-qemusystem
-if [ ! -f /etc/polkit-1/rules.d/80-libvirt.rules ]; then
-  cat <<EOF >> /etc/polkit-1/rules.d/80-libvirt.rules
+if sudo test ! -f /etc/polkit-1/rules.d/80-libvirt.rules ; then
+  cat <<EOF | sudo dd of=/etc/polkit-1/rules.d/80-libvirt.rules
 polkit.addRule(function(action, subject) {
   if (action.id == "org.libvirt.unix.manage" && subject.local && subject.active && subject.isInGroup("wheel")) {
       return polkit.Result.YES;
