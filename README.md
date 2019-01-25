@@ -22,13 +22,23 @@ from tripleo-quickstart here.
 - `./01_install_requirements.sh`
 - `./02_configure_host.sh`
 
-This should result in some VMs created by tripleo-quickstart on the
-local virthost.
+This should result in some (stopped) VMs created by tripleo-quickstart on the
+local virthost and some other dependencies installed.
 
-All other scripts are WIP and currently under development.
+- `./03_ocp_repo_sync.sh`
+- `./04_build_ocp_installer.sh`
+
+These will pull and build the openshift-install and some other things from
+source.
+
+- `05_run_ocp.sh`
+
+This will run the openshift-install to generate ignition configs and boot the
+bootstrap VM, currently no cluster is actually created.
 
 ## 2) Cleanup
 
-To clean up you can run:
+To clean up your environment you can run:
 
+- `./ocp_cleanup.sh`
 - `./libvirt_cleanup.sh`
