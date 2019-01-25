@@ -42,7 +42,7 @@ fi
 sudo yum -y update
 
 # make sure additional requirments are installed
-sudo yum install -y bind-utils ansible python-netaddr python-virtualbmc libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm
+sudo yum install -y bind-utils ansible python-netaddr python-virtualbmc libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm virt-install jq
 
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
     ssh-keygen

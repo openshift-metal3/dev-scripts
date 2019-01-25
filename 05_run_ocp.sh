@@ -58,16 +58,25 @@ $GOPATH/src/github.com/openshift/installer/bin/openshift-install --dir ocp --log
 #exit 1
 
 # ... so for now lets create the bootstrap VM manually and use the generated ignition config
-sudo cp ocp/bootstrap.ign /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.ign
+# See https://coreos.com/os/docs/latest/booting-with-libvirt.html
+IGN_FILE="/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.ign"
+sudo cp ocp/bootstrap.ign ${IGN_FILE}
 ./get_rhcos_image.sh
-LATEST_IMAGE=$(ls -ltr redhat-coreos-maipo-*.qcow2 | tail -n1 | awk '{print $9}')
+LATEST_IMAGE=$(ls -ltr redhat-coreos-maipo-*-qemu.qcow2 | tail -n1 | awk '{print $9}')
 sudo cp $LATEST_IMAGE /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2
-cp bootstrap-config/bootstrap-vm.xml ocp
-cp bootstrap-config/bootstrap-net.xml ocp
-cp bootstrap-config/bootstrap-vol-ign.xml ocp
-sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" ocp/bootstrap-vm.xml
-sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" ocp/bootstrap-net.xml
-sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" ocp/bootstrap-vol-ign.xml
-sed -i "s/BASE_DOMAIN/${BASE_DOMAIN}/g" ocp/bootstrap-net.xml
-sudo virsh net-create ocp/bootstrap-net.xml
-sudo virsh create ocp/bootstrap-vm.xml
+virt-install --connect qemu:///system \
+             --import \
+             --name ${CLUSTER_NAME}-bootstrap \
+             --ram 4096 --vcpus 4 \
+             --os-type=linux \
+             --os-variant=virtio26 \
+             --disk path=/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2,format=qcow2,bus=virtio \
+             --vnc --noautoconsole \
+             --print-xml > ocp/bootstrap-vm.xml
+sed -i 's|type="kvm"|type="kvm" xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0"|' ocp/bootstrap-vm.xml
+sed -i "/<\/devices>/a <qemu:commandline>\n  <qemu:arg value='-fw_cfg'/>\n  <qemu:arg value='name=opt/com.coreos/config,file=${IGN_FILE}'/>\n</qemu:commandline>" ocp/bootstrap-vm.xml
+sudo virsh define ocp/bootstrap-vm.xml
+sudo virsh start ${CLUSTER_NAME}-bootstrap
+sleep 10
+sudo virsh domifaddr ostest-bootstrap
+echo "You can now ssh to the IP listed above as the core user"
