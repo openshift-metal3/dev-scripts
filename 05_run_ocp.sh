@@ -78,5 +78,10 @@ sed -i "/<\/devices>/a <qemu:commandline>\n  <qemu:arg value='-fw_cfg'/>\n  <qem
 sudo virsh define ocp/bootstrap-vm.xml
 sudo virsh start ${CLUSTER_NAME}-bootstrap
 sleep 10
-sudo virsh domifaddr ostest-bootstrap
+VM_MAC=$(sudo virsh dumpxml ${CLUSTER_NAME}-bootstrap | grep "mac address" | cut -d\' -f2)
+while ! sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap | grep -q ${VM_MAC}; do
+  echo "Waiting for ${CLUSTER_NAME}-bootstrap interface to become active.."
+  sleep 10
+done
+sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap
 echo "You can now ssh to the IP listed above as the core user"
