@@ -45,7 +45,7 @@ sudo yum -y update
 sudo yum install -y bind-utils ansible python-netaddr python-virtualbmc libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm virt-install jq
 
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
-    ssh-keygen
+    ssh-keygen -A
 fi
 
 # root needs a private key to talk to libvirt, see configure-vbmc.yml
