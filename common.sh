@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-47.278}"
+export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-47.284}"
 export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
 # FIXME(shardy) note the -openstack image doesn't work for libvirt
 # as the qemu ignition config injection described in the docs at
