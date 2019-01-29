@@ -49,7 +49,7 @@ if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
 fi
 
 # root needs a private key to talk to libvirt, see configure-vbmc.yml
-if [ ! -f /root/.ssh/id_rsa_virt_power ]; then
+if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
     sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
     sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
 fi
