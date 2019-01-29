@@ -45,7 +45,7 @@ sshKey: |
 EOF
 fi
 
-
+cp ocp/install-config{,.backup}.yaml 
 $GOPATH/src/github.com/openshift/installer/bin/openshift-install --dir ocp --log-level=debug create ignition-configs
 
 # Here we can make any necessary changes to the ignition configs/manifests
