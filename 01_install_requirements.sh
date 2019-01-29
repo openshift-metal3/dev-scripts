@@ -53,3 +53,8 @@ if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
     sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
     sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
 fi
+
+# make sure stack user is created
+if sudo [ ! cat /etc/passwd | grep stack ]; then
+    useradd stack
+fi
