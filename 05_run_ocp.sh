@@ -42,6 +42,7 @@ pullSecret: |
   ${PULL_SECRET}
 sshKey: |
   ${SSH_PUB_KEY}
+
 EOF
 fi
 
