@@ -2,3 +2,4 @@ ocp/
 *.qcow2
 openshift-install.log
 logs/
+config_*.sh
