@@ -55,6 +55,6 @@ if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
 fi
 
 # make sure stack user is created
-if sudo [ ! cat /etc/passwd | grep stack ]; then
+if ! sudo grep stack /etc/passwd; then
     useradd stack
 fi
