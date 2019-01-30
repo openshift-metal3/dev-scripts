@@ -64,7 +64,7 @@ sudo cp ocp/bootstrap.ign ${IGN_FILE}
 ./get_rhcos_image.sh
 LATEST_IMAGE=$(ls -ltr redhat-coreos-maipo-*-qemu.qcow2 | tail -n1 | awk '{print $9}')
 sudo cp $LATEST_IMAGE /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2
-virt-install --connect qemu:///system \
+sudo virt-install --connect qemu:///system \
              --import \
              --name ${CLUSTER_NAME}-bootstrap \
              --ram 4096 --vcpus 4 \
