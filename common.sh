@@ -22,7 +22,6 @@ if [ -z "$PULL_SECRET" ]; then
   echo "Get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret"
   exit 1
 fi
-exit 1
 
 export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-47.278}"
 export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
