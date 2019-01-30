@@ -1,0 +1,42 @@
+FROM docker.io/centos:centos7
+
+RUN yum install -y python-requests
+RUN curl https://raw.githubusercontent.com/openstack/tripleo-repos/master/tripleo_repos/main.py | python - current-tripleo
+RUN yum install -y openstack-ironic-api openstack-ironic-conductor rabbitmq-server crudini iproute dnsmasq httpd qemu-img iscsi-initiator-utils
+RUN mkdir -p /var/www/html/images
+RUN curl http://tarballs.openstack.org/ironic-python-agent/tinyipa/tinyipa-stable-rocky.tar.gz | tar -C /var/www/html/images/ -xzf -
+
+RUN cp /etc/ironic/ironic.conf /etc/ironic/ironic.conf_orig
+RUN crudini --set /etc/ironic/ironic.conf DEFAULT auth_strategy noauth
+RUN crudini --set /etc/ironic/ironic.conf DEFAULT my_ip 172.22.0.1
+RUN crudini --set /etc/ironic/ironic.conf DEFAULT debug true
+RUN crudini --set /etc/ironic/ironic.conf DEFAULT default_network_interface noop
+RUN crudini --set /etc/ironic/ironic.conf DEFAULT enabled_boot_interfaces pxe,ipxe
+RUN crudini --set /etc/ironic/ironic.conf DEFAULT default_boot_interface ipxe
+RUN crudini --set /etc/ironic/ironic.conf database connection sqlite:///ironic.db
+RUN crudini --set /etc/ironic/ironic.conf dhcp dhcp_provider none
+RUN crudini --set /etc/ironic/ironic.conf conductor automated_clean false
+RUN crudini --set /etc/ironic/ironic.conf conductor api_url http://172.22.0.1:6385
+RUN crudini --set /etc/ironic/ironic.conf deploy http_url http://172.22.0.1
+RUN crudini --set /etc/ironic/ironic.conf deploy http_root /var/www/html/
+RUN crudini --set /etc/ironic/ironic.conf deploy default_boot_option local
+RUN crudini --set /etc/ironic/ironic.conf pxe ipxe_enabled true
+RUN crudini --set /etc/ironic/ironic.conf pxe pxe_config_template \$pybasedir/drivers/modules/ipxe_config.template
+
+RUN mkdir /tftpboot
+
+RUN ironic-dbsync --config-file /etc/ironic/ironic.conf create_schema
+
+RUN echo "#!/usr/bin/bash" >> /bin/runironic
+RUN echo "/usr/lib/rabbitmq/bin/rabbitmq-server > /var/log/rabbit.out 2>&1 &" >> /bin/runironic
+RUN echo "/usr/bin/python2 /usr/bin/ironic-conductor > /var/log/ironic-conductor.out 2>&1 &" >> /bin/runironic
+RUN echo "/usr/bin/python2 /usr/bin/ironic-api > /var/log/ironic-api.out 2>&1 &" >> /bin/runironic
+RUN echo "/usr/sbin/httpd" >> /bin/runironic
+RUN echo "/usr/sbin/dnsmasq -d -q -i eth1 --dhcp-range 172.22.0.10,172.22.0.100 --enable-tftp --tftp-root=/tftpboot --dhcp-boot=http://172.22.0.1/boot.ipxe > /var/log/dnsmasq.out 2>&1 &" >> /bin/runironic
+RUN echo "sleep infinity" >> /bin/runironic
+
+RUN chmod +x /bin/runironic
+
+ENTRYPOINT ["/bin/runironic"]
+
+

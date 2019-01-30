@@ -72,16 +72,39 @@ sudo virt-install --connect qemu:///system \
              --os-variant=virtio26 \
              --disk path=/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2,format=qcow2,bus=virtio \
              --vnc --noautoconsole \
+             --network default --network bridge=brovc \
              --print-xml > ocp/bootstrap-vm.xml
 sed -i 's|type="kvm"|type="kvm" xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0"|' ocp/bootstrap-vm.xml
 sed -i "/<\/devices>/a <qemu:commandline>\n  <qemu:arg value='-fw_cfg'/>\n  <qemu:arg value='name=opt/com.coreos/config,file=${IGN_FILE}'/>\n</qemu:commandline>" ocp/bootstrap-vm.xml
 sudo virsh define ocp/bootstrap-vm.xml
 sudo virsh start ${CLUSTER_NAME}-bootstrap
 sleep 10
-VM_MAC=$(sudo virsh dumpxml ${CLUSTER_NAME}-bootstrap | grep "mac address" | cut -d\' -f2)
+VM_MAC=$(sudo virsh dumpxml ${CLUSTER_NAME}-bootstrap | grep "mac address" | head -n 1 | cut -d\' -f2)
 while ! sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap | grep -q ${VM_MAC}; do
   echo "Waiting for ${CLUSTER_NAME}-bootstrap interface to become active.."
   sleep 10
 done
 sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap
-echo "You can now ssh to the IP listed above as the core user"
+
+IP=$(sudo virsh domifaddr ostest-bootstrap | grep 122 | awk '{print $4}' | grep -o '^[^/]*')
+
+# Wait for ssh to start
+while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
+
+# Using 172.22.0.1 on the provisioning network for PXE and the ironic API
+echo -e "DEVICE=eth1\nONBOOT=yes\nTYPE=Ethernet\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=/etc/sysconfig/network-scripts/ifcfg-eth1
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo ifup eth1
+
+# Needed for iscsiadm
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo modprobe iscsi_tcp
+
+# Workaround for httpd as we are bind mountin /run into the container (for iscsi) and /run/httpd
+# doesn't exist on the host
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo mkdir /run/httpd
+
+# Build and start the ironic container
+cat ironic/Dockerfile | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=Dockerfile
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build -t ironic:latest .
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run -d --net host --privileged --name ironic -v /run:/run:shared -v /dev:/dev localhost/ironic
+
+echo "You can now ssh to \"$IP\" as the core user"
