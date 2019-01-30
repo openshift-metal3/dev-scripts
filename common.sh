@@ -1,5 +1,28 @@
 #!/bin/bash
 
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+USER=`whoami`
+
+if [ -z "$CONFIG" ]; then  
+    # See if there's a config_$USER.sh in the SCRIPTDIR
+    if [ -f ${SCRIPTDIR}/config_${USER}.sh ]; then
+        echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh"
+        CONFIG="${SCRIPTDIR}/config_${USER}.sh"
+    else
+        echo "Please run with a configuration environment set."
+        echo "eg CONFIG=config_example.sh ./01_all_in_one.sh"
+        exit 1
+    fi
+fi
+source $CONFIG
+cat $CONFIG
+
+if [ -z "$PULL_SECRET" ]; then
+  echo "No valid PULL_SECRET set in ${CONFIG}"
+  echo "Get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret"
+  exit 1
+fi
+
 export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-47.284}"
 export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
 # FIXME(shardy) note the -openstack image doesn't work for libvirt
