@@ -1,7 +1,6 @@
 ---
 
 - name: Create VirtualBMC directories
-  when: release not in ['newton']
   file:
     path: "{{ item }}"
     state: directory
@@ -14,7 +13,6 @@
   become: true
 
 - name: Create VirtualBMC configuration file
-  when: release not in ['newton']
   copy:
     mode: 0750
     dest: "/etc/virtualbmc/virtualbmc.conf"
@@ -62,7 +60,6 @@
   when: vbmc_libvirt_uri is not defined
 
 - name: Install VirtualBMC package
-  when: release not in ['newton']
   package:
     name: "python2-virtualbmc"
     state: present
