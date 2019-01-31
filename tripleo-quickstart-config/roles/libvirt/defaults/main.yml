@@ -54,6 +54,3 @@ extradisks_list:
 
 # size of the disks to create when using extradisks
 extradisks_size: 8G
-
-# template for zuul-hosts file
-zuul_hosts_template: zuul-hosts.yaml.j2
