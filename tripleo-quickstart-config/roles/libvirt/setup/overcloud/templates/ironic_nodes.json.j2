@@ -18,7 +18,9 @@
         "ipmi_user": "admin",
         "ipmi_password": "password",
         "ipmi_addr": "192.168.122.1",
-        "ipmi_port": "{{ node.virtualbmc_port }}"
+        "ipmi_port": "{{ node.virtualbmc_port }}",
+        "deploy_kernel": "http://172.22.0.1/images/tinyipa-stable-rocky.vmlinuz",
+        "deploy_ramdisk": "http://172.22.0.1/images/tinyipa-stable-rocky.gz"
       },
       "ports": [{
         "address": "{{ node_mac_map.get(node.name).get(lvars['pxe_network']) }}",

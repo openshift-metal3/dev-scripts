@@ -107,4 +107,7 @@ cat ironic/Dockerfile | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=Do
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build -t ironic:latest .
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run -d --net host --privileged --name ironic -v /run:/run:shared -v /dev:/dev localhost/ironic
 
+# Create a master_nodes.json file
+cat ~stack/ironic_nodes.json | jq '.nodes[0:3] |  {nodes: .}' | tee ocp/master_nodes.json
+
 echo "You can now ssh to \"$IP\" as the core user"
