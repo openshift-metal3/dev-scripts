@@ -17,7 +17,13 @@ from tripleo-quickstart here.
 
 # Instructions
 
-## 1) Run the scripts in order
+## Installation
+
+For a new setup, run::
+
+make
+
+The Makefile will run the scripts in this order:
 
 - `./01_install_requirements.sh`
 - `./02_configure_host.sh`
@@ -64,9 +70,19 @@ And to deploy a node with the cirros image (image\_source above)
 You can also see the status of the bootkube.sh script which is running via
 `journalctl -b -f -u bootkube.service`.
 
-## 2) Cleanup
+## Cleanup
 
-To clean up your environment you can run:
+- To clean up the ocp deployment run `./ocp_cleanup.sh`
 
-- `./ocp_cleanup.sh`
-- `./libvirt_cleanup.sh`
+- To clean up the dummy baremetal VMs and associated libvirt resources run `./libvirt_cleanup.sh`
+
+e.g. to clean and re-install ocp run:
+
+`./ocp_cleanup.sh`
+
+`rm -fr ocp`
+
+`./05_run_ocp.sh`
+
+Or, you can run `make clean` which will run all of the cleanup steps.
+
