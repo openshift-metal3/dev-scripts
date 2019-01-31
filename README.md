@@ -54,7 +54,7 @@ virt host)
 To Define a NODE (Get \<MAC\> and \<IPMI\_PORT\> from instackenv.json
 `NODE_UUID=$(openstack baremetal node create --driver ipmi --driver-info ipmi_address=192.168.122.1 --driver-info ipmi_port=6230 --driver-info ipmi_username=admin --driver-info ipmi_password=password --driver-info deploy_kernel=http://172.22.0.1/images/tinyipa-stable-rocky.vmlinuz --driver-info deploy_ramdisk=http://172.22.0.1/images/tinyipa-stable-rocky.gz -f value -c uuid)`
 `openstack baremetal port create 00:32:49:d0:63:75 --node $NODE_UUID`
-`openstack baremetal node set $NODE_UUID --instance-info image_source=https://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img --instance-info image_checksum=f8ab98ff5e73ebab884d80c9dc9c7290 --instance-info root_gb=10`
+`openstack baremetal node set $NODE_UUID --instance-info image_source=https://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img --instance-info image_checksum=f8ab98ff5e73ebab884d80c9dc9c7290 --instance-info root_gb=10  --property root_device='{"name": "/dev/vda"}'`
 `openstack baremetal node manage $NODE_UUID --wait`
 `openstack baremetal node provide $NODE_UUID --wait`
 
