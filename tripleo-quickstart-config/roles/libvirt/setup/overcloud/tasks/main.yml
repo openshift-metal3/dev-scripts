@@ -17,7 +17,7 @@
 
     # Generate MAC addresses that we'll use for the overcloud nodes.
     # By generating these in advance we can populate the
-    # `instackenv.json` file with MAC addresses without running
+    # `ironic_nodes.json` file with MAC addresses without running
     # introspection.
     - name: get a list of MACs to use
       generate_macs:
@@ -93,12 +93,11 @@
       when: item is failed
       with_items: "{{ overcloud_extradisks_check.results }}"
 
-# Generate the `instackenv.json` configuration file.  Note that this
+# Generate the ironic node inventory files.  Note that this
 # task *must* occur after the above overcloud tasks, because if
 # `overcloud_nodes` is defined the template depends on the
 # `node_mac_map` variable.
-- name: Write instackenv script
+- name: Write ironic node json files
   template:
-    src: "{{ undercloud_instackenv_template }}"
-    dest: "{{ working_dir }}/instackenv.json"
-  when: create_instackenv_json|default("true")|bool
+    src: ../templates/ironic_nodes.json.j2
+    dest: "{{ working_dir }}/ironic_nodes.json"
