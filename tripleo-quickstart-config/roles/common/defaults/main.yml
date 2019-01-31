@@ -106,7 +106,7 @@ deploy_supplemental_node: false
 enable_tls_everywhere: false
 
 # allow the nic model to be overridden by environment variable
-overcloud_libvirt_nic_model: virtio
+overcloud_libvirt_nic_model: e1000
 
 # The overcloud will have three controllers, one compute node,
 # and a ceph storage node.
