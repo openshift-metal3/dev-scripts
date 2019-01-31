@@ -83,8 +83,7 @@
   with_items: "{{ overcloud_nodes }}"
   become: true
 
-- name: Start the Virtual BMCs (virtualbmc >= 1.4.0+)
-  command: "vbmc start {{ item.name }}"
+- name: Start the Virtual BMCs
+  script: vbmc_start.sh {{ item.name }}
   with_items: "{{ overcloud_nodes }}"
   become: true
-
