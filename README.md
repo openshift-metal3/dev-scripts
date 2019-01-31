@@ -31,7 +31,7 @@ local virthost and some other dependencies installed.
 These will pull and build the openshift-install and some other things from
 source.
 
-- `05_run_ocp.sh`
+- `./05_run_ocp.sh`
 
 This will run the openshift-install to generate ignition configs and boot the
 bootstrap VM, currently no cluster is actually created.
