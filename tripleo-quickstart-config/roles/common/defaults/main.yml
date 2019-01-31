@@ -149,21 +149,6 @@ networks:
       - 1024
       - 65535
 
-# Enable network isolation with single-nic-vlans for virtualized deployments
-undercloud_network_cidr: 192.168.24.0/24
-undercloud_external_network_cidr: >-
-  {%- if overcloud_ipv6|bool %}2001:db8:fd00:1000::/64{% else %}10.0.0.1/24{% endif -%}
-undercloud_networks:
-  external:
-    address: "{{ undercloud_external_network_cidr|nthhost(1) }}"
-    netmask: "{{ undercloud_external_network_cidr|ipaddr('netmask') }}"
-    address6: "{{ undercloud_external_network_cidr6|nthhost(1) }}"
-    device_type: ovs
-    type: OVSIntPort
-    ovs_bridge: br-ctlplane
-    ovs_options: '"tag=10"'
-    tag: 10
-
 network_isolation: true
 network_isolation_type: 'single-nic-vlans'
 enable_pacemaker: false
