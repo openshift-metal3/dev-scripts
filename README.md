@@ -19,9 +19,9 @@ from tripleo-quickstart here.
 
 ## Installation
 
-For a new setup, run::
+For a new setup, run:
 
-make
+`make`
 
 The Makefile will run the scripts in this order:
 
@@ -55,7 +55,7 @@ Then you can interact with the k8s API on the bootstrap VM e.g
 You can also see the status of the bootkube.sh script which is running via
 `journalctl -b -f -u bootkube.service`.
 
-## 2) Interact with Ironic from the host
+## Interact with Ironic from the host
 
 You can test ironic by talking to its API with the openstack client (from the
 virt host)
@@ -93,11 +93,11 @@ openstack baremetal node deploy $NODE_UUID
 
 e.g. to clean and re-install ocp run:
 
-`./ocp_cleanup.sh`
-
-`rm -fr ocp`
-
-`./05_run_ocp.sh`
+```
+./ocp_cleanup.sh
+rm -fr ocp
+./05_run_ocp.sh
+```
 
 Or, you can run `make clean` which will run all of the cleanup steps.
 
