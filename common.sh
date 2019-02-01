@@ -23,6 +23,7 @@ if [ -z "$PULL_SECRET" ]; then
   exit 1
 fi
 
+export RHCOS_IMAGE_URL="https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/"
 export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-47.284}"
 export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
 # FIXME(shardy) note the -openstack image doesn't work for libvirt
@@ -31,8 +32,8 @@ export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
 # doesn't work - probably we need to download both as the
 # -openstack one may be needed for the baremetal nodes so we get
 # config drive support, or perhaps a completely new image?
-#export RHCOS_IMAGE_FILENAME="${RHCOS_IMAGE_NAME}-openstack.qcow2"
 export RHCOS_IMAGE_FILENAME="${RHCOS_IMAGE_NAME}-qemu.qcow2"
+export RHCOS_IMAGE_FILENAME_OPENSTACK="${RHCOS_IMAGE_NAME}-openstack.qcow2"
 
 # Log output automatically
 LOGDIR="$(dirname $0)/logs"
