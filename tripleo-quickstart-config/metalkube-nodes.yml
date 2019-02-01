@@ -32,10 +32,10 @@ flavors:
     memory: '{{openshift_memory|default(default_memory)}}'
     disk: '{{openshift_disk|default(default_disk)}}'
     vcpu: '{{openshift_vcpu|default(default_vcpu)}}'
-    extradisks: true
+    extradisks: false
 
   openshift_worker:
     memory: '{{openshift_memory|default(default_memory)}}'
     disk: '{{openshift_disk|default(default_disk)}}'
     vcpu: '{{openshift_vcpu|default(default_vcpu)}}'
-    extradisks: true
+    extradisks: false
