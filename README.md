@@ -74,7 +74,9 @@ openstack baremetal create ocp/master_nodes.json
 Then to deploy you can do e.g:
 
 ```
-openstack baremetal node set $NODE_UUID --instance-info image_source=https://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img --instance-info image_checksum=f8ab98ff5e73ebab884d80c9dc9c7290 --instance-info root_gb=10  --property root_device='{"name": "/dev/vda"}'
+# Set NODE_UUID to the uuid of the node you want to work with
+NODE_UUID=$(openstack baremetal node show openshift-master-0 -f value -c uuid)
+openstack baremetal node set $NODE_UUID --instance-info image_source=http://172.22.0.1/images/redhat-coreos-maipo-47.284-openstack.qcow2 --instance-info image_checksum=2a38fafe0b9465937955e4d054b8db3a --instance-info root_gb=25 --property root_device='{"name": "/dev/vda"}'
 openstack baremetal node manage $NODE_UUID --wait
 openstack baremetal node provide $NODE_UUID --wait
 ```
