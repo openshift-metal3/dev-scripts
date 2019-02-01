@@ -46,9 +46,6 @@ currently no cluster is actually created.
 When the VM is running, the script will show the IP and you can ssh to the
 VM via ssh core@IP.
 
-You can then add the IP to the /etc/hosts on the node with the hostname,
-e.g `sudo echo "192.168.122.235 ostest-api.test.metalkube.org" >> /etc/hosts`.
-
 Then you can interact with the k8s API on the bootstrap VM e.g
 `sudo oc status --verbose --config /etc/kubernetes/kubeconfig`.
 

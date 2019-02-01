@@ -5,6 +5,11 @@ set -e
 source ocp_install_env.sh
 source common.sh
 
+# Switch NetworkManager to internal DNS
+sudo mkdir -p /etc/NetworkManager/conf.d/
+echo -e "[main]\ndns=dnsmasq" | sudo tee /etc/NetworkManager/conf.d/dnsmasq.conf
+systemctl restart NetworkManager
+
 # FIXME this is configuring for the libvirt backend which is dev-only ref
 # https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md
 # We may need some additional steps from that doc in 02* and also to make the
@@ -88,6 +93,9 @@ done
 sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap
 
 IP=$(sudo virsh domifaddr ostest-bootstrap | grep 122 | awk '{print $4}' | grep -o '^[^/]*')
+# TODO point to libvirt's DNS instead once correct hostname is set
+echo "address=/${CLUSTER_NAME}-api.${BASE_DOMAIN}/${IP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+sudo systemctl restart NetworkManager
 
 # Wait for ssh to start
 while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
