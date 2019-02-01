@@ -2,7 +2,7 @@ FROM docker.io/centos:centos7
 
 RUN yum install -y python-requests
 RUN curl https://raw.githubusercontent.com/openstack/tripleo-repos/master/tripleo_repos/main.py | python - current-tripleo
-RUN yum install -y openstack-ironic-api openstack-ironic-conductor rabbitmq-server crudini iproute dnsmasq httpd qemu-img iscsi-initiator-utils
+RUN yum install -y openstack-ironic-api openstack-ironic-conductor rabbitmq-server crudini iproute dnsmasq httpd qemu-img iscsi-initiator-utils parted gdisk
 RUN mkdir -p /var/www/html/images
 RUN curl http://tarballs.openstack.org/ironic-python-agent/tinyipa/tinyipa-stable-rocky.tar.gz | tar -C /var/www/html/images/ -xzf -
 
