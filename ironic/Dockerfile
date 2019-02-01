@@ -5,7 +5,11 @@ RUN curl https://raw.githubusercontent.com/openstack/tripleo-repos/master/triple
 RUN yum install -y openstack-ironic-api openstack-ironic-conductor rabbitmq-server crudini iproute dnsmasq httpd qemu-img iscsi-initiator-utils
 RUN mkdir -p /var/www/html/images
 RUN curl http://tarballs.openstack.org/ironic-python-agent/tinyipa/tinyipa-stable-rocky.tar.gz | tar -C /var/www/html/images/ -xzf -
-RUN curl --insecure --compressed -L -o /var/www/html/images/redhat-coreos-maipo-47.284-openstack.qcow2 https://releases-redhat-coreos-dev.cloud.paas.upshift.redhat.com/storage/releases/maipo/47.284/redhat-coreos-maipo-47.284-openstack.qcow2.gz
+
+ARG RHCOS_IMAGE_FILENAME_OPENSTACK
+ARG RHCOS_IMAGE_URL
+ARG RHCOS_IMAGE_VERSION
+RUN curl --insecure --compressed -L -o /var/www/html/images/${RHCOS_IMAGE_FILENAME_OPENSTACK} ${RHCOS_IMAGE_URL}/${RHCOS_IMAGE_VERSION}/${RHCOS_IMAGE_FILENAME_OPENSTACK}.gz
 
 RUN cp /etc/ironic/ironic.conf /etc/ironic/ironic.conf_orig
 RUN crudini --set /etc/ironic/ironic.conf DEFAULT auth_strategy noauth
