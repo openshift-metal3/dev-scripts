@@ -25,3 +25,8 @@ fi
 
 # Allow ipmi to the virtual bmc processes that we just started
 sudo iptables -I INPUT -i virbr0 -p udp -m udp --dport 6230:6235 -j ACCEPT
+
+# Switch NetworkManager to internal DNS
+sudo mkdir -p /etc/NetworkManager/conf.d/
+echo -e "[main]\ndns=dnsmasq" | sudo tee /etc/NetworkManager/conf.d/dnsmasq.conf
+sudo systemctl restart NetworkManager

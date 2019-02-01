@@ -88,6 +88,9 @@ done
 sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap
 
 IP=$(sudo virsh domifaddr ostest-bootstrap | grep 122 | awk '{print $4}' | grep -o '^[^/]*')
+# TODO point to libvirt's DNS instead once correct hostname is set
+echo "address=/${CLUSTER_NAME}-api.${BASE_DOMAIN}/${IP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+sudo systemctl restart NetworkManager
 
 # Wait for ssh to start
 while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
