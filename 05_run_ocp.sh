@@ -105,8 +105,13 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo mkdir /run/httpd
 
 # Build and start the ironic container
 cat ironic/Dockerfile | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=Dockerfile
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build -t ironic:latest .
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run -d --net host --privileged --name ironic -v /run:/run:shared -v /dev:/dev localhost/ironic
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build \
+    --build-arg RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL} \
+    --build-arg RHCOS_IMAGE_VERSION=${RHCOS_IMAGE_VERSION} \
+    --build-arg RHCOS_IMAGE_FILENAME_OPENSTACK=${RHCOS_IMAGE_FILENAME_OPENSTACK} \
+    -t ironic:latest .
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
+    -d --net host --privileged --name ironic -v /run:/run:shared -v /dev:/dev localhost/ironic
 
 # Create a master_nodes.json file
 cat ~stack/ironic_nodes.json | jq '.nodes[0:3] |  {nodes: .}' | tee ocp/master_nodes.json
