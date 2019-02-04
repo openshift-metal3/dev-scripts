@@ -78,10 +78,18 @@ openstack baremetal node manage $NODE_UUID --wait
 openstack baremetal node provide $NODE_UUID --wait
 ```
 
-And to deploy a node with the cirros image (image\_source above):
+And to deploy a master node with the coreos image (image\_source above) and passing in ignition config:
 
 ```
-openstack baremetal node deploy $NODE_UUID
+mkdir -p configdrive/openstack/latest
+cp ocp/master.ign configdrive/openstack/latest/user_data
+openstack baremetal node deploy --config-drive configdrive $NODE_UUID
+```
+
+To ssh to the master nodes, you can route trafic through the bootstrap node
+```
+sudo ip route add 172.22.0.0/24 via $(getent hosts ostest-api.test.metalkube.org | awk '{ print $1 }')
+ssh core@<IP> # For the moment you have to get the IP form the dnsmasq logs in the ironic container
 ```
 
 ## Cleanup
