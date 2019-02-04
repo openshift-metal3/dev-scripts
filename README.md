@@ -100,3 +100,6 @@ rm -fr ocp
 
 Or, you can run `make clean` which will run all of the cleanup steps.
 
+## Troubleshooting
+If you're having trouble, try `systemctl restart libvirtd`.
+
