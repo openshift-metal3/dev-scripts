@@ -107,16 +107,27 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo modprobe iscsi_tcp
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo mkdir /run/httpd
 
 # Build and start the ironic container
-cat ironic/Dockerfile | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=Dockerfile
+"StrictHostKeyChecking=no" core@$IP sudo mkdir -p /home/core/ironic
+cat ironic/Dockerfile | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=ironic/Dockerfile
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build \
     --build-arg RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL} \
     --build-arg RHCOS_IMAGE_VERSION=${RHCOS_IMAGE_VERSION} \
     --build-arg RHCOS_IMAGE_FILENAME_OPENSTACK=${RHCOS_IMAGE_FILENAME_OPENSTACK} \
-    -t ironic:latest .
+    -t ironic:latest ironic
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
     -d --net host --privileged --name ironic -v /run:/run:shared -v /dev:/dev localhost/ironic
 
 # Create a master_nodes.json file
 cat ~stack/ironic_nodes.json | jq '.nodes[0:3] |  {nodes: .}' | tee ocp/master_nodes.json
+
+# Build and start the ironic_client container
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo mkdir -p /home/core/ironic_client
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo mkdir -p /var/run/ironic_client_mnt
+cat ironic_client/Dockerfile | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=ironic_client/Dockerfile
+cat ocp/master.ign | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=/var/run/ironic_client_mnt/master.ign
+cat ocp/master_nodes.json | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=/var/run/ironic_client_mnt/master_nodes.json
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build -t ironic_client:latest ironic_client
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
+  -d --net host --privileged --name ironic_client -v /dev:/dev -v /var/run/ironic_client_mnt:/mnt localhost/ironic_client
 
 echo "You can now ssh to \"$IP\" as the core user"
