@@ -57,4 +57,5 @@ fi
 # make sure stack user is created
 if ! cat /etc/passwd | grep -q "^stack:" ; then
     sudo useradd stack
+    sudo chmod 0755 ~stack
 fi
