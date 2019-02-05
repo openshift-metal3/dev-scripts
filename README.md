@@ -83,13 +83,13 @@ And to deploy a master node with the coreos image (image\_source above) and pass
 ```
 mkdir -p configdrive/openstack/latest
 cp ocp/master.ign configdrive/openstack/latest/user_data
-openstack baremetal node deploy --config-drive configdrive $NODE_UUID
+openstack baremetal node deploy --config-drive configdrive $NODE_UUID --wait
 ```
 
 To ssh to the master nodes, you can route trafic through the bootstrap node
 ```
-sudo ip route add 172.22.0.0/24 via $(getent hosts ostest-api.test.metalkube.org | awk '{ print $1 }')
-ssh core@<IP> # For the moment you have to get the IP form the dnsmasq logs in the ironic container
+sudo ip route add 172.22.0.0/24 via $(getent hosts ostest-api.test.metalkube.org | grep 192 | awk '{ print $1 }')
+ssh core@ostest-etcd-<n>.test.metalkube.org
 ```
 
 ## Cleanup
@@ -110,4 +110,3 @@ Or, you can run `make clean` which will run all of the cleanup steps.
 
 ## Troubleshooting
 If you're having trouble, try `systemctl restart libvirtd`.
-

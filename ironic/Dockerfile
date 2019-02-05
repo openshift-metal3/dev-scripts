@@ -32,16 +32,8 @@ RUN mkdir /tftpboot
 
 RUN ironic-dbsync --config-file /etc/ironic/ironic.conf create_schema
 
-RUN echo "#!/usr/bin/bash" >> /bin/runironic
-RUN echo "/usr/lib/rabbitmq/bin/rabbitmq-server > /var/log/rabbit.out 2>&1 &" >> /bin/runironic
-RUN echo "/usr/bin/python2 /usr/bin/ironic-conductor > /var/log/ironic-conductor.out 2>&1 &" >> /bin/runironic
-RUN echo "/usr/bin/python2 /usr/bin/ironic-api > /var/log/ironic-api.out 2>&1 &" >> /bin/runironic
-RUN echo "/usr/sbin/httpd" >> /bin/runironic
-RUN echo "/usr/sbin/dnsmasq -d -q -i eth1 --dhcp-range 172.22.0.10,172.22.0.100 --enable-tftp --tftp-root=/tftpboot --dhcp-boot=http://172.22.0.1/boot.ipxe > /var/log/dnsmasq.out 2>&1 &" >> /bin/runironic
-RUN echo "sleep infinity" >> /bin/runironic
-
+COPY ./runironic.sh /bin/runironic
+COPY ./dnsmasq.conf /etc/dnsmasq.conf
 RUN chmod +x /bin/runironic
 
 ENTRYPOINT ["/bin/runironic"]
-
-
