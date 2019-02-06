@@ -15,6 +15,7 @@ build:
 
 ocp_run:
 	./05_run_ocp.sh
+	./06_ironic.sh
 
 clean: ocp_cleanup libvirt_cleanup
 
@@ -23,4 +24,3 @@ ocp_cleanup:
 
 libvirt_cleanup:
 	./libvirt_cleanup.sh
-
