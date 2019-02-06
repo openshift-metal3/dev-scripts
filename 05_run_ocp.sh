@@ -87,9 +87,11 @@ while ! sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap | grep -q ${VM_MAC}; do
 done
 sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap
 
+# NOTE: This hardcodes CLUSTER_NAME-api.BASE_DOMAIN to the bootstrap node.
+# TODO: Point instead to the DNS VIP when we have that. E.g.: server=/BASE_DOMAIN/DNS_VIP
 IP=$(sudo virsh domifaddr ostest-bootstrap | grep 122 | awk '{print $4}' | grep -o '^[^/]*')
-# TODO point to libvirt's DNS instead once correct hostname is set
-echo "address=/${CLUSTER_NAME}-api.${BASE_DOMAIN}/${IP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+echo "addn-hosts=/etc/hosts.openshift" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+echo "${IP} ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee /etc/hosts.openshift
 sudo systemctl restart NetworkManager
 
 # Wait for ssh to start
@@ -106,7 +108,23 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo modprobe iscsi_tcp
 # doesn't exist on the host
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo mkdir /run/httpd
 
+# Internal dnsmasq should reserve IP addresses for each master
+sudo cp -f ironic/dnsmasq.conf /tmp
+for i in 0 1 2; do 
+  NODE_MAC=$(cat ~stack/ironic_nodes.json | jq -r ".nodes[${i}].ports[0].address")
+  NODE_IP="172.22.0.2${i}"
+  HOSTNAME="${CLUSTER_NAME}-etcd-${i}.${BASE_DOMAIN}"
+  # Make sure internal dnsmasq would assign an expected IP
+  echo "dhcp-host=${NODE_MAC},${HOSTNAME},${NODE_IP}" >> /tmp/dnsmasq.conf
+  # Reconfigure "external" dnsmasq
+  echo "${NODE_IP} ${HOSTNAME} ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee -a /etc/hosts.openshift
+  echo "srv-host=_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOMAIN},${HOSTNAME},2380,0,0" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
+done
+sudo systemctl reload NetworkManager
+cat /tmp/dnsmasq.conf | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dnsmasq.conf
+
 # Build and start the ironic container
+cat ironic/runironic.sh | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=runironic.sh
 cat ironic/Dockerfile | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=Dockerfile
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build \
     --build-arg RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL} \
