@@ -101,13 +101,6 @@ while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
 echo -e "DEVICE=eth1\nONBOOT=yes\nTYPE=Ethernet\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=/etc/sysconfig/network-scripts/ifcfg-eth1
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo ifup eth1
 
-# Needed for iscsiadm
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo modprobe iscsi_tcp
-
-# Workaround for httpd as we are bind mountin /run into the container (for iscsi) and /run/httpd
-# doesn't exist on the host
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo mkdir /run/httpd
-
 # Internal dnsmasq should reserve IP addresses for each master
 sudo cp -f ironic/dnsmasq.conf /tmp
 for i in 0 1 2; do 
@@ -132,7 +125,7 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build \
     --build-arg RHCOS_IMAGE_FILENAME_OPENSTACK=${RHCOS_IMAGE_FILENAME_OPENSTACK} \
     -t ironic:latest .
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
-    -d --net host --privileged --name ironic -v /run:/run:shared -v /dev:/dev localhost/ironic
+    -d --net host --privileged --name ironic localhost/ironic
 
 # Create a master_nodes.json file
 cat ~stack/ironic_nodes.json | jq '.nodes[0:3] |  {nodes: .}' | tee ocp/master_nodes.json
