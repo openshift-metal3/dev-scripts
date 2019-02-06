@@ -55,7 +55,7 @@ if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
 fi
 
 # make sure stack user is created
-if ! cat /etc/passwd | grep -q "^stack:" ; then
+if ! grep -q "^stack:" /etc/passwd; then
     sudo useradd stack
     sudo chmod 0755 ~stack
 fi
