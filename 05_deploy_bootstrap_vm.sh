@@ -109,7 +109,7 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo modprobe iscsi_tcp
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo mkdir /run/httpd
 
 # Internal dnsmasq should reserve IP addresses for each master
-sudo cp -f ironic/dnsmasq.conf /tmp
+cp -f ironic/dnsmasq.conf /tmp
 for i in 0 1 2; do 
   NODE_MAC=$(cat ~stack/ironic_nodes.json | jq -r ".nodes[${i}].ports[0].address")
   NODE_IP="172.22.0.2${i}"
