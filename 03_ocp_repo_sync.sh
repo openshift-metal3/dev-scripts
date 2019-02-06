@@ -38,9 +38,5 @@ function sync_go_repo_and_patch {
 
 sync_go_repo_and_patch github.com/openshift/installer https://github.com/openshift/installer.git
 
-sync_go_repo_and_patch github.com/terraform-providers/terraform-provider-openstack https://github.com/terraform-providers/terraform-provider-openstack
-
 # sync_go_repo_and_patch github.com/openshift/ci-operator https://github.com/openshift/ci-operator.git
 # sync_go_repo_and_patch github.com/sallyom/installer-e2e https://github.com/sallyom/installer-e2e.git
-
-sync_go_repo_and_patch sigs.k8s.io/openshift/cluster-api-provider-openstack https://github.com/openshift/cluster-api-provider-openstack.git
