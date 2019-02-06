@@ -39,8 +39,9 @@ source.
 - `./05_deploy_bootstrap_vm.sh`
 
 This will run the openshift-install to generate ignition configs and boot the
-bootstrap VM, including a bootstrap ironic all in one container,
-currently no cluster is actually created.
+bootstrap VM, including a bootstrap ironic all in one container.
+Ironic container is stored at https://quay.io/repository/metalkube/metalkube-ironic, built from https://github.com/metalkube/metalkube-ironic
+Currently no cluster is actually created.
 
 When the VM is running, the script will show the IP and you can ssh to the
 VM via ssh core@IP.
