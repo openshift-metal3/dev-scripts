@@ -14,7 +14,8 @@ build:
 	./04_build_ocp_installer.sh
 
 ocp_run:
-	./05_run_ocp.sh
+	./05_deploy_bootstrap_vm.sh
+	./06_deploy_masters.sh
 
 clean: ocp_cleanup libvirt_cleanup
 

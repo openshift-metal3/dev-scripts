@@ -37,7 +37,7 @@ local virthost and some other dependencies installed.
 These will pull and build the openshift-install and some other things from
 source.
 
-- `./05_run_ocp.sh`
+- `./05_deploy_bootstrap_vm.sh`
 
 This will run the openshift-install to generate ignition configs and boot the
 bootstrap VM, including a bootstrap ironic all in one container,
@@ -52,38 +52,18 @@ Then you can interact with the k8s API on the bootstrap VM e.g
 You can also see the status of the bootkube.sh script which is running via
 `journalctl -b -f -u bootkube.service`.
 
-## Interact with Ironic from the host
+- `./06_deploy_masters.sh`
 
-You can test ironic by talking to its API with the openstack client (from the
-virt host)
+This will deploy the master nodes via ironic, using the Ignition config
+generated in the previous step.
+
+For manual debugging via openstackclient, you can use the following:
 
 ```
 export OS_TOKEN=fake-token
 export OS_URL=http://ostest-api.test.metalkube.org:6385/
-```
-
-To define the master nodes, you can use:
-
-```
-openstack baremetal create ocp/master_nodes.json
-```
-
-Then to deploy you can do e.g:
-
-```
-# Set NODE_UUID to the uuid of the node you want to work with
-NODE_UUID=$(openstack baremetal node show openshift-master-0 -f value -c uuid)
-openstack baremetal node set $NODE_UUID --instance-info image_source=http://172.22.0.1/images/redhat-coreos-maipo-47.284-openstack.qcow2 --instance-info image_checksum=2a38fafe0b9465937955e4d054b8db3a --instance-info root_gb=25 --property root_device='{"name": "/dev/vda"}'
-openstack baremetal node manage $NODE_UUID --wait
-openstack baremetal node provide $NODE_UUID --wait
-```
-
-And to deploy a master node with the coreos image (image\_source above) and passing in ignition config:
-
-```
-mkdir -p configdrive/openstack/latest
-cp ocp/master.ign configdrive/openstack/latest/user_data
-openstack baremetal node deploy --config-drive configdrive $NODE_UUID --wait
+openstack baremetal node list
+...
 ```
 
 To ssh to the master nodes, you can route trafic through the bootstrap node
