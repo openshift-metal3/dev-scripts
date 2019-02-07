@@ -4,6 +4,7 @@ set -e
 
 source ocp_install_env.sh
 source common.sh
+source get_rhcos_image.sh
 
 # FIXME this is configuring for the libvirt backend which is dev-only ref
 # https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md
@@ -61,7 +62,6 @@ $GOPATH/src/github.com/openshift/installer/bin/openshift-install --dir ocp --log
 # See https://coreos.com/os/docs/latest/booting-with-libvirt.html
 IGN_FILE="/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.ign"
 sudo cp ocp/bootstrap.ign ${IGN_FILE}
-./get_rhcos_image.sh
 LATEST_IMAGE=$(ls -ltr redhat-coreos-maipo-*-qemu.qcow2 | tail -n1 | awk '{print $9}')
 sudo cp $LATEST_IMAGE /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2
 sudo qemu-img resize /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2 50G
