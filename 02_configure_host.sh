@@ -9,7 +9,10 @@ source common.sh
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
 export ANSIBLE_LIBRARY=./library
+
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
+    -e "non_root_user=$USER" \
+    -e "working_dir=$WORKING_DIR" \
     -e "roles_path=$PWD/roles" \
     -e @tripleo-quickstart-config/metalkube-nodes.yml \
     -e "local_working_dir=$HOME/.quickstart" \
@@ -18,7 +21,6 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -i tripleo-quickstart-config/metalkube-inventory.ini \
     -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml \
     | tee "ansible-$(date -u +%Y%m%d%H%M).log"
-
 
 # Allow local non-root-user access to libvirt ref
 # https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#make-sure-you-have-permissions-for-qemusystem
