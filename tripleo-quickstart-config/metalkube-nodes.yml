@@ -1,4 +1,4 @@
-openshift_memory: 4096
+openshift_memory: 6144
 default_vcpu: 2
 overcloud_nodes:
   - name: openshift_master_0
