@@ -2,6 +2,7 @@
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=`whoami`
+WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
 
 if [ -z "$CONFIG" ]; then  
     # See if there's a config_$USER.sh in the SCRIPTDIR
@@ -21,6 +22,13 @@ if [ -z "$PULL_SECRET" ]; then
   echo "No valid PULL_SECRET set in ${CONFIG}"
   echo "Get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret"
   exit 1
+fi
+
+if [ ! -d "$WORKING_DIR" ]; then
+    echo "Creating Working Dir"
+    sudo mkdir "$WORKING_DIR"
+    sudo chown "${USER}:${USER}" "$WORKING_DIR"
+    sudo chmod 755 "$WORKING_DIR"
 fi
 
 export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-"https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/"}

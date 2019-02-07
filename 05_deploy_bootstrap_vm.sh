@@ -103,8 +103,8 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo ifup eth1
 
 # Internal dnsmasq should reserve IP addresses for each master
 cp -f ironic/dnsmasq.conf /tmp
-for i in 0 1 2; do 
-  NODE_MAC=$(cat ~stack/ironic_nodes.json | jq -r ".nodes[${i}].ports[0].address")
+for i in 0 1 2; do
+  NODE_MAC=$(cat "${WORKING_DIR}/ironic_nodes.json" | jq -r ".nodes[${i}].ports[0].address")
   NODE_IP="172.22.0.2${i}"
   HOSTNAME="${CLUSTER_NAME}-etcd-${i}.${BASE_DOMAIN}"
   # Make sure internal dnsmasq would assign an expected IP
@@ -128,6 +128,6 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
     -d --net host --privileged --name ironic localhost/ironic
 
 # Create a master_nodes.json file
-cat ~stack/ironic_nodes.json | jq '.nodes[0:3] |  {nodes: .}' | tee ocp/master_nodes.json
+jq '.nodes[0:3] | {nodes: .}' "${WORKING_DIR}/ironic_nodes.json" | tee ocp/master_nodes.json
 
 echo "You can now ssh to \"$IP\" as the core user"

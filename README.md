@@ -11,9 +11,8 @@ from tripleo-quickstart here.
 
 - CentOS 7
 - ideally on a bare metal host
-- run as user 'stack' with passwordless sudo access
-  - qemu needs access to this users home directory:
-    - `$ chmod 755 ~stack`
+- run as a user with passwordless sudo access
+- get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret
 
 # Instructions
 

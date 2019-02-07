@@ -4,16 +4,16 @@
 local_working_dir: "{{ lookup('env', 'HOME') }}/.quickstart"
 
 # this will define the user that ansible will connect with
-ssh_user: stack
+ssh_user: "{{ non_root_user }}"
 
 # This defines the users that deploys the overcloud from the undercloud
 # and accesses overcloud as the orchestration admin user
-undercloud_user: stack
+undercloud_user: "{{ non_root_user }}"
 overcloud_user: heat-admin
 
 # This is where we store generated artifacts (like ssh config files,
 # keys, deployment scripts, etc) on the undercloud.
-working_dir: "/home/{{ undercloud_user }}"
+#working_dir: "/opt/dev-scripts"
 
 # This is a directory no the virthost in which we store the downloaded
 # undercloud image.
@@ -186,7 +186,6 @@ tuned_profile: 'virtual-host'
 
 # This is the name of the user the `provision` role will create on the
 # remote host.
-non_root_user: stack
 non_root_group: "{{ non_root_user }}"
 
 # Path for volume storage

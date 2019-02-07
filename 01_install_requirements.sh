@@ -54,8 +54,3 @@ if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
     sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
 fi
 
-# make sure stack user is created
-if ! grep -q "^stack:" /etc/passwd; then
-    sudo useradd stack
-    sudo chmod 0755 ~stack
-fi
