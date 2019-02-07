@@ -115,7 +115,7 @@ for i in 0 1 2; do
   NODE_IP="172.22.0.2${i}"
   HOSTNAME="${CLUSTER_NAME}-etcd-${i}.${BASE_DOMAIN}"
   # Make sure internal dnsmasq would assign an expected IP
-  echo "dhcp-host=${NODE_MAC},${HOSTNAME},${NODE_IP}" >> /tmp/dnsmasq.conf
+  echo "dhcp-host=${NODE_MAC},${HOSTNAME},${NODE_IP}" | sudo tee /tmp/dnsmasq.conf
   # Reconfigure "external" dnsmasq
   echo "${NODE_IP} ${HOSTNAME} ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee -a /etc/hosts.openshift
   echo "srv-host=_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOMAIN},${HOSTNAME},2380,0,0" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
