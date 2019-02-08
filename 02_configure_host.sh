@@ -2,6 +2,7 @@
 set -xe
 
 source common.sh
+source ocp_install_env.sh
 
 # This script will create some libvirt VMs do act as "dummy baremetal"
 # then configure python-virtualbmc to control them - these can later

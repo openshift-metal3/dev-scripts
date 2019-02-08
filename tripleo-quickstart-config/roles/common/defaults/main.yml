@@ -56,6 +56,10 @@ undercloud_disk: 50
 # Setting undercloud to 6 cpus, so we continue to have around 10 vcpus
 # by default
 undercloud_vcpu: 6
+# base domain to use
+base_domain: "{{ lookup('env', 'BASE_DOMAIN') | default('test.metalkube.org', true) }}"
+# cluster_name to use
+cluster_name: "{{ lookup('env', 'CLUSTER_NAME') | default('ostest', true) }}"
 
 # The default deployment has flavors for compute, controllers, ceph
 # nodes, and undercloud nodes.  All flavors defined in the `flavors`
@@ -132,22 +136,65 @@ overcloud_nodes:
 #   virt host to the undercloud
 #   *  The first bridge network defined will be used for pxe booting
 #
-external_network_cidr: 192.168.23.0/24
+baremetal_network_cidr: 192.168.111.0/24
 networks:
   - name: overcloud
     bridge: brovc
 
-  - name: external
-    bridge: brext
+  - name: baremetal
+    bridge: baremetal
     forward_mode: nat
-    address: "{{ external_network_cidr|nthhost(1) }}"
-    netmask: "{{ external_network_cidr|ipaddr('netmask') }}"
+    address: "{{ baremetal_network_cidr|nthhost(1) }}"
+    netmask: "{{ baremetal_network_cidr|ipaddr('netmask') }}"
     dhcp_range:
-      - "{{ external_network_cidr|nthhost(10) }}"
-      - "{{ external_network_cidr|nthhost(50) }}"
+      - "{{ baremetal_network_cidr|nthhost(20) }}"
+      - "{{ baremetal_network_cidr|nthhost(60) }}"
+    dhcp_hosts:
+      - name: "{{ cluster_name }}-master-0"
+        ip: "{{ baremetal_network_cidr | nthhost(20) }}"
+      - name: "{{ cluster_name }}-master-1"
+        ip: "{{ baremetal_network_cidr | nthhost(21) }}"
+      - name: "{{ cluster_name }}-master-2"
+        ip: "{{ baremetal_network_cidr | nthhost(22) }}"
     nat_port_range:
       - 1024
       - 65535
+    domain: "{{ base_domain }}"
+    dns:
+      srvs:
+        - name: "etcd-server-ssl"
+          protocol: tcp
+          domain: "{{ cluster_name }}.{{ base_domain }}"
+          port: 2380
+          target: "{{ cluster_name }}-etcd-0.{{ base_domain }}"
+        - name: "etcd-server-ssl"
+          protocol: tcp
+          domain: "{{ cluster_name }}.{{ base_domain }}"
+          port: 2380
+          target: "{{ cluster_name }}-etcd-1.{{ base_domain }}"
+        - name: "etcd-server-ssl"
+          protocol: tcp
+          domain: "{{ cluster_name }}.{{ base_domain }}"
+          port: 2380
+          target: "{{ cluster_name }}-etcd-2.{{ base_domain }}"
+      hosts:
+        - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
+          hostnames:
+            - "{{ cluster_name }}-api"
+        - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
+          hostnames:
+            - "{{ cluster_name }}-dns"
+        - ip: "{{ baremetal_network_cidr | nthhost(20) }}"
+          hostnames:
+            - "{{ cluster_name }}-etcd-0"
+        - ip: "{{ baremetal_network_cidr | nthhost(21) }}"
+          hostnames:
+            - "{{ cluster_name }}-etcd-1"
+        - ip: "{{ baremetal_network_cidr | nthhost(22) }}"
+          hostnames:
+            - "{{ cluster_name }}-etcd-2"
+
+
 
 network_isolation: true
 network_isolation_type: 'single-nic-vlans'

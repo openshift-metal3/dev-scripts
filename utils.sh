@@ -82,3 +82,16 @@ function wait_for_json() {
     echo " Success!"
     return 0
 }
+
+function network_ip() {
+    local network
+    local rc
+
+    network="$1"
+    ip="$(sudo virsh net-dumpxml "$network" | "${PWD}/pyxpath" "//ip/@address" -)"
+    rc=$?
+    if [ $rc -ne 0 ]; then
+        return $rc
+    fi
+    echo "$ip"
+}

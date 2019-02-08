@@ -2,6 +2,11 @@
 {% set delay = item.delay|default('0') %}
 {% set nat_port_range = item.nat_port_range|default([1024, 65535]) %}
 {% set netmask = item.netmask|default('255.255.255.0') %}
+{% if item.dhcp_hosts is defined %}
+{% set cluster_name = lookup('env', 'CLUSTER_NAME') %}
+{% set ironic_prefix = "openshift" %}
+{% set dhcp_hosts_ironic_names = item.dhcp_hosts | map(attribute='name') | map('replace', cluster_name, ironic_prefix) | map('replace', '-', '_') | list %}
+{% endif %}
 <network>
   <name>{{ item.name }}</name>
 {% if item.forward_mode is defined and item.forward_mode != 'nat' %}
@@ -26,8 +31,32 @@
 {% if item.dhcp_range is defined %}
     <dhcp>
       <range start='{{ item.dhcp_range[0] }}' end='{{ item.dhcp_range[1] }}'/>
+  {% if item.dhcp_hosts is defined %}
+    {% for host in item.dhcp_hosts %}
+      <host mac='{{ node_mac_map.get(dhcp_hosts_ironic_names[loop.index0]).get(item.name) }}' name='{{ host.name }}' ip='{{ host.ip }}'/>
+    {% endfor %}
+  {% endif %}
     </dhcp>
 {% endif %}
   </ip>
+{% if item.domain is defined %}
+  <domain name='{{ item.domain }}' localOnly='yes'/>
+{% endif %}
+{% if item.dns is defined %}
+  <dns>
+  {% for host in item.dns.hosts %}
+    <host ip='{{ host.ip }}'>
+    {% for name in host.hostnames %}
+      <hostname>{{ name }}</hostname>
+    {% endfor %}
+    </host>
+  {% endfor %}
+  {% if item.dns.srvs is defined %}
+    {% for srv in item.dns.srvs %}
+    <srv service='{{ srv.name }}' protocol='{{ srv.protocol }}' domain='{{ srv.domain }}' port='{{ srv.port }}' target='{{ srv.target }}' />
+    {% endfor %}
+  {% endif %}
+  </dns>
+{% endif %}
 {% endif %}
 </network>
