@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+import sys
+from lxml import etree
+
+try:
+    selector, xmlfile = sys.argv[1:]
+except Exception:
+    sys.stderr.write('Expects to be called with xpath selector AND a filename ('-' for stdin)\n')
+
+if xmlfile == '-':
+    source = sys.stdin
+else:
+    source = xmlfile
+
+doc = etree.parse(source)
+
+selection = doc.xpath(selector)
+for element in selection:
+    print(element)

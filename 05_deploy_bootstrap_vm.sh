@@ -85,16 +85,15 @@ sed -i "/<\/devices>/a <qemu:commandline>\n  <qemu:arg value='-fw_cfg'/>\n  <qem
 sudo virsh define ocp/bootstrap-vm.xml
 sudo virsh start ${CLUSTER_NAME}-bootstrap
 sleep 10
-VM_MAC=$(sudo virsh dumpxml ${CLUSTER_NAME}-bootstrap | grep "mac address" | head -n 1 | cut -d\' -f2)
-while ! sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap | grep -q ${VM_MAC}; do
+
+while ! domain_net_ip ${CLUSTER_NAME}-bootstrap default; do
   echo "Waiting for ${CLUSTER_NAME}-bootstrap interface to become active.."
   sleep 10
 done
-sudo virsh domifaddr ${CLUSTER_NAME}-bootstrap
 
 # NOTE: This hardcodes CLUSTER_NAME-api.BASE_DOMAIN to the bootstrap node.
 # TODO: Point instead to the DNS VIP when we have that. E.g.: server=/BASE_DOMAIN/DNS_VIP
-IP=$(sudo virsh domifaddr ostest-bootstrap | grep 122 | awk '{print $4}' | grep -o '^[^/]*')
+IP=$(domain_net_ip ${CLUSTER_NAME}-bootstrap default)
 echo "addn-hosts=/etc/hosts.openshift" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
 echo "${IP} ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee /etc/hosts.openshift
 sudo systemctl restart NetworkManager
