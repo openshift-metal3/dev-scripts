@@ -89,3 +89,11 @@ Or, you can run `make clean` which will run all of the cleanup steps.
 
 ## Troubleshooting
 If you're having trouble, try `systemctl restart libvirtd`.
+
+You can use:
+
+```
+virsh console domain_name
+```
+
+To get to the bootstrap node. The username is `core` and the password is `notworking`

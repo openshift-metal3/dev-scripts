@@ -11,7 +11,7 @@ sudo yum -y update
 sudo yum -y install epel-release --enablerepo=extras
 sudo yum -y install curl vim-enhanced wget python-pip patch psmisc figlet golang dnsmasq NetworkManager crudini
 
-sudo pip install lolcat
+sudo pip install lolcat json-patch
 
 # for tripleo-repos install
 sudo yum -y install python-setuptools python-requests
