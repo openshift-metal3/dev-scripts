@@ -122,15 +122,16 @@ sudo systemctl reload NetworkManager
 cat /tmp/dnsmasq.conf | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dnsmasq.conf
 
 # Build and start the ironic container
-cat ironic/runironic.sh | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=runironic.sh
-cat ironic/Dockerfile | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=Dockerfile
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman build \
-    --build-arg RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL} \
-    --build-arg RHCOS_IMAGE_VERSION=${RHCOS_IMAGE_VERSION} \
-    --build-arg RHCOS_IMAGE_FILENAME_OPENSTACK=${RHCOS_IMAGE_FILENAME_OPENSTACK} \
-    -t ironic:latest .
+cat "${RHCOS_IMAGE_FILENAME_OPENSTACK}" | ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo dd of="${RHCOS_IMAGE_FILENAME_OPENSTACK}"
+
+IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
+ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo podman pull "${IRONIC_IMAGE}"
+
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
-    -d --net host --privileged --name ironic localhost/ironic
+    -d --net host --privileged --name ironic \
+    -v /home/core/dnsmasq.conf:/etc/dnsmasq.conf \
+    -v "/home/core/${RHCOS_IMAGE_FILENAME_OPENSTACK}:/var/www/html/images/${RHCOS_IMAGE_FILENAME_OPENSTACK}" \
+    "${IRONIC_IMAGE}"
 
 # Create a master_nodes.json file
 jq '.nodes[0:3] | {nodes: .}' "${WORKING_DIR}/ironic_nodes.json" | tee ocp/master_nodes.json
