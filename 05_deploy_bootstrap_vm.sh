@@ -119,8 +119,10 @@ for i in 0 1 2; do
 done
 sudo systemctl reload NetworkManager
 cat /tmp/dnsmasq.conf | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dnsmasq.conf
+cat ironic/dualboot.ipxe | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dualboot.ipxe
+cat ironic/inspector.ipxe | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=inspector.ipxe
 
-# Build and start the ironic container
+# Retrieve and start the ironic container
 cat "${RHCOS_IMAGE_FILENAME_OPENSTACK}" | ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo dd of="${RHCOS_IMAGE_FILENAME_OPENSTACK}"
 
 IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
@@ -129,8 +131,18 @@ ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo podman pull "${IRONIC_IMAGE}"
 ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
     -d --net host --privileged --name ironic \
     -v /home/core/dnsmasq.conf:/etc/dnsmasq.conf \
+    -v /home/core/dualboot.ipxe:/var/www/html/dualboot.ipxe \
+    -v /home/core/inspector.ipxe:/var/www/html/inspector.ipxe \
     -v "/home/core/${RHCOS_IMAGE_FILENAME_OPENSTACK}:/var/www/html/images/${RHCOS_IMAGE_FILENAME_OPENSTACK}" \
     "${IRONIC_IMAGE}"
+
+# Retrieve and start the inspector container
+IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metalkube/metalkube-ironic-inspector"}
+ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo podman pull "${IRONIC_INSPECTOR_IMAGE}"
+
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
+    -d --net host --privileged --name ironic-inspector \
+    "${IRONIC_INSPECTOR_IMAGE}"
 
 # Create a master_nodes.json file
 jq '.nodes[0:3] | {nodes: .}' "${WORKING_DIR}/ironic_nodes.json" | tee ocp/master_nodes.json
