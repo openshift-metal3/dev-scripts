@@ -9,7 +9,7 @@ sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
 sudo yum -y update
 
 sudo yum -y install epel-release --enablerepo=extras
-sudo yum -y install curl vim-enhanced wget python-pip patch psmisc figlet golang dnsmasq NetworkManager crudini
+sudo yum -y install curl vim-enhanced wget python-pip patch psmisc figlet golang dnsmasq NetworkManager crudini podman
 
 sudo pip install lolcat json-patch
 
@@ -53,4 +53,3 @@ if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
     sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
     sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
 fi
-

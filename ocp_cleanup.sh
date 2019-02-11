@@ -4,7 +4,7 @@ set -e
 
 source ocp_install_env.sh
 
-$GOPATH/src/github.com/openshift/installer/bin/openshift-install --log-level=debug --dir ocp destroy cluster || true
+sudo podman rm -f ostest-bootstrap || true
 
 rm -rf ocp
 

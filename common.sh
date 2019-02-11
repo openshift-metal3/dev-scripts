@@ -40,7 +40,6 @@ export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
 # doesn't work - probably we need to download both as the
 # -openstack one may be needed for the baremetal nodes so we get
 # config drive support, or perhaps a completely new image?
-export RHCOS_IMAGE_FILENAME="${RHCOS_IMAGE_NAME}-qemu.qcow2"
 export RHCOS_IMAGE_FILENAME_OPENSTACK="${RHCOS_IMAGE_NAME}-openstack.qcow2"
 
 # Log output automatically

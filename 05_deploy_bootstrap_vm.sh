@@ -67,43 +67,22 @@ sudo cp ocp/bootstrap.ign ${IGN_FILE}
 # Apply patches to bootstrap ignition
 apply_ignition_patches bootstrap "$IGN_FILE"
 
-LATEST_IMAGE=$(ls -ltr redhat-coreos-maipo-*-qemu.qcow2 | tail -n1 | awk '{print $9}')
-sudo cp $LATEST_IMAGE /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2
-sudo qemu-img resize /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2 50G
-sudo virt-install --connect qemu:///system \
-             --import \
-             --name ${CLUSTER_NAME}-bootstrap \
-             --ram 4096 --vcpus 4 \
-             --os-type=linux \
-             --os-variant=virtio26 \
-             --disk path=/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2,format=qcow2,bus=virtio \
-             --vnc --noautoconsole \
-             --network default --network bridge=brovc \
-             --print-xml > ocp/bootstrap-vm.xml
-sed -i 's|type="kvm"|type="kvm" xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0"|' ocp/bootstrap-vm.xml
-sed -i "/<\/devices>/a <qemu:commandline>\n  <qemu:arg value='-fw_cfg'/>\n  <qemu:arg value='name=opt/com.coreos/config,file=${IGN_FILE}'/>\n</qemu:commandline>" ocp/bootstrap-vm.xml
-sudo virsh define ocp/bootstrap-vm.xml
-sudo virsh start ${CLUSTER_NAME}-bootstrap
-sleep 10
-
-while ! domain_net_ip ${CLUSTER_NAME}-bootstrap default; do
-  echo "Waiting for ${CLUSTER_NAME}-bootstrap interface to become active.."
-  sleep 10
-done
-
-# NOTE: This hardcodes CLUSTER_NAME-api.BASE_DOMAIN to the bootstrap node.
-# TODO: Point instead to the DNS VIP when we have that. E.g.: server=/BASE_DOMAIN/DNS_VIP
-IP=$(domain_net_ip ${CLUSTER_NAME}-bootstrap default)
-echo "addn-hosts=/etc/hosts.openshift" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
-echo "${IP} ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee /etc/hosts.openshift
-sudo systemctl restart NetworkManager
-
-# Wait for ssh to start
-while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
-
-# Using 172.22.0.1 on the provisioning network for PXE and the ironic API
-echo -e "DEVICE=eth1\nONBOOT=yes\nTYPE=Ethernet\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=/etc/sysconfig/network-scripts/ifcfg-eth1
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo ifup eth1
+# Run a fake boostrap instance
+sudo podman rm -f ostest-bootstrap || true
+sudo podman run --name="ostest-bootstrap" \
+  -d --privileged --net=host --systemd=true \
+  --tmpfs /var/lib/containers/storage:rw,size=2G \
+  -v $(pwd)/bootstrap/bootstrap.sh:/usr/local/bin/bootstrap.sh \
+  -v $(pwd)/bootstrap/prepare-bootstrap.service:/etc/systemd/system/prepare-bootstrap.service \
+  -v $(pwd)/ocp:/ocp \
+  -ti centos:7 /sbin/init
+sudo podman exec ostest-bootstrap systemctl start prepare-bootstrap
+# Wait until prepare-bootstrap service completes. It attempts to reboot the container, so it exists with error
+sudo podman exec -ti ostest-bootstrap journalctl -b -f -u prepare-bootstrap; rc=$?
+# Start prepared bootstrap container again
+sudo podman start ostest-bootstrap
+# Mount container in bootstrap_mnt
+bootstrap_mnt=$(sudo podman mount ostest-bootstrap)
 
 # Internal dnsmasq should reserve IP addresses for each master
 cp -f ironic/dnsmasq.conf /tmp
@@ -118,15 +97,13 @@ for i in 0 1 2; do
   echo "srv-host=_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOMAIN},${HOSTNAME},2380,0,0" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
 done
 sudo systemctl reload NetworkManager
-cat /tmp/dnsmasq.conf | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dnsmasq.conf
-
+cp /tmp/dnsmasq.conf ${bootstrap_mnt}/home/core
+cp ${RHCOS_IMAGE_FILENAME_OPENSTACK} ${bootstrap_mnt}/home/core
 # Build and start the ironic container
-cat "${RHCOS_IMAGE_FILENAME_OPENSTACK}" | ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo dd of="${RHCOS_IMAGE_FILENAME_OPENSTACK}"
-
 IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
-ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo podman pull "${IRONIC_IMAGE}"
+sudo podman exec -ti ostest-bootstrap podman pull "${IRONIC_IMAGE}"
 
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
+sudo podman exec -ti ostest-bootstrap sudo podman run \
     -d --net host --privileged --name ironic \
     -v /home/core/dnsmasq.conf:/etc/dnsmasq.conf \
     -v "/home/core/${RHCOS_IMAGE_FILENAME_OPENSTACK}:/var/www/html/images/${RHCOS_IMAGE_FILENAME_OPENSTACK}" \
@@ -135,4 +112,4 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
 # Create a master_nodes.json file
 jq '.nodes[0:3] | {nodes: .}' "${WORKING_DIR}/ironic_nodes.json" | tee ocp/master_nodes.json
 
-echo "You can now ssh to \"$IP\" as the core user"
+echo "You can now run 'podman exec -ti ostest-bootstrap sh' to enter bootstrap container"
