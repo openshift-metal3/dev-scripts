@@ -67,6 +67,10 @@ sudo cp ocp/bootstrap.ign ${IGN_FILE}
 # Apply patches to bootstrap ignition
 apply_ignition_patches bootstrap "$IGN_FILE"
 
+echo "addn-hosts=/etc/hosts.openshift" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+echo "172.22.0.1 ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee /etc/hosts.openshift
+sudo systemctl restart NetworkManager
+
 # Run a fake boostrap instance
 sudo podman rm -f ostest-bootstrap || true
 sudo podman run --name="ostest-bootstrap" \
@@ -75,11 +79,12 @@ sudo podman run --name="ostest-bootstrap" \
   -v $(pwd)/bootstrap/bootstrap.sh:/usr/local/bin/bootstrap.sh \
   -v $(pwd)/bootstrap/prepare-bootstrap.service:/etc/systemd/system/prepare-bootstrap.service \
   -v $(pwd)/ocp:/ocp \
-  -ti centos:7 /sbin/init
+  -ti quay.io/vrutkovs/metalkube-bootstrap
 sudo podman exec ostest-bootstrap systemctl start prepare-bootstrap
 # Wait until prepare-bootstrap service completes. It attempts to reboot the container, so it exists with error
-sudo podman exec -ti ostest-bootstrap journalctl -b -f -u prepare-bootstrap; rc=$?
+sudo podman exec -ti ostest-bootstrap journalctl -b -f -u prepare-bootstrap || true
 # Start prepared bootstrap container again
+sleep 5
 sudo podman start ostest-bootstrap
 # Mount container in bootstrap_mnt
 bootstrap_mnt=$(sudo podman mount ostest-bootstrap)
@@ -97,16 +102,16 @@ for i in 0 1 2; do
   echo "srv-host=_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOMAIN},${HOSTNAME},2380,0,0" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
 done
 sudo systemctl reload NetworkManager
-cp /tmp/dnsmasq.conf ${bootstrap_mnt}/home/core
-cp ${RHCOS_IMAGE_FILENAME_OPENSTACK} ${bootstrap_mnt}/home/core
+cp /tmp/dnsmasq.conf ${bootstrap_mnt}/root
+cp ${RHCOS_IMAGE_FILENAME_OPENSTACK} ${bootstrap_mnt}/root
 # Build and start the ironic container
 IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
 sudo podman exec -ti ostest-bootstrap podman pull "${IRONIC_IMAGE}"
 
-sudo podman exec -ti ostest-bootstrap sudo podman run \
+sudo podman exec -ti ostest-bootstrap podman run \
     -d --net host --privileged --name ironic \
-    -v /home/core/dnsmasq.conf:/etc/dnsmasq.conf \
-    -v "/home/core/${RHCOS_IMAGE_FILENAME_OPENSTACK}:/var/www/html/images/${RHCOS_IMAGE_FILENAME_OPENSTACK}" \
+    -v /root/dnsmasq.conf:/etc/dnsmasq.conf \
+    -v "/root/${RHCOS_IMAGE_FILENAME_OPENSTACK}:/var/www/html/images/${RHCOS_IMAGE_FILENAME_OPENSTACK}" \
     "${IRONIC_IMAGE}"
 
 # Create a master_nodes.json file
