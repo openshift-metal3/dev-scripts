@@ -17,10 +17,10 @@ for node in $(jq -r .nodes[].name ${instack}); do
   fi;
 done
 
-openstack baremetal create ocp/master_nodes.json
+openstack baremetal create $instack 
 mkdir -p configdrive/openstack/latest
 cp ocp/master.ign configdrive/openstack/latest/user_data
-for node in $(jq -r .nodes[].name ocp/master_nodes.json); do
+for node in $(jq -r .nodes[].name $instack); do
 
   # FIXME(shardy) we should parameterize the image and checksum (or calculate the latter)
   # Change to sda if using BM
