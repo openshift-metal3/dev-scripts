@@ -28,6 +28,7 @@ local hwaddr
 
 netname="$1"
 hwaddr="$2"
+sudo virsh net-dhcp-leases "$netname" | grep -q "$hwaddr" || return 1
 sudo virsh net-dhcp-leases "$netname" | awk -v hwaddr="$hwaddr" '$3 ~ hwaddr {split($5, res, "/"); print res[1]}'
 }
 
