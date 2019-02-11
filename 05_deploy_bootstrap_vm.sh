@@ -96,7 +96,7 @@ done
 IP=$(domain_net_ip ${CLUSTER_NAME}-bootstrap default)
 echo "addn-hosts=/etc/hosts.openshift" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
 echo "${IP} ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee /etc/hosts.openshift
-sudo systemctl restart NetworkManager
+sudo systemctl reload NetworkManager
 
 # Wait for ssh to start
 while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
