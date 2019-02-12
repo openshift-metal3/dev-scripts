@@ -1,0 +1,9 @@
+#!ipxe
+
+
+:retry_boot
+echo In inspector.ipxe
+imgfree
+kernel --timeout 60000 http://172.22.0.1/images/ironic-python-agent.kernel ipa-inspection-callback-url=http://172.22.0.1:5050/v1/continue ipa-inspection-collectors=default,logs systemd.journald.forward_to_console=yes BOOTIF=${mac} ipa-debug=1 ipa-inspection-dhcp-all-interfaces=1 ipa-collect-lldp=1 initrd=ironic-python-agent.initramfs || goto retry_boot
+initrd --timeout 60000 http://172.22.0.1/images/ironic-python-agent.initramfs || goto retry_boot
+boot
