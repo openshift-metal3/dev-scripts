@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
 set -eux
+source utils.sh
 
 # Note This logic will likely run in a container (on the bootstrap VM)
 # for the final solution, but for now we'll prototype the workflow here
@@ -8,7 +9,12 @@ instack="ocp/master_nodes.json"
 export OS_TOKEN=fake-token
 export OS_URL=http://ostest-api.test.metalkube.org:6385/
 
-# Clean previously env 
+wait_for_json ironic \
+    "${OS_URL}/v1/nodes" \
+    10 \
+    -H "Accept: application/json" -H "Content-Type: application/json" -H "User-Agent: wait-for-json" -H "X-Auth-Token: $OS_TOKEN"
+
+# Clean previously env
 nodes=$(openstack baremetal node list)
 for node in $(jq -r .nodes[].name ${instack}); do
   if [[ $nodes =~ $node ]]; then
