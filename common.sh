@@ -3,6 +3,14 @@
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=`whoami`
 WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
+# Additional DNS
+ADDN_DNS=${ADDN_DNS:-}
+# External interface for routing traffic through the host
+EXT_IF=${EXT_IF:-}
+# Provisioning interface
+PRO_IF=${PRO_IF:-}
+# Internal interface, to bridge virbr0
+INT_IF=${INT_IF:-}
 
 if [ -z "$CONFIG" ]; then  
     # See if there's a config_$USER.sh in the SCRIPTDIR
