@@ -4,7 +4,7 @@ set -e
 
 source ocp_install_env.sh
 source common.sh
-source get_rhcos_image.sh
+source get_images.sh
 source utils.sh
 
 # FIXME this is configuring for the libvirt backend which is dev-only ref
@@ -105,8 +105,10 @@ cat ironic/dnsmasq.conf | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=
 cat ironic/dualboot.ipxe | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dualboot.ipxe
 cat ironic/inspector.ipxe | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=inspector.ipxe
 
+# Copy images the bootstrap node
+tar -cf - images | ssh -o "StrictHostKeyChecking=no" "core@$IP" tar -xf -
+
 # Retrieve and start the ironic container
-cat "${RHCOS_IMAGE_FILENAME_OPENSTACK}" | ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo dd of="${RHCOS_IMAGE_FILENAME_OPENSTACK}"
 IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
 echo -e "RHCOS_IMAGE_FILENAME_OPENSTACK=${RHCOS_IMAGE_FILENAME_OPENSTACK}\nIRONIC_IMAGE=${IRONIC_IMAGE}" \
     | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=/etc/ironicservice
