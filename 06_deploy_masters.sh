@@ -30,7 +30,7 @@ for node in $(jq -r .nodes[].name $instack); do
 
   # FIXME(shardy) we should parameterize the image and checksum (or calculate the latter)
   # Change to sda if using BM
-  openstack baremetal node set $node --instance-info image_source=http://172.22.0.1/images/redhat-coreos-maipo-47.284-openstack.qcow2 --instance-info image_checksum=2a38fafe0b9465937955e4d054b8db3a --instance-info root_gb=25 --property root_device='{"name": "/dev/vda"}'
+  openstack baremetal node set $node --instance-info image_source=http://172.22.0.1/images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2 --instance-info image_checksum=$(md5sum images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2 | awk '{print $1}') --instance-info root_gb=25 --property root_device='{"name": "/dev/vda"}'
   openstack baremetal node manage $node --wait
   openstack baremetal node provide $node --wait
   openstack baremetal node deploy --config-drive configdrive $node

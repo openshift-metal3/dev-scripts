@@ -105,6 +105,21 @@ cat ironic/dnsmasq.conf | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=
 cat ironic/dualboot.ipxe | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dualboot.ipxe
 cat ironic/inspector.ipxe | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=inspector.ipxe
 
+# Workaround so that the dracut network module does dhcp on eth0 & eth1
+if [ ! -e images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2 ] ; then
+    qemu-img convert images/redhat-coreos-maipo-47.284-openstack.qcow2 images/redhat-coreos-maipo-47.284-openstack.raw
+    LOOPBACK=$(sudo losetup --show -f images/redhat-coreos-maipo-47.284-openstack.raw | cut -f 3 -d /)
+    mkdir -p /tmp/mnt
+    sudo kpartx -a /dev/$LOOPBACK
+    sudo mount /dev/mapper/${LOOPBACK}p1 /tmp/mnt
+    sudo sed -i -e 's/ip=eth0:dhcp/ip=eth0:dhcp ip=eth1:dhcp/g' /tmp/mnt/grub2/grub.cfg 
+    sudo umount /tmp/mnt
+    sudo kpartx -d /dev/${LOOPBACK}
+    sudo losetup -d /dev/${LOOPBACK}
+    qemu-img convert -O qcow2 -c images/redhat-coreos-maipo-47.284-openstack.raw images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2
+    rm images/redhat-coreos-maipo-47.284-openstack.raw
+fi
+
 # Copy images the bootstrap node
 tar -cf - images | ssh -o "StrictHostKeyChecking=no" "core@$IP" tar -xf -
 
