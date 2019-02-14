@@ -31,6 +31,14 @@ This should result in some (stopped) VMs created by tripleo-quickstart on the
 local virthost and some other dependencies installed.
 
 - `./03_ocp_repo_sync.sh`
+
+After this step, you can run the [facet](https://github.com/metalkube/facet)
+server with:
+
+```
+$ go run "${GOPATH}/src/github.com/metalkube/facet/main.go" server
+```
+
 - `./04_build_ocp_installer.sh`
 
 These will pull and build the openshift-install and some other things from
