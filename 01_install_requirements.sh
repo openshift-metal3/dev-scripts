@@ -54,3 +54,7 @@ if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
     sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
 fi
 
+# Install yarn and nodejs
+curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
+curl --silent --location https://rpm.nodesource.com/setup_10.x | sudo bash -
+sudo yum install yarn nodejs -y

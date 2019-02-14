@@ -40,3 +40,12 @@ sync_go_repo_and_patch github.com/openshift/installer https://github.com/openshi
 
 # sync_go_repo_and_patch github.com/openshift/ci-operator https://github.com/openshift/ci-operator.git
 # sync_go_repo_and_patch github.com/sallyom/installer-e2e https://github.com/sallyom/installer-e2e.git
+
+sync_go_repo_and_patch github.com/metalkube/facet https://github.com/metalkube/facet.git
+
+# Build facet
+go get -v github.com/rakyll/statik
+pushd "${GOPATH}/src/github.com/metalkube/facet"
+yarn install
+./build.sh
+popd
