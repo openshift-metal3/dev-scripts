@@ -95,3 +95,7 @@ function network_ip() {
     fi
     echo "$ip"
 }
+
+function urldecode() {
+  echo -e "$(sed 's/+/ /g;s/%\(..\)/\\x\1/g;')"
+}
