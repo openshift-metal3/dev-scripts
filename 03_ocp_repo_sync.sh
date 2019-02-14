@@ -45,7 +45,7 @@ sync_go_repo_and_patch github.com/openshift/installer https://github.com/openshi
 sync_go_repo_and_patch github.com/metalkube/facet https://github.com/metalkube/facet.git
 
 # Build facet
-go get github.com/rakyll/statik
+go get -v github.com/rakyll/statik
 pushd $GOPATH/src/github.com/metalkube/facet
 yarn install
 ./build.sh
