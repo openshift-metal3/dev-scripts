@@ -46,7 +46,7 @@ sync_go_repo_and_patch github.com/metalkube/facet https://github.com/metalkube/f
 
 # Build facet
 go get -v github.com/rakyll/statik
-pushd $GOPATH/src/github.com/metalkube/facet
+pushd "${GOPATH}/src/github.com/metalkube/facet"
 yarn install
 ./build.sh
 popd
