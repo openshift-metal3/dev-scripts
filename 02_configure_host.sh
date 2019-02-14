@@ -36,12 +36,12 @@ EOF
 fi
 
 # Allow ipmi to the virtual bmc processes that we just started
-sudo iptables -I INPUT -i virbr0 -p udp -m udp --dport 6230:6235 -j ACCEPT
+sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
   sudo iptables -t nat -A POSTROUTING --out-interface $EXT_IF -j MASQUERADE
-  sudo iptables -A FORWARD --in-interface virbr0 -j ACCEPT
+  sudo iptables -A FORWARD --in-interface baremetal -j ACCEPT
 fi
 
 # Need to pass the provision interface for bare metal
@@ -51,7 +51,7 @@ fi
 
 # Internal interface
 if [ "$INT_IF" ]; then
-  sudo ip link set "$INT_IF" master virbr0
+  sudo ip link set "$INT_IF" master baremetal 
 fi
 
 # Switch NetworkManager to internal DNS
