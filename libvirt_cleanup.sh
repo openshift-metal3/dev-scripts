@@ -13,3 +13,5 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -b -vvv tripleo-quickstart-config/metalkube-teardown-playbook.yml
 
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/conf.d/dnsmasq.conf
+sudo virsh net-destroy baremetal
+sudo virsh net-undefine baremetal
