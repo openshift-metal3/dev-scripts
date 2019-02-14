@@ -5,7 +5,6 @@ source common.sh
 
 eval "$(go env)"
 echo "$GOPATH" | lolcat # should print $HOME/go or something like that
-export PATH="$PATH:$GOPATH/bin"
 
 function sync_go_repo_and_patch {
     DEST="$GOPATH/src/$1"
