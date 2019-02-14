@@ -36,7 +36,7 @@ After this step, you can run the [facet](https://github.com/metalkube/facet)
 server with:
 
 ```
-$ go run "${GOPATH}/src/github.com/metalkube/facet/main.go"" server
+$ go run "${GOPATH}/src/github.com/metalkube/facet/main.go" server
 ```
 
 - `./04_build_ocp_installer.sh`
