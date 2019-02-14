@@ -18,9 +18,9 @@ wait_for_json ironic \
 nodes=$(openstack baremetal node list)
 for node in $(jq -r .nodes[].name ${instack}); do
   if [[ $nodes =~ $node ]]; then
-    openstack baremetal node undeploy $node;
-    openstack baremetal node delete $node;
-  fi;
+    openstack baremetal node undeploy $node --wait || true
+    openstack baremetal node delete $node
+  fi
 done
 
 openstack baremetal create $instack 
