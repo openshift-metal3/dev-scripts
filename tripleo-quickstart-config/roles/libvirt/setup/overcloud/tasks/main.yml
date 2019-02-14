@@ -15,16 +15,6 @@
         name: python-netaddr
         state: present
 
-    # Generate MAC addresses that we'll use for the overcloud nodes.
-    # By generating these in advance we can populate the
-    # `ironic_nodes.json` file with MAC addresses without running
-    # introspection.
-    - name: get a list of MACs to use
-      generate_macs:
-        nodes: "{{ overcloud_nodes }}"
-        networks: "{{ networks }}"
-      register: node_mac_map
-
     # Create libvirt volumes for the overcloud hosts.
     - name: Check if overcloud volumes exist
       command: >

@@ -16,6 +16,15 @@
     with_items: "{{ networks }}"
     become: true
 
+# TODO(apuimedo) drop this back to overcloud tasks once we have proper DNS
+- name: get a list of MACs to use
+  generate_macs:
+    nodes: "{{ overcloud_nodes }}"
+    networks: "{{ networks }}"
+  register: node_mac_map
+  when: overcloud_nodes
+
+
 # Create the global, root-managed libvirt networks to which we will
 # attach the undercoud and overcloud virtual machines.
 - name: Create libvirt networks

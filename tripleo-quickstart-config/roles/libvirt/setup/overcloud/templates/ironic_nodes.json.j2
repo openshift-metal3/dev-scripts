@@ -17,7 +17,7 @@
       "driver_info": {
         "ipmi_username": "admin",
         "ipmi_password": "password",
-        "ipmi_address": "192.168.122.1",
+        "ipmi_address": "{{ lvars['host_ip'] }}",
         "ipmi_port": "{{ node.virtualbmc_port }}",
         "deploy_kernel": "http://172.22.0.1/images/ironic-python-agent.kernel",
         "deploy_ramdisk": "http://172.22.0.1/images/ironic-python-agent.initramfs"

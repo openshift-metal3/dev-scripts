@@ -4,7 +4,7 @@ set -e
 
 source ocp_install_env.sh
 source common.sh
-source get_rhcos_image.sh
+source get_images.sh
 source utils.sh
 
 # FIXME this is configuring for the libvirt backend which is dev-only ref
@@ -78,7 +78,7 @@ sudo virt-install --connect qemu:///system \
              --os-variant=virtio26 \
              --disk path=/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2,format=qcow2,bus=virtio \
              --vnc --noautoconsole \
-             --network default --network bridge=brovc \
+             --network bridge=baremetal --network bridge=brovc \
              --print-xml > ocp/bootstrap-vm.xml
 sed -i 's|type="kvm"|type="kvm" xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0"|' ocp/bootstrap-vm.xml
 sed -i "/<\/devices>/a <qemu:commandline>\n  <qemu:arg value='-fw_cfg'/>\n  <qemu:arg value='name=opt/com.coreos/config,file=${IGN_FILE}'/>\n</qemu:commandline>" ocp/bootstrap-vm.xml
@@ -86,55 +86,51 @@ sudo virsh define ocp/bootstrap-vm.xml
 sudo virsh start ${CLUSTER_NAME}-bootstrap
 sleep 10
 
-while ! domain_net_ip ${CLUSTER_NAME}-bootstrap default; do
+while ! domain_net_ip ${CLUSTER_NAME}-bootstrap baremetal; do
   echo "Waiting for ${CLUSTER_NAME}-bootstrap interface to become active.."
   sleep 10
 done
 
-# NOTE: This hardcodes CLUSTER_NAME-api.BASE_DOMAIN to the bootstrap node.
-# TODO: Point instead to the DNS VIP when we have that. E.g.: server=/BASE_DOMAIN/DNS_VIP
-IP=$(domain_net_ip ${CLUSTER_NAME}-bootstrap default)
-echo "addn-hosts=/etc/hosts.openshift" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
-echo "${IP} ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee /etc/hosts.openshift
+# NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
+IP=$(domain_net_ip ${CLUSTER_NAME}-bootstrap baremetal)
+API_IP=$(dig +noall +answer "${CLUSTER_NAME}-api.${BASE_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
+echo "address=/${CLUSTER_NAME}-api.${BASE_DOMAIN}/${API_IP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
 sudo systemctl reload NetworkManager
 
 # Wait for ssh to start
 while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
 
-# Using 172.22.0.1 on the provisioning network for PXE and the ironic API
-echo -e "DEVICE=eth1\nONBOOT=yes\nTYPE=Ethernet\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=/etc/sysconfig/network-scripts/ifcfg-eth1
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo ifup eth1
-
-# Internal dnsmasq should reserve IP addresses for each master
-cp -f ironic/dnsmasq.conf /tmp
-for i in 0 1 2; do
-  NODE_MAC=$(cat "${WORKING_DIR}/ironic_nodes.json" | jq -r ".nodes[${i}].ports[0].address")
-  NODE_IP="172.22.0.2${i}"
-  HOSTNAME="${CLUSTER_NAME}-etcd-${i}.${BASE_DOMAIN}"
-  # Make sure internal dnsmasq would assign an expected IP
-  echo "dhcp-host=${NODE_MAC},${HOSTNAME},${NODE_IP}" >> /tmp/dnsmasq.conf
-  # Reconfigure "external" dnsmasq
-  echo "${NODE_IP} ${HOSTNAME} ${CLUSTER_NAME}-api.${BASE_DOMAIN}" | sudo tee -a /etc/hosts.openshift
-  echo "srv-host=_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOMAIN},${HOSTNAME},2380,0,0" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
-done
-sudo systemctl reload NetworkManager
-cat /tmp/dnsmasq.conf | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dnsmasq.conf
+# ironic dnsmasq and ipxe config
+cat ironic/dnsmasq.conf | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dnsmasq.conf
 cat ironic/dualboot.ipxe | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=dualboot.ipxe
 cat ironic/inspector.ipxe | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=inspector.ipxe
 
+# Workaround so that the dracut network module does dhcp on eth0 & eth1
+if [ ! -e images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2 ] ; then
+    qemu-img convert images/redhat-coreos-maipo-47.284-openstack.qcow2 images/redhat-coreos-maipo-47.284-openstack.raw
+    LOOPBACK=$(sudo losetup --show -f images/redhat-coreos-maipo-47.284-openstack.raw | cut -f 3 -d /)
+    mkdir -p /tmp/mnt
+    sudo kpartx -a /dev/$LOOPBACK
+    sudo mount /dev/mapper/${LOOPBACK}p1 /tmp/mnt
+    sudo sed -i -e 's/ip=eth0:dhcp/ip=eth0:dhcp ip=eth1:dhcp/g' /tmp/mnt/grub2/grub.cfg 
+    sudo umount /tmp/mnt
+    sudo kpartx -d /dev/${LOOPBACK}
+    sudo losetup -d /dev/${LOOPBACK}
+    qemu-img convert -O qcow2 -c images/redhat-coreos-maipo-47.284-openstack.raw images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2
+    rm images/redhat-coreos-maipo-47.284-openstack.raw
+fi
+
+# Copy images the bootstrap node
+tar -cf - images | ssh -o "StrictHostKeyChecking=no" "core@$IP" tar -xf -
+
 # Retrieve and start the ironic container
-cat "${RHCOS_IMAGE_FILENAME_OPENSTACK}" | ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo dd of="${RHCOS_IMAGE_FILENAME_OPENSTACK}"
-
 IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
-ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo podman pull "${IRONIC_IMAGE}"
+echo -e "RHCOS_IMAGE_FILENAME_OPENSTACK=${RHCOS_IMAGE_FILENAME_OPENSTACK}\nIRONIC_IMAGE=${IRONIC_IMAGE}" \
+    | ssh -o "StrictHostKeyChecking=no" core@$IP sudo dd of=/etc/ironicservice
 
-ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
-    -d --net host --privileged --name ironic \
-    -v /home/core/dnsmasq.conf:/etc/dnsmasq.conf \
-    -v /home/core/dualboot.ipxe:/var/www/html/dualboot.ipxe \
-    -v /home/core/inspector.ipxe:/var/www/html/inspector.ipxe \
-    -v "/home/core/${RHCOS_IMAGE_FILENAME_OPENSTACK}:/var/www/html/images/${RHCOS_IMAGE_FILENAME_OPENSTACK}" \
-    "${IRONIC_IMAGE}"
+# Now that we have the Environment and the image, we can pull the image and start the ironic service
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman pull "$IRONIC_IMAGE"
+ssh -o "StrictHostKeyChecking=no" core@$IP sudo systemctl start ironic.service
 
 # Retrieve and start the inspector container
 IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metalkube/metalkube-ironic-inspector"}
