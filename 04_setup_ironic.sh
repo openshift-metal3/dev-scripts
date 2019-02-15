@@ -25,10 +25,11 @@ if [ ! -e /etc/sysconfig/network-scripts/ifcfg-brovc ] ; then
 fi
 
 # Workaround so that the dracut network module does dhcp on eth0 & eth1
-if [ ! -e $IRONIC_DATA_DIR/html/images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2 ] ; then
+RHCOS_IMAGE_FILENAME_RAW="${RHCOS_IMAGE_FILENAME_OPENSTACK}.raw"
+if [ ! -e "$IRONIC_DATA_DIR/html/images/$RHCOS_IMAGE_FILENAME_DUALDHCP" ] ; then
     pushd $IRONIC_DATA_DIR/html/images
-    qemu-img convert redhat-coreos-maipo-47.284-openstack.qcow2 redhat-coreos-maipo-47.284-openstack.raw
-    LOOPBACK=$(sudo losetup --show -f redhat-coreos-maipo-47.284-openstack.raw | cut -f 3 -d /)
+    qemu-img convert "$RHCOS_IMAGE_FILENAME_OPENSTACK" "${RHCOS_IMAGE_FILENAME_RAW}"
+    LOOPBACK=$(sudo losetup --show -f "${RHCOS_IMAGE_FILENAME_RAW}" | cut -f 3 -d /)
     mkdir -p /tmp/mnt
     sudo kpartx -a /dev/$LOOPBACK
     sudo mount /dev/mapper/${LOOPBACK}p1 /tmp/mnt
@@ -36,8 +37,8 @@ if [ ! -e $IRONIC_DATA_DIR/html/images/redhat-coreos-maipo-47.284-openstack_dual
     sudo umount /tmp/mnt
     sudo kpartx -d /dev/${LOOPBACK}
     sudo losetup -d /dev/${LOOPBACK}
-    qemu-img convert -O qcow2 -c redhat-coreos-maipo-47.284-openstack.raw redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2
-    rm redhat-coreos-maipo-47.284-openstack.raw
+    qemu-img convert -O qcow2 -c "$RHCOS_IMAGE_FILENAME_RAW" "$RHCOS_IMAGE_FILENAME_DUALDHCP"
+    rm "$RHCOS_IMAGE_FILENAME_RAW"
     popd
 fi
 
