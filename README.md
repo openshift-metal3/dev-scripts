@@ -51,7 +51,7 @@ $ go run "${GOPATH}/src/github.com/metalkube/facet/main.go" server
 
 - `./04_setup_ironic.sh`
 
-This we setup Ironic on the host server and download the resources it requires
+This will setup Ironic on the host server and download the resources it requires
 
 - `./05_build_ocp_installer.sh`
 
@@ -88,17 +88,11 @@ openstack baremetal node list
 ...
 ```
 
-To ssh to the master nodes, you can route trafic through the bootstrap node
-```
-sudo ip route add 172.22.0.0/24 via $(getent hosts api.ostest.test.metalkube.org | grep 192 | awk '{ print $1 }')
-ssh core@etcd-<n>.ostest.test.metalkube.org
-```
-
 ## Cleanup
 
 - To clean up the ocp deployment run `./ocp_cleanup.sh`
 
-- To clean up the dummy baremetal VMs and associated libvirt resources run `./libvirt_cleanup.sh`
+- To clean up the dummy baremetal VMs and associated libvirt resources run `./host_cleanup.sh`
 
 e.g. to clean and re-install ocp run:
 

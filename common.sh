@@ -58,6 +58,11 @@ export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
 export RHCOS_IMAGE_FILENAME="${RHCOS_IMAGE_NAME}-qemu.qcow2"
 export RHCOS_IMAGE_FILENAME_OPENSTACK="${RHCOS_IMAGE_NAME}-openstack.qcow2"
 
+# Ironic vars
+export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
+export IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metalkube/metalkube-ironic-inspector"}
+export IRONIC_DATA_DIR="$WORKING_DIR/ironic"
+
 # Log output automatically
 LOGDIR="$(dirname $0)/logs"
 if [ ! -d "$LOGDIR" ]; then

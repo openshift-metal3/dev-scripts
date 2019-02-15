@@ -7,9 +7,15 @@ if [ ! -f "$RHCOS_IMAGE_FILENAME" ]; then
     curl --insecure --compressed -L -o "${RHCOS_IMAGE_FILENAME}" "${RHCOS_IMAGE_URL}/${RHCOS_IMAGE_VERSION}/${RHCOS_IMAGE_FILENAME}".gz
 fi
 
-mkdir -p images
-pushd images
+mkdir -p "$IRONIC_DATA_DIR/html/images"
+# Move images from the old directory to the new one if we have already downloaded them
+# TODO: delete this in a week or so
+if [ -d images ] ; then
+    find images -type f -exec mv {} "$IRONIC_DATA_DIR/html/images/" \;
+    rmdir images
+fi
 
+pushd "$IRONIC_DATA_DIR/html/images"
 if [ ! -f "${RHCOS_IMAGE_FILENAME_OPENSTACK}" ]; then
     curl --insecure --compressed -L -o "${RHCOS_IMAGE_FILENAME_OPENSTACK}" "${RHCOS_IMAGE_URL}/${RHCOS_IMAGE_VERSION}/${RHCOS_IMAGE_FILENAME_OPENSTACK}".gz
 fi

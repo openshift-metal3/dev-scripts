@@ -1,5 +1,5 @@
-.PHONY: default requirements configure repo_sync build ocp_run clean ocp_cleanup libvirt_cleanup
-default: requirements configure repo_sync build ocp_run
+.PHONY: default requirements configure repo_sync ironic build ocp_run clean ocp_cleanup host_cleanup
+default: requirements configure repo_sync ironic build ocp_run
 
 requirements:
 	./01_install_requirements.sh
@@ -20,11 +20,11 @@ ocp_run:
 	./06_deploy_bootstrap_vm.sh
 	./07_deploy_masters.sh
 
-clean: ocp_cleanup libvirt_cleanup
+clean: ocp_cleanup host_cleanup
 
 ocp_cleanup:
 	./ocp_cleanup.sh
 
-libvirt_cleanup:
-	./libvirt_cleanup.sh
+host_cleanup:
+	./host_cleanup.sh
 

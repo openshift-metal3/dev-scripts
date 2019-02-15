@@ -3,6 +3,12 @@ set -xe
 
 source common.sh
 
+# Kill and remove the running ironic
+for name in ironic ironic-inspector ; do 
+    sudo podman ps | grep -w "$name$" && sudo podman kill $name
+    sudo podman ps --all | grep -w "$name$" && sudo podman rm $name
+done
+
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "working_dir=$WORKING_DIR" \
     -e "local_working_dir=$HOME/.quickstart" \
