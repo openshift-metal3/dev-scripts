@@ -24,7 +24,7 @@ for node in $(jq -r .nodes[].name ${instack}); do
   fi
 done
 
-openstack baremetal create $instack 
+openstack baremetal create $instack
 mkdir -p configdrive/openstack/latest
 cp ocp/master.ign configdrive/openstack/latest/user_data
 for node in $(jq -r .nodes[].name $instack); do
@@ -33,7 +33,9 @@ for node in $(jq -r .nodes[].name $instack); do
   openstack baremetal node set $node --instance-info image_source=http://172.22.0.1/images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2 --instance-info image_checksum=$(md5sum images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2 | awk '{print $1}') --instance-info root_gb=25 --property root_device="{\"name\": \"$ROOT_DISK\"}"
   openstack baremetal node manage $node --wait
   openstack baremetal node provide $node --wait
-  openstack baremetal node deploy --config-drive configdrive $node
 done
 
+for node in $(jq -r .nodes[].name $instack); do
+  openstack baremetal node deploy --config-drive configdrive $node
+done
 # FIXME(shardy) we should wait for the node deploy to complete (or fail)
