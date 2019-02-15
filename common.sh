@@ -31,6 +31,7 @@ cat $CONFIG
 WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
 NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
+MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 
 if [ -z "$PULL_SECRET" ]; then
   echo "No valid PULL_SECRET set in ${CONFIG}"
