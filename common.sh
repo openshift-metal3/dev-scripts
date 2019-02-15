@@ -2,7 +2,7 @@
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=`whoami`
-WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
+
 # Additional DNS
 ADDN_DNS=${ADDN_DNS:-}
 # External interface for routing traffic through the host
@@ -27,6 +27,10 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 cat $CONFIG
+
+WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
+NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
+NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 
 if [ -z "$PULL_SECRET" ]; then
   echo "No valid PULL_SECRET set in ${CONFIG}"

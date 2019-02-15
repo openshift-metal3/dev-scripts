@@ -16,6 +16,16 @@ from tripleo-quickstart here.
 
 # Instructions
 
+## Configuration
+
+Make a copy of the `config_example.sh` to `config_$USER.sh`, and set the `PULL_SECRET`
+variable to the secret obtained from cloud.openshift.com.
+
+For baremetal test setups where you don't require the VM fake-baremetal nodes, you may also
+set `NODES_FILE` to reference a manually created json file with the node details, and
+`NODES_PLATFORM` which can be set to e.g "baremetal" to disable the libvirt master/worker
+node setup. See common.sh for other variables that can be overridden.
+
 ## Installation
 
 For a new setup, run:

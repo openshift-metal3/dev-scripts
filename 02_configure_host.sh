@@ -18,6 +18,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @tripleo-quickstart-config/metalkube-nodes.yml \
     -e "local_working_dir=$HOME/.quickstart" \
     -e "virthost=$HOSTNAME" \
+    -e "platform=$NODES_PLATFORM" \
     -e @config/environments/dev_privileged_libvirt.yml \
     -i tripleo-quickstart-config/metalkube-inventory.ini \
     -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml \
