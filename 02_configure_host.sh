@@ -36,7 +36,9 @@ EOF
 fi
 
 # Allow ipmi to the virtual bmc processes that we just started
-sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
+if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT ; then
+    sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
+fi
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
