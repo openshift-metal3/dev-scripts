@@ -178,9 +178,6 @@ networks:
           port: 2380
           target: "{{ cluster_name }}-etcd-2.{{ base_domain }}"
       hosts:
-        - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
-          hostnames:
-            - "{{ cluster_name }}-api"
         - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
           hostnames:
             - "{{ cluster_name }}-dns"
