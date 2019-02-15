@@ -10,12 +10,15 @@ configure:
 repo_sync:
 	./03_ocp_repo_sync.sh
 
+ironic:
+	./04_setup_ironic.sh
+
 build:
-	./04_build_ocp_installer.sh
+	./05_build_ocp_installer.sh
 
 ocp_run:
-	./05_deploy_bootstrap_vm.sh
-	./06_deploy_masters.sh
+	./06_deploy_bootstrap_vm.sh
+	./07_deploy_masters.sh
 
 clean: ocp_cleanup libvirt_cleanup
 

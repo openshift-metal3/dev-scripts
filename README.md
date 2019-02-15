@@ -49,12 +49,16 @@ server with:
 $ go run "${GOPATH}/src/github.com/metalkube/facet/main.go" server
 ```
 
-- `./04_build_ocp_installer.sh`
+- `./04_setup_ironic.sh`
+
+This we setup Ironic on the host server and download the resources it requires
+
+- `./05_build_ocp_installer.sh`
 
 These will pull and build the openshift-install and some other things from
 source.
 
-- `./05_deploy_bootstrap_vm.sh`
+- `./06_deploy_bootstrap_vm.sh`
 
 This will run the openshift-install to generate ignition configs and boot the
 bootstrap VM, including a bootstrap ironic all in one container.
@@ -70,7 +74,7 @@ Then you can interact with the k8s API on the bootstrap VM e.g
 You can also see the status of the bootkube.sh script which is running via
 `journalctl -b -f -u bootkube.service`.
 
-- `./06_deploy_masters.sh`
+- `./07_deploy_masters.sh`
 
 This will deploy the master nodes via ironic, using the Ignition config
 generated in the previous step.
