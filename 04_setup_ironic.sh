@@ -11,9 +11,24 @@ source get_images.sh
 cp ironic/dnsmasq.conf $IRONIC_DATA_DIR/
 cp ironic/dualboot.ipxe ironic/inspector.ipxe $IRONIC_DATA_DIR/html/
 
-# Now that we have the Environment and the image, we can pull the image and start the ironic service
-sudo podman pull "$IRONIC_IMAGE"
-sudo podman pull "$IRONIC_INSPECTOR_IMAGE"
+# Either pull or build the ironic images
+# To build the IRONIC image set
+# IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
+for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE ; do
+    IMAGE=${!IMAGE_VAR}
+    # Is it a git repo?
+    if [[ "$IMAGE" =~ "://" ]] ; then
+        REPOPATH=~/${IMAGE##*/}
+        # Clone to ~ if not there already
+        [ -e "$REPOPATH" ] || git clone $IMAGE $REPOPATH
+        cd $REPOPATH
+        export $IMAGE_VAR=localhost/${IMAGE##*/}:latest
+        sudo podman build -t ${!IMAGE_VAR} .
+        cd -
+    else
+        sudo podman pull "$IMAGE"
+    fi
+done
 
 # Adding an IP address in the libvirt definition for this network results in
 # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
