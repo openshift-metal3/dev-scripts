@@ -166,4 +166,7 @@ sed "s;$(cat ocp/machineconfigs/temp/etcd-member.urlencode);$(cat ocp/machinecon
 # Copy the changed file back to bootstrap
 cat ocp/machineconfigs/master.yaml | ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo dd of="${MASTER_CONFIG}"
 
+# Apply patches to masters
+patch_node_ignition "master" "$IP"
+
 echo "You can now ssh to \"$IP\" as the core user"
