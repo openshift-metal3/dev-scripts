@@ -93,8 +93,8 @@ done
 
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 IP=$(domain_net_ip ${CLUSTER_NAME}-bootstrap baremetal)
-API_IP=$(dig +noall +answer "${CLUSTER_NAME}-api.${BASE_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
-echo "address=/${CLUSTER_NAME}-api.${BASE_DOMAIN}/${API_IP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+API_IP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
+echo "address=/api.${CLUSTER_DOMAIN}/${API_IP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
 sudo systemctl reload NetworkManager
 
 # Wait for ssh to start
@@ -112,7 +112,7 @@ if [ ! -e images/redhat-coreos-maipo-47.284-openstack_dualdhcp.qcow2 ] ; then
     mkdir -p /tmp/mnt
     sudo kpartx -a /dev/$LOOPBACK
     sudo mount /dev/mapper/${LOOPBACK}p1 /tmp/mnt
-    sudo sed -i -e 's/ip=eth0:dhcp/ip=eth0:dhcp ip=eth1:dhcp/g' /tmp/mnt/grub2/grub.cfg 
+    sudo sed -i -e 's/ip=eth0:dhcp/ip=eth0:dhcp ip=eth1:dhcp/g' /tmp/mnt/grub2/grub.cfg
     sudo umount /tmp/mnt
     sudo kpartx -d /dev/${LOOPBACK}
     sudo losetup -d /dev/${LOOPBACK}

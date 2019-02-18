@@ -8,7 +8,7 @@ source common.sh
 # for the final solution, but for now we'll prototype the workflow here
 instack="ocp/master_nodes.json"
 export OS_TOKEN=fake-token
-export OS_URL=http://ostest-api.test.metalkube.org:6385/
+export OS_URL=http://api.ostest.test.metalkube.org:6385/
 
 wait_for_json ironic \
     "${OS_URL}/v1/nodes" \

@@ -79,15 +79,15 @@ For manual debugging via openstackclient, you can use the following:
 
 ```
 export OS_TOKEN=fake-token
-export OS_URL=http://ostest-api.test.metalkube.org:6385/
+export OS_URL=http://api.ostest.test.metalkube.org:6385/
 openstack baremetal node list
 ...
 ```
 
 To ssh to the master nodes, you can route trafic through the bootstrap node
 ```
-sudo ip route add 172.22.0.0/24 via $(getent hosts ostest-api.test.metalkube.org | grep 192 | awk '{ print $1 }')
-ssh core@ostest-etcd-<n>.test.metalkube.org
+sudo ip route add 172.22.0.0/24 via $(getent hosts api.ostest.test.metalkube.org | grep 192 | awk '{ print $1 }')
+ssh core@etcd-<n>.ostest.test.metalkube.org
 ```
 
 ## Cleanup

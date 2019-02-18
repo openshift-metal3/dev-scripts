@@ -57,9 +57,7 @@ undercloud_disk: 50
 # by default
 undercloud_vcpu: 6
 # base domain to use
-base_domain: "{{ lookup('env', 'BASE_DOMAIN') | default('test.metalkube.org', true) }}"
-# cluster_name to use
-cluster_name: "{{ lookup('env', 'CLUSTER_NAME') | default('ostest', true) }}"
+cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metalkube.org', true) }}"
 
 # The default deployment has flavors for compute, controllers, ceph
 # nodes, and undercloud nodes.  All flavors defined in the `flavors`
@@ -150,49 +148,49 @@ networks:
       - "{{ baremetal_network_cidr|nthhost(20) }}"
       - "{{ baremetal_network_cidr|nthhost(60) }}"
     dhcp_hosts:
-      - name: "{{ cluster_name }}-master-0"
+      - name: "master-0"
         ip: "{{ baremetal_network_cidr | nthhost(20) }}"
-      - name: "{{ cluster_name }}-master-1"
+      - name: "master-1"
         ip: "{{ baremetal_network_cidr | nthhost(21) }}"
-      - name: "{{ cluster_name }}-master-2"
+      - name: "master-2"
         ip: "{{ baremetal_network_cidr | nthhost(22) }}"
     nat_port_range:
       - 1024
       - 65535
-    domain: "{{ base_domain }}"
+    domain: "{{ cluster_domain }}"
     dns:
       srvs:
         - name: "etcd-server-ssl"
           protocol: tcp
-          domain: "{{ cluster_name }}.{{ base_domain }}"
+          domain: "{{ cluster_domain }}"
           port: 2380
-          target: "{{ cluster_name }}-etcd-0.{{ base_domain }}"
+          target: "etcd-0.{{ cluster_domain }}"
         - name: "etcd-server-ssl"
           protocol: tcp
-          domain: "{{ cluster_name }}.{{ base_domain }}"
+          domain: "{{ cluster_domain }}"
           port: 2380
-          target: "{{ cluster_name }}-etcd-1.{{ base_domain }}"
+          target: "etcd-1.{{ cluster_domain }}"
         - name: "etcd-server-ssl"
           protocol: tcp
-          domain: "{{ cluster_name }}.{{ base_domain }}"
+          domain: "{{ cluster_domain }}"
           port: 2380
-          target: "{{ cluster_name }}-etcd-2.{{ base_domain }}"
+          target: "etcd-2.{{ cluster_domain }}"
       hosts:
         - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
           hostnames:
-            - "{{ cluster_name }}-api"
+            - "api"
         - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
           hostnames:
-            - "{{ cluster_name }}-dns"
+            - "dns"
         - ip: "{{ baremetal_network_cidr | nthhost(20) }}"
           hostnames:
-            - "{{ cluster_name }}-etcd-0"
+            - "etcd-0"
         - ip: "{{ baremetal_network_cidr | nthhost(21) }}"
           hostnames:
-            - "{{ cluster_name }}-etcd-1"
+            - "etcd-1"
         - ip: "{{ baremetal_network_cidr | nthhost(22) }}"
           hostnames:
-            - "{{ cluster_name }}-etcd-2"
+            - "etcd-2"
 
 
 

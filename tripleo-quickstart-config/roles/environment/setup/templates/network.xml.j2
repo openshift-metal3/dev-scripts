@@ -3,9 +3,8 @@
 {% set nat_port_range = item.nat_port_range|default([1024, 65535]) %}
 {% set netmask = item.netmask|default('255.255.255.0') %}
 {% if item.dhcp_hosts is defined %}
-{% set cluster_name = lookup('env', 'CLUSTER_NAME') %}
-{% set ironic_prefix = "openshift" %}
-{% set dhcp_hosts_ironic_names = item.dhcp_hosts | map(attribute='name') | map('replace', cluster_name, ironic_prefix) | map('replace', '-', '_') | list %}
+{% set ironic_prefix = "openshift_" %}
+{% set dhcp_hosts_names = item.dhcp_hosts | map(attribute='name') | map('replace', '-', '_') | list %}
 {% endif %}
 <network>
   <name>{{ item.name }}</name>
@@ -33,7 +32,7 @@
       <range start='{{ item.dhcp_range[0] }}' end='{{ item.dhcp_range[1] }}'/>
   {% if item.dhcp_hosts is defined %}
     {% for host in item.dhcp_hosts %}
-      <host mac='{{ node_mac_map.get(dhcp_hosts_ironic_names[loop.index0]).get(item.name) }}' name='{{ host.name }}' ip='{{ host.ip }}'/>
+      <host mac='{{ node_mac_map.get(ironic_prefix + dhcp_hosts_names[loop.index0]).get(item.name) }}' name='{{ host.name }}' ip='{{ host.ip }}'/>
     {% endfor %}
   {% endif %}
     </dhcp>
