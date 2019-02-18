@@ -14,12 +14,63 @@ wd=$(mktemp -d)
 target_name="$(basename "$target")"
 
 current="$target"
-for patch in "${PWD}/ignition_patches/${kind}/"*.json; do
+for patch in $(ls "${PWD}/ignition_patches/${kind}/"*.json); do
     current_patch_name="$(basename "$patch")"
     jsonpatch "$current" "$patch" > "${wd}/${target_name}_${current_patch_name}"
     current="${wd}/${target_name}_${current_patch_name}"
 done
-sudo cp "$current" "$target"
+
+if [[ "$current" != "$target" ]]; then
+    sudo cp "$current" "$target"
+fi
+}
+
+function patch_node_ignition() {
+    local kind
+    local bootstrap
+    local wd
+    local config
+
+    kind="$1"
+    bootstrap="$2"
+    wd="$(mktemp -d)"
+    ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null)
+
+    # Wait for the release config to be pulled
+    while
+        config=$(ssh "${ssh_opts[@]}" "core@$bootstrap" \
+            sudo ls "/etc/mcs/bootstrap/machine-configs/${kind}*")
+        [ -z "$config" ]
+    do
+        (>&2 echo "Waiting 5 seconds more for $kind Release MachineConfig to be pulled...")
+        sleep 5
+    done
+
+    # Retrieve the MachineConfig
+    ssh "${ssh_opts[@]}" "core@$bootstrap" \
+        sudo cat "$config" > "${wd}/${kind}.yaml"
+
+    apply_yaml_patches "$kind" "${wd}/${kind}.yaml"
+
+    # Put it back
+    ssh < "${wd}/${kind}.yaml" "${ssh_opts[@]}" "core@$bootstrap" sudo dd of="$config"
+}
+
+function apply_yaml_patches() {
+    local kind
+    local target
+    local wd
+
+    kind="$1"
+    target="$2"
+    wd=$(mktemp -d)
+
+    # Convert to json so we can use jsonpatch
+    yq '.' "$target" > "${wd}/${kind}.json"
+    apply_ignition_patches "$kind" "${wd}/${kind}.json"
+
+    # Back to yaml
+    yq -y '.' < "${wd}/${kind}.json" | sudo tee "$target"
 }
 
 function net_iface_dhcp_ip() {
