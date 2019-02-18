@@ -6,8 +6,15 @@
   hosts: virthost
   connection: local
   gather_facts: true
-  roles:
-    - environment/setup
-    - libvirt/setup/overcloud
-    - virtbmc
+  tasks:
+    - import_role:
+        name: common
+    - import_role:
+        name: environment/setup
+    - import_role:
+        name: libvirt/setup/overcloud
+      when: platform == "libvirt"
+    - import_role:
+        name: virtbmc
+      when: platform == "libvirt"
 
