@@ -58,7 +58,7 @@ fi
 sudo mkdir -p /etc/NetworkManager/conf.d/
 sudo crudini --set /etc/NetworkManager/conf.d/dnsmasq.conf main dns dnsmasq
 if [ "$ADDN_DNS" ] ; then
-  echo "server=$ADDN_DNS" | tee /etc/NetworkManager/dnsmasq.d/upstream.conf
+  echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
 fi
 if systemctl is-active --quiet NetworkManager; then
   sudo systemctl reload NetworkManager
