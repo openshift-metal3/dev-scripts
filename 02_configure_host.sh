@@ -21,8 +21,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "platform=$NODES_PLATFORM" \
     -e @config/environments/dev_privileged_libvirt.yml \
     -i tripleo-quickstart-config/metalkube-inventory.ini \
-    -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml \
-    | tee "ansible-$(date -u +%Y%m%d%H%M).log"
+    -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml
 
 # Allow local non-root-user access to libvirt ref
 # https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#make-sure-you-have-permissions-for-qemusystem
