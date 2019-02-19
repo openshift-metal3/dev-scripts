@@ -141,7 +141,7 @@ ssh -o "StrictHostKeyChecking=no" core@$IP sudo podman run \
     "${IRONIC_INSPECTOR_IMAGE}"
 
 # Create a master_nodes.json file
-jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee ocp/master_nodes.json
+jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
 
 MASTER_INTERFACE="eth1"
 
