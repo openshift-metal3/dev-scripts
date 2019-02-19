@@ -1,0 +1,10 @@
+<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+
+<service-group>
+  <name>EtcdSRV</name>
+  <service>
+    <type>_etcd-server-ssl._tcp</type>
+    <port>2380</port>
+  </service>
+</service-group>
