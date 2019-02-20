@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -x
 
 source ocp_install_env.sh
 
