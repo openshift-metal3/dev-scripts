@@ -1,0 +1,14 @@
+vrrp_instance VI_1 {
+    state BACKUP
+    interface ${INTERFACE}
+    virtual_router_id 51
+    priority 150
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass cluster_uuid_master_vip
+    }
+    virtual_ipaddress {
+        ${API_VIP}
+    }
+}
