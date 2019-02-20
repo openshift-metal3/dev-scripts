@@ -13,30 +13,12 @@ source utils.sh
 if [ ! -d ocp ]; then
     mkdir -p ocp
     cat > ocp/install-config.yaml << EOF
-apiVersion: v1beta1
+apiVersion: v1beta3
 baseDomain: ${BASE_DOMAIN}
-machines:
-- name:     master
-  platform: {}
-  replicas: null
-- name:     worker
-  platform: {}
-  replicas: null
 metadata:
-  creationTimestamp: null
   name: ${CLUSTER_NAME}
-networking:
-  clusterNetworks:
-  - cidr: 10.128.0.0/14
-    hostSubnetLength: 9
-  machineCIDR: 192.168.126.0/24
-  serviceCIDR: 172.30.0.0/16
-  type: OpenshiftSDN
 platform:
-  libvirt:
-    URI: qemu:///system
-    network:
-      if: tt0
+  libvirt: {}
 pullSecret: |
   ${PULL_SECRET}
 sshKey: |
