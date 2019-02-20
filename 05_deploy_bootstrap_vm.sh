@@ -13,11 +13,9 @@ source utils.sh
 # qemu endpoint configurable?
 if [ ! -d ocp ]; then
     mkdir -p ocp
-    export CLUSTER_ID=$(uuidgen --random)
     cat > ocp/install-config.yaml << EOF
 apiVersion: v1beta1
 baseDomain: ${BASE_DOMAIN}
-clusterID:  ${CLUSTER_ID}
 machines:
 - name:     master
   platform: {}
