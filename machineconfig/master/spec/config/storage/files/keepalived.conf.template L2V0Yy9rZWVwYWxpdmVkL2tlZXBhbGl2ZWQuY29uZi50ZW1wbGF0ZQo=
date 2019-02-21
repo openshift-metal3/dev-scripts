@@ -1,8 +1,13 @@
+vrrp_script chk_ocp {
+    script "/etc/keepalived/check_ocp_api.sh"
+    interval 1
+    weight 50
+}
 vrrp_instance VI_1 {
     state BACKUP
     interface ${INTERFACE}
     virtual_router_id 51
-    priority 150
+    priority 40
     advert_int 1
     authentication {
         auth_type PASS
@@ -10,5 +15,8 @@ vrrp_instance VI_1 {
     }
     virtual_ipaddress {
         ${API_VIP}
+    }
+    track_script {
+        chk_ocp
     }
 }
