@@ -36,7 +36,7 @@ function sync_go_repo_and_patch {
 # sync_go_repo_and_patch github.com/openshift/machine-config-operator https://github.com/openshift/machine-config-operator.git
 # sync_go_repo_and_patch github.com/openshift/machine-api-operator https://github.com/openshift/machine-api-operator.git
 
-sync_go_repo_and_patch github.com/openshift/installer https://github.com/openshift/installer.git
+sync_go_repo_and_patch github.com/metalkube/kni-installer https://github.com/metalkube/kni-installer.git
 
 # sync_go_repo_and_patch github.com/openshift/ci-operator https://github.com/openshift/ci-operator.git
 # sync_go_repo_and_patch github.com/sallyom/installer-e2e https://github.com/sallyom/installer-e2e.git
