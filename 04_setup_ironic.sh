@@ -39,6 +39,11 @@ if [ ! -e /etc/sysconfig/network-scripts/ifcfg-brovc ] ; then
     sudo ifup brovc
 fi
 
+# Add firewall rule to ensure the IPA ramdisk can reach the Ironic API on the host
+if ! sudo iptables -C INPUT -i brovc -p tcp -m tcp --dport 6385 -j ACCEPT; then
+    sudo iptables -I INPUT -i brovc -p tcp -m tcp --dport 6385 -j ACCEPT
+fi
+
 # Workaround so that the dracut network module does dhcp on eth0 & eth1
 RHCOS_IMAGE_FILENAME_RAW="${RHCOS_IMAGE_FILENAME_OPENSTACK}.raw"
 if [ ! -e "$IRONIC_DATA_DIR/html/images/$RHCOS_IMAGE_FILENAME_DUALDHCP" ] ; then
