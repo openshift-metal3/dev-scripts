@@ -1,0 +1,3 @@
+[SERVER]
+host-name=${SHORT_HOSTNAME}
+enable-dbus=no

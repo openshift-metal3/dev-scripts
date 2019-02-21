@@ -16,6 +16,15 @@ target_name="$(basename "$target")"
 current="$target"
 for patch in $(ls "${PWD}/ignition_patches/${kind}/"*.json); do
     current_patch_name="$(basename "$patch")"
+    (>2& echo "Patching "$current" with "$patch"")
+    jsonpatch "$current" "$patch" > "${wd}/${target_name}_${current_patch_name}"
+    current="${wd}/${target_name}_${current_patch_name}"
+done
+
+# Process also generated if they exist
+for patch in $(ls "${PWD}/ignition_patches/generated/${kind}/"*.json); do
+    current_patch_name="$(basename "$patch")"
+    (>2& echo "Patching "$current" with "$patch"")
     jsonpatch "$current" "$patch" > "${wd}/${target_name}_${current_patch_name}"
     current="${wd}/${target_name}_${current_patch_name}"
 done
@@ -53,7 +62,63 @@ function patch_node_ignition() {
     apply_yaml_patches "$kind" "${wd}/${kind}.yaml"
 
     # Put it back
+    # TODO: Put a check so we only do this step if the yaml was successfully generated
     ssh < "${wd}/${kind}.yaml" "${ssh_opts[@]}" "core@$bootstrap" sudo dd of="$config"
+}
+
+function machineconfig_generate_patches() {
+    set -x
+    local kind
+    local path
+    local value
+    local search_path
+    local config_type
+    local files_template
+    local units_template
+    local octal_mode
+    local decimal_mode
+    local dest_path
+    local ifs
+    local simple_name
+
+    files_template=$(cat <<'EOF'
+[{"op": "add", "path": "/${path}/-", "value": {"filesystem": "root", "path": "${dest_path}", "user": {"name": "root"}, "contents": {"source": "data:,${value}", "verification": {}}, "mode": ${decimal_mode}}}]
+EOF
+)
+    units_template=$(cat <<'EOF'
+[{"op": "add", "path": "/${path}/-", "value": {"contents": "${value}", "enabled": true, "name": "${simple_name}"}}]
+EOF
+)
+
+    kind="$1"
+    search_path="machineconfig/${kind}"
+
+    ifs="$IFS"
+    IFS=$'\n'
+    rm -fr "${PWD}/ignition_patches/generated/${kind}"
+    for file in $(find "$search_path" -type f -printf "%P\n"); do
+        path="$(dirname "$file")"
+        config_type="$(basename "$path")"
+
+        if [[ "$config_type" == "files" ]]; then
+            simple_name="$(basename "$file" | cut -f1 -d' ')"
+            dest_path="$(basename "$file" | cut -f2 -d' '| base64 -d)"
+            value="$(jq -sRr @uri "${search_path}/${file}")"
+            octal_mode=$(stat -c '%a' "${search_path}/${file}")
+            decimal_mode=$(printf "%d" "0${octal_mode}")
+            mkdir -p "${PWD}/ignition_patches/generated/${kind}"
+            path="$path" dest_path="$dest_path" value="$value" decimal_mode="$decimal_mode" envsubst <<< "$files_template" | tee "ignition_patches/generated/${kind}/${simple_name}.json"
+        elif [[ "$config_type" == "units" ]]; then
+            simple_name="$(basename "$file")"
+            value="$(sed ':a;N;$!ba;s/\n/\\n/g' "${search_path}/${file}")"
+            mkdir -p "${PWD}/ignition_patches/generated/${kind}"
+            path="$path" value="$value" simple_name="$simple_name" envsubst <<< "$units_template" | tee "ignition_patches/generated/${kind}/${simple_name}.json"
+        else
+            (>&2 echo "unknown type")
+        fi
+    done
+    IFS="$ifs"
+    set +x
 }
 
 function apply_yaml_patches() {

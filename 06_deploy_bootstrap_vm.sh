@@ -105,6 +105,8 @@ sed "s;$(cat ocp/machineconfigs/temp/etcd-member.urlencode);$(cat ocp/machinecon
 # Copy the changed file back to bootstrap
 cat ocp/machineconfigs/master.yaml | ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo dd of="${MASTER_CONFIG}"
 
+# Generate "dynamic" ignition patches
+machineconfig_generate_patches "master"
 # Apply patches to masters
 patch_node_ignition "master" "$IP"
 
