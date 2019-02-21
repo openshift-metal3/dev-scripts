@@ -43,7 +43,15 @@ fi
 RHCOS_IMAGE_FILENAME_RAW="${RHCOS_IMAGE_FILENAME_OPENSTACK}.raw"
 if [ ! -e "$IRONIC_DATA_DIR/html/images/$RHCOS_IMAGE_FILENAME_DUALDHCP" ] ; then
     pushd $IRONIC_DATA_DIR/html/images
-    qemu-img convert "$RHCOS_IMAGE_FILENAME_OPENSTACK" "${RHCOS_IMAGE_FILENAME_RAW}"
+
+    # Calculate the disksize required for the partitions on the image
+    # we do this to reduce the disk size so that ironic doesn't have to write as
+    # much data during deploy, as the default upstream disk image is way bigger
+    # then it needs to be. Were are adding the partition sizes and multiplying by 1.2.
+    DISKSIZE=$(virt-filesystems -a "$RHCOS_IMAGE_FILENAME_OPENSTACK" -l | grep /dev/ | awk '{s+=$5} END {print s*1.2}')
+    truncate --size $DISKSIZE "${RHCOS_IMAGE_FILENAME_RAW}"
+    virt-resize --no-extra-partition "${RHCOS_IMAGE_FILENAME_OPENSTACK}" "${RHCOS_IMAGE_FILENAME_RAW}"
+
     LOOPBACK=$(sudo losetup --show -f "${RHCOS_IMAGE_FILENAME_RAW}" | cut -f 3 -d /)
     mkdir -p /tmp/mnt
     sudo kpartx -a /dev/$LOOPBACK
