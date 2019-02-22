@@ -1,0 +1,24 @@
+[Unit]
+Description=Serve cluster DNS
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+WorkingDirectory=/etc/coredns
+ExecStartPre=/bin/sh -c 'grep -v ${DNS_VIP} /etc/resolv.conf | tee /etc/coredns/resolv.conf'
+ExecStartPre=-/usr/bin/podman create \
+    --name coredns \
+    --volume /etc/coredns:/etc/coredns:z \
+    --network host \
+    --env CLUSTER_DOMAIN=$CLUSTER_DOMAIN \
+    quay.io/metalkube/coredns-mdns:latest \
+        --conf /etc/coredns/Corefile
+ExecStart=/usr/bin/podman start -a coredns
+ExecStop=/usr/bin/podman stop -t 10 coredns
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,3 +1,7 @@
 [SERVER]
 host-name=${SHORT_HOSTNAME}
 enable-dbus=no
+use-ipv6=no
+
+[PUBLISH]
+publish-workstation=yes

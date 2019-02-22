@@ -2,11 +2,12 @@
 Description=mDNS announcing with Avahi
 Wants=network-online.target
 After=network-online.target
-ConditionPathExists=!/etc/avahi/.avahi.done
 
 [Service]
 WorkingDirectory=/etc/avahi
-ExecStart=/usr/local/bin/avahi.sh
+ExecStartPre=/usr/local/bin/avahi.sh
+ExecStart=/usr/bin/podman start -a avahi
+ExecStop=/usr/bin/podman stop -t 10 avahi
 
 Restart=on-failure
 RestartSec=5

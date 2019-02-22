@@ -106,7 +106,15 @@ EOF
         if [[ "$config_type" == "files" ]]; then
             simple_name="$(basename "$file" | cut -f1 -d' ')"
             dest_path="$(basename "$file" | cut -f2 -d' '| base64 -d)"
-            value="$(jq -sRr @uri "${search_path}/${file}")"
+
+            if [[ "$simple_name" == *".envsubst" ]]; then
+                content="$(envsubst < "${search_path}/${file}")"
+                simple_name="${simple_name%".envsubst"}"
+            else
+                content="$(cat "${search_path}/${file}")"
+            fi
+
+            value="$(jq -sRr @uri <<< "$content")"
             octal_mode=$(stat -c '%a' "${search_path}/${file}")
             decimal_mode=$(printf "%d" "0${octal_mode}")
             mkdir -p "${PWD}/ignition_patches/generated/${kind}"
@@ -120,7 +128,7 @@ EOF
             else
                 content="$(cat "${search_path}/${file}")"
             fi
-            value="$(sed ':a;N;$!ba;s/\n/\\n/g' <<< "$content")"
+            value="$(sed ':a;N;$!ba;s/\\/\\\\/g;s/\n/\\n/g' <<< "$content")"
             mkdir -p "${PWD}/ignition_patches/generated/${kind}"
             path="$path" value="$value" simple_name="$simple_name" envsubst <<< "$units_template" | tee "ignition_patches/generated/${kind}/${simple_name}.json"
         else

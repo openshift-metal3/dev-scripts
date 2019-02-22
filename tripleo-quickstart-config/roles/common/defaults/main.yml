@@ -134,7 +134,7 @@ overcloud_nodes:
 #   virt host to the undercloud
 #   *  The first bridge network defined will be used for pxe booting
 #
-baremetal_network_cidr: 192.168.111.0/24
+baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.111.0/24', true) }}"
 networks:
   - name: provisioning
     bridge: provisioning
@@ -159,39 +159,10 @@ networks:
       - 65535
     domain: "{{ cluster_domain }}"
     dns:
-      srvs:
-        - name: "etcd-server-ssl"
-          protocol: tcp
-          domain: "{{ cluster_domain }}"
-          port: 2380
-          target: "etcd-0.{{ cluster_domain }}"
-        - name: "etcd-server-ssl"
-          protocol: tcp
-          domain: "{{ cluster_domain }}"
-          port: 2380
-          target: "etcd-1.{{ cluster_domain }}"
-        - name: "etcd-server-ssl"
-          protocol: tcp
-          domain: "{{ cluster_domain }}"
-          port: 2380
-          target: "etcd-2.{{ cluster_domain }}"
       hosts:
         - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
           hostnames:
             - "api"
-        - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
-          hostnames:
-            - "dns"
-        - ip: "{{ baremetal_network_cidr | nthhost(20) }}"
-          hostnames:
-            - "etcd-0"
-        - ip: "{{ baremetal_network_cidr | nthhost(21) }}"
-          hostnames:
-            - "etcd-1"
-        - ip: "{{ baremetal_network_cidr | nthhost(22) }}"
-          hostnames:
-            - "etcd-2"
-
 
 
 network_isolation: true

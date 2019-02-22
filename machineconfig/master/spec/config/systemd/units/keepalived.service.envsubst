@@ -2,12 +2,14 @@
 Description=Manage node VIPs with keepalived
 Wants=network-online.target
 After=network-online.target
-ConditionPathExists=!/etc/keepalived/.keepalived.done
 
 [Service]
 WorkingDirectory=/etc/keepalived
 Environment=API_VIP=${API_VIP}
-ExecStart=/usr/local/bin/keepalived.sh
+Environment=DNS_VIP=${DNS_VIP}
+ExecStartPre=/usr/local/bin/keepalived.sh
+ExecStart=/usr/bin/podman start -a keepalived
+ExecStop=/usr/bin/podman stop -t 10 keepalived
 
 Restart=on-failure
 RestartSec=5

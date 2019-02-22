@@ -10,12 +10,12 @@ if ! podman inspect "$AVAHI_IMAGE" &>/dev/null; then
     podman pull "$AVAHI_IMAGE"
 fi
 
-podman run \
-        --rm \
-        --volume /etc/avahi:/etc/avahi:z \
-        --network=host \
-        "${AVAHI_IMAGE}"
-
-# Workaround for https://github.com/opencontainers/runc/pull/1807
-touch /etc/avahi/.avahi.done
-
+# Check if the pod exists
+MATCHES="$(sudo podman ps -a --format "{{.Names}}" | awk '/avahi$/ {print $0}')"
+if [[ -z "$MATCHES" ]]; then
+    podman create \
+            --name avahi \
+            --volume /etc/avahi:/etc/avahi:z \
+            --network=host \
+            "${AVAHI_IMAGE}"
+fi

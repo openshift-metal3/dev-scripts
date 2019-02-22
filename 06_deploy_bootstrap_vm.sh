@@ -43,6 +43,79 @@ $GOPATH/src/github.com/openshift/installer/bin/openshift-install --dir ocp --log
 IGN_FILE="/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.ign"
 sudo cp ocp/bootstrap.ign ${IGN_FILE}
 
+export DNS_VIP=$("${PWD}/nthhost" "$EXTERNAL_SUBNET" 2)
+# Generate bootstrap mDNS CoreDNS ignition
+KEEPALIVED_CONF_TEMPLATE="vrrp_instance API {
+    state BACKUP
+    interface \${INTERFACE}
+    virtual_router_id 51
+    priority 50
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass cluster_uuid_api_vip
+    }
+    virtual_ipaddress {
+        \${MASTER_VIP}
+    }
+}
+
+vrrp_instance DNS {
+    state BACKUP
+    interface \${INTERFACE}
+    virtual_router_id 52
+    priority 50
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass cluster_uuid_dns_vip
+    }
+    virtual_ipaddress {
+        ${DNS_VIP}
+    }
+}
+"
+
+MDNS_COREFILE=". {
+    errors
+    health
+    mdns ${CLUSTER_DOMAIN}
+    forward . /etc/coredns/resolv.conf
+    cache 30
+    reload
+}
+"
+
+MDNS_SERVICE='[Unit]
+Description=Serve cluster DNS gathered from mDNS
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+WorkingDirectory=/etc/coredns
+ExecStartPre=/bin/sh -c '"'"'grep -v '"${DNS_VIP}"' /etc/resolv.conf | tee /etc/coredns/resolv.conf'"'"'
+ExecStartPre=-/usr/bin/podman create \
+    --name coredns \
+    --volume /etc/coredns:/etc/coredns:z \
+    --network host \
+    quay.io/metalkube/coredns-mdns \
+        --conf /etc/coredns/Corefile
+ExecStart=/usr/bin/podman start -a coredns
+ExecStop=/usr/bin/podman stop -t 10 coredns
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+'
+
+mkdir -p ignition_patches/generated/bootstrap
+
+cat > ignition_patches/generated/bootstrap/03_coredns.json << EOF
+[{"op": "add", "path": "/systemd/units/-", "value": {"contents": "$(sed -E ':a;N;$!ba;s/\\/\\\\/g;s/\r{0,1}\n/\\n/g' <<< "$MDNS_SERVICE")", "enabled": true, "name": "coredns.service"}},{"op": "add", "path": "/storage/files/-", "value": {"filesystem": "root", "path": "/etc/coredns/Corefile", "user": {"name": "root"}, "contents": {"source": "data:text/plain;charset=utf-8;base64,$(base64 -w0 <<< "$MDNS_COREFILE")", "verification": {}}, "mode": 420}},{"op": "add", "path": "/storage/files/-", "value": {"filesystem": "root", "path": "/etc/keepalived/keepalived.conf.template", "user": {"name": "root"}, "contents": {"source": "data:text/plain;charset=utf-8;base64,$(base64 -w0 <<< "$KEEPALIVED_CONF_TEMPLATE")", "verification": {}}, "mode": 420}},{"op": "add", "path": "/storage/files/-", "value": {"filesystem": "root", "path": "/etc/dhcp/dhclient.conf", "user": {"name": "root"}, "contents": {"source": "data:text/plain;charset=utf-8;base64,$(base64 -w0 <<< "prepend domain-name-servers ${DNS_VIP};")", "verification": {}}, "mode": 420}}]
+EOF
+
 # Apply patches to bootstrap ignition
 apply_ignition_patches bootstrap "$IGN_FILE"
 

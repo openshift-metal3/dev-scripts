@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+
+import itertools
+import sys
+
+import netaddr
+
+
+if len(sys.argv) < 2:
+    sys.stderr.write('Missing positional argument. Must include subnet CIDR and host number\n')
+    sys.exit(1)
+
+subnet = netaddr.IPNetwork(sys.argv[1])
+nth = int(sys.argv[2], 10)
+print(subnet[nth])
