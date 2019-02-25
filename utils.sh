@@ -80,6 +80,7 @@ function machineconfig_generate_patches() {
     local dest_path
     local ifs
     local simple_name
+    local content
 
     files_template=$(cat <<'EOF'
 [{"op": "add", "path": "/${path}/-", "value": {"filesystem": "root", "path": "${dest_path}", "user": {"name": "root"}, "contents": {"source": "data:,${value}", "verification": {}}, "mode": ${decimal_mode}}}]
@@ -110,7 +111,14 @@ EOF
             path="$path" dest_path="$dest_path" value="$value" decimal_mode="$decimal_mode" envsubst <<< "$files_template" | tee "ignition_patches/generated/${kind}/${simple_name}.json"
         elif [[ "$config_type" == "units" ]]; then
             simple_name="$(basename "$file")"
-            value="$(sed ':a;N;$!ba;s/\n/\\n/g' "${search_path}/${file}")"
+            if [[ "$simple_name" == *".envsubst" ]]; then
+                # The file needs to have variables substituted from env
+                content="$(envsubst < "${search_path}/${file}")"
+                simple_name="${simple_name%".envsubst"}"
+            else
+                content="$(cat "${search_path}/${file}")"
+            fi
+            value="$(sed ':a;N;$!ba;s/\n/\\n/g' <<< "$content")"
             mkdir -p "${PWD}/ignition_patches/generated/${kind}"
             path="$path" value="$value" simple_name="$simple_name" envsubst <<< "$units_template" | tee "ignition_patches/generated/${kind}/${simple_name}.json"
         else
