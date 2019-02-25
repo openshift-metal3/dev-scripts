@@ -29,7 +29,7 @@ cp ocp/master.ign configdrive/openstack/latest/user_data
 for node in $(jq -r .nodes[].name $MASTER_NODES_FILE); do
 
   # FIXME(shardy) we should parameterize the image
-  openstack baremetal node set $node --instance-info "image_source=http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_DUALDHCP" --instance-info image_checksum=$(md5sum "$IRONIC_DATA_DIR/html/images/$RHCOS_IMAGE_FILENAME_DUALDHCP" | awk '{print $1}') --instance-info root_gb=25 --property root_device="{\"name\": \"$ROOT_DISK\"}"
+  openstack baremetal node set $node --instance-info "image_source=http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST" --instance-info image_checksum=$(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum) --instance-info root_gb=25 --property root_device="{\"name\": \"$ROOT_DISK\"}"
   openstack baremetal node manage $node --wait
   openstack baremetal node provide $node --wait
 done
