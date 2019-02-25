@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 function apply_ignition_patches() {
 local kind
 local target
@@ -202,6 +204,7 @@ function wait_for_json() {
             echo "\nTimed out waiting for $name"
             return 1
         fi
+        sleep 5
     done
     echo " Success!"
     return 0
