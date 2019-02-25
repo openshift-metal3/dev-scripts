@@ -35,9 +35,9 @@ done
 # the IP address here
 if [ ! -e /etc/sysconfig/network-scripts/ifcfg-brovc ] ; then
     echo -e "DEVICE=brovc\nONBOOT=yes\nNM_CONTROLLED=no\nTYPE=Ethernet\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-brovc
-    sudo ifdown brovc || true
-    sudo ifup brovc
 fi
+sudo ifdown brovc || true
+sudo ifup brovc
 
 # Add firewall rule to ensure the IPA ramdisk can reach the Ironic API on the host
 if ! sudo iptables -C INPUT -i brovc -p tcp -m tcp --dport 6385 -j ACCEPT; then

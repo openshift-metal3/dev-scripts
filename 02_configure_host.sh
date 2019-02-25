@@ -40,6 +40,11 @@ if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCE
     sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
 fi
 
+#Allow access to dualboot.ipxe
+if ! sudo iptables -C INPUT -p tcp --dport 80 -j ACCEPT ; then
+    sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+fi
+
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
   sudo iptables -t nat -A POSTROUTING --out-interface $EXT_IF -j MASQUERADE

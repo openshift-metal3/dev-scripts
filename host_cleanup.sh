@@ -21,3 +21,5 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/conf.d/dnsmasq.conf
 sudo virsh net-destroy baremetal
 sudo virsh net-undefine baremetal
+sudo virsh net-destroy overcloud
+sudo virsh net-undefine overcloud
