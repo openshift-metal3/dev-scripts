@@ -48,7 +48,6 @@ apply_ignition_patches bootstrap "$IGN_FILE"
 
 LATEST_IMAGE=$(ls -ltr redhat-coreos-maipo-*-qemu.qcow2 | tail -n1 | awk '{print $9}')
 sudo cp $LATEST_IMAGE /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2
-sudo qemu-img resize /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2 50G
 sudo virt-install --connect qemu:///system \
              --import \
              --name ${CLUSTER_NAME}-bootstrap \
