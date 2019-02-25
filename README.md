@@ -79,6 +79,23 @@ You can also see the status of the bootkube.sh script which is running via
 This will deploy the master nodes via ironic, using the Ignition config
 generated in the previous step.
 
+After running `./07_deploy_masters.sh` note that it takes some time for the cluster to
+fully come up, many container images are downloaded before the k8s API is fully available.
+
+## Interacting with the deployed cluster
+
+When the master nodes are up and the cluster is active, you can interact with the API:
+
+```
+$ oc --config ocp/auth/kubeconfig get nodes
+NAME       STATUS    ROLES     AGE       VERSION
+master-0   Ready     master    20m       v1.12.4+50c2f2340a
+master-1   Ready     master    20m       v1.12.4+50c2f2340a
+master-2   Ready     master    20m       v1.12.4+50c2f2340a
+```
+
+## Interacting with Ironic directly
+
 For manual debugging via openstackclient, you can use the following:
 
 ```
