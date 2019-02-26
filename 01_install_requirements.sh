@@ -46,7 +46,7 @@ sudo yum -y update
 
 # make sure additional requirments are installed
 sudo yum install -y bind-utils ansible python-netaddr python-virtualbmc libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm virt-install jq \
-		    python-ironicclient python-ironic-inspector-client python-openstackclient podman
+		    python-ironicclient python-ironic-inspector-client python-openstackclient podman libguestfs-tools python-lxml
 
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
     ssh-keygen -f ~/.ssh/id_rsa -P ""
