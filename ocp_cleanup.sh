@@ -10,3 +10,6 @@ VOL_POOL=$(sudo virsh vol-pool "/var/lib/libvirt/images/${CLUSTER_NAME}-bootstra
 sudo virsh vol-delete "${CLUSTER_NAME}-bootstrap.ign" --pool "${VOL_POOL}"
 rm -rf ocp
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf
+
+# Cleanup ssh keys for baremetal network
+sed -i "/^192.168.111/d" /home/$USER/.ssh/known_hosts
