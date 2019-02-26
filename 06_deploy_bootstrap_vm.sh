@@ -56,7 +56,7 @@ sudo virt-install --connect qemu:///system \
              --os-variant=virtio26 \
              --disk path=/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2,format=qcow2,bus=virtio \
              --vnc --noautoconsole \
-             --network bridge=baremetal --network bridge=brovc \
+             --network bridge=baremetal --network bridge=provisioning \
              --print-xml > ocp/bootstrap-vm.xml
 sed -i 's|type="kvm"|type="kvm" xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0"|' ocp/bootstrap-vm.xml
 sed -i "/<\/devices>/a <qemu:commandline>\n  <qemu:arg value='-fw_cfg'/>\n  <qemu:arg value='name=opt/com.coreos/config,file=${IGN_FILE}'/>\n</qemu:commandline>" ocp/bootstrap-vm.xml
