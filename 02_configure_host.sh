@@ -53,7 +53,7 @@ fi
 
 # Need to pass the provision interface for bare metal
 if [ "$PRO_IF" ]; then
-  sudo ip link set "$PRO_IF" master brovc
+  sudo ip link set "$PRO_IF" master provisioning
 fi
 
 # Internal interface

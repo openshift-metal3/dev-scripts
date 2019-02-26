@@ -33,15 +33,15 @@ done
 # Adding an IP address in the libvirt definition for this network results in
 # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
 # the IP address here
-if [ ! -e /etc/sysconfig/network-scripts/ifcfg-brovc ] ; then
-    echo -e "DEVICE=brovc\nONBOOT=yes\nNM_CONTROLLED=no\nTYPE=Ethernet\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-brovc
+if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
+    echo -e "DEVICE=provisioning\nONBOOT=yes\nNM_CONTROLLED=no\nTYPE=Ethernet\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
 fi
-sudo ifdown brovc || true
-sudo ifup brovc
+sudo ifdown provisioning || true
+sudo ifup provisioning
 
 # Add firewall rule to ensure the IPA ramdisk can reach the Ironic API on the host
-if ! sudo iptables -C INPUT -i brovc -p tcp -m tcp --dport 6385 -j ACCEPT; then
-    sudo iptables -I INPUT -i brovc -p tcp -m tcp --dport 6385 -j ACCEPT
+if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport 6385 -j ACCEPT; then
+    sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport 6385 -j ACCEPT
 fi
 
 pushd $IRONIC_DATA_DIR/html/images

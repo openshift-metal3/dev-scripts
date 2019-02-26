@@ -136,8 +136,8 @@ overcloud_nodes:
 #
 baremetal_network_cidr: 192.168.111.0/24
 networks:
-  - name: overcloud
-    bridge: brovc
+  - name: provisioning
+    bridge: provisioning
 
   - name: baremetal
     bridge: baremetal
