@@ -62,3 +62,10 @@ fi
 curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
 curl --silent --location https://rpm.nodesource.com/setup_10.x | sudo bash -
 sudo yum install yarn nodejs -y
+
+# Install go dep command.  The packaged version is too old.  This is for development only atm.
+export GOPATH=$HOME/go
+mkdir -p $GOPATH/go/bin
+curl -o /tmp/install-go-dep.sh https://raw.githubusercontent.com/golang/dep/master/install.sh
+chmod 755 /tmp/install-go-dep.sh
+/tmp/install-go-dep.sh
