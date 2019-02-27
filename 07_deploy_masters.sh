@@ -14,6 +14,11 @@ wait_for_json ironic \
     10 \
     -H "Accept: application/json" -H "Content-Type: application/json" -H "User-Agent: wait-for-json" -H "X-Auth-Token: $OS_TOKEN"
 
+if [ $(sudo podman ps | grep -w -e "ironic$" -e "ironic-inspector$" | wc -l) != 2 ] ; then
+    echo "Can't find required containers"
+    exit 1
+fi
+
 # Clean previously env
 nodes=$(openstack baremetal node list)
 for node in $(jq -r .nodes[].name ${MASTER_NODES_FILE}); do
