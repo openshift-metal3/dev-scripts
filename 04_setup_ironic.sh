@@ -39,10 +39,12 @@ fi
 sudo ifdown provisioning || true
 sudo ifup provisioning
 
-# Add firewall rule to ensure the IPA ramdisk can reach the Ironic API on the host
-if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport 6385 -j ACCEPT; then
-    sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport 6385 -j ACCEPT
-fi
+# Add firewall rules to ensure the IPA ramdisk can reach Ironic and Inspector APIs on the host
+for port in 5050 6385 ; do
+    if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
+        sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT
+    fi
+done
 
 pushd $IRONIC_DATA_DIR/html/images
 
