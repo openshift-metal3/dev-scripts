@@ -26,7 +26,6 @@ if [ -z "${CONFIG:-}" ]; then
     fi
 fi
 source $CONFIG
-cat $CONFIG
 
 # Use a cloudy ssh that doesn't do Host Key checking
 export SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
@@ -43,7 +42,8 @@ NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 
-if [ -z "$PULL_SECRET" ]; then
+# avoid "-z $PULL_SECRET" to ensure the secret is not logged
+if [ ${#PULL_SECRET} = 0 ]; then
   echo "No valid PULL_SECRET set in ${CONFIG}"
   echo "Get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret"
   exit 1
