@@ -4,11 +4,11 @@ set -x
 
 source ocp_install_env.sh
 
-virsh destroy "${CLUSTER_NAME}-bootstrap"
-virsh undefine "${CLUSTER_NAME}-bootstrap" --remove-all-storage
-VOL_POOL=$(virsh vol-pool "/var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.ign")
-virsh vol-delete "${CLUSTER_NAME}-bootstrap.ign" --pool "${VOL_POOL}"
-rm -rf ocp
+if [ -d ocp ]; then
+    $GOPATH/src/github.com/metalkube/kni-installer/bin/kni-install --dir ocp --log-level=debug destroy bootstrap
+    rm -rf ocp
+fi
+
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf
 
 # Cleanup ssh keys for baremetal network
