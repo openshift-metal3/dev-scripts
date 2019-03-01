@@ -144,7 +144,7 @@ function apply_yaml_patches() {
     apply_ignition_patches "$kind" "${wd}/${kind}.json"
 
     # Back to yaml
-    yq -y '.' < "${wd}/${kind}.json" | sudo tee "$target"
+    yq -y '.' < "${wd}/${kind}.json" | sudo tee "$target" | sed -e 's/.*auth.*/***PULL_SECRET***/g'
 }
 
 # Add if-name param to etcd discovery container on masters
