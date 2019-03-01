@@ -22,13 +22,15 @@ create_cluster ocp
 cp ocp/master.ign.tmp ocp/master.ign
 sleep 10
 
-while ! domain_net_ip ${CLUSTER_NAME}-bootstrap baremetal; do
-  echo "Waiting for ${CLUSTER_NAME}-bootstrap interface to become active.."
+INFRA_ID=$(jq -r .infraID ocp/metadata.json)
+
+while ! domain_net_ip ${INFRA_ID}-bootstrap baremetal; do
+  echo "Waiting for ${INFRA_ID}-bootstrap interface to become active.."
   sleep 10
 done
 
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
-IP=$(domain_net_ip ${CLUSTER_NAME}-bootstrap baremetal)
+IP=$(domain_net_ip ${INFRA_ID}-bootstrap baremetal)
 export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
 echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
 sudo systemctl reload NetworkManager
