@@ -200,7 +200,7 @@ function domain_net_ip() {
 
 
     bridge_name=$(sudo virsh net-dumpxml "$net" | "${PWD}/pyxpath" "//bridge/@name" -)
-    hwaddr=$(sudo virsh dumpxml "$domain" | "${PWD}/pyxpath" "//devices/interface[source/@bridge='$bridge_name']/mac/@address" -)
+    hwaddr=$(virsh dumpxml "$domain" | "${PWD}/pyxpath" "//devices/interface[source/@bridge='$bridge_name']/mac/@address" -)
     rc=$?
     if [ $rc -ne 0 ]; then
         return $rc

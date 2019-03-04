@@ -48,7 +48,7 @@ apply_ignition_patches bootstrap "$IGN_FILE"
 
 LATEST_IMAGE=$(ls -ltr redhat-coreos-maipo-*-qemu.qcow2 | tail -n1 | awk '{print $9}')
 sudo cp $LATEST_IMAGE /var/lib/libvirt/images/${CLUSTER_NAME}-bootstrap.qcow2
-sudo virt-install --connect qemu:///system \
+virt-install --connect qemu:///system \
              --import \
              --name ${CLUSTER_NAME}-bootstrap \
              --ram 4096 --vcpus 4 \
@@ -60,8 +60,8 @@ sudo virt-install --connect qemu:///system \
              --print-xml > ocp/bootstrap-vm.xml
 sed -i 's|type="kvm"|type="kvm" xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0"|' ocp/bootstrap-vm.xml
 sed -i "/<\/devices>/a <qemu:commandline>\n  <qemu:arg value='-fw_cfg'/>\n  <qemu:arg value='name=opt/com.coreos/config,file=${IGN_FILE}'/>\n</qemu:commandline>" ocp/bootstrap-vm.xml
-sudo virsh define ocp/bootstrap-vm.xml
-sudo virsh start ${CLUSTER_NAME}-bootstrap
+virsh define ocp/bootstrap-vm.xml
+virsh start ${CLUSTER_NAME}-bootstrap
 sleep 10
 
 while ! domain_net_ip ${CLUSTER_NAME}-bootstrap baremetal; do
