@@ -81,28 +81,8 @@ while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
 # Create a master_nodes.json file
 jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
 
-MASTER_INTERFACE="eth1"
-
 # Fix etcd discovery on bootstrap
-rm -rf ocp/machineconfigs
-mkdir -p ocp/machineconfigs/temp
-# Find master machine config name
-while [ -z $(ssh -o StrictHostKeyChecking=no "core@$IP" sudo ls /etc/mcs/bootstrap/machine-configs/master*) ]; do sleep 5; done
-
-MASTER_CONFIG=$(ssh -o StrictHostKeyChecking=no "core@$IP" sudo ls /etc/mcs/bootstrap/machine-configs/master*)
-ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo cat "${MASTER_CONFIG}" > ocp/machineconfigs/temp/master.yaml
-# Extract etcd-member.yaml part
-yq -r ".spec.config.storage.files[] | select(.path==\"/etc/kubernetes/manifests/etcd-member.yaml\") | .contents.source" ocp/machineconfigs/temp/master.yaml | sed 's;data:,;;' > ocp/machineconfigs/temp/etcd-member.urlencode
-# URL decode
-cat ocp/machineconfigs/temp/etcd-member.urlencode | urldecode > ocp/machineconfigs/etcd-member.yaml
-# Add a new param to args in discovery container
-sed -i "s;- \"run\";- \"run\"\\n    - \"--if-name=${MASTER_INTERFACE}\";g" ocp/machineconfigs/etcd-member.yaml
-# URL encode yaml
-cat ocp/machineconfigs/etcd-member.yaml | jq -sRr @uri > ocp/machineconfigs/temp/etcd-member.urlencode_updated
-# Replace etcd-member contents in the yaml
-sed "s;$(cat ocp/machineconfigs/temp/etcd-member.urlencode);$(cat ocp/machineconfigs/temp/etcd-member.urlencode_updated);g" ocp/machineconfigs/temp/master.yaml > ocp/machineconfigs/master.yaml
-# Copy the changed file back to bootstrap
-cat ocp/machineconfigs/master.yaml | ssh -o "StrictHostKeyChecking=no" "core@$IP" sudo dd of="${MASTER_CONFIG}"
+add_if_name_to_etcd_discovery "$IP" "eth1"
 
 # Generate "dynamic" ignition patches
 machineconfig_generate_patches "master"
