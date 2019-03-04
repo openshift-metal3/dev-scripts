@@ -23,17 +23,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -i tripleo-quickstart-config/metalkube-inventory.ini \
     -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml
 
-# Allow local non-root-user access to libvirt ref
-# https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#make-sure-you-have-permissions-for-qemusystem
-if sudo test ! -f /etc/polkit-1/rules.d/80-libvirt.rules ; then
-  cat <<EOF | sudo dd of=/etc/polkit-1/rules.d/80-libvirt.rules
-polkit.addRule(function(action, subject) {
-  if (action.id == "org.libvirt.unix.manage" && subject.local && subject.active && subject.isInGroup("wheel")) {
-      return polkit.Result.YES;
-  }
-});
-EOF
-fi
+# Allow local non-root-user access to libvirt
+sudo usermod -a -G "libvirt" $USER
 
 # Allow ipmi to the virtual bmc processes that we just started
 if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT ; then
