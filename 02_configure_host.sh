@@ -51,6 +51,16 @@ if [ "$EXT_IF" ]; then
   sudo iptables -A FORWARD --in-interface baremetal -j ACCEPT
 fi
 
+# Add access to backend Facet server from remote locations
+if ! sudo iptables -C INPUT -p tcp --dport 8080 -j ACCEPT ; then
+  sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
+fi
+
+# Add access to Yarn development server from remote locations
+if ! sudo iptables -C INPUT -p tcp --dport 3000 -j ACCEPT ; then
+  sudo iptables -I INPUT -p tcp --dport 3000 -j ACCEPT
+fi
+
 # Need to pass the provision interface for bare metal
 if [ "$PRO_IF" ]; then
   sudo ip link set "$PRO_IF" master provisioning
