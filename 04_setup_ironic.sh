@@ -85,10 +85,20 @@ for name in ironic ironic-inspector ; do
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name
 done
 
+# Remove existing pod
+if  sudo podman pod exists ironic-pod ; then 
+    sudo podman pod rm ironic-pod
+fi
+
+# Create pod
+sudo podman pod create -n ironic-pod 
+
 # Start Ironic and inspector
 sudo podman run -d --net host --privileged --name ironic \
+    --pod ironic-pod \
     -v $IRONIC_DATA_DIR/dnsmasq.conf:/etc/dnsmasq.conf \
     -v $IRONIC_DATA_DIR/html/images:/var/www/html/images \
     -v $IRONIC_DATA_DIR/html/dualboot.ipxe:/var/www/html/dualboot.ipxe \
     -v $IRONIC_DATA_DIR/html/inspector.ipxe:/var/www/html/inspector.ipxe ${IRONIC_IMAGE}
-sudo podman run -d --net host --privileged --name ironic-inspector "${IRONIC_INSPECTOR_IMAGE}"
+
+sudo podman run -d --net host --privileged --name ironic-inspector --pod ironic-pod "${IRONIC_INSPECTOR_IMAGE}"
