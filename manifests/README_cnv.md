@@ -41,4 +41,14 @@ TBD
 
 ## Network
 
-TBD
+Manifests are based on https://github.com/kubevirt/kubevirt-ansible/tree/master/roles/network-multus/templates
+
+The list is as follows:
+
+```
+120_cni_plugins.yaml
+121_sriovdp.yaml
+122_sriov_crd.yaml
+123_sriov_cni.yaml
+124_ovs_cni.yaml
+```
