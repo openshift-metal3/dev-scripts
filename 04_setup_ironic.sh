@@ -48,7 +48,6 @@ done
 
 pushd $IRONIC_DATA_DIR/html/images
 
-# Workaround so that the dracut network module does dhcp on eth0 & eth1
 RHCOS_IMAGE_FILENAME_RAW="${RHCOS_IMAGE_FILENAME_OPENSTACK}.raw"
 if [ ! -e "$RHCOS_IMAGE_FILENAME_DUALDHCP" ] ; then
     # Calculate the disksize required for the partitions on the image
@@ -59,14 +58,6 @@ if [ ! -e "$RHCOS_IMAGE_FILENAME_DUALDHCP" ] ; then
     truncate --size $DISKSIZE "${RHCOS_IMAGE_FILENAME_RAW}"
     virt-resize --no-extra-partition "${RHCOS_IMAGE_FILENAME_OPENSTACK}" "${RHCOS_IMAGE_FILENAME_RAW}"
 
-    LOOPBACK=$(sudo losetup --show -f "${RHCOS_IMAGE_FILENAME_RAW}" | cut -f 3 -d /)
-    mkdir -p /tmp/mnt
-    sudo kpartx -a /dev/$LOOPBACK
-    sudo mount /dev/mapper/${LOOPBACK}p1 /tmp/mnt
-    sudo sed -i -e 's/ip=eth0:dhcp/ip=eth0:dhcp ip=eth1:dhcp/g' /tmp/mnt/grub2/grub.cfg 
-    sudo umount /tmp/mnt
-    sudo kpartx -d /dev/${LOOPBACK}
-    sudo losetup -d /dev/${LOOPBACK}
     qemu-img convert -O qcow2 -c "$RHCOS_IMAGE_FILENAME_RAW" "$RHCOS_IMAGE_FILENAME_DUALDHCP"
     rm "$RHCOS_IMAGE_FILENAME_RAW"
 fi

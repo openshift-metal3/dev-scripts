@@ -81,9 +81,6 @@ while ! ssh -o "StrictHostKeyChecking=no" core@$IP id ; do sleep 5 ; done
 # Create a master_nodes.json file
 jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
 
-# Fix etcd discovery on bootstrap
-add_if_name_to_etcd_discovery "$IP" "eth1"
-
 # Generate "dynamic" ignition patches
 machineconfig_generate_patches "master"
 # Apply patches to masters
