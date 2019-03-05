@@ -10,5 +10,5 @@ done
 ```
 
 > **Important note:** We do not assume that all manifests can be applied in one
-> go using `kubectlapply -f .` as some manfiests will be depending on others,
+> go using `kubectl apply -f .` as some manifests will depend on others,
 > i.e. a manifest introducing a CRD is needed before the CR can be created.
