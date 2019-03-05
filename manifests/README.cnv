@@ -30,6 +30,11 @@ After creation you can wait for the application readiness with:
 ```
 
 
+### Running a VM
+
+Apply this config https://github.com/kubevirt/demo/blob/master/manifests/vm.yaml
+
+
 ## CDI
 
 TBD
