@@ -1,0 +1,112 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sriov-nodes-config
+  namespace: kube-system
+data:
+  fallback-config: |
+    {
+        "resourceList":
+        [
+            {
+                "resourceName": "sriov",
+                "rootDevices": [],
+                "sriovMode": true,
+                "deviceType": "vfio"
+            }
+        ]
+    }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sriov-device-plugin
+  namespace: kube-system
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kube-sriov-device-plugin-amd64
+  namespace: kube-system
+  labels:
+    tier: node
+    app: sriovdp
+spec:
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: sriovdp
+    spec:
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      serviceAccountName: sriov-device-plugin
+      initContainers:
+      - name: config-container
+        image: quay.io/booxter/sriov-device-plugin:latest
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        command:
+        - /bin/sh
+        - -c
+        args:
+        - |
+          if [ -f /etc/sriov-nodes-config/$NODE_NAME ]; then
+            config_path=/etc/sriov-nodes-config/$NODE_NAME
+          else
+            config_path=/etc/sriov-nodes-config/fallback-config
+          fi
+          cp $config_path /etc/pcidp/config.json
+        volumeMounts:
+        - name: config
+          mountPath: /etc/pcidp
+        - name: configmap
+          mountPath: /etc/sriov-nodes-config
+        securityContext:
+          privileged: true
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+      containers:
+      - name: kube-sriovdp
+        image: quay.io/booxter/sriov-device-plugin:latest
+        args:
+        - --log-level=10
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - name: devicesock
+          mountPath: /var/lib/kubelet/device-plugins/
+          readOnly: false
+        - name: sysfs
+          mountPath: /sys
+          readOnly: true
+        - name: config
+          mountPath: /etc/pcidp
+          readOnly: true
+      volumes:
+        - name: devicesock
+          hostPath:
+            path: /var/lib/kubelet/device-plugins/
+        - name: sysfs
+          hostPath:
+            path: /sys
+        - name: config
+          hostPath:
+            path: /etc/pcidp
+            type: DirectoryOrCreate
+        - name: configmap
+          configMap:
+            name: sriov-nodes-config
