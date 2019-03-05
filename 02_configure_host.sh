@@ -26,6 +26,21 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
 # Allow local non-root-user access to libvirt
 sudo usermod -a -G "libvirt" $USER
 
+# As per https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#configure-default-libvirt-storage-pool
+# Usually virt-manager/virt-install creates this: https://www.redhat.com/archives/libvir-list/2008-August/msg00179.html
+if ! virsh pool-uuid default > /dev/null 2>&1 ; then
+    virsh pool-define /dev/stdin <<EOF
+<pool type='dir'>
+  <name>default</name>
+  <target>
+    <path>/var/lib/libvirt/images</path>
+  </target>
+</pool>
+EOF
+    virsh pool-start default
+    virsh pool-autostart default
+fi
+
 # Allow ipmi to the virtual bmc processes that we just started
 if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT ; then
     sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
