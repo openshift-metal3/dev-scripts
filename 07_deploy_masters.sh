@@ -48,7 +48,7 @@ done
 # https://storyboard.openstack.org/#!/story/2005093
 NUM_ACTIVE=$(openstack baremetal node list --fields name --fields provision_state | grep master | grep active | wc -l || echo 0)
 while [ "$NUM_ACTIVE" != "3" ]; do
-  if openstack baremetal node list --fields name --fields provision_state | grep master | grep error; then
+  if openstack baremetal node list --fields name --fields provision_state | grep master | grep -e error -e failed; then
     openstack baremetal node list
     echo "Error detected waiting for baremetal nodes to become active" >&2
     exit 1
