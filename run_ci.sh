@@ -33,6 +33,14 @@ for FILE in $FILESTOCACHE ; do
 done
 sudo chown -R notstack /opt/dev-scripts/ironic
 
+# If directories for the containers exists then we build the images (as they are what triggered the job)
+if [ -f "/home/notstack/metalkube-ironic" ] ; then
+    export IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
+fi
+if [ -f "/home/notstack/metalkube-ironic-inspector" ] ; then
+    export IRONIC_INSPECTOR_IMAGE=https://github.com/metalkube/metalkube-ironic-inspector
+fi
+
 # Run dev-scripts
 make | sed -e 's/.*auth.*/*** PULL_SECRET ***/g'
 
