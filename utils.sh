@@ -45,11 +45,10 @@ function patch_node_ignition() {
     kind="$1"
     bootstrap="$2"
     wd="$(mktemp -d)"
-    ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null)
 
     # Wait for the release config to be pulled
     while
-        config=$(ssh "${ssh_opts[@]}" "core@$bootstrap" \
+        config=$($SSH "core@$bootstrap" \
             sudo ls "/etc/mcs/bootstrap/machine-configs/${kind}*")
         [ -z "$config" ]
     do
@@ -58,14 +57,14 @@ function patch_node_ignition() {
     done
 
     # Retrieve the MachineConfig
-    ssh "${ssh_opts[@]}" "core@$bootstrap" \
+    $SSH "core@$bootstrap" \
         sudo cat "$config" > "${wd}/${kind}.yaml"
 
     apply_yaml_patches "$kind" "${wd}/${kind}.yaml"
 
     # Put it back
     # TODO: Put a check so we only do this step if the yaml was successfully generated
-    ssh < "${wd}/${kind}.yaml" "${ssh_opts[@]}" "core@$bootstrap" sudo dd of="$config"
+    $SSH < "${wd}/${kind}.yaml" "core@$bootstrap" sudo dd of="$config"
 }
 
 function machineconfig_generate_patches() {
@@ -160,10 +159,10 @@ function add_if_name_to_etcd_discovery() {
     wd=$(mktemp -d)
 
     # Find master machine config name
-    while [ -z $(ssh -o StrictHostKeyChecking=no "core@$ip" sudo ls /etc/mcs/bootstrap/machine-configs/master*) ]; do sleep 5; done
+    while [ -z $($SSH "core@$ip" sudo ls /etc/mcs/bootstrap/machine-configs/master*) ]; do sleep 5; done
 
-    master_config=$(ssh -o StrictHostKeyChecking=no "core@$ip" sudo ls /etc/mcs/bootstrap/machine-configs/master*)
-    ssh -o "StrictHostKeyChecking=no" "core@$ip" sudo cat "${master_config}" > "${wd}/master.yaml"
+    master_config=$($SSH "core@$ip" sudo ls /etc/mcs/bootstrap/machine-configs/master*)
+    $SSH "core@$ip" sudo cat "${master_config}" > "${wd}/master.yaml"
     # Extract etcd-member.yaml part
     yq -r ".spec.config.storage.files[] | select(.path==\"/etc/kubernetes/manifests/etcd-member.yaml\") | .contents.source" "${wd}/master.yaml" | sed 's;data:,;;' > "${wd}/etcd-member.urlencode"
     # URL decode
@@ -175,7 +174,7 @@ function add_if_name_to_etcd_discovery() {
     # Replace etcd-member contents in the yaml
     sed -i "s;$(cat ${wd}/etcd-member.urlencode);$(cat ${wd}/etcd-member.urlencode_updated);g" "${wd}/master.yaml"
     # Copy the changed file back to bootstrap
-    cat "${wd}/master.yaml" | ssh -o "StrictHostKeyChecking=no" "core@$ip" sudo dd of="${master_config}"
+    cat "${wd}/master.yaml" | $SSH "core@$ip" sudo dd of="${master_config}"
 }
 
 function net_iface_dhcp_ip() {

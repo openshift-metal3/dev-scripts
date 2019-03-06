@@ -28,6 +28,9 @@ fi
 source $CONFIG
 cat $CONFIG
 
+# Use a cloudy ssh that doesn't do Host Key checking
+export SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
+
 # Connect to system libvirt
 export LIBVIRT_DEFAULT_URI=qemu:///system
 if [ "$USER" != "root" -a "${XDG_RUNTIME_DIR:-}" == "/run/user/0" ] ; then
