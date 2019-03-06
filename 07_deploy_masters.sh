@@ -69,7 +69,7 @@ done
 echo "Master nodes up, you can ssh to the following IPs with core@<IP>"
 sudo virsh net-dhcp-leases baremetal
 
-while [[ ! $(ssh -o StrictHostKeyChecking=no "core@api.${CLUSTER_NAME}.${BASE_DOMAIN}" hostname) =~ master- ]]; do
+while [[ ! $(timeout -k 9 5 $SSH "core@api.${CLUSTER_NAME}.${BASE_DOMAIN}" hostname) =~ master- ]]; do
   echo "Waiting for the master API to become ready..."
   sleep 10
 done
