@@ -18,7 +18,7 @@ target_name="$(basename "$target")"
 current="$target"
 for patch in $(ls "${PWD}/ignition_patches/${kind}/"*.json); do
     current_patch_name="$(basename "$patch")"
-    (>2& echo "Patching "$current" with "$patch"")
+    (>&2 echo "Patching "$current" with "$patch"")
     jsonpatch "$current" "$patch" > "${wd}/${target_name}_${current_patch_name}"
     current="${wd}/${target_name}_${current_patch_name}"
 done
@@ -26,7 +26,7 @@ done
 # Process also generated if they exist
 for patch in $(ls "${PWD}/ignition_patches/generated/${kind}/"*.json); do
     current_patch_name="$(basename "$patch")"
-    (>2& echo "Patching "$current" with "$patch"")
+    (>&2 echo "Patching "$current" with "$patch"")
     jsonpatch "$current" "$patch" > "${wd}/${target_name}_${current_patch_name}"
     current="${wd}/${target_name}_${current_patch_name}"
 done
