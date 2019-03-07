@@ -1,0 +1,16 @@
+[Unit]
+Description=Loadbalance openshift API using haproxy
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+WorkingDirectory=/etc/haproxy
+Environment=CLUSTER_DOMAIN=${CLUSTER_DOMAIN}
+Environment=API_VIP=${API_VIP}
+ExecStart=/usr/local/bin/haproxy.sh start
+ExecStop=/usr/local/bin/haproxy.sh stop
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

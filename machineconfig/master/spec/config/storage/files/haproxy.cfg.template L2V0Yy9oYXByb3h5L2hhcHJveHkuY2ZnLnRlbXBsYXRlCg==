@@ -1,0 +1,22 @@
+global
+    external-check
+defaults
+    mode                    tcp
+    log                     global
+    option                  dontlognull
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect 10s
+    timeout client 86400s
+    timeout server 86400s
+    timeout tunnel 86400s
+frontend  main
+  bind :7443
+  default_backend masters
+backend masters
+   option external-check
+   option log-health-checks
+   external-check path "/usr/bin:/usr/local/bin"
+   external-check command "/usr/local/etc/haproxy/members_healthcheck.sh"
+   balance     roundrobin
