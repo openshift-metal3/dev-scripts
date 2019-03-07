@@ -8,7 +8,9 @@ source common.sh
 source get_images.sh
 
 # ironic dnsmasq and ipxe config
-cp ironic/dnsmasq.conf $IRONIC_DATA_DIR/
+if [[ "${PWD}/ironic" != "$IRONIC_DATA_DIR" ]]; then
+    cp ironic/dnsmasq.conf "${IRONIC_DATA_DIR}/dnsmasq.conf"
+fi
 cp ironic/dualboot.ipxe ironic/inspector.ipxe $IRONIC_DATA_DIR/html/
 
 # Either pull or build the ironic images
