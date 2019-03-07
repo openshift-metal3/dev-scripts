@@ -177,6 +177,14 @@ function add_if_name_to_etcd_discovery() {
     cat "${wd}/master.yaml" | $SSH "core@$ip" sudo dd of="${master_config}"
 }
 
+function create_manifests() {
+    local assets_dir
+
+    assets_dir="$1"
+
+    $GOPATH/src/github.com/metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create manifests
+}
+
 function create_ignition_configs() {
     local assets_dir
 

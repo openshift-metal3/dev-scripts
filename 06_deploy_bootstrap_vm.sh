@@ -11,6 +11,11 @@ if [ ! -d ocp ]; then
     generate_ocp_install_config ocp
 fi
 
+# We are patching in the extra manifests here,
+# in future this may be handled via kni-installer
+create_manifests ocp
+cp manifests/*.yaml ocp/openshift
+
 # We are only doing this to generate the master ignition
 # configs for patching later. This will go away when
 # "create cluster" also launches the masters

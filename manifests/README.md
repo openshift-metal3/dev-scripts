@@ -1,13 +1,8 @@
 A number of manifests which will be deployed during installation.
 
-Assumption is that the list of sorted manifests is applicable using:
-
-```bash
-for MANIFEST in $(ls -1 | sort -h);
-do
-  kubectl apply -f $MANIFEST
-done
-```
+These manifests will be applied by the installer in order, based on the
+prefix, but note that currently kni-installer uses prefixes of 99 for most
+openshift manifests, so we're starting with a number >100.
 
 > **Important note:** We do not assume that all manifests can be applied in one
 > go using `kubectl apply -f .` as some manifests will depend on others,
