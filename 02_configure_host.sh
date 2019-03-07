@@ -51,6 +51,11 @@ if ! sudo iptables -C INPUT -p tcp --dport 80 -j ACCEPT ; then
     sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
 fi
 
+#Allow access to tftp server for pxeboot
+if ! sudo iptables -C INPUT -p udp --dport 69 -j ACCEPT ; then
+    sudo iptables -I INPUT -p udp --dport 69 -j ACCEPT
+fi
+
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
   sudo iptables -t nat -A POSTROUTING --out-interface $EXT_IF -j MASQUERADE
