@@ -20,6 +20,21 @@ if [ $(sudo podman ps | grep -w -e "ironic$" -e "ironic-inspector$" | wc -l) != 
     exit 1
 fi
 
+function wait_for_ironic_state() {
+
+   NUM_IN_STATE=$(openstack baremetal node list --fields name --fields provision_state | grep master | grep $1 | wc -l || echo 0)
+   while [ "$NUM_IN_STATE" != "3" ]; do
+       if openstack baremetal node list --fields name --fields provision_state | grep master | grep -e error -e failed; then
+          openstack baremetal node list
+          echo "Error detected waiting for baremetal nodes to become $1" >&2
+          exit 1
+       fi
+       sleep 10
+       NUM_IN_STATE=$(openstack baremetal node list --fields name --fields provision_state | grep master | grep $1 | wc -l || echo 0)
+   done
+
+}
+
 # Clean previously env
 nodes=$(openstack baremetal node list)
 for node in $(jq -r .nodes[].name ${MASTER_NODES_FILE}); do
@@ -37,25 +52,19 @@ for node in $(jq -r .nodes[].name $MASTER_NODES_FILE); do
   # FIXME(shardy) we should parameterize the image
   openstack baremetal node set $node --instance-info "image_source=http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST" --instance-info image_checksum=$(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum) --instance-info root_gb=25 --property root_device="{\"name\": \"$ROOT_DISK\"}"
   openstack baremetal node manage $node --wait
-  openstack baremetal node provide $node --wait
+  openstack baremetal node inspect $node
 done
 
+# Check for nodes manageable after introspection 
+wait_for_ironic_state "manageable"
+
 for node in $(jq -r .nodes[].name $MASTER_NODES_FILE); do
+  openstack baremetal node provide $node --wait
   openstack baremetal node deploy --config-drive configdrive $node
 done
 
-# Note we have to tolerate failure with the || echo 0 due to this issue
-# https://storyboard.openstack.org/#!/story/2005093
-NUM_ACTIVE=$(openstack baremetal node list --fields name --fields provision_state | grep master | grep active | wc -l || echo 0)
-while [ "$NUM_ACTIVE" != "3" ]; do
-  if openstack baremetal node list --fields name --fields provision_state | grep master | grep -e error -e failed; then
-    openstack baremetal node list
-    echo "Error detected waiting for baremetal nodes to become active" >&2
-    exit 1
-  fi
-  sleep 10
-  NUM_ACTIVE=$(openstack baremetal node list --fields name --fields provision_state | grep master | grep active | wc -l || echo 0)
-done
+# Check for nodes active after deployment 
+wait_for_ironic_state "active"
 
 echo "Master nodes active"
 openstack baremetal node list
