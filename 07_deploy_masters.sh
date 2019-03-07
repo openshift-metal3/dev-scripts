@@ -57,15 +57,20 @@ done
 echo "Master nodes up, you can ssh to the following IPs with core@<IP>"
 sudo virsh net-dhcp-leases baremetal
 
-while [[ ! $(timeout -k 9 5 $SSH "core@api.${CLUSTER_NAME}.${BASE_DOMAIN}" hostname) =~ master- ]]; do
-  echo "Waiting for the master API to become ready..."
+# Wait for nodes to appear and become ready
+until oc --config ocp/auth/kubeconfig get nodes; do sleep 5; done
+NUM_NODES=$(oc --config ocp/auth/kubeconfig get nodes --no-headers | wc -l)
+while [ "$NUM_NODES" -ne 3 ]; do
   sleep 10
+  NUM_NODES=$(oc --config ocp/auth/kubeconfig get nodes --no-headers | wc -l)
+done
+for i in $(seq 0 2); do
+  oc --config ocp/auth/kubeconfig wait nodes/master-$i --for condition=ready --timeout=600s
 done
 
-NODES_ACTIVE=$(oc --config ocp/auth/kubeconfig get nodes | grep "master-[0-2] *Ready" | wc -l)
-while [ "$NODES_ACTIVE" -ne 3 ]; do
+# Wait for bootstrap to complete
+while ! oc --config ocp/auth/kubeconfig get events -n kube-system --no-headers -o wide | grep -q bootstrap-complete; do
   sleep 10
-  NODES_ACTIVE=$(oc --config ocp/auth/kubeconfig get nodes | grep "master-[0-2] *Ready" | wc -l)
 done
 
 # disable NoSchedule taints for masters until we have workers deployed
@@ -73,5 +78,4 @@ for num in 0 1 2; do
   oc --kubeconfig ocp/auth/kubeconfig adm taint nodes master-${num} node-role.kubernetes.io/master:NoSchedule-
 done
 
-oc --config ocp/auth/kubeconfig get nodes
 echo "Cluster up, you can interact with it via oc --config ocp/auth/kubeconfig <command>"
