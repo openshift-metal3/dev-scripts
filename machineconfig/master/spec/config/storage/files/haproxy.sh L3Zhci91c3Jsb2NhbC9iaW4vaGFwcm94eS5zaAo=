@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+set -e
+
+
+function generate_haproxy_cfg {
+envsubst < $HOST_CFG_PATH/haproxy.cfg.template | sudo tee $HOST_CFG_PATH/haproxy.cfg
+
+etcd_members=$(dig +noall +answer -t SRV _etcd-server-ssl._tcp.$CLUSTER_DOMAIN | awk '{print $NF}')
+for item in $etcd_members
+do
+    ips=$(dig +noall +answer $item  | awk '{print $NF}')
+    if [[ "$?" -eq 0 && "${#ips[@]}" -ne 0 ]]; then
+        sudo echo "   server "$item" "$ips":"$OCP_API_PORT" weight 1 check inter 3s fall 3 rise 3" >>  $HOST_CFG_PATH/haproxy.cfg
+    fi
+done
+
+}
+
+function has_master_api_lb_topology_changed {
+etcd_members=$(dig +noall +answer -t SRV _etcd-server-ssl._tcp.$CLUSTER_DOMAIN   | awk '{print $NF}')
+for item in $etcd_members
+do
+    ips=$(dig +noall +answer $item | awk '{print $NF}')
+    haproxy_cfg_ip=($(grep $item $HOST_CFG_PATH/haproxy.cfg | awk '{print $3}' | sed 's/:.*//'))
+    if [[ "$?" -eq 0 && "${#ips[@]}" -ne 0 ]]; then
+       if [ "$haproxy_cfg_ip" != "$ips" ]; then
+           return 0
+       fi
+    else
+       if [[! -z "${haproxy_cfg_ip// }" ]];then
+          return 0
+       fi
+    fi
+done
+return 1
+}
+
+function start_haproxy {
+sudo mkdir --parents $HOST_CFG_PATH
+
+generate_haproxy_cfg
+
+if ! podman inspect "$HAPROXY_IMAGE" &>/dev/null; then
+    echo "Pulling release image..."
+    podman pull "$HAPROXY_IMAGE"
+fi
+
+sudo podman run \
+            -d \
+            --name masters-haproxy \
+            --network=host \
+            --cap-add=NET_ADMIN \
+            -v $HOST_CFG_PATH:/usr/local/etc/haproxy:ro \
+            $HAPROXY_IMAGE
+
+# make sure we can access API via LB before redirecting traffic to LB
+while true; do
+    curl -o /dev/null -kLs "https://0:$LB_OCP_API_PORT/healthz"
+    if [ $? -eq 0 ]; then
+        echo "API is accessible via LB"
+        break
+    fi
+    echo "Waiting till API is accessible via LB"
+    sleep 15
+done
+
+# redirect traffic to OCP API LB
+sudo iptables -t nat -I PREROUTING --src 0/0 --dst $API_VIP -p tcp --dport $OCP_API_PORT -j REDIRECT --to-ports $LB_OCP_API_PORT -m comment --comment "OCP_API_LB_REDIRECT"
+
+#update LB if masters topology changed
+while true
+do
+    sleep 60
+    if has_master_api_lb_topology_changed; then
+       echo "LB topology changed - reconfigure ha-proxy"
+       generate_haproxy_cfg
+       sudo podman kill -s HUP masters-haproxy
+    fi
+done
+
+}
+
+function stop_haproxy {
+
+#delete IPtable rule by comment
+rules=$(sudo iptables -L PREROUTING -n -t nat --line-numbers |grep OCP_API_LB_REDIRECT | awk '{print $1;}'  | tac)
+for rule in $rules;
+do
+   sudo iptables -t nat -D PREROUTING  $rule
+done
+
+sudo podman rm -f  masters-haproxy
+}
+
+export CLUSTER_DOMAIN="$CLUSTER_DOMAIN"
+export API_VIP="$API_VIP"
+
+HOST_CFG_PATH='/etc/haproxy'
+HAPROXY_IMAGE=quay.io/yboaron/haproxy
+LB_OCP_API_PORT="7443"
+OCP_API_PORT="6443"
+
+if [ -z $1 ]
+then
+  echo "Must provide parameter (start/stop)"
+  exit 1
+elif [ -n $1 ]
+then
+  operation=$1
+fi
+
+
+case $operation in
+   "start")
+       start_haproxy
+       ;;
+   "stop")
+       stop_haproxy
+       ;;
+esac
+

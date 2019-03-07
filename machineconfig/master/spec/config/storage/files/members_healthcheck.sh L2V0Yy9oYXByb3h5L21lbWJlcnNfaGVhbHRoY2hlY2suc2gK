@@ -1,0 +1,1 @@
+exec wget -q --no-check-certificate https://$3:6443/healthz
