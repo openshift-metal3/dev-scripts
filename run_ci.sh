@@ -33,6 +33,11 @@ for FILE in $FILESTOCACHE ; do
 done
 sudo chown -R notstack /opt/dev-scripts/ironic
 
+# Make yum store its cache on /opt so packages don't need to be downloaded for each job
+sudo sed -i -e '/keepcache=0/d' /etc/yum.conf
+sudo mkdir -p /opt/data/yumcache
+sudo mount -o bind /opt/data/yumcache /var/cache/yum
+
 # If directories for the containers exists then we build the images (as they are what triggered the job)
 if [ -f "/home/notstack/metalkube-ironic" ] ; then
     export IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
