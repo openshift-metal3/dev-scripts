@@ -14,3 +14,7 @@ export MODE=release
 export TAGS=libvirt
 ./hack/build.sh
 popd
+
+pushd "$GOPATH/src/github.com/openshift-metalkube/terraform-provider-ironic"
+make install
+popd

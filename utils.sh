@@ -271,3 +271,79 @@ function network_ip() {
 function urldecode() {
   echo -e "$(sed 's/+/ /g;s/%\(..\)/\\x\1/g;')"
 }
+
+function master_node_val() {
+    local n
+    local val
+
+    n="$1"
+    val="$2"
+
+    jq -r ".nodes[${n}].${val}" $MASTER_NODES_FILE
+}
+
+function master_node_to_tf() {
+    local master_idx
+    local image_source
+    local image_checksum
+    local root_gb
+    local root_device
+
+    master_idx="$1"
+    image_source="$2"
+    image_checksum="$3"
+    root_gb="$4"
+    root_device="$5"
+
+    name=$(master_node_val ${master_idx} "name")
+    mac=$(master_node_val ${master_idx} "ports[0].address")
+    local_gb=$(master_node_val ${master_idx} "properties.local_gb")
+    cpu_arch=$(master_node_val ${master_idx} "properties.cpu_arch")
+
+    ipmi_port=$(master_node_val ${master_idx} "driver_info.ipmi_port")
+    ipmi_username=$(master_node_val ${master_idx} "driver_info.ipmi_username")
+    ipmi_password=$(master_node_val ${master_idx} "driver_info.ipmi_password")
+    ipmi_address=$(master_node_val ${master_idx} "driver_info.ipmi_address")
+
+    deploy_kernel=$(master_node_val ${master_idx} "driver_info.deploy_kernel")
+    deploy_ramdisk=$(master_node_val ${master_idx} "driver_info.deploy_ramdisk")
+
+    cat <<EOF
+
+resource "ironic_node_v1" "openshift-master-${master_idx}" {
+  name = "$name"
+
+  target_provision_state = "active"
+  user_data = "\${file("master.ign")}"
+
+  ports = [
+    {
+      "address" = "${mac}"
+      "pxe_enabled" = "true"
+    }
+  ]
+
+  properties {
+    "local_gb" = "${local_gb}"
+    "cpu_arch" =  "${cpu_arch}"
+  }
+
+  instance_info = {
+    "image_source" = "${image_source}"
+    "image_checksum" = "${image_checksum}"
+    "root_gb" = "${root_gb}"
+    "root_device" = "${root_device}"
+  }
+
+  driver = "ipmi"
+  driver_info {
+    "ipmi_port"=      "${ipmi_port}"
+    "ipmi_username"=  "${ipmi_username}"
+    "ipmi_password"=  "${ipmi_password}"
+    "ipmi_address"=   "${ipmi_address}"
+    "deploy_kernel"=  "${deploy_kernel}"
+    "deploy_ramdisk"= "${deploy_ramdisk}"
+  }
+}
+EOF
+}
