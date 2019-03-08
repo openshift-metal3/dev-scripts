@@ -29,7 +29,7 @@ sudo usermod -a -G "libvirt" $USER
 # As per https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#configure-default-libvirt-storage-pool
 # Usually virt-manager/virt-install creates this: https://www.redhat.com/archives/libvir-list/2008-August/msg00179.html
 if ! virsh pool-uuid default > /dev/null 2>&1 ; then
-    virsh pool-define /dev/stdin <<EOF
+    sudo virsh pool-define /dev/stdin <<EOF
 <pool type='dir'>
   <name>default</name>
   <target>
@@ -37,8 +37,8 @@ if ! virsh pool-uuid default > /dev/null 2>&1 ; then
   </target>
 </pool>
 EOF
-    virsh pool-start default
-    virsh pool-autostart default
+    sudo virsh pool-start default
+    sudo virsh pool-autostart default
 fi
 
 # Allow ipmi to the virtual bmc processes that we just started
@@ -79,7 +79,7 @@ fi
 
 # Internal interface
 if [ "$INT_IF" ]; then
-  sudo ip link set "$INT_IF" master baremetal 
+  sudo ip link set "$INT_IF" master baremetal
 fi
 
 # Switch NetworkManager to internal DNS
