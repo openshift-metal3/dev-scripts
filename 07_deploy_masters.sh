@@ -20,54 +20,34 @@ if [ $(sudo podman ps | grep -w -e "ironic$" -e "ironic-inspector$" | wc -l) != 
     exit 1
 fi
 
-function wait_for_ironic_state() {
+mkdir ocp/tf-master
+cp ocp/master.ign ocp/tf-master
 
-   NUM_IN_STATE=$(openstack baremetal node list --fields name --fields provision_state | grep master | grep $1 | wc -l || echo 0)
-   while [ "$NUM_IN_STATE" != "3" ]; do
-       if openstack baremetal node list --fields name --fields provision_state | grep master | grep -e error -e failed; then
-          openstack baremetal node list
-          echo "Error detected waiting for baremetal nodes to become $1" >&2
-          exit 1
-       fi
-       sleep 10
-       NUM_IN_STATE=$(openstack baremetal node list --fields name --fields provision_state | grep master | grep $1 | wc -l || echo 0)
-   done
-
+cat > ocp/tf-master/main.tf <<EOF
+provider "ironic" {
+  "url" = "http://localhost:6385/v1"
+  "microversion" = "1.50"
 }
+EOF
 
-# Clean previously env
-nodes=$(openstack baremetal node list)
-for node in $(jq -r .nodes[].name ${MASTER_NODES_FILE}); do
-  if [[ $nodes =~ $node ]]; then
-    openstack baremetal node undeploy $node --wait || true
-    openstack baremetal node delete $node
-  fi
+IMAGE_SOURCE="http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST"
+IMAGE_CHECKSUM=$(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
+
+ROOT_GB="25"
+ROOT_DEVICE="/dev/vda"
+
+for i in $(seq 0 2); do
+  master_node_to_tf $i $IMAGE_SOURCE $IMAGE_CHECKSUM $ROOT_GB $ROOT_DEVICE >> ocp/tf-master/main.tf
 done
 
-openstack baremetal create $MASTER_NODES_FILE
-mkdir -p configdrive/openstack/latest
-cp ocp/master.ign configdrive/openstack/latest/user_data
-for node in $(jq -r .nodes[].name $MASTER_NODES_FILE); do
-
-  # FIXME(shardy) we should parameterize the image
-  openstack baremetal node set $node --instance-info "image_source=http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST" --instance-info image_checksum=$(curl -s http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum) --instance-info root_gb=25 --property root_device="{\"name\": \"$ROOT_DISK\"}"
-  openstack baremetal node manage $node --wait
-  openstack baremetal node inspect $node
-done
-
-# Check for nodes manageable after introspection 
-wait_for_ironic_state "manageable"
-
-for node in $(jq -r .nodes[].name $MASTER_NODES_FILE); do
-  openstack baremetal node provide $node --wait
-  openstack baremetal node deploy --config-drive configdrive $node
-done
-
-# Check for nodes active after deployment 
-wait_for_ironic_state "active"
+echo "Deploying master nodes"
+pushd ocp/tf-master
+export TF_LOG=debug
+terraform init
+terraform apply --auto-approve
+popd
 
 echo "Master nodes active"
-openstack baremetal node list
 
 NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
 while [ "$NUM_LEASES" -ne 3 ]; do

@@ -20,7 +20,10 @@ ocp_run:
 	./06_deploy_bootstrap_vm.sh
 	./07_deploy_masters.sh
 
-clean: ocp_cleanup host_cleanup
+clean: masters_cleanup ocp_cleanup host_cleanup
+
+masters_cleanup:
+	./masters_cleanup.sh
 
 ocp_cleanup:
 	./ocp_cleanup.sh

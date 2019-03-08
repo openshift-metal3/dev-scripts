@@ -93,6 +93,14 @@ if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ]; then
   sudo cp oc /usr/local/bin/
 fi
 
+# Install terraform
+if [ ! -f /usr/local/bin/terraform ]; then
+    curl -O https://releases.hashicorp.com/terraform/0.11.11/terraform_0.11.11_linux_amd64.zip
+    unzip terraform_0.11.11_linux_amd64.zip
+    sudo install terraform /usr/local/bin
+    rm -f terraform_0.11.11_linux_amd64.zip terraform
+fi
+
 # Generate user ssh key
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
     ssh-keygen -f ~/.ssh/id_rsa -P ""

@@ -32,6 +32,8 @@ function sync_go_repo_and_patch {
 
 sync_go_repo_and_patch github.com/openshift-metalkube/kni-installer https://github.com/openshift-metalkube/kni-installer.git
 
+sync_go_repo_and_patch github.com/openshift-metalkube/terraform-provider-ironic https://github.com/openshift-metalkube/terraform-provider-ironic.git
+
 sync_go_repo_and_patch github.com/openshift-metalkube/facet https://github.com/openshift-metalkube/facet.git
 
 # Build facet
