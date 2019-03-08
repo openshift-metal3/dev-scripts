@@ -3,4 +3,4 @@ ocp/
 openshift-install.log
 logs/
 config_*.sh
-ignition_patches/generated
+assets/generated
