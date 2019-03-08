@@ -1,6 +1,9 @@
 #!/bin/bash
 set -ex
 
+# Point at our CI custom config file (contains the PULL_SECRET)
+export CONFIG=/opt/data/config_notstack.sh
+
 source common.sh
 
 if [ -n "$PS1" ]; then
@@ -17,13 +20,10 @@ mount | grep root-
 FILECACHEDIR=/opt/data/filecache
 FILESTOCACHE="/home/notstack/dev-scripts/$RHCOS_IMAGE_FILENAME /opt/dev-scripts/ironic/html/images/$RHCOS_IMAGE_FILENAME_OPENSTACK /opt/dev-scripts/ironic/html/images/ironic-python-agent.initramfs /opt/dev-scripts/ironic/html/images/ironic-python-agent.kernel"
 
-# Point at our CI custom config file (contains the PULL_SECRET
-export CONFIG=/opt/data/config_notstack.sh
-
 # Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
 # to prevent each snapshot taking up too much space we keep some of the larger files
 # on /opt we need to delete these before the job starts
-sudo rm -rf /opt/libvirt-images/* /opt/dev-scripts
+sudo find /opt/libvirt-images /opt/dev-scripts -mindepth 1 -maxdepth 1 -exec rm -rf {} \;
 
 # Populate some file from the cache so we don't need to download them
 sudo mkdir -p $FILECACHEDIR
@@ -47,7 +47,8 @@ if [ -f "/home/notstack/metalkube-ironic-inspector" ] ; then
 fi
 
 # Run dev-scripts
-make | sed -e 's/.*auth.*/*** PULL_SECRET ***/g'
+set -o pipefail
+make | sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Populate cache for files it doesn't have
 for FILE in $FILESTOCACHE ; do
