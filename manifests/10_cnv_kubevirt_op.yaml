@@ -1,11 +1,4 @@
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    kubevirt.io: ""
-  name: kubevirt
----
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -58,7 +51,7 @@ kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: kubevirt-operator
-  namespace: kubevirt
+  namespace: kube-system
   labels:
     operator.kubevirt.io: ""
 ---
@@ -66,7 +59,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: kubevirt-operator
-  namespace: kubevirt
+  namespace: kube-system
   labels:
     operator.kubevirt.io: ""
 roleRef:
@@ -76,13 +69,13 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubevirt-operator
-    namespace: kubevirt
+    namespace: kube-system
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: virt-operator
-  namespace: kubevirt
+  namespace: kube-system
   labels:
     operator.kubevirt.io: "virt-operator"
 spec:
