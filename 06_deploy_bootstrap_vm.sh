@@ -36,7 +36,7 @@ echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/
 sudo systemctl reload NetworkManager
 
 # Wait for ssh to start
-while ! $SSH core@$IP id ; do sleep 5 ; done
+$SSH -o ConnectionAttempts=500 core@$IP id
 
 # Create a master_nodes.json file
 jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
