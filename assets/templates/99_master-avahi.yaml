@@ -1,0 +1,48 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 00-master-avahi
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    systemd:
+      units:
+        - contents: |
+            [Unit]
+            Description=mDNS announcing with Avahi
+            Wants=network-online.target
+            After=network-online.target
+            ConditionPathExists=!/etc/avahi/.avahi.done
+
+            [Service]
+            WorkingDirectory=/etc/avahi
+            ExecStart=/usr/local/bin/avahi.sh
+
+            Restart=on-failure
+            RestartSec=5
+
+            [Install]
+            WantedBy=multi-user.target
+          enabled: true
+          name: avahi.service
+    storage:
+      files:
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 664
+        path: /etc/avahi/services/etcd.service
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 664
+        path: /etc/avahi/avahi-daemon.conf.template
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 775
+        path: /usr/local/bin/avahi.sh

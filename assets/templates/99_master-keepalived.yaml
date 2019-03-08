@@ -1,0 +1,50 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 00-master-keepalived
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    systemd:
+      units:
+        - contents: |
+            [Unit]
+            Description=Manage node VIPs with keepalived
+            Wants=network-online.target
+            After=network-online.target
+
+            [Service]
+            WorkingDirectory=/etc/keepalived
+            ExecStartPre=/usr/local/bin/keepalived.sh
+            ExecStart=/usr/bin/podman start -a keepalived
+            ExecStop=/usr/bin/podman stop -t 10 keepalived
+
+            Restart=on-failure
+            RestartSec=5
+
+            [Install]
+            WantedBy=multi-user.target
+
+          enabled: true
+          name: keepalived.service
+    storage:
+      files:
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 775
+        path: /usr/local/bin/get_vip_subnet_cidr
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 664
+        path: /etc/keepalived/keepalived.conf.template
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 775
+        path: /usr/local/bin/keepalived.sh
