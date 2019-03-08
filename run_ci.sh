@@ -46,9 +46,14 @@ if [ -f "/home/notstack/metalkube-ironic-inspector" ] ; then
     export IRONIC_INSPECTOR_IMAGE=https://github.com/metalkube/metalkube-ironic-inspector
 fi
 
+# Install moreutils for ts
+sudo yum install -y epel-release
+sudo yum install -y moreutils
+sudo yum remove -y epel-release
+
 # Run dev-scripts
 set -o pipefail
-make | sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
+make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Populate cache for files it doesn't have
 for FILE in $FILESTOCACHE ; do
