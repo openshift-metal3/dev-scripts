@@ -40,3 +40,21 @@ pushd "${GOPATH}/src/github.com/metalkube/facet"
 yarn install
 ./build.sh
 popd
+
+# Install Go dependency management tool
+# Using pre-compiled binaries instead of installing from source
+curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+export PATH="${GOPATH}/bin:$PATH"
+
+# Install operator-sdk for use by the baremetal-operator
+sync_go_repo_and_patch github.com/operator-framework/operator-sdk https://github.com/operator-framework/operator-sdk.git
+
+# Build operator-sdk
+pushd "${GOPATH}/src/github.com/operator-framework/operator-sdk"
+git checkout master
+make dep
+make install
+popd
+
+# Install baremetal-operator
+sync_go_repo_and_patch github.com/metalkube/baremetal-operator https://github.com/metalkube/baremetal-operator.git
