@@ -21,7 +21,8 @@ if [ ! -f "${RHCOS_IMAGE_FILENAME_OPENSTACK}" ]; then
 fi
 
 if [ ! -f ironic-python-agent.initramfs ]; then
-    curl --insecure --compressed -L https://images.rdoproject.org/master/rdo_trunk/current-tripleo/ironic-python-agent.tar | tar -xf -
+#    curl --insecure --compressed -L https://images.rdoproject.org/master/rdo_trunk/current-tripleo/ironic-python-agent.tar | tar -xf -
+    curl --insecure --compressed -L https://images.rdoproject.org/master/rdo_trunk/54c5a6de8ce5b9cfae83632a7d81000721d56071_786d88d2/ironic-python-agent.tar | tar -xf -
 fi
 
 popd
