@@ -1,0 +1,11 @@
+---
+test_os_client_config: '~/.config/openstack/clouds.yaml'
+test_os_client_profile: 'rdocloud'
+test_os_keypair: 'keypair'
+test_os_image: 'CentOS-7-x86_64-GenericCloud-1804_02'
+test_os_image_ipxe: 'ipxe-boot'
+test_os_provisionhost_flavor: 'm1.large2'
+test_os_master_flavor: 'm1.large2'
+test_os_routerbmc_flavor: 'm1.small'
+test_os_floating_ip_net: '38.145.32.0/22'
+openshift_secret: ''

@@ -26,14 +26,27 @@ done
 
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 IP=$(domain_net_ip ${INFRA_ID}-bootstrap baremetal)
-export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
-echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
-sudo systemctl reload NetworkManager
+if [ -z "$DEPLOY_OVB" ]; then
+    export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
+    echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+    sudo systemctl reload NetworkManager
+else
+    export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')
+fi
 
 # Wait for ssh to start
-$SSH -o ConnectionAttempts=500 core@$IP id
+# OVB case can take longer due to bootstrap VM running as L2 nested
+if [ -z "$DEPLOY_OVB" ]; then
+    $SSH -o ConnectionAttempts=500 core@$IP id
+else
+    $SSH -o ConnectionAttempts=3000 core@$IP id
+fi
 
 # Create a master_nodes.json file
-jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
+if [ -z "$DEPLOY_OVB" ]; then
+    jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
+else
+    cp /tmp/master_nodes.json "${MASTER_NODES_FILE}"
+fi
 
 echo "You can now ssh to \"$IP\" as the core user"

@@ -50,14 +50,16 @@ popd
 
 echo "Master nodes active"
 
-NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
-while [ "$NUM_LEASES" -ne 3 ]; do
-  sleep 10
-  NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
-done
+if [ -z "$DEPLOY_OVB" ]; then
+    NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
+    while [ "$NUM_LEASES" -ne 3 ]; do
+      sleep 10
+      NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
+    done
 
-echo "Master nodes up, you can ssh to the following IPs with core@<IP>"
-sudo virsh net-dhcp-leases baremetal
+    echo "Master nodes up, you can ssh to the following IPs with core@<IP>"
+    sudo virsh net-dhcp-leases baremetal
+fi
 
 # Wait for nodes to appear and become ready
 until oc --config ocp/auth/kubeconfig get nodes; do sleep 5; done

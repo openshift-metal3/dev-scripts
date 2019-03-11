@@ -1,0 +1,327 @@
+- name: Update security ports
+  hosts: localhost
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Get cloud auth info
+      os_client_config:
+          clouds: "{{ test_os_client_profile }}"
+
+    - name: Register baremetal network facts
+      os_networks_facts:
+          cloud: "{{ test_os_client_profile }}"
+          name: "baremetal"
+      register: baremetal_net_facts
+
+    - name: Register provisioning network facts
+      os_networks_facts:
+          cloud: "{{ test_os_client_profile }}"
+          name: "provisioning"
+      register: provisioning_net_facts
+
+    - name: Set network id facts
+      set_fact:
+        baremetal_net_id: "{{ baremetal_net_facts.ansible_facts.openstack_networks[0].id }}"
+        provisioning_net_id: "{{ provisioning_net_facts.ansible_facts.openstack_networks[0].id }}"
+
+    - name: Register port facts
+      os_port_facts:
+          cloud: "{{ test_os_client_profile }}"
+          port: "*"
+
+    - name: Update baremetal and provisioning port security settings
+      shell: |
+          openstack --os-cloud {{ test_os_client_profile }} port set --no-security-group {{ item.id }}
+          openstack --os-cloud {{ test_os_client_profile }} port set --disable-port-security {{ item.id }}
+      with_items:
+        - "{{ openstack_ports }}"
+      when:
+        - "baremetal_net_id in item.network_id or provisioning_net_id in item.network_id"
+
+- name: Set up dnsmasq
+  hosts: routerbmc
+  any_errors_fatal: true
+  become: true
+  tasks:
+      - name: Install packages
+        package:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - dnsmasq
+          - dnsmasq-utils
+
+      - name: Configure eth1
+        copy:
+          content: |
+              BOOTPROTO=none
+              DEVICE=eth1
+              IPADDR=192.168.111.1
+              NETMASK=255.255.255.0
+              ONBOOT=yes
+              TYPE=Ethernet
+              USERCTL=no
+          dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+
+      - name: Enable eth1
+        command: /usr/sbin/ifup eth1
+
+      - name: Set eth1 MTU to 1450
+        command: /usr/sbin/ip link set dev eth1 mtu 1450
+
+      - name: Enable ip forwarding
+        sysctl:
+          name: net.ipv4.ip_forward
+          value: 1
+          sysctl_set: yes
+
+      - name: Enable snat
+        iptables:
+          chain: POSTROUTING
+          source: 192.168.111.0/24
+          ctstate: "NEW,RELATED,ESTABLISHED"
+          comment: masquerade 192.168.111.0/24 ipv4
+          table: nat
+          jump: MASQUERADE
+
+      - name: Configure dnsmasq conf
+        copy:
+          content: |
+              strict-order
+              local=/ostest.test.metalkube.org/
+              domain=ostest.test.metalkube.org
+              expand-hosts
+              except-interface=lo
+              bind-dynamic
+              interface=eth1
+              srv-host=_etcd-server-ssl._tcp.ostest.test.metalkube.org,etcd-0.ostest.test.metalkube.org,2380
+              srv-host=_etcd-server-ssl._tcp.ostest.test.metalkube.org,etcd-1.ostest.test.metalkube.org,2380
+              srv-host=_etcd-server-ssl._tcp.ostest.test.metalkube.org,etcd-2.ostest.test.metalkube.org,2380
+              dhcp-range=192.168.111.100,192.168.111.150
+              dhcp-no-override
+              dhcp-authoritative
+              dhcp-lease-max=51
+              dhcp-hostsfile=/var/lib/dnsmasq/baremetal.hostsfile
+              addn-hosts=/var/lib/dnsmasq/baremetal.addnhosts
+              dhcp-option=eth1,26,1450
+          dest: /etc/dnsmasq.d/baremetal.conf
+
+      - name: Generate baremetal.hostsfile
+        template:
+            src: baremetal.hostsfile.j2
+            dest: /var/lib/dnsmasq/baremetal.hostsfile
+
+      - name: Generate baremetal.addnhosts
+        template:
+            src: baremetal.addnhosts.j2
+            dest: /var/lib/dnsmasq/baremetal.addnhosts
+
+      - name: Start dnsmasq service
+        service:
+            name: dnsmasq
+            state: restarted
+            enabled: yes
+
+      - name: Install tripleo-repos
+        shell: |
+            yum localinstall -y https://trunk.rdoproject.org/centos7/current/$(curl -s https://trunk.rdoproject.org/centos7/current/ | grep python2-tripleo-repos | sed 's/.*\(python2-tripleo-repos.*rpm\).*/\1/')
+            tripleo-repos current
+
+      - name: Install packages required for OVB
+        package:
+            name: "{{ item }}"
+            state: installed
+        with_items:
+          - epel-release
+          - python2-pip
+          - gcc
+          - python-devel
+          - python2-crypto
+          - python-novaclient
+          - python-neutronclient
+          - jq
+
+      - name: Install pip packages
+        pip:
+            name: "{{ item }}"
+        with_items:
+           - pyghmi
+
+      - name: Get OVB
+        get_url:
+            url: https://raw.githubusercontent.com/openstack/openstack-virtual-baremetal/master/openstack_virtual_baremetal/openstackbmc.py
+            dest: /usr/local/bin/openstackbmc
+
+      - name: Create openstack client config directory
+        file:
+            path: "/root/.config/openstack"
+            state: directory
+            recurse: true
+
+      - name: Copy openstack client config
+        copy:
+            src: "{{ test_os_client_config }}"
+            dest: "/root/.config/openstack/clouds.yml"
+
+      - setup:
+
+      - name: Set routerbmc address fact
+        set_fact:
+            bmc_address: "{{ ansible_eth1.ipv4.address }}"
+
+      - name: Create bmc systemd unit fils
+        vars:
+            bmc_start_port: 6230
+        template:
+            src: bmc.service.j2
+            dest: "/etc/systemd/system/{{ item }}-bmc.service"
+        with_items: "{{ groups.get('openshift') }}"
+
+      - name: Reload systemd
+        systemd:
+            daemon_reload: yes
+
+      - name: Start bmc services
+        systemd:
+            name: "{{ item }}-bmc"
+            state: started
+        with_items: "{{ groups.get('openshift') }}"
+
+- name: Run dev-scripts
+  hosts: provisionhost
+  any_errors_fatal: true
+  tasks:
+      # Route management traffic through a separate routing table
+      # in order to avoid breaking SSH connectivity when bringing up
+      # the baremetal bridge
+      - name: Create management routing table
+        lineinfile:
+            path: /etc/iproute2/rt_tables
+            line: '1 mgmt_rt'
+            insertafter: EOF
+        become: true
+
+      - name: Create management routing table rules
+        shell: |
+            ip route add {{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }} dev eth0 src {{ ansible_default_ipv4.address }} table mgmt_rt
+            ip route add default via {{ ansible_default_ipv4.gateway }} dev eth0 table mgmt_rt
+            ip rule add from {{ ansible_default_ipv4.address }}/32 table mgmt_rt
+            ip rule add to {{ ansible_default_ipv4.address }}/32 table mgmt_rt
+        become: true
+
+      - name: Add hostname to /etc/hosts
+        lineinfile:
+            path: /etc/hosts
+            line: "{{ ansible_default_ipv4.address }} {{ ansible_hostname }} {{ ansible_fqdn }}"
+        become: true
+
+      - name: Create swap
+        shell: |
+            dd if=/dev/zero of=/swapfile bs=4096 count=1048576
+            chmod 600 /swapfile
+            mkswap /swapfile
+            swapon /swapfile
+        become: true
+
+      - name: Generate nodes json
+        vars:
+            bmc_start_port: 6230
+        template:
+          src: "nodes.json.j2"
+          dest: /tmp/master_nodes.json
+
+      - name: check existing keypair
+        stat:
+          path: "~/.ssh/id_rsa.pub"
+        register: keypair_result
+
+      - name: generate keypair if not present
+        shell: "ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''"
+        when: keypair_result.stat.exists == False
+
+      - name: register public key
+        shell: "cat ~/.ssh/id_rsa.pub"
+        register: provision_key
+
+      - name: clear authorized_keys on router
+        become: true
+        shell: "> /root/.ssh/authorized_keys"
+        delegate_to: routerbmc
+
+      - name: transfer public key to router
+        become: true
+        copy:
+          dest: /root/.ssh/authorized_keys
+          content: "{{ provision_key.stdout }}"
+        delegate_to: routerbmc
+
+      - name: bring up network interfaces
+        shell: |
+            ip link set dev {{ item }} up
+            ip link set dev {{ item }} mtu 1450
+        become: true
+        with_items:
+            - 'eth1'
+            - 'eth2'
+
+      - name: Install git
+        become: true
+        package:
+            name: git
+            state: installed
+
+      - name: Sync local dev-scripts to provisioning instance
+        synchronize:
+            src: "{{ hostvars['localhost']['playbook_dir'] }}/../../../../"
+            dest: "~/dev-scripts/"
+
+      - name: Copy config
+        shell: "cp config_example.sh config_{{ ansible_user }}.sh"
+        args:
+          chdir: "~/dev-scripts"
+
+      - name: Configure secret
+        replace:
+            path: "~/dev-scripts/config_{{ansible_user}}.sh"
+            regexp: "PULL_SECRET=''"
+            replace: "PULL_SECRET='{{ openshift_secret }}'"
+
+      - name: Set DEPLOY_OVB
+        lineinfile:
+            path: "~/dev-scripts/config_{{ansible_user}}.sh"
+            line: "DEPLOY_OVB=true"
+
+      - name: Run 01_install_requirements.sh
+        shell: "bash 01_install_requirements.sh &> 01_install_requirements.log"
+        args:
+          chdir: "~/dev-scripts"
+
+      - name: Run 02_configure_host.sh
+        shell: "bash 02_configure_host.sh &> 02_configure_host.sh.log"
+        args:
+          chdir: "~/dev-scripts"
+
+      - name: Run 03_ocp_repo_sync.sh
+        shell: "bash 03_ocp_repo_sync.sh &> 03_ocp_repo_sync.log"
+        args:
+          chdir: "~/dev-scripts"
+
+      - name: Run 04_setup_ironic.sh
+        shell: "bash 04_setup_ironic.sh &> 04_setup_ironic.log"
+        args:
+          chdir: "~/dev-scripts"
+
+      - name: Run 05_build_ocp_installer.sh
+        shell: "bash 05_build_ocp_installer.sh &> 05_build_ocp_installer.log"
+        args:
+          chdir: "~/dev-scripts"
+
+      - name: Run 06_deploy_bootstrap_vm.sh
+        shell: "bash 06_deploy_bootstrap_vm.sh &> 06_deploy_bootstrap_vm.log"
+        args:
+          chdir: "~/dev-scripts"
+
+      - name: Run 07_deploy_masters.sh
+        shell: "bash 07_deploy_masters.sh &> 07_deploy_masters.log"
+        args:
+          chdir: "~/dev-scripts"

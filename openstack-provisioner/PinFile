@@ -1,0 +1,150 @@
+---
+cfgs:
+  openstack:
+    __IP__: name
+    __ADDRESS__: accessIPv4
+    __BAREMETALNETMAC__: addresses.baremetal.0.OS-EXT-IPS-MAC:mac_addr
+    __PROVISIONINGNETMAC__: addresses.provisioning.0.OS-EXT-IPS-MAC:mac_addr
+
+os-network:
+  topology:
+    topology_name: os_network
+    resource_groups:
+      - resource_group_name: simple
+        resource_group_type: openstack
+        resource_definitions:
+          - name: management
+            role: os_network
+            unique: false
+          - name: management-subnet
+            role: os_subnet
+            network_name: management
+            unique: false
+            cidr: 192.168.124.0/24
+          - name: baremetal
+            role: os_network
+            unique: false
+          - name: baremetal-subnet
+            role: os_subnet
+            network_name: baremetal
+            unique: false
+            cidr: 192.168.111.0/24
+            no_gateway_ip: true
+            enable_dhcp: false
+          - name: provisioning
+            role: os_network
+            unique: false
+          - name: provisioning-subnet
+            role: os_subnet
+            network_name: provisioning
+            unique: false
+            cidr: 172.22.0.0/24
+            no_gateway_ip: true
+            enable_dhcp: false
+          - name: management-router
+            role: os_router
+            network: "{{ test_os_floating_ip_net }}"
+            unique: false
+            interfaces:
+              - management-subnet
+          - name: "metalkube_security_group"
+            role: os_sg
+            description: "Openstack Security Group with ssh and icmp access"
+            rules:
+              - rule_type: "inbound"
+                from_port: 22
+                to_port: 22
+                proto: "tcp"
+                cidr_ip: "0.0.0.0/0"
+              - rule_type: "inbound"
+                from_port: -1
+                to_port: -1
+                proto: "icmp"
+                cidr_ip: "0.0.0.0/0"
+        credentials:
+           filename: "{{ test_os_client_config }}"
+           profile: "{{ test_os_client_profile }}"
+
+os-server-new:
+  topology:
+    topology_name: os-server-new
+    resource_groups:
+     - resource_group_name: os-server-new
+       resource_group_type: openstack
+       resource_definitions:
+         - name: "routerbmc"
+           role: os_server
+           flavor: {{ test_os_routerbmc_flavor }}
+           image: "{{ test_os_image }}"
+           unique: false
+           count: 1
+           keypair: "{{ test_os_keypair }}"
+           security_groups: metalkube_security_group
+           networks:
+             - management
+             - baremetal
+       credentials:
+         filename: {{ test_os_client_config }}
+         profile: {{ test_os_client_profile }}
+
+     - resource_group_name: os-server-new
+       resource_group_type: openstack
+       resource_definitions:
+         - name: "provisionhost"
+           role: os_server
+           flavor: {{ test_os_provisionhost_flavor }}
+           image: "{{ test_os_image }}"
+           count: 1
+           keypair: "{{ test_os_keypair }}"
+           security_groups: metalkube_security_group
+           networks:
+             - management
+             - baremetal
+             - provisioning
+
+     - resource_group_name: os-server-new
+       resource_group_type: openstack
+       resource_definitions:
+         - name: "master"
+           role: os_server
+           flavor: {{ test_os_master_flavor }}
+           image: "{{ test_os_image_ipxe }}"
+           unique: false
+           count: 3
+           keypair: "{{ test_os_keypair }}"
+           auto_ip: false
+           networks:
+             - provisioning
+             - baremetal
+
+  layout:
+    inventory_layout:
+      vars:
+        hostname: __IP__
+        ansible_ssh_host: __ADDRESS__
+        baremetal_net_mac: __BAREMETALNETMAC__
+        provisioning_net_mac: __PROVISIONINGNETMAC__
+        ansible_ssh_user: centos
+        ansible_ssh_common_args: '"-o StrictHostKeyChecking=no"'
+      hosts:
+        routerbmc:
+          count: 1
+          host_groups:
+            - routerbmc
+        provisionhost:
+          count: 1
+          host_groups:
+            - provisionhost
+        master:
+          count: 3
+          host_groups:
+            - master
+            - openshift
+  hooks:
+    postup:
+      - name: post
+        type: ansible
+        context: True
+        actions:
+          - playbook: post.yaml
+            vars: extravars.yml

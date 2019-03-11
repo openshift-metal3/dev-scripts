@@ -1,0 +1,9 @@
+[Unit]
+Description=openstack-bmc {{ item }} Service
+[Service]
+ExecStart=/usr/bin/python /usr/local/bin/openstackbmc --os-cloud {{ test_os_client_profile }} --instance {{ item }} --address {{ bmc_address }} --port {{ bmc_start_port + groups['openshift'].index(item) }}
+User=root
+StandardOutput=kmsg+console
+StandardError=inherit
+[Install]
+WantedBy=multi-user.target

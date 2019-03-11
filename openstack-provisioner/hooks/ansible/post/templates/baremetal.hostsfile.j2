@@ -1,0 +1,4 @@
+{% set start_ip = 100 %}
+{% for node in groups['openshift'] %}
+{{ hostvars[node].baremetal_net_mac }},192.168.111.{{ start_ip + groups['openshift'].index(node) }},{{ node }}
+{% endfor %}

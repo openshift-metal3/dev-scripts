@@ -1,0 +1,6 @@
+192.168.111.5 api
+192.168.111.2 dns
+{% set start_ip = 100 %}
+{% for node in groups['openshift'] %}
+192.168.111.{{ start_ip + groups['openshift'].index(node) }} {{ node }} etcd-{{ node.split("-")[-1] }}
+{% endfor %}

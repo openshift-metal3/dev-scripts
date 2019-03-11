@@ -1,0 +1,30 @@
+{
+  "nodes": [
+{% for node in groups['openshift'] %}
+    {
+      "name": "{{ node }}",
+      "driver": "ipmi",
+      "resource_class": "baremetal",
+      "driver_info": {
+        "ipmi_username": "admin",
+        "ipmi_password": "password",
+        "ipmi_address": "{{ hostvars['routerbmc']['bmc_address'] }}",
+        "ipmi_port": "{{ bmc_start_port + groups['openshift'].index(node) }}",
+        "deploy_kernel": "http://172.22.0.1/images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http://172.22.0.1/images/ironic-python-agent.initramfs"
+      },
+      "ports": [{
+        "address": "{{ hostvars[node].provisioning_net_mac }}",
+        "pxe_enabled": true
+      }],
+      "properties": {
+        "local_gb": "50",
+        "cpu_arch": "x86_64"
+      }
+    }
+    {% if not loop.last %}
+    ,
+    {% endif %}
+  {% endfor %}
+  ]
+}
