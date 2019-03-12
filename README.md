@@ -9,7 +9,8 @@ from tripleo-quickstart here.
 
 # Pre-requisites
 
-- CentOS 7
+- CentOS 7.5 or greater (installed from 7.4 or newer)
+- file system that supports d_type (see Troubleshooting section for more information)
 - ideally on a bare metal host
 - run as a user with passwordless sudo access
 - get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret
@@ -131,3 +132,15 @@ virsh console domain_name
 ```
 
 To get to the bootstrap node. The username is `core` and the password is `notworking`
+
+### Determining your filesystem type
+If you're not sure what filesystem you have, try `df - T` and the second 
+column will include the type.
+
+### Determining if your filesystem supports d_type
+If the above command returns ext4 or btrfs, d_type is supported by default. If not, 
+at the command line, try:
+```
+xfs_info /mount-point
+```
+If you see `ftype=1` then you have d_type support.
