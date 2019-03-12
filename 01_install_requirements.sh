@@ -19,11 +19,15 @@ sudo pip install \
 # for tripleo-repos install
 sudo yum -y install python-setuptools python-requests
 
-if [ ! -f $HOME/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz ]; then
-  cd
-  wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
-  tar xvzf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
-  sudo cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/{kubectl,oc} /usr/local/bin/
+oc_version=4.0.22
+oc_tools_dir=$HOME/oc-${oc_version}
+oc_tools_local_file=openshift-client-${oc_version}.tar.gz
+if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ]; then
+  mkdir -p ${oc_tools_dir}
+  cd ${oc_tools_dir}
+  wget https://mirror.openshift.com/pub/openshift-v3/clients/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
+  tar xvzf ${oc_tools_local_file}
+  sudo cp oc /usr/local/bin/
 fi
 
 # We're reusing some tripleo pieces for this setup so clone them here
