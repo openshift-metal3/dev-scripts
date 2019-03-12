@@ -42,17 +42,17 @@ EOF
 fi
 
 # Allow ipmi to the virtual bmc processes that we just started
-if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT ; then
+if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT 2>/dev/null ; then
     sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
 fi
 
 #Allow access to dualboot.ipxe
-if ! sudo iptables -C INPUT -p tcp --dport 80 -j ACCEPT ; then
+if ! sudo iptables -C INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null ; then
     sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
 fi
 
 #Allow access to tftp server for pxeboot
-if ! sudo iptables -C INPUT -p udp --dport 69 -j ACCEPT ; then
+if ! sudo iptables -C INPUT -p udp --dport 69 -j ACCEPT 2>/dev/null ; then
     sudo iptables -I INPUT -p udp --dport 69 -j ACCEPT
 fi
 
@@ -63,12 +63,12 @@ if [ "$EXT_IF" ]; then
 fi
 
 # Add access to backend Facet server from remote locations
-if ! sudo iptables -C INPUT -p tcp --dport 8080 -j ACCEPT ; then
+if ! sudo iptables -C INPUT -p tcp --dport 8080 -j ACCEPT 2>/dev/null ; then
   sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
 fi
 
 # Add access to Yarn development server from remote locations
-if ! sudo iptables -C INPUT -p tcp --dport 3000 -j ACCEPT ; then
+if ! sudo iptables -C INPUT -p tcp --dport 3000 -j ACCEPT 2>/dev/null ; then
   sudo iptables -I INPUT -p tcp --dport 3000 -j ACCEPT
 fi
 
