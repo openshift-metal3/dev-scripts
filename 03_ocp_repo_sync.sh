@@ -30,16 +30,7 @@ function sync_go_repo_and_patch {
     popd
 }
 
-# sync_go_repo_and_patch github.com/openshift/origin https://github.com/openshift/origin.git
-# sync_go_repo_and_patch github.com/openshift/release https://github.com/openshift/release.git
-
-# sync_go_repo_and_patch github.com/openshift/machine-config-operator https://github.com/openshift/machine-config-operator.git
-# sync_go_repo_and_patch github.com/openshift/machine-api-operator https://github.com/openshift/machine-api-operator.git
-
 sync_go_repo_and_patch github.com/metalkube/kni-installer https://github.com/metalkube/kni-installer.git
-
-# sync_go_repo_and_patch github.com/openshift/ci-operator https://github.com/openshift/ci-operator.git
-# sync_go_repo_and_patch github.com/sallyom/installer-e2e https://github.com/sallyom/installer-e2e.git
 
 sync_go_repo_and_patch github.com/metalkube/facet https://github.com/metalkube/facet.git
 
