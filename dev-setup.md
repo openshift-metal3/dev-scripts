@@ -58,7 +58,7 @@ Luckily, dev-scripts handles much of the prerequisite software installation heav
 As the rhhi user, clone the dev-scripts repository to a location of your choosing:
 
 ```
-$ git clone git@github.com:metalkube/dev-scripts.git
+$ git clone git@github.com:openshift-metalkube/dev-scripts.git
 ```
 
 Change in to the dev-scripts directory:
