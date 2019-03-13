@@ -9,6 +9,9 @@ export SSH_PUB_KEY="`cat $HOME/.ssh/id_rsa.pub`"
 # Not used by the installer.  Used by s.sh.
 export SSH_PRIV_KEY="$HOME/.ssh/id_rsa"
 
+# Temporary workaround pending merge of https://github.com/openshift/machine-api-operator/pull/246
+export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/vrutkovs/kni-release-mar13:release"
+
 function generate_ocp_install_config() {
     local outdir
 
