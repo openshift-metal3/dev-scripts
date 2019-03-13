@@ -182,7 +182,7 @@ function create_ignition_configs() {
 
     assets_dir="$1"
 
-    $GOPATH/src/github.com/metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create ignition-configs
+    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create ignition-configs
 }
 
 function create_cluster() {
@@ -190,7 +190,7 @@ function create_cluster() {
 
     assets_dir="$1"
 
-    $GOPATH/src/github.com/metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create cluster
+    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create cluster
 }
 
 function net_iface_dhcp_ip() {

@@ -5,7 +5,7 @@ set -x
 source ocp_install_env.sh
 
 if [ -d ocp ]; then
-    $GOPATH/src/github.com/metalkube/kni-installer/bin/kni-install --dir ocp --log-level=debug destroy bootstrap
+    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir ocp --log-level=debug destroy bootstrap
     rm -rf ocp
 fi
 
