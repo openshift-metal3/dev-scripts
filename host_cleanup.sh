@@ -24,6 +24,16 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -b -vvv tripleo-quickstart-config/metalkube-teardown-playbook.yml
 
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/conf.d/dnsmasq.conf
+
+#Remove the bootstrap VM
+sudo virsh list --all --name|grep -q bootstrap && (
+    for i in $(sudo virsh list --all --name|grep bootstrap); do
+          sudo virsh destroy $i 2>/dev/null;
+          sudo virsh undefine $i 2>/dev/null;
+    done
+)
+
+#Remove the networks
 sudo virsh net-destroy baremetal
 sudo virsh net-undefine baremetal
 sudo virsh net-destroy provisioning
