@@ -30,7 +30,7 @@ function sync_go_repo_and_patch {
     popd
 }
 
-sync_go_repo_and_patch github.com/metalkube/kni-installer https://github.com/metalkube/kni-installer.git
+sync_go_repo_and_patch github.com/openshift-metalkube/kni-installer https://github.com/openshift-metalkube/kni-installer.git
 
 sync_go_repo_and_patch github.com/metalkube/facet https://github.com/metalkube/facet.git
 
