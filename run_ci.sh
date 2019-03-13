@@ -39,10 +39,10 @@ sudo mkdir -p /opt/data/yumcache
 sudo mount -o bind /opt/data/yumcache /var/cache/yum
 
 # If directories for the containers exists then we build the images (as they are what triggered the job)
-if [ -f "/home/notstack/metalkube-ironic" ] ; then
+if [ -d "/home/notstack/metalkube-ironic" ] ; then
     export IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
 fi
-if [ -f "/home/notstack/metalkube-ironic-inspector" ] ; then
+if [ -d "/home/notstack/metalkube-ironic-inspector" ] ; then
     export IRONIC_INSPECTOR_IMAGE=https://github.com/metalkube/metalkube-ironic-inspector
 fi
 
