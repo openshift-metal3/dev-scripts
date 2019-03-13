@@ -7,5 +7,5 @@ export PULL_SECRET=''
 set -x
 
 # Uncomment to build a copy of ironic or inspector locally
-#export IRONIC_INSPECTOR_IMAGE=https://github.com/metalkube/metalkube-ironic-inspector
 #export IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
+#export IRONIC_INSPECTOR_IMAGE=https://github.com/metalkube/metalkube-ironic-inspector
