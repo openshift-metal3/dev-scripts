@@ -88,5 +88,11 @@ while [ "$NODES_ACTIVE" -ne 3 ]; do
   sleep 10
   NODES_ACTIVE=$(oc --config ocp/auth/kubeconfig get nodes | grep "master-[0-2] *Ready" | wc -l)
 done
+
+# disable NoSchedule taints for masters until we have workers deployed
+for num in 0 1 2; do
+  oc --kubeconfig ocp/auth/kubeconfig adm taint nodes master-${num} node-role.kubernetes.io/master:NoSchedule-
+done
+
 oc --config ocp/auth/kubeconfig get nodes
 echo "Cluster up, you can interact with it via oc --config ocp/auth/kubeconfig <command>"
