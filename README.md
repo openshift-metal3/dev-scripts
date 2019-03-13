@@ -42,11 +42,11 @@ local virthost and some other dependencies installed.
 
 - `./03_ocp_repo_sync.sh`
 
-After this step, you can run the [facet](https://github.com/metalkube/facet)
+After this step, you can run the [facet](https://github.com/openshift-metalkube/facet)
 server with:
 
 ```
-$ go run "${GOPATH}/src/github.com/metalkube/facet/main.go" server
+$ go run "${GOPATH}/src/github.com/openshift-metalkube/facet/main.go" server
 ```
 
 - `./04_setup_ironic.sh`

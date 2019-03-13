@@ -149,7 +149,7 @@ The 03\_ocp\_repo\_sync.sh script we ran previously, automatically cloned the fa
 
 To run the production build of facet, use the following command:
 ```
-$ go run $GOPATH/src/github.com/metalkube/facet/main.go server
+$ go run $GOPATH/src/github.com/openshift-metalkube/facet/main.go server
 ```
 
 Upon execution, facet can be accessed by the URL printed to the output.
@@ -182,7 +182,7 @@ To see these bridges and which interfaces are associated with them, run:
 sudo brctl show
 ```
 **Q**:  I’ve heard “production api” or “production build” - what’s that?  
-**A**:  “Production build” or “production API” are the product of compiling all the facet server components in to a static asset in to a go module, using statik.  The final binary then becomes $GOPATH/src/github.com/metalkube/facet/bin/facet.  
+**A**:  “Production build” or “production API” are the product of compiling all the facet server components in to a static asset in to a go module, using statik.  The final binary then becomes $GOPATH/src/github.com/openshift-metalkube/facet/bin/facet.  
 
 
 
