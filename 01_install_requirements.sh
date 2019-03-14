@@ -73,6 +73,7 @@ sudo yum -y install \
   python-virtualbmc \
   qemu-kvm \
   virt-install \
+  unzip \
   yarn
 
 # Install python packages not included as rpms
