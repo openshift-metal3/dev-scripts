@@ -46,6 +46,20 @@ if [ -d "/home/notstack/metalkube-ironic-inspector" ] ; then
     export IRONIC_INSPECTOR_IMAGE=https://github.com/metalkube/metalkube-ironic-inspector
 fi
 
+# If directories for go projects exist, copy them to where go expects them
+for PROJ in facet kni-installer terraform-provider-ironic ; do
+    [ ! -d /home/notstack/$PROJ ] && continue
+
+    # Set origin so that sync_go_repo_and_patch is rebasing against the correct source
+    cd /home/notstack/$PROJ
+    git branch -M master
+    git remote set-url origin https://github.com/openshift-metalkube/$PROJ
+    cd -
+
+    mkdir -p $HOME/go/src/github.com/openshift-metalkube
+    mv /home/notstack/$PROJ $HOME/go/src/github.com/openshift-metalkube
+done
+
 # Install moreutils for ts
 sudo yum install -y epel-release
 sudo yum install -y moreutils
