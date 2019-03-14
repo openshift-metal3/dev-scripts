@@ -19,6 +19,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "local_working_dir=$HOME/.quickstart" \
     -e "virthost=$HOSTNAME" \
     -e "platform=$NODES_PLATFORM" \
+    -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e @config/environments/dev_privileged_libvirt.yml \
     -i tripleo-quickstart-config/metalkube-inventory.ini \
     -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml
@@ -61,6 +62,31 @@ if [ "$PRO_IF" ]; then
     sudo ifup $PRO_IF
 fi
 
+# Create the baremetal bridge
+if [ ! -e /etc/sysconfig/network-scripts/ifcfg-baremetal ] ; then
+    echo -e "DEVICE=baremetal\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
+fi
+sudo ifdown baremetal || true
+sudo ifup baremetal
+
+# Add the internal interface to it if requests, this may also be the interface providing
+# external access so we need to make sure we maintain dhcp config if its available
+if [ "$INT_IF" ]; then
+    echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+    sudo ifdown $INT_IF || true
+    sudo ifup $INT_IF
+    if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
+        echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal
+        sudo ifdown baremetal || true
+        sudo ifup baremetal
+    fi
+fi
+# restart the libvirt network so it applies an ip to the bridge
+if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
+    sudo virsh net-destroy baremetal                                                                                                                                                                  
+    sudo virsh net-start baremetal   
+fi
+
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
 for port in 80 5050 6385 ; do
     if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
@@ -73,11 +99,12 @@ if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCE
     sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
 fi
 
-#Allow access to tftp server for pxeboot
+#Allow access to dhcp and tftp server for pxeboot
 for port in 67 69 ; do
-if ! sudo iptables -C INPUT -i provisioning -p udp --dport $port -j ACCEPT 2>/dev/null ; then
-    sudo iptables -I INPUT -i provisioning -p udp --dport $port -j ACCEPT
-fi
+    if ! sudo iptables -C INPUT -i provisioning -p udp --dport $port -j ACCEPT 2>/dev/null ; then
+        sudo iptables -I INPUT -i provisioning -p udp --dport $port -j ACCEPT
+    fi
+done
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
@@ -93,11 +120,6 @@ fi
 # Add access to Yarn development server from remote locations
 if ! sudo iptables -C INPUT -p tcp --dport 3000 -j ACCEPT 2>/dev/null ; then
   sudo iptables -I INPUT -p tcp --dport 3000 -j ACCEPT
-fi
-
-# Internal interface
-if [ "$INT_IF" ]; then
-  sudo ip link set "$INT_IF" master baremetal 
 fi
 
 # Switch NetworkManager to internal DNS

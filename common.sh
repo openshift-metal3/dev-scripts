@@ -24,6 +24,8 @@ ADDN_DNS=${ADDN_DNS:-}
 EXT_IF=${EXT_IF:-}
 # Provisioning interface
 PRO_IF=${PRO_IF:-}
+# Does libvirt manage the baremetal bridge (including DNS and DHCP)
+MANAGE_BR_BRIDGE=${MANAGE_BR_BRIDGE:-y}
 # Internal interface, to bridge virbr0
 INT_IF=${INT_IF:-}
 #Root disk to deploy coreOS - use /dev/sda on BM

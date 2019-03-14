@@ -33,6 +33,7 @@ sudo yum -y install \
   figlet \
   golang \
   NetworkManager \
+  nmap \
   patch \
   psmisc \
   python-pip \
