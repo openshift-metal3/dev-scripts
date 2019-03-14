@@ -102,18 +102,29 @@ function master_node_to_tf() {
     root_gb="$4"
     root_device="$5"
 
+    driver=$(master_node_val ${master_idx} "driver")
+    if [ $driver == "ipmi" ] ; then
+        driver=ipmi
+        driver_prefix=ipmi
+        driver_interface=ipmitool
+    elif [ $driver == "idrac" ] ; then
+        driver=idrac
+        driver_prefix=drac
+        driver_interface=idrac
+    fi
+
     name=$(master_node_val ${master_idx} "name")
     mac=$(master_node_val ${master_idx} "ports[0].address")
     local_gb=$(master_node_val ${master_idx} "properties.local_gb")
     cpu_arch=$(master_node_val ${master_idx} "properties.cpu_arch")
 
-    ipmi_port=$(master_node_val ${master_idx} "driver_info.ipmi_port // \"\"")
-    if [ -n "$ipmi_port" ]; then
-        ipmi_port="\"ipmi_port\"=      \"${ipmi_port}\""
+    port=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_port // \"\"")
+    if [ -n "$port" ]; then
+        port="\"${driver_prefix}_port\"=      \"${port}\""
     fi
-    ipmi_username=$(master_node_val ${master_idx} "driver_info.ipmi_username")
-    ipmi_password=$(master_node_val ${master_idx} "driver_info.ipmi_password")
-    ipmi_address=$(master_node_val ${master_idx} "driver_info.ipmi_address")
+    username=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_username")
+    password=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_password")
+    address=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_address")
 
     deploy_kernel=$(master_node_val ${master_idx} "driver_info.deploy_kernel")
     deploy_ramdisk=$(master_node_val ${master_idx} "driver_info.deploy_ramdisk")
@@ -145,15 +156,20 @@ resource "ironic_node_v1" "openshift-master-${master_idx}" {
     "root_device" = "${root_device}"
   }
 
-  driver = "ipmi"
+  driver = "${driver}"
   driver_info {
-    ${ipmi_port}
-    "ipmi_username"=  "${ipmi_username}"
-    "ipmi_password"=  "${ipmi_password}"
-    "ipmi_address"=   "${ipmi_address}"
+    ${port}
+    "${driver_prefix}_username"=  "${username}"
+    "${driver_prefix}_password"=  "${password}"
+    "${driver_prefix}_address"=   "${address}"
     "deploy_kernel"=  "${deploy_kernel}"
     "deploy_ramdisk"= "${deploy_ramdisk}"
   }
+
+  management_interface = "${driver_interface}"
+  power_interface = "${driver_interface}"
+  vendor_interface = "no-vendor"
+
 }
 EOF
 }
