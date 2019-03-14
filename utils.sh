@@ -147,36 +147,6 @@ function apply_yaml_patches() {
     yq -y '.' < "${wd}/${kind}.json" | sudo tee "$target" | sed -e 's/.*auth.*/***PULL_SECRET***/g'
 }
 
-# Add if-name param to etcd discovery container on masters
-function add_if_name_to_etcd_discovery() {
-    local ip
-    local if_name
-    local wd
-    local master_config
-
-    ip="$1"
-    if_name="$2"
-    wd=$(mktemp -d)
-
-    # Find master machine config name
-    while [ -z $($SSH "core@$ip" sudo ls /etc/mcs/bootstrap/machine-configs/master*) ]; do sleep 5; done
-
-    master_config=$($SSH "core@$ip" sudo ls /etc/mcs/bootstrap/machine-configs/master*)
-    $SSH "core@$ip" sudo cat "${master_config}" > "${wd}/master.yaml"
-    # Extract etcd-member.yaml part
-    yq -r ".spec.config.storage.files[] | select(.path==\"/etc/kubernetes/manifests/etcd-member.yaml\") | .contents.source" "${wd}/master.yaml" | sed 's;data:,;;' > "${wd}/etcd-member.urlencode"
-    # URL decode
-    cat "${wd}/etcd-member.urlencode" | urldecode > "${wd}/etcd-member.yaml"
-    # Add a new param to args in discovery container
-    sed -i "s;- \"run\";- \"run\"\\n    - \"--if-name=${if_name}\";g" "${wd}/etcd-member.yaml"
-    # URL encode yaml
-    cat "${wd}/etcd-member.yaml" | jq -sRr @uri > "${wd}/etcd-member.urlencode_updated"
-    # Replace etcd-member contents in the yaml
-    sed -i "s;$(cat ${wd}/etcd-member.urlencode);$(cat ${wd}/etcd-member.urlencode_updated);g" "${wd}/master.yaml"
-    # Copy the changed file back to bootstrap
-    cat "${wd}/master.yaml" | $SSH "core@$ip" sudo dd of="${master_config}"
-}
-
 function create_ignition_configs() {
     local assets_dir
 
