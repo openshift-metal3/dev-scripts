@@ -11,7 +11,13 @@ sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
 sudo yum -y update
 
 # Install EPEL required by some packages
-sudo yum -y install epel-release --enablerepo=extras
+if [ ! -f /etc/yum.repos.d/epel.repo ] ; then
+    if grep -q "Red Hat Enterprise Linux" /etc/redhat-release ; then
+        sudo yum -y install http://mirror.centos.org/centos/7/extras/x86_64/Packages/epel-release-7-11.noarch.rpm
+    else
+        sudo yum -y install epel-release --enablerepo=extras
+    fi
+fi
 
 # Work around a conflict with a newer zeromq from epel
 if ! grep -q zeromq /etc/yum.repos.d/epel.repo; then
