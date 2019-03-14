@@ -49,15 +49,6 @@ popd
 
 echo "Master nodes active"
 
-NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
-while [ "$NUM_LEASES" -ne 3 ]; do
-  sleep 10
-  NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
-done
-
-echo "Master nodes up, you can ssh to the following IPs with core@<IP>"
-sudo virsh net-dhcp-leases baremetal
-
 # Wait for nodes to appear and become ready
 until oc get nodes; do sleep 5; done
 NUM_NODES=$(oc get nodes --no-headers | wc -l)
