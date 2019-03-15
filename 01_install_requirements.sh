@@ -78,7 +78,6 @@ sudo yum -y install \
 
 # Install python packages not included as rpms
 sudo pip install \
-  json-patch \
   lolcat \
   yq
 
