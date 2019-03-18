@@ -1,5 +1,7 @@
-.PHONY: default requirements configure repo_sync ironic build ocp_run clean ocp_cleanup host_cleanup
+.PHONY: default all requirements configure repo_sync ironic build ocp_run clean ocp_cleanup host_cleanup
 default: requirements configure repo_sync ironic build ocp_run
+
+all: default
 
 requirements:
 	./01_install_requirements.sh
