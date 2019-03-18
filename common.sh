@@ -13,8 +13,10 @@ PRO_IF=${PRO_IF:-}
 INT_IF=${INT_IF:-}
 #Root disk to deploy coreOS - use /dev/sda on BM
 ROOT_DISK=${ROOT_DISK:="/dev/vda"}
+# Default port of IPMI, will be used for BM
+DEFAULT_IPMI_PORT=${DEFAULT_IPMI_PORT:="623"}
 
-if [ -z "${CONFIG:-}" ]; then  
+if [ -z "${CONFIG:-}" ]; then
     # See if there's a config_$USER.sh in the SCRIPTDIR
     if [ -f ${SCRIPTDIR}/config_${USER}.sh ]; then
         echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh"

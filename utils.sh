@@ -270,7 +270,11 @@ function master_node_to_tf() {
     local_gb=$(master_node_val ${master_idx} "properties.local_gb")
     cpu_arch=$(master_node_val ${master_idx} "properties.cpu_arch")
 
-    ipmi_port=$(master_node_val ${master_idx} "driver_info.ipmi_port")
+    if [ "$NODES_PLATFORM" == "libvirt" ]; then
+      ipmi_port=$(master_node_val ${master_idx} "driver_info.ipmi_port")
+    else
+      ipmi_port=$DEFAULT_IPMI_PORT
+    fi
     ipmi_username=$(master_node_val ${master_idx} "driver_info.ipmi_username")
     ipmi_password=$(master_node_val ${master_idx} "driver_info.ipmi_password")
     ipmi_address=$(master_node_val ${master_idx} "driver_info.ipmi_address")

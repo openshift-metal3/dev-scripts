@@ -39,7 +39,9 @@ sudo systemctl reload NetworkManager
 $SSH -o ConnectionAttempts=500 core@$IP id
 
 # Create a master_nodes.json file
-jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
+if [ "$NODES_PLATFORM" == "libvirt" ]; then
+  jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
+fi
 
 # Generate "dynamic" ignition patches
 machineconfig_generate_patches "master"
