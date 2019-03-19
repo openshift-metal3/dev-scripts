@@ -57,8 +57,8 @@ if [ ! -d "$WORKING_DIR" ]; then
 fi
 
 export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-"https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/"}
-export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-47.284}"
-export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
+export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-400.7.20190312.0}"
+export RHCOS_IMAGE_NAME="rhcos-maipo-${RHCOS_IMAGE_VERSION}"
 # FIXME(shardy) note the -openstack image doesn't work for libvirt
 # as the qemu ignition config injection described in the docs at
 # https://coreos.com/os/docs/latest/booting-with-libvirt.html
