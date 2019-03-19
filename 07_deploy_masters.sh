@@ -34,10 +34,9 @@ IMAGE_SOURCE="http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST"
 IMAGE_CHECKSUM=$(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
 
 ROOT_GB="25"
-ROOT_DEVICE="/dev/vda"
 
 for i in $(seq 0 2); do
-  master_node_to_tf $i $IMAGE_SOURCE $IMAGE_CHECKSUM $ROOT_GB $ROOT_DEVICE >> ocp/tf-master/main.tf
+  master_node_to_tf $i $IMAGE_SOURCE $IMAGE_CHECKSUM $ROOT_GB $ROOT_DISK >> ocp/tf-master/main.tf
 done
 
 echo "Deploying master nodes"
