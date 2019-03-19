@@ -36,15 +36,15 @@ spec:
       - contents:
           verification: {}
         filesystem: root
-        mode: 664
+        mode: 0664
         path: /etc/coredns/Corefile
       - contents:
           verification: {}
         filesystem: root
-        mode: 775
+        mode: 0775
         path: /usr/local/bin/coredns.sh
       - contents:
           verification: {}
         filesystem: root
-        mode: 775
+        mode: 0775
         path: /usr/local/bin/nthhost

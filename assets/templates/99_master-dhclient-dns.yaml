@@ -14,10 +14,10 @@ spec:
       - contents:
           verification: {}
         filesystem: root
-        mode: 664
+        mode: 0664
         path: /etc/dhcp/dhclient.conf.template
       - contents:
           verification: {}
         filesystem: root
-        mode: 775
+        mode: 0755
         path: /etc/NetworkManager/dispatcher.d/dns-vip-prepender
