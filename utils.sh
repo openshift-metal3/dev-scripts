@@ -195,3 +195,20 @@ function collect_info_on_failure() {
     oc --kubeconfig ocp/auth/kubeconfig get clusteroperators
     oc --kubeconfig ocp/auth/kubeconfig get pods --all-namespaces | grep -v Running | grep -v Completed
 }
+
+function wait_for_bootstrap_event() {
+  local events
+  local counter
+  pause=10
+  max_attempts=60 # 60*10 = at least 10 mins of attempts
+
+  for i in $(seq 0 "$max_attempts"); do
+    events=$(oc --request-timeout=5s --config ocp/auth/kubeconfig get events -n kube-system --no-headers -o wide)
+    echo "$events"
+    if [[ ! $events =~ "bootstrap-complete" ]]; then 
+      sleep "$pause";
+    else
+      break
+    fi
+  done
+}
