@@ -270,7 +270,10 @@ function master_node_to_tf() {
     local_gb=$(master_node_val ${master_idx} "properties.local_gb")
     cpu_arch=$(master_node_val ${master_idx} "properties.cpu_arch")
 
-    ipmi_port=$(master_node_val ${master_idx} "driver_info.ipmi_port")
+    ipmi_port=$(master_node_val ${master_idx} "driver_info.ipmi_port // \"\"")
+    if [ -n "$ipmi_port" ]; then
+        ipmi_port="\"ipmi_port\"=      \"${ipmi_port}\""
+    fi
     ipmi_username=$(master_node_val ${master_idx} "driver_info.ipmi_username")
     ipmi_password=$(master_node_val ${master_idx} "driver_info.ipmi_password")
     ipmi_address=$(master_node_val ${master_idx} "driver_info.ipmi_address")
@@ -307,7 +310,7 @@ resource "ironic_node_v1" "openshift-master-${master_idx}" {
 
   driver = "ipmi"
   driver_info {
-    "ipmi_port"=      "${ipmi_port}"
+    ${ipmi_port}
     "ipmi_username"=  "${ipmi_username}"
     "ipmi_password"=  "${ipmi_password}"
     "ipmi_address"=   "${ipmi_address}"
