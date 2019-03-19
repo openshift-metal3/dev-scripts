@@ -71,10 +71,7 @@ for i in $(seq 0 2); do
   oc --config ocp/auth/kubeconfig wait nodes/master-$i --for condition=ready --timeout=600s
 done
 
-# Wait for bootstrap to complete
-while ! oc --config ocp/auth/kubeconfig get events -n kube-system --no-headers -o wide | grep -q bootstrap-complete; do
-  sleep 10
-done
+wait_for_bootstrap_event
 
 # disable NoSchedule taints for masters until we have workers deployed
 for num in 0 1 2; do
