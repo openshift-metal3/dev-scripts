@@ -1,0 +1,23 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 00-worker-dhclient-dns
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      files:
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 664
+        path: /etc/dhcp/dhclient.conf
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 775
+        path: /etc/NetworkManager/dispatcher.d/dns-vip-prepender
