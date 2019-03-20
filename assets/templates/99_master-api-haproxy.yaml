@@ -1,0 +1,42 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 00-master-api-haproxy
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    systemd:
+      units:
+        - contents: |
+            [Unit]
+            Description=Load Balance OpenShift API using HAProxy
+            Wants=network-online.target
+            After=network-online.target
+
+            [Service]
+            WorkingDirectory=/etc/haproxy
+            ExecStart=/usr/local/bin/haproxy.sh
+            Restart=on-failure
+            RestartSec=5
+
+            [Install]
+            WantedBy=multi-user.target
+
+          enabled: true
+          name: api-haproxy.service
+    storage:
+      files:
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 0664
+        path: /etc/haproxy/haproxy.cfg.template
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 0755
+        path: /usr/local/bin/haproxy.sh

@@ -1,5 +1,3 @@
-global
-    external-check
 defaults
     mode                    tcp
     log                     global
@@ -15,8 +13,6 @@ frontend  main
   bind :7443
   default_backend masters
 backend masters
-   option external-check
+   option httpchk GET /healthz HTTP/1.0
    option log-health-checks
-   external-check path "/usr/bin:/usr/local/bin"
-   external-check command "/usr/local/etc/haproxy/members_healthcheck.sh"
    balance     roundrobin
