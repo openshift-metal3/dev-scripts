@@ -57,8 +57,10 @@ if [ ! -d "$WORKING_DIR" ]; then
 fi
 
 export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-"https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/"}
-export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-47.284}"
-export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
+export RHCOS_LATEST="$(curl ${RHCOS_IMAGE_URL}/builds.json | jq -r ".builds[0]")"
+export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-${RHCOS_LATEST}}"
+export RHCOS_IMAGE_FILENAME_OPENSTACK_GZ="$(curl ${RHCOS_IMAGE_URL}/${RHCOS_IMAGE_VERSION}/meta.json | jq -r '.images.openstack.path')"
+export RHCOS_IMAGE_NAME=$(echo $RHCOS_IMAGE_FILENAME_OPENSTACK_GZ | sed -e 's/-openstack.*//')
 # FIXME(shardy) note the -openstack image doesn't work for libvirt
 # as the qemu ignition config injection described in the docs at
 # https://coreos.com/os/docs/latest/booting-with-libvirt.html
@@ -68,7 +70,7 @@ export RHCOS_IMAGE_NAME="redhat-coreos-maipo-${RHCOS_IMAGE_VERSION}"
 export RHCOS_IMAGE_FILENAME="${RHCOS_IMAGE_NAME}-qemu.qcow2"
 export RHCOS_IMAGE_FILENAME_OPENSTACK="${RHCOS_IMAGE_NAME}-openstack.qcow2"
 export RHCOS_IMAGE_FILENAME_DUALDHCP="${RHCOS_IMAGE_NAME}-dualdhcp.qcow2"
-export RHCOS_IMAGE_FILENAME_LATEST="redhat-coreos-maipo-latest.qcow2"
+export RHCOS_IMAGE_FILENAME_LATEST="rhcos-maipo-latest.qcow2"
 
 # Ironic vars
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
