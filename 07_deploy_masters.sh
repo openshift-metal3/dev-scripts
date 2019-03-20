@@ -67,14 +67,14 @@ while [ "$NUM_NODES" -ne 3 ]; do
   NUM_NODES=$(oc --config ocp/auth/kubeconfig get nodes --no-headers | wc -l)
 done
 for i in $(seq 0 2); do
-  oc --config ocp/auth/kubeconfig wait nodes/master-$i --for condition=ready --timeout=600s
+  oc wait nodes/master-$i --for condition=ready --timeout=600s
 done
 
 wait_for_bootstrap_event
 
 # disable NoSchedule taints for masters until we have workers deployed
 for num in 0 1 2; do
-  oc --kubeconfig ocp/auth/kubeconfig adm taint nodes master-${num} node-role.kubernetes.io/master:NoSchedule-
+  oc adm taint nodes master-${num} node-role.kubernetes.io/master:NoSchedule-
 done
 
 echo "Cluster up, you can interact with it via oc --config ocp/auth/kubeconfig <command>"
