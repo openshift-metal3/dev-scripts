@@ -60,3 +60,6 @@ popd
 
 # Install baremetal-operator
 sync_go_repo_and_patch github.com/metalkube/baremetal-operator https://github.com/metalkube/baremetal-operator.git
+
+# Install rook repository
+sync_go_repo_and_patch github.com/rook/rook https://github.com/rook/rook.git
