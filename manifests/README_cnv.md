@@ -37,7 +37,26 @@ Apply this config https://github.com/kubevirt/demo/blob/master/manifests/vm.yaml
 
 ## CDI
 
-TBD
+CDI provides the DataVolume CRD to use with VMs.  Enable 'DataVolumes' feature
+gate in the kubevirt configmap to use them.
+
+```bash
+VERSION=v1.6.0
+curl -Lo 8_cnv_cdi_operator.yaml https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-operator.yaml
+curl -Lo 9_cnv_cdi_cr.yaml https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-operator-cr.yaml
+cat > 12_cnv_kubevirt_config.yaml <<EOY
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubevirt-config
+  namespace: kubevirt
+data:
+  debug.useEmulation: "true"
+  feature-gates: "DataVolumes"
+EOY
+```
+
+Manifests are from https://github.com/kubevirt/containerized-data-importer/releases.
 
 ## Network
 
