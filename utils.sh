@@ -191,9 +191,9 @@ EOF
 
 function collect_info_on_failure() {
     $SSH -o ConnectionAttempts=500 core@$IP sudo journalctl -b -u bootkube
-    oc --kubeconfig ocp/auth/kubeconfig get clusterversion/version
-    oc --kubeconfig ocp/auth/kubeconfig get clusteroperators
-    oc --kubeconfig ocp/auth/kubeconfig get pods --all-namespaces | grep -v Running | grep -v Completed
+    oc get clusterversion/version
+    oc get clusteroperators
+    oc get pods --all-namespaces | grep -v Running | grep -v Completed
 }
 
 function wait_for_bootstrap_event() {
@@ -203,7 +203,7 @@ function wait_for_bootstrap_event() {
   max_attempts=60 # 60*10 = at least 10 mins of attempts
 
   for i in $(seq 0 "$max_attempts"); do
-    events=$(oc --request-timeout=5s --config ocp/auth/kubeconfig get events -n kube-system --no-headers -o wide || echo 'Error retrieving events')
+    events=$(oc --request-timeout=5s get events -n kube-system --no-headers -o wide || echo 'Error retrieving events')
     echo "$events"
     if [[ ! $events =~ "bootstrap-complete" ]]; then 
       sleep "$pause";

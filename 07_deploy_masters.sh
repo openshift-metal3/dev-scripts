@@ -60,11 +60,11 @@ echo "Master nodes up, you can ssh to the following IPs with core@<IP>"
 sudo virsh net-dhcp-leases baremetal
 
 # Wait for nodes to appear and become ready
-until oc --config ocp/auth/kubeconfig get nodes; do sleep 5; done
-NUM_NODES=$(oc --config ocp/auth/kubeconfig get nodes --no-headers | wc -l)
+until oc get nodes; do sleep 5; done
+NUM_NODES=$(oc get nodes --no-headers | wc -l)
 while [ "$NUM_NODES" -ne 3 ]; do
   sleep 10
-  NUM_NODES=$(oc --config ocp/auth/kubeconfig get nodes --no-headers | wc -l)
+  NUM_NODES=$(oc get nodes --no-headers | wc -l)
 done
 for i in $(seq 0 2); do
   oc wait nodes/master-$i --for condition=ready --timeout=600s
