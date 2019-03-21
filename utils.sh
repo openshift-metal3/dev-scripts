@@ -203,7 +203,7 @@ function wait_for_bootstrap_event() {
   max_attempts=60 # 60*10 = at least 10 mins of attempts
 
   for i in $(seq 0 "$max_attempts"); do
-    events=$(oc --request-timeout=5s --config ocp/auth/kubeconfig get events -n kube-system --no-headers -o wide)
+    events=$(oc --request-timeout=5s --config ocp/auth/kubeconfig get events -n kube-system --no-headers -o wide || echo 'Error retrieving events')
     echo "$events"
     if [[ ! $events =~ "bootstrap-complete" ]]; then 
       sleep "$pause";
