@@ -32,4 +32,3 @@ ocp_cleanup:
 
 host_cleanup:
 	./host_cleanup.sh
-
