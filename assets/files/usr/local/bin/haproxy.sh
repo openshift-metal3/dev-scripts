@@ -61,7 +61,7 @@ function start_haproxy {
 
     domain="$1"
     api_vip="$2"
-    declare -r image=quay.io/yboaron/haproxy:latest
+    declare -r image=docker.io/library/haproxy:latest
     declare -r cfg_dir=/etc/haproxy
     declare -r lb_port=7443
     declare -r api_port=6443
