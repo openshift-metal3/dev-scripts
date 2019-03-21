@@ -14,7 +14,7 @@ INT_IF=${INT_IF:-}
 #Root disk to deploy coreOS - use /dev/sda on BM
 ROOT_DISK=${ROOT_DISK:="/dev/vda"}
 
-if [ -z "${CONFIG:-}" ]; then  
+if [ -z "${CONFIG:-}" ]; then
     # See if there's a config_$USER.sh in the SCRIPTDIR
     if [ -f ${SCRIPTDIR}/config_${USER}.sh ]; then
         echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh"
@@ -74,6 +74,8 @@ export RHCOS_IMAGE_FILENAME_LATEST="redhat-coreos-maipo-latest.qcow2"
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
 export IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metalkube/metalkube-ironic-inspector"}
 export IRONIC_DATA_DIR="$WORKING_DIR/ironic"
+
+export KUBECONFIG="${SCRIPTDIR}/ocp/auth/kubeconfig"
 
 # Log output automatically
 LOGDIR="$(dirname $0)/logs"
