@@ -75,7 +75,7 @@ function start_haproxy {
         podman pull "$image"
     fi
 
-    MATCHES="$(sudo podman ps -a --format "{{.Names}}" | egrep "^${CONTAINER_NAME}$")" || /bin/true
+    MATCHES="$(sudo podman ps -a --format "{{.Names}}" | grep "^${CONTAINER_NAME}$")" || /bin/true
     if [[ -z "$MATCHES" ]]; then
         (>&2 echo "Creating container...")
         sudo podman create \
@@ -89,34 +89,40 @@ function start_haproxy {
 
     sudo podman start "$CONTAINER_NAME"
 
-    # Make sure we can access API via LB before redirecting traffic to LB
-    while true; do
-        if curl -o /dev/null -kLs "https://0:${lb_port}/healthz"; then
-            (>&2 echo "API is accessible via LB")
-            break
-        fi
-        (>&2 echo "Waiting for API to be accessible via LB")
-        sleep 15
-    done
-
-    # Redirect traffic to OCP API LB
-    sudo iptables -t nat -I PREROUTING --src 0/0 --dst "$api_vip" -p tcp --dport "$api_port" -j REDIRECT --to-ports "$lb_port" -m comment --comment "OCP_API_LB_REDIRECT"
-
     # Update LB if masters topology changed
     while true; do
-        sleep 60
+        sleep 15
         if has_master_api_lb_topology_changed "$domain" "${cfg_dir}/haproxy.cfg"; then
             (>&2 echo "Master topology changed. Reconfiguring and hot restarting HAProxy")
             generate_haproxy_cfg "$domain" "$cfg_dir" "$api_port"
             sudo podman kill -s HUP "$CONTAINER_NAME"
         fi
+        if curl -o /dev/null -kLs "https://0:${lb_port}/healthz"; then
+            (>&2 echo "API is accessible via LB")
+            ensure_prerouting_rules "$api_vip" "$api_port" "$lb_port"
+        fi
     done
+}
+
+function ensure_prerouting_rules {
+    local api_vip
+    local api_port
+    local lb_port
+
+    api_vip="$1"
+    api_port="$2"
+    lb_port="$3"
+    rules=$(sudo iptables -L PREROUTING -n -t nat --line-numbers | awk '/OCP_API_LB_REDIRECT/ {print $1}'  | tac)
+    if [[ -z "$rules" ]]; then
+            (>&2 echo "Setting prerouting rule from ${api_vip}:${api_port} to port $lb_port")
+            sudo iptables -t nat -I PREROUTING --src 0/0 --dst "$api_vip" -p tcp --dport "$api_port" -j REDIRECT --to-ports "$lb_port" -m comment --comment "OCP_API_LB_REDIRECT"
+    fi
 }
 
 function sighandler {
     (>&2 echo "Exiting...")
     (>&2 echo "Delete API HAProxy IPtables rule")
-    rules=$(sudo iptables -L PREROUTING -n -t nat --line-numbers | awk '/OCP_API_LB_REDIRECT/ {print $1;}'  | tac)
+    rules=$(sudo iptables -L PREROUTING -n -t nat --line-numbers | awk '/OCP_API_LB_REDIRECT/ {print $1}'  | tac)
     for rule in $rules; do
        sudo iptables -t nat -D PREROUTING  "$rule"
     done
