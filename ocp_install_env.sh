@@ -18,13 +18,23 @@ function generate_ocp_install_config() {
 
     outdir="$1"
 
+    PLATFORM_YAML=`jq '.nodes[0:3] | {nodes: .}' ${NODES_FILE} | python -c 'import sys, yaml, json; from flatten_json import flatten; yaml.safe_dump({"platform": {"baremetal": {"nodes": flatten(json.load(sys.stdin))}}}, sys.stdout, default_flow_style=False)'`
+
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1beta3
 baseDomain: ${BASE_DOMAIN}
 metadata:
   name: ${CLUSTER_NAME}
 platform:
-  baremetal: {}
+  baremetal:
+    nodes:
+$(master_node_to_install_config 0)
+$(master_node_to_install_config 1)
+$(master_node_to_install_config 2)
+    master_configuration:
+      image_source: "http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST"
+      image_checksum: $(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
+      root_gb: 25
 pullSecret: |
   ${PULL_SECRET}
 sshKey: |

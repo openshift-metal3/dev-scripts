@@ -8,7 +8,7 @@ function generate_assets() {
       echo "Templating ${file} to assets/generated/${file}"
       cp assets/{templates,generated}/${file}
 
-      for path in $(yq -r '.spec.config.storage.files[].path' assets/templates/${file} | cut -c 2-); do 
+      for path in $(yq -r '.spec.config.storage.files[].path' assets/templates/${file} | cut -c 2-); do
           assets/yaml_patch.py "assets/generated/${file}" "/${path}" "$(cat assets/files/${path} | base64 -w0)"
       done
   done
@@ -18,21 +18,16 @@ function create_cluster() {
     local assets_dir
 
     assets_dir="$1"
+
     cp ${assets_dir}/install-config.yaml{,.tmp}
-
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create ignition-configs
-    cp ${assets_dir}/master.ign{,.tmp}
-
-    cp ${assets_dir}/install-config.yaml{.tmp,}
     $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create manifests
 
     generate_assets
+    mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
     cp ${assets_dir}/install-config.yaml{.tmp,}
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" create cluster
-    cp ${assets_dir}/master.ign{.tmp,}
-
+    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create cluster
 }
 
 function wait_for_json() {
@@ -89,18 +84,17 @@ function master_node_val() {
     jq -r ".nodes[${n}].${val}" $MASTER_NODES_FILE
 }
 
-function master_node_to_tf() {
-    local master_idx
-    local image_source
-    local image_checksum
-    local root_gb
-    local root_device
+function collect_info_on_failure() {
+    $SSH -o ConnectionAttempts=500 core@$IP sudo journalctl -b -u bootkube
+    oc get clusterversion/version
+    oc get clusteroperators
+    oc get pods --all-namespaces | grep -v Running | grep -v Completed
+}
 
+
+function master_node_to_install_config() {
+    local master_idx
     master_idx="$1"
-    image_source="$2"
-    image_checksum="$3"
-    root_gb="$4"
-    root_device="$5"
 
     driver=$(master_node_val ${master_idx} "driver")
     if [ $driver == "ipmi" ] ; then
@@ -120,7 +114,8 @@ function master_node_to_tf() {
 
     port=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_port // \"\"")
     if [ -n "$port" ]; then
-        port="\"${driver_prefix}_port\"=      \"${port}\""
+	port_prefix="${driver_prefix}_port: \"${port}\""
+        port_newline=$'\n        '
     fi
     username=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_username")
     password=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_password")
@@ -130,50 +125,24 @@ function master_node_to_tf() {
     deploy_ramdisk=$(master_node_val ${master_idx} "driver_info.deploy_ramdisk")
 
     cat <<EOF
-
-resource "ironic_node_v1" "openshift-master-${master_idx}" {
-  name = "$name"
-
-  target_provision_state = "active"
-  user_data = "\${file("master.ign")}"
-
-  ports = [
-    {
-      "address" = "${mac}"
-      "pxe_enabled" = "true"
-    }
-  ]
-
-  properties {
-    "local_gb" = "${local_gb}"
-    "cpu_arch" =  "${cpu_arch}"
-  }
-
-  root_device = {
-    "name" = "${ROOT_DISK}"
-  }
-
-  instance_info = {
-    "image_source" = "${image_source}"
-    "image_checksum" = "${image_checksum}"
-    "root_gb" = "${root_gb}"
-  }
-
-  driver = "${driver}"
-  driver_info {
-    ${port}
-    "${driver_prefix}_username"=  "${username}"
-    "${driver_prefix}_password"=  "${password}"
-    "${driver_prefix}_address"=   "${address}"
-    "deploy_kernel"=  "${deploy_kernel}"
-    "deploy_ramdisk"= "${deploy_ramdisk}"
-  }
-
-  management_interface = "${driver_interface}"
-  power_interface = "${driver_interface}"
-  vendor_interface = "no-vendor"
-
-}
+      master_$master_idx:
+        name: $name
+        port_address: "${mac}"
+        driver: "${driver}"
+        management_interface: "${driver_interface}"
+        power_interface: "${driver_interface}"
+        vendor_interface: "no-vendor"
+      properties_$master_idx:
+        local_gb: "${local_gb}"
+        cpu_arch: "${cpu_arch}"
+      root_device_$master_idx:
+        name: "${ROOT_DISK}"
+      driver_info_$master_idx:
+        ${port_prefix}${port_newline}${driver_prefix}_username: "${username}"
+        ${driver_prefix}_password: "${password}"
+        ${driver_prefix}_address: "${address}"
+        deploy_kernel:  "${deploy_kernel}"
+        deploy_ramdisk: "${deploy_ramdisk}"
 EOF
 }
 
@@ -182,13 +151,6 @@ function collect_info_on_failure() {
     oc get clusterversion/version
     oc get clusteroperators
     oc get pods --all-namespaces | grep -v Running | grep -v Completed
-}
-
-function wait_for_bootstrap_event() {
-    local assets_dir
-
-    assets_dir="$1"
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" upi bootstrap-complete
 }
 
 function patch_ep_host_etcd() {
