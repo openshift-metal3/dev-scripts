@@ -3,6 +3,13 @@ vrrp_script chk_ocp {
     interval 1
     weight 50
 }
+
+vrrp_script chk_dns {
+    script "/etc/keepalived/check_coredns_mdns.sh"
+    interval 1
+    weight 50
+}
+
 vrrp_instance API {
     state BACKUP
     interface ${INTERFACE}
@@ -18,5 +25,23 @@ vrrp_instance API {
     }
     track_script {
         chk_ocp
+    }
+}
+
+vrrp_instance DNS {
+    state BACKUP
+    interface ${INTERFACE}
+    virtual_router_id 52
+    priority 40
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass cluster_uuid_dns_vip
+    }
+    virtual_ipaddress {
+        ${DNS_VIP}
+    }
+    track_script {
+        chk_dns
     }
 }

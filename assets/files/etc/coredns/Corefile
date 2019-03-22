@@ -1,0 +1,8 @@
+. {
+    errors
+    health
+    mdns {$CLUSTER_DOMAIN}
+    forward . /etc/coredns/resolv.conf
+    cache 30
+    reload
+}

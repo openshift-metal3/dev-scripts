@@ -3,8 +3,8 @@ kind: MachineConfig
 metadata:
   generation: 1
   labels:
-    machineconfiguration.openshift.io/role: master
-  name: 00-master-keepalived
+    machineconfiguration.openshift.io/role: worker
+  name: 00-worker-coredns
 spec:
   config:
     ignition:
@@ -13,15 +13,15 @@ spec:
       units:
         - contents: |
             [Unit]
-            Description=Manage node VIPs with keepalived
+            Description=Serve cluster DNS
             Wants=network-online.target
             After=network-online.target
 
             [Service]
-            WorkingDirectory=/etc/keepalived
-            ExecStartPre=/usr/local/bin/keepalived.sh
-            ExecStart=/usr/bin/podman start -a keepalived
-            ExecStop=/usr/bin/podman stop -t 10 keepalived
+            WorkingDirectory=/etc/coredns
+            ExecStartPre=/usr/local/bin/coredns.sh
+            ExecStart=/usr/bin/podman start -a coredns
+            ExecStop=/usr/bin/podman stop -t 10 coredns
 
             Restart=on-failure
             RestartSec=5
@@ -30,26 +30,21 @@ spec:
             WantedBy=multi-user.target
 
           enabled: true
-          name: keepalived.service
+          name: coredns.service
     storage:
       files:
       - contents:
           verification: {}
         filesystem: root
-        mode: 0775
-        path: /usr/local/bin/get_vip_subnet_cidr
-      - contents:
-          verification: {}
-        filesystem: root
         mode: 0664
-        path: /etc/keepalived/keepalived.conf.template
+        path: /etc/coredns/Corefile
       - contents:
           verification: {}
         filesystem: root
         mode: 0775
-        path: /usr/local/bin/keepalived.sh
+        path: /usr/local/bin/coredns.sh
       - contents:
           verification: {}
         filesystem: root
         mode: 0775
-        path: /etc/keepalived/check_coredns_mdns.sh
+        path: /usr/local/bin/nthhost

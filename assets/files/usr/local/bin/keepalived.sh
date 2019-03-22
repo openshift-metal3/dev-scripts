@@ -8,7 +8,7 @@ API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
 SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
 INTERFACE="$(ip -o addr show to "$SUBNET_CIDR" | awk '{print $2}')"
-
+DNS_VIP="$(/usr/local/bin/nthhost "$SUBNET_CIDR" 2)"
 
 KEEPALIVED_IMAGE="quay.io/celebdor/keepalived:latest"
 if ! podman inspect "$KEEPALIVED_IMAGE" &>/dev/null; then
@@ -17,6 +17,7 @@ if ! podman inspect "$KEEPALIVED_IMAGE" &>/dev/null; then
 fi
 
 export API_VIP
+export DNS_VIP
 export INTERFACE
 envsubst < /etc/keepalived/keepalived.conf.template | sudo tee /etc/keepalived/keepalived.conf
 
