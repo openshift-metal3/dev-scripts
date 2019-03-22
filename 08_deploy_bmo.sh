@@ -13,6 +13,6 @@ sed -i 's/bmo-project/openshift-machine-api/g' ocp/deploy/role_binding.yaml
 # Start deploying on the new cluster
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/service_account.yaml --namespace=openshift-machine-api
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/role.yaml --namespace=openshift-machine-api
-oc --config ocp/auth/kubeconfig apply -f ocp/deploy/operator.yaml --namespace=openshift-machine-api
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/role_binding.yaml
+oc --config ocp/auth/kubeconfig apply -f ocp/deploy/operator.yaml --namespace=openshift-machine-api
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/crds/metalkube_v1alpha1_baremetalhost_crd.yaml
