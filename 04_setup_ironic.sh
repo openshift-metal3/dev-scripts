@@ -11,6 +11,12 @@ source get_images.sh
 cp ironic/dnsmasq.conf $IRONIC_DATA_DIR/
 cp ironic/dualboot.ipxe ironic/inspector.ipxe $IRONIC_DATA_DIR/html/
 
+# tftpboot must be in the same partition as html when mounted in the
+# Ironic containers to avoid "Invalid cross-device link" errors
+if [ ! -d $IRONIC_DATA_DIR/tftpboot ] ; then
+   mkdir $IRONIC_DATA_DIR/tftpboot
+fi
+
 # Either pull or build the ironic images
 # To build the IRONIC image set
 # IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
@@ -80,7 +86,7 @@ ln -sf "$RHCOS_IMAGE_FILENAME_DUALDHCP" "$RHCOS_IMAGE_FILENAME_LATEST"
 ln -sf "$RHCOS_IMAGE_FILENAME_DUALDHCP.md5sum" "$RHCOS_IMAGE_FILENAME_LATEST.md5sum"
 popd
 
-for name in ironic ironic-inspector ; do 
+for name in ironic ironic-inspector dnsmasq httpd; do 
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -93,12 +99,15 @@ fi
 # Create pod
 sudo podman pod create -n ironic-pod 
 
-# Start Ironic and inspector
-sudo podman run -d --net host --privileged --name ironic \
-    --pod ironic-pod \
-    -v $IRONIC_DATA_DIR/dnsmasq.conf:/etc/dnsmasq.conf \
-    -v $IRONIC_DATA_DIR/html/images:/var/www/html/images \
-    -v $IRONIC_DATA_DIR/html/dualboot.ipxe:/var/www/html/dualboot.ipxe \
-    -v $IRONIC_DATA_DIR/html/inspector.ipxe:/var/www/html/inspector.ipxe ${IRONIC_IMAGE}
+# Start dnsmasq, http, and dnsmasq containers using same image
+sudo podman run -d --net host --privileged --name dnsmasq  --pod ironic-pod \
+     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE} 
 
+sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
+     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE} 
+
+sudo podman run -d --net host --privileged --name ironic --pod ironic-pod \
+     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE} 
+
+# Start Ironic Inspector 
 sudo podman run -d --net host --privileged --name ironic-inspector --pod ironic-pod "${IRONIC_INSPECTOR_IMAGE}"
