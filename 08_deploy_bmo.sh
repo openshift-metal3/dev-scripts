@@ -1,18 +1,18 @@
 #!/usr/bin/bash
 
+#source common.sh
 eval "$(go env)"
 
 # Get the latest bits for baremetal-operator
 export BMOPATH="$GOPATH/src/github.com/metalkube/baremetal-operator"
 
-source common.sh
-
-oc new-project bmo-project
+# Make a local copy of the baremetal-operator code to make changes
+cp -r $BMOPATH/deploy ocp/.
+sed -i 's/bmo-project/openshift-machine-api/g' ocp/deploy/role_binding.yaml
 
 # Start deploying on the new cluster
-
-oc apply -f $BMOPATH/deploy/service_account.yaml
-oc apply -f $BMOPATH/deploy/role.yaml
-oc apply -f $BMOPATH/deploy/role_binding.yaml
-oc apply -f $BMOPATH/deploy/crds/metalkube_v1alpha1_baremetalhost_crd.yaml
-oc apply -f $BMOPATH/deploy/operator.yaml
+oc --config ocp/auth/kubeconfig apply -f ocp/deploy/service_account.yaml --namespace=openshift-machine-api
+oc --config ocp/auth/kubeconfig apply -f ocp/deploy/role.yaml --namespace=openshift-machine-api
+oc --config ocp/auth/kubeconfig apply -f ocp/deploy/operator.yaml --namespace=openshift-machine-api
+oc --config ocp/auth/kubeconfig apply -f ocp/deploy/role_binding.yaml
+oc --config ocp/auth/kubeconfig apply -f ocp/deploy/crds/metalkube_v1alpha1_baremetalhost_crd.yaml

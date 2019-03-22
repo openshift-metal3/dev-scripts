@@ -83,6 +83,12 @@ generated in the previous step.
 After running `./07_deploy_masters.sh` note that it takes some time for the cluster to
 fully come up, many container images are downloaded before the k8s API is fully available.
 
+- `./08_deploy_bmo.sh`
+
+After running `./08_deploy_bmo.sh` the cluster that becomes active in the previous step
+is updated by deploying the baremetal-operator into the pre-existing "openshift-machine-api"
+project/namespace.
+
 ## Interacting with the deployed cluster
 
 When the master nodes are up and the cluster is active, you can interact with the API:
