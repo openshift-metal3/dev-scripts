@@ -21,11 +21,13 @@ function generate_haproxy_cfg {
     local cfg_path
     local domain
     local api_port
+    local stat_port
 
     domain="$1"
     template_path="${2}/haproxy.cfg.template"
     cfg_path="${2}/haproxy.cfg"
     api_port="$3"
+    stat_port="$4"
 
     sudo tee "$cfg_path" < "$template_path"
     for item in $(etcd_members "$domain"); do
@@ -33,6 +35,16 @@ function generate_haproxy_cfg {
             sudo echo "   server $item ${ip}:$api_port weight 1 verify none check check-ssl inter 3s fall 3 rise 3" | sudo tee -a "$cfg_path"
         fi
     done
+    cat >> "$cfg_path" << EOL
+listen stats
+  bind 127.0.0.1:$stat_port
+  mode http
+  stats enable
+  stats hide-version
+  stats uri /haproxy_stats
+  stats refresh 30s
+  stats auth Username:Password
+EOL
 }
 
 function has_master_api_lb_topology_changed {
@@ -65,10 +77,11 @@ function start_haproxy {
     declare -r cfg_dir=/etc/haproxy
     declare -r lb_port=7443
     declare -r api_port=6443
+    declare -r stat_port=50000
 
     sudo mkdir --parents "$cfg_dir"
 
-    generate_haproxy_cfg "$domain" "$cfg_dir" "$api_port"
+    generate_haproxy_cfg "$domain" "$cfg_dir" "$api_port" "$stat_port"
 
     if ! podman inspect "$image" &>/dev/null; then
         (>&2 echo "Pulling haproxy release image $image...")
