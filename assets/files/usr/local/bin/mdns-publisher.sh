@@ -10,7 +10,7 @@ API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
 SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
 PREFIX="${SUBNET_CIDR#*/}"
-DNS_VIP="$(/usr/local/bin/nthhost "$SUBNET_CIDR" 2)"
+DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 ONE_CIDR="$(ip addr show to "$SUBNET_CIDR" | \
             grep -Po 'inet \K[\d.]+/[\d.]+' | \
             grep -v "${DNS_VIP}/$PREFIX" | \

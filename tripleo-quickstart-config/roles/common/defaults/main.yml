@@ -163,6 +163,9 @@ networks:
         - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
           hostnames:
             - "api"
+        - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
+          hostnames:
+            - "ns1"
 
 network_isolation: true
 network_isolation_type: 'single-nic-vlans'
