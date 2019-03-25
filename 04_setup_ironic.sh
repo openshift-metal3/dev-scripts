@@ -8,8 +8,8 @@ source common.sh
 source get_images.sh
 
 # ironic dnsmasq and ipxe config
-cp ironic/dnsmasq.conf $IRONIC_DATA_DIR/
-cp ironic/dualboot.ipxe ironic/inspector.ipxe $IRONIC_DATA_DIR/html/
+sudo cp ironic/dnsmasq.conf $IRONIC_DATA_DIR/
+sudo cp ironic/dualboot.ipxe ironic/inspector.ipxe $IRONIC_DATA_DIR/html/
 
 # Either pull or build the ironic images
 # To build the IRONIC image set
