@@ -119,8 +119,8 @@ fi
 
 if [ ! -d "$WORKING_DIR" ]; then
   echo "Creating Working Dir"
-  mkdir "$WORKING_DIR"
-  chown "${USER}:${USER}" "$WORKING_DIR"
+  sudo mkdir "$WORKING_DIR"
+  sudo chown "${USER}:${USER}" "$WORKING_DIR"
   chmod 755 "$WORKING_DIR"
 fi
 
