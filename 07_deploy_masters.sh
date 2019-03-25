@@ -75,6 +75,7 @@ wait_for_bootstrap_event
 # disable NoSchedule taints for masters until we have workers deployed
 for num in 0 1 2; do
   oc adm taint nodes master-${num} node-role.kubernetes.io/master:NoSchedule-
+  oc label node master-${num} node-role.kubernetes.io/worker=''
 done
 
 echo "Cluster up, you can interact with it via oc --config ocp/auth/kubeconfig <command>"
