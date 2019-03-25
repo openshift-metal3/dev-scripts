@@ -43,8 +43,3 @@ spec:
         filesystem: root
         mode: 0775
         path: /usr/local/bin/coredns.sh
-      - contents:
-          verification: {}
-        filesystem: root
-        mode: 0775
-        path: /usr/local/bin/nthhost
