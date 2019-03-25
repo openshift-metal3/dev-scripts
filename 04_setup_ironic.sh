@@ -63,7 +63,7 @@ if [ ! -e "$RHCOS_IMAGE_FILENAME_DUALDHCP" ] ; then
     mkdir -p /tmp/mnt
     sudo kpartx -a /dev/$LOOPBACK
     sudo mount /dev/mapper/${LOOPBACK}p1 /tmp/mnt
-    sudo sed -i -e 's/ip=eth0:dhcp/ip=eth0:dhcp ip=eth1:dhcp/g' /tmp/mnt/grub2/grub.cfg 
+    sudo sed --follow-symlinks -i -e 's/ip=eth0:dhcp/ip=eth0:dhcp ip=eth1:dhcp/g' /tmp/mnt/grub2/grub.cfg
     sudo umount /tmp/mnt
     sudo kpartx -d /dev/${LOOPBACK}
     sudo losetup -d /dev/${LOOPBACK}
