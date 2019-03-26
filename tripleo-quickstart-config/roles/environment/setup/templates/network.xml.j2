@@ -12,6 +12,9 @@
   <bridge name='{{ item.bridge }}' stp='{{ stp }}' delay='{{ delay }}' />
 {% else %}
   <bridge name='{{ item.bridge }}'/>
+{% if item.name == 'baremetal' and platform == 'baremetal' %}
+  <mac address="{{ baremetal_nic_mac }}"/>
+{% endif %}
 {% endif %}
 {% if item.forward_mode is defined %}
   <forward mode='{{ item.forward_mode }}'>

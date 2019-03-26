@@ -19,6 +19,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "local_working_dir=$HOME/.quickstart" \
     -e "virthost=$HOSTNAME" \
     -e "platform=$NODES_PLATFORM" \
+    -e "baremetal_interface=$INT_IF" \
+    -e "provisioning_interface=$PRO_IF" \
     -e @config/environments/dev_privileged_libvirt.yml \
     -i tripleo-quickstart-config/metalkube-inventory.ini \
     -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml
@@ -74,22 +76,27 @@ fi
 
 # Need to pass the provision interface for bare metal
 if [ "$PRO_IF" ]; then
-  sudo ip link set "$PRO_IF" master provisioning
+    echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=none\nBRIDGE=provisioning" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
 fi
 
 # Internal interface
 if [ "$INT_IF" ]; then
-  sudo ip link set "$INT_IF" master baremetal 
+    echo -e "DEVICE=baremetal\nTYPE=Bridge\nHWADDR=$MAC\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=dhcp" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
+    sudo cp /etc/sysconfig/network-scripts/ifcfg-$INT_IF /etc/sysconfig/network-scripts/ifcfg-$INT_IF.orig
+    echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=none\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+    sudo systemctl restart network
 fi
 
 # Switch NetworkManager to internal DNS
-sudo mkdir -p /etc/NetworkManager/conf.d/
-sudo crudini --set /etc/NetworkManager/conf.d/dnsmasq.conf main dns dnsmasq
-if [ "$ADDN_DNS" ] ; then
-  echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
-fi
-if systemctl is-active --quiet NetworkManager; then
-  sudo systemctl reload NetworkManager
-else
-  sudo systemctl restart NetworkManager
+if [ "$NODES_PLATFORM" == 'libvirt' ]; then
+  sudo mkdir -p /etc/NetworkManager/conf.d/
+  sudo crudini --set /etc/NetworkManager/conf.d/dnsmasq.conf main dns dnsmasq
+  if [ "$ADDN_DNS" ] ; then
+    echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
+  fi
+  if systemctl is-active --quiet NetworkManager; then
+    sudo systemctl reload NetworkManager
+  else
+    sudo systemctl restart NetworkManager
+  fi
 fi

@@ -1,0 +1,11 @@
+---
+- block:
+    - include_vars:
+        file: baremetal.yml
+    - name: register mac address of baremetal network interface
+      shell: |
+        /usr/sbin/ip l show dev {{ baremetal_interface }} | awk '/link/ {print $2}'
+      register: bm_mac
+    - set_fact:
+        baremetal_nic_mac: "{{ bm_mac.stdout }}"
+  when: platform == "baremetal"

@@ -24,6 +24,12 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -b -vvv tripleo-quickstart-config/metalkube-teardown-playbook.yml
 
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/conf.d/dnsmasq.conf
+sudo rm -rf /etc/sysconfig/network-scripts/ifcfg-provisioning
+if [ "$INT_IF" ]; then
+  sudo rm -rf /etc/sysconfig/network-scripts/ifcfg-baremetal
+  sudo cp /etc/sysconfig/network-scripts/ifcfg-$INT_IF.orig /etc/sysconfig/network-scripts/ifcfg-$INT_IF
+  sudo systemctl restart network
+fi
 sudo virsh net-destroy baremetal
 sudo virsh net-undefine baremetal
 sudo virsh net-destroy provisioning
