@@ -43,8 +43,6 @@ use_external_images: false
 # how many disks should be created when using extradisks
 extradisks_list:
   - vdb
-  - vdc
-  - vdd
 
 # size of the disks to create when using extradisks
 extradisks_size: 8G
