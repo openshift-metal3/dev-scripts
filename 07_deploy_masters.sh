@@ -73,4 +73,11 @@ for node in $(oc --config ocp/auth/kubeconfig get nodes --no-headers | sed -e 's
   oc label node $node node-role.kubernetes.io/worker=''
 done
 
+#Verify Ingress controller functionality
+echo "Verifying Ingress controller functionality, first we'll check that router pod responsive"
+until curl -o /dev/null -kLs --fail  tst.apps.${CLUSTER_DOMAIN}:1936/healthz; do sleep 20 && echo "Router pod not responding"; done
+echo "Router pod responding, checking connectivity to console via ingress controller"
+until wget --no-check-certificate https://console-openshift-console.apps.${CLUSTER_DOMAIN}; do sleep 10 && echo "rechecking"; done
+echo "Ingress controller is working!"
+
 echo "Cluster up, you can interact with it via oc --config ocp/auth/kubeconfig <command>"

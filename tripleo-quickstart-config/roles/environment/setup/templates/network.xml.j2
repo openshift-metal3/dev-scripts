@@ -49,6 +49,11 @@
     <srv service='{{ srv.name }}' protocol='{{ srv.protocol }}' domain='{{ srv.domain }}' port='{{ srv.port }}' target='{{ srv.target }}' />
     {% endfor %}
   {% endif %}
+  {% if item.dns.forwarders is defined %}
+    {% for forwarder in item.dns.forwarders %}
+    <forwarder domain='{{ forwarder.domain }}' addr='{{ forwarder.addr }}' />
+    {% endfor %}
+  {% endif %}
   </dns>
 {% endif %}
 {% endif %}
