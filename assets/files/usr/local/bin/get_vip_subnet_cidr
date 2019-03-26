@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/libexec/platform-python
 import sys
 import socket
 import struct
