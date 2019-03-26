@@ -20,4 +20,4 @@ spec:
           verification: {}
         filesystem: root
         mode: 0755
-        path: /etc/NetworkManager/dispatcher.d/dns-vip-prepender
+        path: /etc/NetworkManager/dispatcher.d/pre-up.d/dns-vip-prepender
