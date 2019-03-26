@@ -10,6 +10,12 @@ vrrp_script chk_dns {
     weight 50
 }
 
+vrrp_script chk_ingress {
+    script "curl -o /dev/null -kLs https://0:1936/healthz"
+    interval 1
+    weight 50
+}
+
 vrrp_instance API {
     state BACKUP
     interface ${INTERFACE}
@@ -43,5 +49,23 @@ vrrp_instance DNS {
     }
     track_script {
         chk_dns
+    }
+}
+
+vrrp_instance INGRESS {
+    state BACKUP
+    interface ${INTERFACE}
+    virtual_router_id 53
+    priority 40
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass cluster_uuid_ingress_vip
+    }
+    virtual_ipaddress {
+        192.168.111.4
+    }
+    track_script {
+        chk_ingress
     }
 }

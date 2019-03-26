@@ -28,6 +28,8 @@ done
 IP=$(domain_net_ip ${INFRA_ID}-bootstrap baremetal)
 export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
 echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+export INGRESS_VIP=$(dig +noall +answer "ingress.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
+echo "address=/.apps.${CLUSTER_DOMAIN}/${INGRESS_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
 sudo systemctl reload NetworkManager
 
 # Wait for ssh to start
