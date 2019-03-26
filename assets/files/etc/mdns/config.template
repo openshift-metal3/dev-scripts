@@ -2,7 +2,7 @@ bind_address = "$NON_VIRTUAL_IP"
 collision_avoidance = "hostname"
 
 service {
-    name = "Etcd"
+    name = "$CLUSTER_NAME Etcd"
     host_name = "$ETCD_HOSTNAME"
     type = "_etcd-server-ssl._tcp"
     domain = "local."
@@ -11,7 +11,7 @@ service {
 }
 
 service {
-    name = "Workstation"
+    name = "$CLUSTER_NAME Workstation"
     host_name = "$MASTER_HOSTNAME"
     type = "_workstation._tcp"
     domain = "local."
@@ -20,7 +20,7 @@ service {
 }
 
 service {
-    name = "EtcdWorkstation"
+    name = "$CLUSTER_NAME EtcdWorkstation"
     host_name = "$ETCD_HOSTNAME"
     type = "_workstation._tcp"
     domain = "local."

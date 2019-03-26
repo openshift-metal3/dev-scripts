@@ -4,6 +4,8 @@ set -e
 mkdir --parents /etc/mdns
 
 CLUSTER_DOMAIN="$(awk '/search/ {print $2}' /etc/resolv.conf)"
+read -d '.' -a CLUSTER_ARR <<< $CLUSTER_DOMAIN
+CLUSTER_NAME=${CLUSTER_ARR[0]}
 API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
 SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
@@ -21,6 +23,7 @@ ETCD_HOSTNAME="$(echo "$MASTER_HOSTNAME" | sed 's;master;etcd;')"
 export MASTER_HOSTNAME
 export ETCD_HOSTNAME
 export NON_VIRTUAL_IP
+export CLUSTER_NAME
 envsubst < /etc/mdns/config.template | sudo tee /etc/mdns/config.hcl
 
 MDNS_PUBLISHER_IMAGE="quay.io/openshift-metalkube/mdns-publisher:collision_avoidance"
