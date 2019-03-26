@@ -28,3 +28,4 @@ sudo virsh net-destroy baremetal
 sudo virsh net-undefine baremetal
 sudo virsh net-destroy provisioning
 sudo virsh net-undefine provisioning
+sudo rm -rf /opt/dev-scripts/
