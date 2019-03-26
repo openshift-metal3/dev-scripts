@@ -19,13 +19,15 @@ from tripleo-quickstart here.
 
 ## Configuration
 
-Make a copy of the `config_example.sh` to `config_$USER.sh`, and set the `PULL_SECRET`
-variable to the secret obtained from cloud.openshift.com.
+Make a copy of the `config_example.sh` to `config_$USER.sh`, and set the
+`PULL_SECRET` variable to the secret obtained from cloud.openshift.com.
 
-For baremetal test setups where you don't require the VM fake-baremetal nodes, you may also
-set `NODES_FILE` to reference a manually created json file with the node details, and
-`NODES_PLATFORM` which can be set to e.g "baremetal" to disable the libvirt master/worker
-node setup. See common.sh for other variables that can be overridden.
+For baremetal test setups where you don't require the VM fake-baremetal nodes,
+you may also set `NODES_FILE` to reference a manually created json file with
+the node details (see [ironic_hosts.json.example](ironic_hosts.json.example)),
+and `NODES_PLATFORM` which can be set to e.g "baremetal" to disable the libvirt
+master/worker node setup. See [common.sh](common.sh) for other variables that
+can be overridden.
 
 ## Installation
 
@@ -140,11 +142,11 @@ virsh console domain_name
 To get to the bootstrap node. The username is `core` and the password is `notworking`
 
 ### Determining your filesystem type
-If you're not sure what filesystem you have, try `df - T` and the second 
+If you're not sure what filesystem you have, try `df - T` and the second
 column will include the type.
 
 ### Determining if your filesystem supports d_type
-If the above command returns ext4 or btrfs, d_type is supported by default. If not, 
+If the above command returns ext4 or btrfs, d_type is supported by default. If not,
 at the command line, try:
 ```
 xfs_info /mount-point
