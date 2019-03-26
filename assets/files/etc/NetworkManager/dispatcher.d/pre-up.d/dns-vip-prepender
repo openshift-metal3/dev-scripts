@@ -4,8 +4,8 @@ IFACE=$1
 STATUS=$2
 
 case "$STATUS" in
-    up)
-    logger -s "NM dns-vip-prepender triggered by upping ${1}."
+    pre-up)
+    logger -s "NM dns-vip-prepender triggered by pre-upping ${1}."
     set -e
     CLUSTER_DOMAIN="$(awk '/search/ {print $2}' /etc/resolv.conf)"
     API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
@@ -32,8 +32,8 @@ case "$STATUS" in
     down)
     logger -s "NM dns-vip-prepender triggered by downing $IFACE"
     ;;
-    pre-up)
-    logger -s "NM dns-vip-prepender triggered by pre upping $IFACE"
+    up)
+    logger -s "NM dns-vip-prepender triggered by upping $IFACE"
     ;;
     post-down)
     logger -s "NM dns-vip-prepender triggered by post-downing $IFACE"
