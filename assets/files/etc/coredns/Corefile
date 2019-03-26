@@ -1,7 +1,7 @@
 . {
     errors
     health
-    mdns {$CLUSTER_DOMAIN}
+    mdns {$CLUSTER_DOMAIN} 3 {$CLUSTER_NAME}
     forward . /etc/coredns/resolv.conf
     cache 30
     reload
