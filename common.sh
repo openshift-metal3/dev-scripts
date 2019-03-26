@@ -68,12 +68,6 @@ if [ "$USER" != "root" -a "${XDG_RUNTIME_DIR:-}" == "/run/user/0" ] ; then
     exit 1
 fi
 
-# Check if root user
-if [[ $EUID -eq 0 ]]; then
-   echo "This script must be executed as regular user"
-   exit 1
-fi
-
 # Check if sudo privileges without password
 if ! sudo -n uptime &> /dev/null ; then
   echo "sudo without password is required"
