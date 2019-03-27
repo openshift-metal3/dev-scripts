@@ -3,8 +3,10 @@
 set -eux
 source common.sh
 
-export ROOKPATH="$GOPATH/src/github.com/rook/rook"
+figlet "Deploying rook" | lolcat
+eval "$(go env)"
 
+export ROOKPATH="$GOPATH/src/github.com/rook/rook"
 cd $ROOKPATH/cluster/examples/kubernetes/ceph
 oc create namespace rook-ceph-system
 oc create configmap csi-cephfs-config -n rook-ceph-system --from-file=csi/template/cephfs
@@ -44,6 +46,8 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
    name: rook-ceph-block
+   annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
 provisioner: ceph.rook.io/block
 parameters:
   blockPool: rbd
