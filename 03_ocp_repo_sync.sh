@@ -7,12 +7,19 @@ eval "$(go env)"
 echo "$GOPATH" | lolcat # should print $HOME/go or something like that
 
 function sync_go_repo_and_patch {
-    DEST="$GOPATH/src/$1"
-    figlet "Syncing $1" | lolcat
+    local repo_gopath
+    local git_repo
+    local pr
+
+    repo_gopath="$1"
+    git_repo="$2"
+    pr="$3"
+    DEST="$GOPATH/src/$repo_gopath"
+    figlet "Syncing $repo" | lolcat
 
     if [ ! -d $DEST ]; then
         mkdir -p $DEST
-        git clone $2 $DEST
+        git clone "$git_repo" $DEST
     fi
 
     pushd $DEST
@@ -21,7 +28,12 @@ function sync_go_repo_and_patch {
     git checkout master
     git pull --rebase origin master
     git branch -D we_dont_need_no_stinkin_patches || true
-    git checkout -b we_dont_need_no_stinkin_patches
+    if [[ -n "$pr" ]]; then
+        git fetch origin "pull/$pr/head:we_dont_need_no_stinkin_patches"
+        git checkout we_dont_need_no_stinkin_patches
+    else
+        git checkout -b we_dont_need_no_stinkin_patches
+    fi
 
     shift; shift;
     for arg in "$@"; do
