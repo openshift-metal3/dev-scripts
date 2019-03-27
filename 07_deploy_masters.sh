@@ -50,14 +50,19 @@ popd
 
 echo "Master nodes active"
 
-NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
-while [ "$NUM_LEASES" -ne 3 ]; do
+# Wait for master nodes to have a DNS record. The DNS service is binding on all
+# interfaces so we can query the API VIP to retrieve the records
+NUM_MASTERS=$(dig +short SRV @api.${CLUSTER_DOMAIN} _etcd-server-ssl._tcp.${CLUSTER_DOMAIN} | wc -l)
+while [ "$NUM_MASTERS" -ne 3 ]; do
   sleep 10
-  NUM_LEASES=$(sudo virsh net-dhcp-leases baremetal | grep master | wc -l)
+  NUM_MASTERS=$(dig +short SRV @api.${CLUSTER_DOMAIN} _etcd-server-ssl._tcp.${CLUSTER_DOMAIN} | wc -l)
 done
 
-echo "Master nodes up, you can ssh to the following IPs with core@<IP>"
-sudo virsh net-dhcp-leases baremetal
+for etcd in $(dig +short SRV @api.${CLUSTER_DOMAIN} _etcd-server-ssl._tcp.${CLUSTER_DOMAIN} | awk '{print $NF}'); do
+  MASTER_NAME=$(dig +short CNAME @api.${CLUSTER_DOMAIN} $etcd | head -1)
+  MASTER_IP=$(dig +short CNAME @api.${CLUSTER_DOMAIN} $etcd | tail -1)
+  echo "You can ssh to $MASTER_NAME with core@$MASTER_IP"
+done
 
 # Wait for nodes to appear and become ready
 until oc --config ocp/auth/kubeconfig get nodes; do sleep 5; done
