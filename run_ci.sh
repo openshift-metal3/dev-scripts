@@ -18,7 +18,7 @@ mount | grep root-
 # The CI host has a "/" filesystem that reset for each job, the only partition
 # that persist is /opt (and /boot), we can use this to store data between jobs
 FILECACHEDIR=/opt/data/filecache
-FILESTOCACHE="/home/notstack/dev-scripts/$RHCOS_IMAGE_FILENAME /opt/dev-scripts/ironic/html/images/$RHCOS_IMAGE_FILENAME_OPENSTACK /opt/dev-scripts/ironic/html/images/ironic-python-agent.initramfs /opt/dev-scripts/ironic/html/images/ironic-python-agent.kernel"
+FILESTOCACHE="/opt/dev-scripts/ironic/html/images/$RHCOS_IMAGE_FILENAME_OPENSTACK /opt/dev-scripts/ironic/html/images/ironic-python-agent.initramfs /opt/dev-scripts/ironic/html/images/ironic-python-agent.kernel"
 
 # Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
 # to prevent each snapshot taking up too much space we keep some of the larger files
