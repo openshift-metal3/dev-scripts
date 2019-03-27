@@ -35,37 +35,6 @@ function create_cluster() {
 
 }
 
-function net_iface_dhcp_ip() {
-local netname
-local hwaddr
-
-netname="$1"
-hwaddr="$2"
-sudo virsh net-dhcp-leases "$netname" | grep -q "$hwaddr" || return 1
-sudo virsh net-dhcp-leases "$netname" | awk -v hwaddr="$hwaddr" '$3 ~ hwaddr {split($5, res, "/"); print res[1]}'
-}
-
-function domain_net_ip() {
-    local domain
-    local bridge_name
-    local net
-    local hwaddr
-    local rc
-
-    domain="$1"
-    net="$2"
-
-
-    bridge_name=$(sudo virsh net-dumpxml "$net" | "${PWD}/pyxpath" "//bridge/@name" -)
-    hwaddr=$(virsh dumpxml "$domain" | "${PWD}/pyxpath" "//devices/interface[source/@bridge='$bridge_name']/mac/@address" -)
-    rc=$?
-    if [ $rc -ne 0 ]; then
-        return $rc
-    fi
-
-    net_iface_dhcp_ip "$net" "$hwaddr"
-}
-
 function wait_for_json() {
     local name
     local url

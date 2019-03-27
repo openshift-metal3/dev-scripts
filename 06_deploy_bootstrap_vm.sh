@@ -19,19 +19,20 @@ sleep 10
 
 INFRA_ID=$(jq -r .infraID ocp/metadata.json)
 
-while ! domain_net_ip ${INFRA_ID}-bootstrap baremetal; do
-  echo "Waiting for ${INFRA_ID}-bootstrap interface to become active.."
-  sleep 10
-done
-
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
-IP=$(domain_net_ip ${INFRA_ID}-bootstrap baremetal)
-export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
-echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
-sudo systemctl reload NetworkManager
+if [ "$NODES_PLATFORM" == 'libvirt' ]; then
+  export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
+  echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+  sudo systemctl reload NetworkManager
+else
+  export API_VIP=$(dig +short "api.${CLUSTER_DOMAIN}")
+fi
 
 # Wait for ssh to start
-$SSH -o ConnectionAttempts=$BOOTSTRAP_SSH_READY core@$IP id
+$SSH -o ConnectionAttempts=$BOOTSTRAP_SSH_READY core@$API_VIP id
+
+# Register bootstrap VM baremetal nic address
+IP=$($SSH core@$API_VIP "/usr/sbin/ip -o -4 a show eth0" | awk '/brd/ {print $4}' | awk -F '/' '{print $1}')
 
 # Create a master_nodes.json file
 jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
