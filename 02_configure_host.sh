@@ -24,7 +24,11 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml
 
 # Allow local non-root-user access to libvirt
-sudo usermod -a -G "libvirt" $USER
+# Restart libvirtd service to get the new group membership loaded
+if ! id $USER | grep -q libvirt; then
+  sudo usermod -a -G "libvirt" $USER
+  sudo systemctl restart libvirtd
+fi
 
 # As per https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#configure-default-libvirt-storage-pool
 # Usually virt-manager/virt-install creates this: https://www.redhat.com/archives/libvir-list/2008-August/msg00179.html
