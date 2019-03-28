@@ -3,7 +3,7 @@ set -e
 
 mkdir --parents /etc/keepalived
 
-CLUSTER_DOMAIN="$(awk '/search/ {print $2}' /etc/resolv.conf)"
+CLUSTER_DOMAIN="$(clusterinfo CLUSTER_DOMAIN)"
 API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
 SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
