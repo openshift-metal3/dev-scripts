@@ -16,8 +16,7 @@ wait_for_json ironic \
     "${OS_URL}/v1/nodes" \
     10 \
     -H "Accept: application/json" -H "Content-Type: application/json" -H "User-Agent: wait-for-json" -H "X-Auth-Token: $OS_TOKEN"
-
-if [ $(sudo podman ps | grep -w -e "ironic$" -e "ironic-inspector$" | wc -l) != 2 ] ; then
+if [ $(sudo podman ps | grep -w -e "ironic$" -e "ironic-inspector$" -e "dnsmasq" -e "httpd" | wc -l) != 4 ] ; then
     echo "Can't find required containers"
     exit 1
 fi
