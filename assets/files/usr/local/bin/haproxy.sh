@@ -107,7 +107,7 @@ function start_haproxy {
         sleep 15
         if has_master_api_lb_topology_changed "$domain" "${cfg_dir}/haproxy.cfg"; then
             (>&2 echo "Master topology changed. Reconfiguring and hot restarting HAProxy")
-            generate_haproxy_cfg "$domain" "$cfg_dir" "$api_port"
+            generate_haproxy_cfg "$domain" "$cfg_dir" "$api_port" "$stat_port"
             sudo podman kill -s HUP "$CONTAINER_NAME"
         fi
         if curl -o /dev/null -kLs "https://0:${lb_port}/healthz"; then
