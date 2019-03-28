@@ -61,16 +61,16 @@ done
 # generate storageConfig.urls
 patch_ep_host_etcd "$CLUSTER_DOMAIN"
 
-for i in $(seq 0 2); do
-  oc wait nodes/master-$i --for condition=ready --timeout=600s
+for node in $(oc --config ocp/auth/kubeconfig get nodes --no-headers | sed -e 's/ .*//g') ; do
+  oc wait nodes/$node --for condition=ready --timeout=600s
 done
 
 wait_for_bootstrap_event
 
 # disable NoSchedule taints for masters until we have workers deployed
-for num in 0 1 2; do
-  oc adm taint nodes master-${num} node-role.kubernetes.io/master:NoSchedule-
-  oc label node master-${num} node-role.kubernetes.io/worker=''
+for node in $(oc --config ocp/auth/kubeconfig get nodes --no-headers | sed -e 's/ .*//g') ; do
+  oc adm taint nodes $node node-role.kubernetes.io/master:NoSchedule-
+  oc label node $node node-role.kubernetes.io/worker=''
 done
 
 echo "Cluster up, you can interact with it via oc --config ocp/auth/kubeconfig <command>"
