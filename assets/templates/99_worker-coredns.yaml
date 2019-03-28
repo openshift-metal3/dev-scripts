@@ -22,6 +22,7 @@ spec:
             ExecStartPre=/usr/local/bin/coredns.sh
             ExecStart=/usr/bin/podman start -a coredns
             ExecStop=/usr/bin/podman stop -t 10 coredns
+            TimeoutStartSec=600
 
             Restart=on-failure
             RestartSec=5

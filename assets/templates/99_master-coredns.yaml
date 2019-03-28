@@ -25,6 +25,7 @@ spec:
 
             Restart=on-failure
             RestartSec=5
+            TimeoutStartSec=600
 
             [Install]
             WantedBy=multi-user.target
