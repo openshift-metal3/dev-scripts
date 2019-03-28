@@ -65,6 +65,11 @@ while [ "$NUM_NODES" -ne 3 ]; do
   sleep 10
   NUM_NODES=$(oc --config ocp/auth/kubeconfig get nodes --no-headers | wc -l)
 done
+
+# Update kube-system ep/host-etcd used by cluster-kube-apiserver-operator to
+# generate storageConfig.urls
+patch_ep_host_etcd "$CLUSTER_DOMAIN"
+
 for i in $(seq 0 2); do
   oc wait nodes/master-$i --for condition=ready --timeout=600s
 done
