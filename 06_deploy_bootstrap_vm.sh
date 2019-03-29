@@ -22,11 +22,11 @@ INFRA_ID=$(jq -r .infraID ocp/metadata.json)
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
+    echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+    sudo systemctl reload NetworkManager
 else
     export API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
 fi
-echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
-sudo systemctl reload NetworkManager
 
 # Wait for ssh to start
 $SSH -o ConnectionAttempts=$BOOTSTRAP_SSH_READY core@$API_VIP id

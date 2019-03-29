@@ -123,13 +123,15 @@ if ! sudo iptables -C INPUT -p tcp --dport 3000 -j ACCEPT 2>/dev/null ; then
 fi
 
 # Switch NetworkManager to internal DNS
-sudo mkdir -p /etc/NetworkManager/conf.d/
-sudo crudini --set /etc/NetworkManager/conf.d/dnsmasq.conf main dns dnsmasq
-if [ "$ADDN_DNS" ] ; then
-  echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
-fi
-if systemctl is-active --quiet NetworkManager; then
-  sudo systemctl reload NetworkManager
-else
-  sudo systemctl restart NetworkManager
+if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
+  sudo mkdir -p /etc/NetworkManager/conf.d/
+  sudo crudini --set /etc/NetworkManager/conf.d/dnsmasq.conf main dns dnsmasq
+  if [ "$ADDN_DNS" ] ; then
+    echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
+  fi
+  if systemctl is-active --quiet NetworkManager; then
+    sudo systemctl reload NetworkManager
+  else
+    sudo systemctl restart NetworkManager
+  fi
 fi
