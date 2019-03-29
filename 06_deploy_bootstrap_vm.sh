@@ -2,8 +2,8 @@
 set -x
 set -e
 
-source ocp_install_env.sh
 source common.sh
+source ocp_install_env.sh
 source utils.sh
 
 if [ ! -d ocp ]; then
