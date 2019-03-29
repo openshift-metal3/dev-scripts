@@ -36,22 +36,6 @@ for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE ; do
     fi
 done
 
-# Adding an IP address in the libvirt definition for this network results in
-# dnsmasq being run, we don't want that as we have our own dnsmasq, so set
-# the IP address here
-if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
-    echo -e "DEVICE=provisioning\nONBOOT=yes\nNM_CONTROLLED=no\nTYPE=Ethernet\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
-fi
-sudo ifdown provisioning || true
-sudo ifup provisioning
-
-# Add firewall rules to ensure the IPA ramdisk can reach Ironic and Inspector APIs on the host
-for port in 5050 6385 ; do
-    if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
-        sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT
-    fi
-done
-
 pushd $IRONIC_DATA_DIR/html/images
 
 # Workaround so that the dracut network module does dhcp on eth0 & eth1

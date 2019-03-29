@@ -24,6 +24,8 @@ ADDN_DNS=${ADDN_DNS:-}
 EXT_IF=${EXT_IF:-}
 # Provisioning interface
 PRO_IF=${PRO_IF:-}
+# Does libvirt manage the baremetal bridge (including DNS and DHCP)
+MANAGE_BR_BRIDGE=${MANAGE_BR_BRIDGE:-y}
 # Internal interface, to bridge virbr0
 INT_IF=${INT_IF:-}
 #Root disk to deploy coreOS - use /dev/sda on BM
@@ -71,7 +73,7 @@ if ! sudo -n uptime &> /dev/null ; then
 fi
 
 # Check OS
-if [[ $(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"') != "centos" ]]; then
+if [[ ! $(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"') =~ ^(centos|rhel)$ ]]; then
   echo "Unsupported OS"
   exit 1
 fi

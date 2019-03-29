@@ -138,10 +138,10 @@ baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.
 networks:
   - name: provisioning
     bridge: provisioning
-
+    forward_mode: bridge
   - name: baremetal
     bridge: baremetal
-    forward_mode: nat
+    forward_mode: "{% if manage_baremetal == 'y' %}nat{% else %}bridge{% endif %}"
     address: "{{ baremetal_network_cidr|nthhost(1) }}"
     netmask: "{{ baremetal_network_cidr|ipaddr('netmask') }}"
     dhcp_range:
@@ -163,6 +163,9 @@ networks:
         - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
           hostnames:
             - "api"
+        - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
+          hostnames:
+            - "ns1"
 
 network_isolation: true
 network_isolation_type: 'single-nic-vlans'

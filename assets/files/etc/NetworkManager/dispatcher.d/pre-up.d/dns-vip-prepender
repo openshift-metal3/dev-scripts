@@ -7,11 +7,8 @@ case "$STATUS" in
     pre-up)
     logger -s "NM dns-vip-prepender triggered by pre-upping ${1}."
     set -e
-    CLUSTER_DOMAIN="$(awk '/search/ {print $2}' /etc/resolv.conf)"
-    API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
-    IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
-    SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
-    DNS_VIP="$(/usr/local/bin/nthhost "$SUBNET_CIDR" 2)"
+    CLUSTER_DOMAIN="$(clusterinfo CLUSTER_DOMAIN)"
+    DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
     set +e
     if [[ -n $DNS_VIP ]]; then
         logger -s "NM dns-vip-prepender: Checking if DNS VIP is the first entry in resolv.conf"
@@ -25,7 +22,7 @@ case "$STATUS" in
             envsubst < /etc/dhcp/dhclient.conf.template | tee /etc/dhcp/dhclient.conf
 
             logger -s "NM dns-vip-prepender: Looking for 'search $CLUSTER_DOMAIN' in /etc/resolv.conf to place 'nameserver $DNS_VIP'"
-            sed -i "/^search ${CLUSTER_DOMAIN}$/a nameserver $DNS_VIP" /etc/resolv.conf
+            sed -i "/^search .*$/a nameserver $DNS_VIP" /etc/resolv.conf
         fi
     fi
     ;;

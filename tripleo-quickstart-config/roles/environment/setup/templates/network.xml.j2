@@ -1,5 +1,3 @@
-{% set stp = item.stp|default('off') %}
-{% set delay = item.delay|default('0') %}
 {% set nat_port_range = item.nat_port_range|default([1024, 65535]) %}
 {% set netmask = item.netmask|default('255.255.255.0') %}
 {% if item.dhcp_hosts is defined %}
@@ -8,11 +6,7 @@
 {% endif %}
 <network>
   <name>{{ item.name }}</name>
-{% if item.forward_mode is defined and item.forward_mode != 'nat' %}
-  <bridge name='{{ item.bridge }}' stp='{{ stp }}' delay='{{ delay }}' />
-{% else %}
   <bridge name='{{ item.bridge }}'/>
-{% endif %}
 {% if item.forward_mode is defined %}
   <forward mode='{{ item.forward_mode }}'>
 {% if item.forward_mode == 'nat' %}
@@ -25,7 +19,7 @@
 {% if item.virtualport_type is defined %}
       <virtualport type='{{ item.virtualport_type }}'/>
 {% endif %}
-{% if item.address is defined %}
+{% if item.address is defined  and item.forward_mode != 'bridge' %}
   <ip address='{{ item.address }}' netmask='{{ netmask }}'>
 {% if item.dhcp_range is defined %}
     <dhcp>

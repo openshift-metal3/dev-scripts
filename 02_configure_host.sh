@@ -19,6 +19,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "local_working_dir=$HOME/.quickstart" \
     -e "virthost=$HOSTNAME" \
     -e "platform=$NODES_PLATFORM" \
+    -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e @config/environments/dev_privileged_libvirt.yml \
     -i tripleo-quickstart-config/metalkube-inventory.ini \
     -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml
@@ -45,20 +46,65 @@ EOF
     virsh pool-autostart default
 fi
 
+# Adding an IP address in the libvirt definition for this network results in
+# dnsmasq being run, we don't want that as we have our own dnsmasq, so set
+# the IP address here
+if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
+    echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+fi
+sudo ifdown provisioning || true
+sudo ifup provisioning
+
+# Need to pass the provision interface for bare metal
+if [ "$PRO_IF" ]; then
+    echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=provisioning" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
+    sudo ifdown $PRO_IF || true
+    sudo ifup $PRO_IF
+fi
+
+# Create the baremetal bridge
+if [ ! -e /etc/sysconfig/network-scripts/ifcfg-baremetal ] ; then
+    echo -e "DEVICE=baremetal\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
+fi
+sudo ifdown baremetal || true
+sudo ifup baremetal
+
+# Add the internal interface to it if requests, this may also be the interface providing
+# external access so we need to make sure we maintain dhcp config if its available
+if [ "$INT_IF" ]; then
+    echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+    sudo ifdown $INT_IF || true
+    sudo ifup $INT_IF
+    if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
+        echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal
+        sudo ifdown baremetal || true
+        sudo ifup baremetal
+    fi
+fi
+# restart the libvirt network so it applies an ip to the bridge
+if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
+    sudo virsh net-destroy baremetal                                                                                                                                                                  
+    sudo virsh net-start baremetal   
+fi
+
+# Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
+for port in 80 5050 6385 ; do
+    if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
+        sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT
+    fi
+done
+
 # Allow ipmi to the virtual bmc processes that we just started
 if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT 2>/dev/null ; then
     sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
 fi
 
-#Allow access to dualboot.ipxe
-if ! sudo iptables -C INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null ; then
-    sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
-fi
-
-#Allow access to tftp server for pxeboot
-if ! sudo iptables -C INPUT -p udp --dport 69 -j ACCEPT 2>/dev/null ; then
-    sudo iptables -I INPUT -p udp --dport 69 -j ACCEPT
-fi
+#Allow access to dhcp and tftp server for pxeboot
+for port in 67 69 ; do
+    if ! sudo iptables -C INPUT -i provisioning -p udp --dport $port -j ACCEPT 2>/dev/null ; then
+        sudo iptables -I INPUT -i provisioning -p udp --dport $port -j ACCEPT
+    fi
+done
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
@@ -74,16 +120,6 @@ fi
 # Add access to Yarn development server from remote locations
 if ! sudo iptables -C INPUT -p tcp --dport 3000 -j ACCEPT 2>/dev/null ; then
   sudo iptables -I INPUT -p tcp --dport 3000 -j ACCEPT
-fi
-
-# Need to pass the provision interface for bare metal
-if [ "$PRO_IF" ]; then
-  sudo ip link set "$PRO_IF" master provisioning
-fi
-
-# Internal interface
-if [ "$INT_IF" ]; then
-  sudo ip link set "$INT_IF" master baremetal 
 fi
 
 # Switch NetworkManager to internal DNS

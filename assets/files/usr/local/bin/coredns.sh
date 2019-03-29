@@ -3,13 +3,10 @@ set -e
 
 mkdir --parents /etc/coredns
 
-CLUSTER_DOMAIN="$(awk '/search/ {print $2}' /etc/resolv.conf)"
+CLUSTER_DOMAIN="$(clusterinfo CLUSTER_DOMAIN)"
 read -d '.' -a CLUSTER_ARR <<< $CLUSTER_DOMAIN
 CLUSTER_NAME=${CLUSTER_ARR[0]}
-API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
-IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
-SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
-DNS_VIP="$(/usr/local/bin/nthhost "$SUBNET_CIDR" 2)"
+DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 grep -v "${DNS_VIP}" /etc/resolv.conf | tee /etc/coredns/resolv.conf
 
 COREDNS_IMAGE="quay.io/openshift-metalkube/coredns-mdns:name-filter"

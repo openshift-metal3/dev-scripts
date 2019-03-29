@@ -145,7 +145,7 @@ function sighandler {
     trap - SIGINT SIGTERM
 }
 
-CLUSTER_DOMAIN="$(awk '/search/ {print $2}' /etc/resolv.conf)"
+CLUSTER_DOMAIN="$(clusterinfo CLUSTER_DOMAIN)"
 API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 declare -r CONTAINER_NAME="api-haproxy"
 
