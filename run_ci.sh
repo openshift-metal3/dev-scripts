@@ -1,6 +1,21 @@
 #!/bin/bash
 set -ex
 
+# grabs files and puts them into $LOGDIR to be saved as jenkins artifacts
+function getlogs(){
+    LOGDIR=/home/notstack/dev-scripts/logs
+
+    # Grab the host journal
+    sudo journalctl > $LOGDIR/bootstrap-host-system.journal
+
+    # openshift info
+    export KUBECONFIG=ocp/auth/kubeconfig
+    oc --request-timeout=5s get clusterversion/version > $LOGDIR/cluster_version.log || true
+    oc --request-timeout=5s get clusteroperators > $LOGDIR/cluster_operators.log || true
+    oc --request-timeout=5s get pods --all-namespaces | grep -v Running | grep -v Completed  > $LOGDIR/failing_pods.log || true
+}
+trap getlogs EXIT
+
 # Point at our CI custom config file (contains the PULL_SECRET)
 export CONFIG=/opt/data/config_notstack.sh
 
