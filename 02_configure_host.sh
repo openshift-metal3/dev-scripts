@@ -73,14 +73,14 @@ sudo ifup baremetal
 # external access so we need to make sure we maintain dhcp config if its available
 if [ "$INT_IF" ]; then
     echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
-    sudo ifdown $INT_IF || true
-    sudo ifup $INT_IF
     if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
         echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal
-        sudo ifdown baremetal || true
-        sudo ifup baremetal
+        sudo systemctl restart network
+    else
+        sudo systemctl restart network
     fi
 fi
+
 # restart the libvirt network so it applies an ip to the bridge
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     sudo virsh net-destroy baremetal                                                                                                                                                                  
