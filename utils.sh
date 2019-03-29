@@ -149,11 +149,14 @@ resource "ironic_node_v1" "openshift-master-${master_idx}" {
     "cpu_arch" =  "${cpu_arch}"
   }
 
+  root_device = {
+    "name" = "/dev/vda"
+  }
+
   instance_info = {
     "image_source" = "${image_source}"
     "image_checksum" = "${image_checksum}"
     "root_gb" = "${root_gb}"
-    "root_device" = "${root_device}"
   }
 
   driver = "${driver}"
