@@ -7,16 +7,6 @@ source common.sh
 # Get the various images
 source get_images.sh
 
-# ironic dnsmasq and ipxe config
-cp ironic/dnsmasq.conf $IRONIC_DATA_DIR/
-cp ironic/dualboot.ipxe ironic/inspector.ipxe $IRONIC_DATA_DIR/html/
-
-# tftpboot must be in the same partition as html when mounted in the
-# Ironic containers to avoid "Invalid cross-device link" errors
-if [ ! -d $IRONIC_DATA_DIR/tftpboot ] ; then
-   mkdir $IRONIC_DATA_DIR/tftpboot
-fi
-
 # Either pull or build the ironic images
 # To build the IRONIC image set
 # IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
