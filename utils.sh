@@ -150,7 +150,7 @@ resource "ironic_node_v1" "openshift-master-${master_idx}" {
   }
 
   root_device = {
-    "name" = "/dev/vda"
+    "name" = "${ROOT_DISK}"
   }
 
   instance_info = {
