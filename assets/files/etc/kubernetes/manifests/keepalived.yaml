@@ -19,6 +19,9 @@ spec:
   - name: get-vip-subnet-cidr
     hostPath:
       path: "/usr/local/bin/get_vip_subnet_cidr"
+  - name: fletcher8
+    hostPath:
+      path: "/usr/local/bin/fletcher8"
   - name: conf-dir
     empty-dir: {}
   initContainers:
@@ -45,6 +48,7 @@ spec:
       set -ex
 
       source /etc/kubernetes/static-pod-resources/clusterrc
+      CLUSTER_NAME="$NAME"
       API_VIP="$(dig +noall +answer "api.${DOMAIN}" | awk '{print $NF}')"
       IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
       SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
@@ -52,11 +56,20 @@ spec:
       DNS_VIP="$(dig +noall +answer "ns1.${DOMAIN}" | awk '{print $NF}')"
       INGRESS_VIP="$(dig +noall +answer "test.apps.${DOMAIN}" | awk '{print $NF}')"
 
+      # Virtual Router IDs. They must be different and 8 bit in length
+      API_VRID=$(/usr/local/bin/fletcher8 "${CLUSTER_NAME}-api")
+      DNS_VRID=$(/usr/local/bin/fletcher8 "${CLUSTER_NAME}-dns")
+      INGRESS_VRID=$(/usr/local/bin/fletcher8 "${CLUSTER_NAME}-ingress")
+
       export DOMAIN
+      export CLUSTER_NAME
       export INTERFACE
       export API_VIP
       export DNS_VIP
       export INGRESS_VIP
+      export API_VRID
+      export DNS_VRID
+      export INGRESS_VRID
       /usr/libexec/platform-python -c "from __future__ import print_function
       import os
       with open('/etc/kubernetes/static-pod-resources/keepalived.conf.template', 'r') as f:
@@ -72,6 +85,8 @@ spec:
       mountPath: "/etc/keepalived"
     - name: get-vip-subnet-cidr
       mountPath: "/usr/local/bin/get_vip_subnet_cidr"
+    - name: fletcher8
+      mountPath: "/usr/local/bin/fletcher8"
     imagePullPolicy: IfNotPresent
   containers:
   - name: keepalived
