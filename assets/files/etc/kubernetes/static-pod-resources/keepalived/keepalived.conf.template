@@ -16,15 +16,15 @@ vrrp_script chk_ingress {
     weight 50
 }
 
-vrrp_instance API {
+vrrp_instance ${CLUSTER_NAME}_API {
     state BACKUP
     interface ${INTERFACE}
-    virtual_router_id 51
+    virtual_router_id ${API_VRID}
     priority 40
     advert_int 1
     authentication {
         auth_type PASS
-        auth_pass cluster_uuid_api_vip
+        auth_pass ${CLUSTER_NAME}_api_vip
     }
     virtual_ipaddress {
         ${API_VIP}
@@ -34,15 +34,15 @@ vrrp_instance API {
     }
 }
 
-vrrp_instance DNS {
+vrrp_instance ${CLUSTER_NAME}_DNS {
     state BACKUP
     interface ${INTERFACE}
-    virtual_router_id 52
+    virtual_router_id ${DNS_VRID}
     priority 40
     advert_int 1
     authentication {
         auth_type PASS
-        auth_pass cluster_uuid_dns_vip
+        auth_pass ${CLUSTER_NAME}_dns_vip
     }
     virtual_ipaddress {
         ${DNS_VIP}
@@ -52,10 +52,10 @@ vrrp_instance DNS {
     }
 }
 
-vrrp_instance INGRESS {
+vrrp_instance ${CLUSTER_NAME}_INGRESS {
     state BACKUP
     interface ${INTERFACE}
-    virtual_router_id 53
+    virtual_router_id ${INGRESS_VRID}
     priority 40
     advert_int 1
     authentication {
