@@ -67,6 +67,11 @@ done
 
 wait_for_bootstrap_event
 
+# Reconfigure ingress operator to use host ports
+oc wait clusteroperator/ingress --for condition=Progressing
+oc patch ingresses.config.openshift.io cluster --type=merge \
+  --patch '{"spec": {"highAvailability": {"type": "UserDefined"}}}'
+
 # disable NoSchedule taints for masters until we have workers deployed
 for node in $(oc --config ocp/auth/kubeconfig get nodes --no-headers | sed -e 's/ .*//g') ; do
   oc adm taint nodes $node node-role.kubernetes.io/master:NoSchedule-
