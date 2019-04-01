@@ -73,6 +73,8 @@ sudo ifup baremetal
 # external access so we need to make sure we maintain dhcp config if its available
 if [ "$INT_IF" ]; then
     echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+    sudo ifdown $INT_IF || true
+    sudo ifup $INT_IF
     if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
         echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal
         sudo systemctl restart network
