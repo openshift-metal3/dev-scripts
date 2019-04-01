@@ -185,20 +185,10 @@ function collect_info_on_failure() {
 }
 
 function wait_for_bootstrap_event() {
-  local events
-  local counter
-  pause=10
-  max_attempts=60 # 60*10 = at least 10 mins of attempts
+    local assets_dir
 
-  for i in $(seq 0 "$max_attempts"); do
-    events=$(oc --request-timeout=5s get events -n kube-system --no-headers -o wide || echo 'Error retrieving events')
-    echo "$events"
-    if [[ ! $events =~ "bootstrap-complete" ]]; then 
-      sleep "$pause";
-    else
-      break
-    fi
-  done
+    assets_dir="$1"
+    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" upi bootstrap-complete
 }
 
 function patch_ep_host_etcd() {

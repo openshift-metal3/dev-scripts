@@ -65,7 +65,7 @@ for node in $(oc --config ocp/auth/kubeconfig get nodes --no-headers | sed -e 's
   oc wait nodes/$node --for condition=ready --timeout=600s
 done
 
-wait_for_bootstrap_event
+wait_for_bootstrap_event ocp
 
 # disable NoSchedule taints for masters until we have workers deployed
 for node in $(oc --config ocp/auth/kubeconfig get nodes --no-headers | sed -e 's/ .*//g') ; do
