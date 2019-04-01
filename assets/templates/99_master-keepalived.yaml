@@ -16,6 +16,7 @@ spec:
             Description=Manage node VIPs with keepalived
             Wants=network-online.target
             After=network-online.target
+            ConditionPathExists=!/etc/pivot/image-pullspec
 
             [Service]
             WorkingDirectory=/etc/keepalived
