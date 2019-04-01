@@ -166,6 +166,9 @@ networks:
         - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
           hostnames:
             - "ns1"
+      forwarders:
+        - domain: "apps.{{ cluster_domain }}"
+          addr: "127.0.0.1"
 
 network_isolation: true
 network_isolation_type: 'single-nic-vlans'
