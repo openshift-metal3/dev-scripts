@@ -19,6 +19,13 @@ trap getlogs EXIT
 # Point at our CI custom config file (contains the PULL_SECRET)
 export CONFIG=/opt/data/config_notstack.sh
 
+# Install moreutils for ts
+sudo yum install -y epel-release
+sudo yum install -y moreutils
+# Install jq for common.sh
+sudo yum install -y jq
+sudo yum remove -y epel-release
+
 source common.sh
 
 if [ -n "$PS1" ]; then
@@ -74,11 +81,6 @@ for PROJ in facet kni-installer terraform-provider-ironic ; do
     mkdir -p $HOME/go/src/github.com/openshift-metalkube
     mv /home/notstack/$PROJ $HOME/go/src/github.com/openshift-metalkube
 done
-
-# Install moreutils for ts
-sudo yum install -y epel-release
-sudo yum install -y moreutils
-sudo yum remove -y epel-release
 
 # Run dev-scripts
 set -o pipefail
