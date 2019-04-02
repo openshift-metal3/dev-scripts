@@ -7,6 +7,15 @@ This set of scripts configures some libvirt VMs and associated
 This is very similar to how we do TripleO testing so we reuse some roles
 from tripleo-quickstart here.
 
+We are using this repository as a work space while we figure out what the
+installer needs to do for bare metal provisioning. As that logic is ironed out,
+we are moving it into the [go-based
+kni-installer](https://github.com/openshift-metalkube/kni-installer).
+Eventually that fork of
+[openshift-installer](https://github.com/openshift/installer) will be merged
+back, and we won't need much or any of this. For now, these tools are the
+canonical way to set up a metalkube cluster.
+
 # Pre-requisites
 
 - CentOS 7.5 or greater (installed from 7.4 or newer)
