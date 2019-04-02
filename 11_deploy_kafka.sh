@@ -11,7 +11,7 @@ export KAFKAPRODUCER_PATH="$GOPATH/src/github.com/scholzj/kafka-test-apps"
 cd $KAFKAPATH
 
 # Apply RBAC
-oc new-project ${KAFKA_NAMESPACE}
+#oc new-project ${KAFKA_NAMESPACE}
 sed -i "s/namespace: .*/namespace: ${KAFKA_NAMESPACE}/" install/cluster-operator/*RoleBinding*.yaml
 oc apply -f install/cluster-operator/020-RoleBinding-strimzi-cluster-operator.yaml -n ${KAFKA_NAMESPACE}
 oc apply -f install/cluster-operator/031-RoleBinding-strimzi-cluster-operator-entity-operator-delegation.yaml -n ${KAFKA_NAMESPACE}
@@ -19,15 +19,18 @@ oc apply -f install/cluster-operator/032-RoleBinding-strimzi-cluster-operator-to
 
 # Install Operator
 oc apply -f install/cluster-operator -n ${KAFKA_NAMESPACE}
-oc wait --for condition=ready pod -l name=${KAFKA_NAMESPACE}-cluster-operator -n ${KAFKA_NAMESPACE} --timeout=120s
+sleep 5
+oc wait --for condition=ready pod -l name=strimzi-cluster-operator -n ${KAFKA_NAMESPACE} --timeout=120s
 
 # Modify Kafka cluster & Deploy
 sed -i "s/my-cluster/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-metrics.yaml
 sed -i "s/100Gi/${KAFKA_PVC_SIZE}Gi/" metrics/examples/kafka/kafka-metrics.yaml
 sed -i "s/my-cluster/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-connect-metrics.yaml
 oc apply -f metrics/examples/kafka/kafka-metrics.yaml -n ${KAFKA_NAMESPACE}
+sleep 5
 oc wait --for condition=ready pod -l strimzi.io/cluster=${KAFKA_CLUSTERNAME} -n ${KAFKA_NAMESPACE} --timeout=120s
 oc apply -f metrics/examples/kafka/kafka-connect-metrics.yaml -n ${KAFKA_NAMESPACE}
+sleep 5
 oc wait --for condition=ready pod -l strimzi.io/kind=KafkaConnect -n ${KAFKA_NAMESPACE} --timeout=120s
 
 # Modify Prometheus & Deploy
