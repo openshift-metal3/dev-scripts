@@ -45,6 +45,21 @@ oc wait --for condition=ready pod -l name=alertmanager -n ${KAFKA_NAMESPACE} --t
 oc apply -f metrics/examples/grafana/grafana.yaml -n ${KAFKA_NAMESPACE}
 oc wait --for condition=ready pod -l name=grafana -n ${KAFKA_NAMESPACE} --timeout=120s
 
+# Expose Grafana & Prometheus
+oc expose svc prometheus -n ${KAFKA_NAMESPACE}
+oc expose svc grafana -n ${KAFKA_NAMESPACE}
+
+# Recover Grafana Dashboard
+wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-kafka.json -O metrics/examples/grafana/strimzi-kafka.json
+wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-zookeeper.json -O metrics/examples/grafana/strimzi-zookeeper.json
+
+# Add Grafana Dashboards and Datasource
+GRAFANA_ROUTE=`oc get route grafana --template='{{ .spec.host }}'`
+PROMETHEUS_ROUTE=`oc get route prometheus --template='{{ .spec.host }}'`
+curl -X "POST" "http://${GRAFANA_ROUTE}/api/datasources" -H "Content-Type: application/json" --user admin:admin --data-binary '{ "name":"Prometheus","type":"prometheus","access":"proxy","url":"http://'${PROMETHEUS_ROUTE}'","basicAuth":false,"isDefault":true }'
+curl -X "POST" "http://grafana-kafka.apps.ostest.test.metalkube.org/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-kafka.json
+curl -X "POST" "http://grafana-kafka.apps.ostest.test.metalkube.org/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-zookeeper.json
+
 figlet "Deploying Kafka Producer/Consumer" | lolcat
 
 # Modify & Deploy Kafka Producer/Consumer
