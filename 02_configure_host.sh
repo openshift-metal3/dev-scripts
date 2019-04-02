@@ -46,45 +46,49 @@ EOF
     virsh pool-autostart default
 fi
 
-# Adding an IP address in the libvirt definition for this network results in
-# dnsmasq being run, we don't want that as we have our own dnsmasq, so set
-# the IP address here
-if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
-    echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
-fi
-sudo ifdown provisioning || true
-sudo ifup provisioning
+if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
+    # Adding an IP address in the libvirt definition for this network results in
+    # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
+    # the IP address here
+    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
+        echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+    fi
+    sudo ifdown provisioning || true
+    sudo ifup provisioning
 
-# Need to pass the provision interface for bare metal
-if [ "$PRO_IF" ]; then
-    echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=provisioning" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
-    sudo ifdown $PRO_IF || true
-    sudo ifup $PRO_IF
+    # Need to pass the provision interface for bare metal
+    if [ "$PRO_IF" ]; then
+        echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=provisioning" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
+        sudo ifdown $PRO_IF || true
+        sudo ifup $PRO_IF
+    fi
 fi
 
-# Create the baremetal bridge
-if [ ! -e /etc/sysconfig/network-scripts/ifcfg-baremetal ] ; then
-    echo -e "DEVICE=baremetal\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
-fi
-sudo ifdown baremetal || true
-sudo ifup baremetal
+if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
+    # Create the baremetal bridge
+    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-baremetal ] ; then
+        echo -e "DEVICE=baremetal\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
+    fi
+    sudo ifdown baremetal || true
+    sudo ifup baremetal
 
-# Add the internal interface to it if requests, this may also be the interface providing
-# external access so we need to make sure we maintain dhcp config if its available
-if [ "$INT_IF" ]; then
-    echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
-    if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-        echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal
-        sudo systemctl restart network
-    else
-        sudo systemctl restart network
+    # Add the internal interface to it if requests, this may also be the interface providing
+    # external access so we need to make sure we maintain dhcp config if its available
+    if [ "$INT_IF" ]; then
+        echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+        if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
+            echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal
+            sudo systemctl restart network
+        else
+           sudo systemctl restart network
+        fi
     fi
 fi
 
 # restart the libvirt network so it applies an ip to the bridge
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
-    sudo virsh net-destroy baremetal                                                                                                                                                                  
-    sudo virsh net-start baremetal   
+    sudo virsh net-destroy baremetal
+    sudo virsh net-start baremetal
 fi
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host

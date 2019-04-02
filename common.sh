@@ -26,6 +26,9 @@ EXT_IF=${EXT_IF:-}
 PRO_IF=${PRO_IF:-}
 # Does libvirt manage the baremetal bridge (including DNS and DHCP)
 MANAGE_BR_BRIDGE=${MANAGE_BR_BRIDGE:-y}
+# Only manage bridges if is set
+MANAGE_PRO_BRIDGE=${MANAGE_PRO_BRIDGE:-y}
+MANAGE_INT_BRIDGE=${MANAGE_INT_BRIDGE:-y}
 # Internal interface, to bridge virbr0
 INT_IF=${INT_IF:-}
 #Root disk to deploy coreOS - use /dev/sda on BM
