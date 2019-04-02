@@ -2,9 +2,9 @@
 set -x
 set -e
 
-source ocp_install_env.sh
-source common.sh
 source utils.sh
+source common.sh
+source ocp_install_env.sh
 
 if [ ! -d ocp ]; then
     mkdir -p ocp

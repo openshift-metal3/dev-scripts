@@ -18,8 +18,6 @@ function generate_ocp_install_config() {
 
     outdir="$1"
 
-    PLATFORM_YAML=`jq '.nodes[0:3] | {nodes: .}' ${NODES_FILE} | python -c 'import sys, yaml, json; from flatten_json import flatten; yaml.safe_dump({"platform": {"baremetal": {"nodes": flatten(json.load(sys.stdin))}}}, sys.stdout, default_flow_style=False)'`
-
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1beta3
 baseDomain: ${BASE_DOMAIN}

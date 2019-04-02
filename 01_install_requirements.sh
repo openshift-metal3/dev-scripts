@@ -85,7 +85,6 @@ sudo yum -y install \
 
 # Install python packages not included as rpms
 sudo pip install \
-  flatten_json \
   lolcat \
   yq
 
