@@ -16,6 +16,7 @@ spec:
             Description=Publish services with multicast DNS
             Wants=network-online.target
             After=network-online.target
+            ConditionPathExists=!/etc/pivot/image-pullspec
 
             [Service]
             WorkingDirectory=/etc/mdns

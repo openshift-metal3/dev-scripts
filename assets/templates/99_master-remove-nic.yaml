@@ -26,5 +26,5 @@ spec:
       - contents:
           verification: {}
         filesystem: root
-        mode: 365
+        mode: 0755
         path: /usr/local/bin/rm-provision-nic.sh

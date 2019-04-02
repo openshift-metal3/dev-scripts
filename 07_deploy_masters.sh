@@ -63,7 +63,7 @@ patch_ep_host_etcd "$CLUSTER_DOMAIN"
 
 oc wait nodes -l node-role.kubernetes.io/master --for condition=ready --timeout=600s
 
-wait_for_bootstrap_event
+wait_for_bootstrap_event ocp
 
 # disable NoSchedule taints for masters until we have workers deployed
 oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-

@@ -16,6 +16,7 @@ spec:
             Description=Serve cluster DNS
             Wants=network-online.target
             After=network-online.target
+            ConditionPathExists=!/etc/pivot/image-pullspec
 
             [Service]
             WorkingDirectory=/etc/coredns
