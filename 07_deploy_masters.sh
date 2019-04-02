@@ -51,27 +51,23 @@ echo "Master nodes active"
 
 # Wait for nodes to appear and become ready
 until oc get nodes; do sleep 5; done
-NUM_NODES=$(oc get nodes --no-headers | wc -l)
+NUM_NODES=$(oc get nodes -l node-role.kubernetes.io/master -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}' | wc -l)
 while [ "$NUM_NODES" -ne 3 ]; do
   sleep 10
-  NUM_NODES=$(oc get nodes --no-headers | wc -l)
+  NUM_NODES=$(oc get nodes -l node-role.kubernetes.io/master -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}' | wc -l)
 done
 
 # Update kube-system ep/host-etcd used by cluster-kube-apiserver-operator to
 # generate storageConfig.urls
 patch_ep_host_etcd "$CLUSTER_DOMAIN"
 
-for node in $(oc --config ocp/auth/kubeconfig get nodes --no-headers | sed -e 's/ .*//g') ; do
-  oc wait nodes/$node --for condition=ready --timeout=600s
-done
+oc wait nodes -l node-role.kubernetes.io/master --for condition=ready --timeout=600s
 
 wait_for_bootstrap_event
 
 # disable NoSchedule taints for masters until we have workers deployed
-for node in $(oc --config ocp/auth/kubeconfig get nodes --no-headers | sed -e 's/ .*//g') ; do
-  oc adm taint nodes $node node-role.kubernetes.io/master:NoSchedule-
-  oc label node $node node-role.kubernetes.io/worker=''
-done
+oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-
+oc label node -l node-role.kubernetes.io/master node-role.kubernetes.io/worker=''
 
 #Verify Ingress controller functionality
 echo "Verifying Ingress controller functionality, first we'll check that router pod responsive"
@@ -80,4 +76,4 @@ echo "Router pod responding, checking connectivity to console via ingress contro
 until wget --no-check-certificate https://console-openshift-console.apps.${CLUSTER_DOMAIN}; do sleep 10 && echo "rechecking"; done
 echo "Ingress controller is working!"
 
-echo "Cluster up, you can interact with it via oc --config ocp/auth/kubeconfig <command>"
+echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"
