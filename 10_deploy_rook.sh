@@ -24,6 +24,8 @@ oc adm policy add-scc-to-user privileged -z rook-csi-cephfs-plugin-sa -n rook-ce
 oc adm policy add-scc-to-user privileged -z rook-csi-cephfs-provisioner-sa -n rook-ceph-system
 oc create -f operator-with-csi.yaml || echo Ignoring ignoring error about allready existing namespace rook-ceph-system
 oc wait --for condition=ready  pod -l app=rook-ceph-operator -n rook-ceph-system --timeout=120s
+oc wait --for condition=ready  pod -l app=rook-ceph-agent -n rook-ceph-system --timeout=120s
+oc wait --for condition=ready  pod -l app=rook-discover -n rook-ceph-system --timeout=120s
 sed -i "s/useAllDevices: .*/useAllDevices: true/" cluster.yaml
 sed -i 's/# port: 8443/port: 8444/' cluster.yaml
 oc create -f cluster.yaml
@@ -37,7 +39,7 @@ metadata:
 spec:
   failureDomain: osd
   replicated:
-    size: 3
+    size: 2
 EOF
 
 # k8s1.12
