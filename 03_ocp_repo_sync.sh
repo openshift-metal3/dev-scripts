@@ -63,3 +63,9 @@ sync_go_repo_and_patch github.com/metalkube/baremetal-operator https://github.co
 
 # Install rook repository
 sync_go_repo_and_patch github.com/rook/rook https://github.com/rook/rook.git
+
+# Install Kafka Strimzi repository
+sync_go_repo_and_patch github.com/strimzi/strimzi-kafka-operator https://github.com/strimzi/strimzi-kafka-operator.git
+
+# Install Kafka Producer/Consumer repository
+sync_go_repo_and_patch github.com/scholzj/kafka-test-apps https://github.com/scholzj/kafka-test-apps.git
