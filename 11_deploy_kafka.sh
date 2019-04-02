@@ -26,6 +26,7 @@ oc wait --for condition=ready pod -l name=strimzi-cluster-operator -n ${KAFKA_NA
 sed -i "s/my-cluster/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-metrics.yaml
 sed -i "s/100Gi/${KAFKA_PVC_SIZE}Gi/" metrics/examples/kafka/kafka-metrics.yaml
 sed -i "s/my-cluster/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-connect-metrics.yaml
+sed -i "s/my-connect/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-connect-metrics.yaml
 oc apply -f metrics/examples/kafka/kafka-metrics.yaml -n ${KAFKA_NAMESPACE}
 sleep 5
 oc wait --for condition=ready pod -l strimzi.io/cluster=${KAFKA_CLUSTERNAME} -n ${KAFKA_NAMESPACE} --timeout=120s
@@ -46,8 +47,8 @@ oc apply -f metrics/examples/grafana/grafana.yaml -n ${KAFKA_NAMESPACE}
 oc wait --for condition=ready pod -l name=grafana -n ${KAFKA_NAMESPACE} --timeout=120s
 
 # Expose Grafana & Prometheus
-oc expose svc prometheus -n ${KAFKA_NAMESPACE}
-oc expose svc grafana -n ${KAFKA_NAMESPACE}
+oc expose svc prometheus -n ${KAFKA_NAMESPACE} || echo "Prometheus route already exists" 
+oc expose svc grafana -n ${KAFKA_NAMESPACE} || echo "Grafana route already exists" 
 
 # Recover Grafana Dashboard
 wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-kafka.json -O metrics/examples/grafana/strimzi-kafka.json
