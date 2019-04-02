@@ -9,9 +9,11 @@ from tripleo-quickstart here.
 
 We are using this repository as a work space while we figure out what the
 installer needs to do for bare metal provisioning. As that logic is ironed out,
-we are moving it into the [go-based
+we are moving it into the [facet wrapper
+API](https://github.com/openshift-metalkube/facet/tree/master/pkg/server), or
+the [go-based
 kni-installer](https://github.com/openshift-metalkube/kni-installer).
-Eventually that fork of
+Eventually that kni-installer fork of
 [openshift-installer](https://github.com/openshift/installer) will be merged
 back, and we won't need much or any of this. For now, these tools are the
 canonical way to set up a metalkube cluster.
