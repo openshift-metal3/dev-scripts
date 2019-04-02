@@ -33,6 +33,7 @@ ROOT_DISK=${ROOT_DISK:="/dev/vda"}
 # Kafka Strimzi configs
 KAFKA_NAMESPACE=${KAFKA_NAMESPACE:-strimzi}
 KAFKA_CLUSTERNAME=${KAFKA_CLUSTERNAME:-strimzi}
+KAFKA_PVC_SIZE=${KAFKA_PVC_SIZE:-10}
 # Kafka producer will generate 10 msg/sec/pod with a value of 100 (by default)
 KAFKA_PRODUCER_TIMER=${KAFKA_PRODUCER_TIMER:-"100"}
 KAFKA_PRODUCER_TOPIC=${KAFKA_PRODUCER_TOPIC:-strimzi-topic}
