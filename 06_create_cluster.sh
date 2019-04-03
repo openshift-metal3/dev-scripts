@@ -2,6 +2,7 @@
 set -x
 set -e
 
+source logging.sh
 source utils.sh
 source common.sh
 source ocp_install_env.sh

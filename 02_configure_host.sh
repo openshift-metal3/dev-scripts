@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -xe
 
+source logging.sh
 source common.sh
 source ocp_install_env.sh
 

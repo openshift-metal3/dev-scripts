@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 
-source common.sh
+source logging.sh
 
 # FIXME ocp-doit required this so leave permissive for now
 sudo setenforce permissive

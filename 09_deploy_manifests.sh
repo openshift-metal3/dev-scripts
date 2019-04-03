@@ -2,6 +2,8 @@
 
 set -ex
 
+source logging.sh
+
 # FIXME - what are the prerequisites we need to wait for here, is waiting for 
 # bootstrap complete enough?
 
