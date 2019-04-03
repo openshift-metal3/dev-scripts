@@ -38,7 +38,7 @@ NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 
-export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-"https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/"}
+export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-"https://releases-rhcos.svc.ci.openshift.org/storage/releases/ootpa/"}
 export RHCOS_LATEST="$(curl ${RHCOS_IMAGE_URL}/builds.json | jq -r ".builds[0]")"
 export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-${RHCOS_LATEST}}"
 export RHCOS_IMAGE_FILENAME_OPENSTACK_GZ="$(curl ${RHCOS_IMAGE_URL}/${RHCOS_IMAGE_VERSION}/meta.json | jq -r '.images.openstack.path')"
@@ -47,8 +47,8 @@ export RHCOS_IMAGE_NAME=$(echo $RHCOS_IMAGE_FILENAME_OPENSTACK_GZ | sed -e 's/-o
 # for the baremetal nodes so we get config drive support,
 # or perhaps a completely new image?
 export RHCOS_IMAGE_FILENAME_OPENSTACK="${RHCOS_IMAGE_NAME}-openstack.qcow2"
-export RHCOS_IMAGE_FILENAME_DUALDHCP="${RHCOS_IMAGE_NAME}-dualdhcp.qcow2"
-export RHCOS_IMAGE_FILENAME_LATEST="rhcos-maipo-latest.qcow2"
+export RHCOS_IMAGE_FILENAME_COMPRESSED="${RHCOS_IMAGE_NAME}-compressed.qcow2"
+export RHCOS_IMAGE_FILENAME_LATEST="rhcos-oopta-latest.qcow2"
 
 # Ironic vars
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}

@@ -28,36 +28,19 @@ done
 
 pushd $IRONIC_DATA_DIR/html/images
 
-# Workaround so that the dracut network module does dhcp on eth0 & eth1
-RHCOS_IMAGE_FILENAME_RAW="${RHCOS_IMAGE_FILENAME_OPENSTACK}.raw"
-if [ ! -e "$RHCOS_IMAGE_FILENAME_DUALDHCP" ] ; then
-    # Calculate the disksize required for the partitions on the image
-    # we do this to reduce the disk size so that ironic doesn't have to write as
-    # much data during deploy, as the default upstream disk image is way bigger
-    # then it needs to be. Were are adding the partition sizes and multiplying by 1.2.
-    DISKSIZE=$(virt-filesystems -a "$RHCOS_IMAGE_FILENAME_OPENSTACK" -l | grep /dev/ | awk '{s+=$5} END {print s*1.2}')
-    truncate --size $DISKSIZE "${RHCOS_IMAGE_FILENAME_RAW}"
-    virt-resize --no-extra-partition "${RHCOS_IMAGE_FILENAME_OPENSTACK}" "${RHCOS_IMAGE_FILENAME_RAW}"
-
-    LOOPBACK=$(sudo losetup --show -f "${RHCOS_IMAGE_FILENAME_RAW}" | cut -f 3 -d /)
-    mkdir -p /tmp/mnt
-    sudo kpartx -a /dev/$LOOPBACK
-    sudo mount /dev/mapper/${LOOPBACK}p1 /tmp/mnt
-    sudo sed --follow-symlinks -i -e 's/ip=eth0:dhcp/ip=eth0:dhcp ip=eth1:dhcp/g' /tmp/mnt/grub2/grub.cfg
-    sudo umount /tmp/mnt
-    sudo kpartx -d /dev/${LOOPBACK}
-    sudo losetup -d /dev/${LOOPBACK}
-    qemu-img convert -O qcow2 -c "$RHCOS_IMAGE_FILENAME_RAW" "$RHCOS_IMAGE_FILENAME_DUALDHCP"
-    rm "$RHCOS_IMAGE_FILENAME_RAW"
+# Compress the qcow2 image so that it can be downloaded into
+# a smaller /tmp by IPA
+if [ ! -e "$RHCOS_IMAGE_FILENAME_COMPRESSED" ] ; then
+    qemu-img convert -O qcow2 -c "$RHCOS_IMAGE_FILENAME_OPENSTACK" "$RHCOS_IMAGE_FILENAME_COMPRESSED"
 fi
 
-if [ ! -e "$RHCOS_IMAGE_FILENAME_DUALDHCP.md5sum" -o \
-     "$RHCOS_IMAGE_FILENAME_DUALDHCP" -nt "$RHCOS_IMAGE_FILENAME_DUALDHCP.md5sum" ] ; then
-    md5sum "$RHCOS_IMAGE_FILENAME_DUALDHCP" | cut -f 1 -d " " > "$RHCOS_IMAGE_FILENAME_DUALDHCP.md5sum"
+if [ ! -e "${RHCOS_IMAGE_FILENAME_COMPRESSED}.md5sum" -o \
+     "$RHCOS_IMAGE_FILENAME_COMPRESSED" -nt "$RHCOS_IMAGE_FILENAME_COMPRESSED.md5sum" ] ; then
+    md5sum "$RHCOS_IMAGE_FILENAME_COMPRESSED" | cut -f 1 -d " " > "$RHCOS_IMAGE_FILENAME_COMPRESSED.md5sum"
 fi
 
-ln -sf "$RHCOS_IMAGE_FILENAME_DUALDHCP" "$RHCOS_IMAGE_FILENAME_LATEST"
-ln -sf "$RHCOS_IMAGE_FILENAME_DUALDHCP.md5sum" "$RHCOS_IMAGE_FILENAME_LATEST.md5sum"
+ln -sf "$RHCOS_IMAGE_FILENAME_COMPRESSED" "$RHCOS_IMAGE_FILENAME_LATEST"
+ln -sf "$RHCOS_IMAGE_FILENAME_COMPRESSED.md5sum" "$RHCOS_IMAGE_FILENAME_LATEST.md5sum"
 popd
 
 for name in ironic ironic-inspector dnsmasq httpd; do 
