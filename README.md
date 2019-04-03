@@ -152,3 +152,15 @@ at the command line, try:
 xfs_info /mount-point
 ```
 If you see `ftype=1` then you have d_type support.
+
+### Modifying cpu/memory/disk resources
+The default cpu/memory/disk resources when using virtual machines are provided
+by the [tripleo-quickstart-config/metalkube-nodes.yml](tripleo-quickstart-config/metalkube-nodes.yml) file:
+
+* 4 vCPU
+* 8 Gb RAM
+* 50 Gb HDD
+
+If required, the cpu/memory/disk can be customzied per host role
+(`openshift_master_memory`, `openshift_worker_memory`,...) by modifying that
+file prior to run the [04_setup_ironic.sh](04_setup_ironic.sh) script.

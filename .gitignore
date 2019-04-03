@@ -3,4 +3,5 @@ ocp/
 openshift-install.log
 logs/
 config_*.sh
+!config_example.sh
 assets/generated
