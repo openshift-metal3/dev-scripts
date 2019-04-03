@@ -84,7 +84,7 @@ done
 
 # Run dev-scripts
 set -o pipefail
-make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
+timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Populate cache for files it doesn't have
 for FILE in $FILESTOCACHE ; do
