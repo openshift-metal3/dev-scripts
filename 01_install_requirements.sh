@@ -40,7 +40,8 @@ sudo yum -y install \
   python-requests \
   python-setuptools \
   vim-enhanced \
-  wget
+  wget \
+  jq
 
 # We're reusing some tripleo pieces for this setup so clone them here
 cd
