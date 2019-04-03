@@ -58,8 +58,8 @@ wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-d
 GRAFANA_ROUTE=`oc get route grafana --template='{{ .spec.host }}'`
 PROMETHEUS_ROUTE=`oc get route prometheus --template='{{ .spec.host }}'`
 curl -X "POST" "http://${GRAFANA_ROUTE}/api/datasources" -H "Content-Type: application/json" --user admin:admin --data-binary '{ "name":"Prometheus","type":"prometheus","access":"proxy","url":"http://'${PROMETHEUS_ROUTE}'","basicAuth":false,"isDefault":true }'
-curl -X "POST" "http://grafana-kafka.apps.ostest.test.metalkube.org/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-kafka.json
-curl -X "POST" "http://grafana-kafka.apps.ostest.test.metalkube.org/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-zookeeper.json
+curl -X "POST" "${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-kafka.json
+curl -X "POST" "http://${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-zookeeper.json
 
 figlet "Deploying Kafka Producer/Consumer" | lolcat
 
