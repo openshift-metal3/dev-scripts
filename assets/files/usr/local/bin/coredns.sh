@@ -9,7 +9,7 @@ CLUSTER_NAME=${CLUSTER_ARR[0]}
 DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 grep -v "${DNS_VIP}" /etc/resolv.conf | tee /etc/coredns/resolv.conf
 
-COREDNS_IMAGE="quay.io/openshift-metalkube/coredns-mdns:name-filter"
+COREDNS_IMAGE="quay.io/openshift-metalkube/coredns-mdns:latest"
 if ! podman inspect "$COREDNS_IMAGE" &>/dev/null; then
     echo "Pulling release image..."
     podman pull "$COREDNS_IMAGE"
