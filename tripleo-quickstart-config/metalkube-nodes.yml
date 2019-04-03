@@ -1,5 +1,5 @@
-openshift_memory: 6144
-default_vcpu: 2
+default_memory: 8192
+default_vcpu: 4
 overcloud_nodes:
   - name: openshift_master_0
     flavor: openshift_master
@@ -29,13 +29,13 @@ node_count: 6
 
 flavors:
   openshift_master:
-    memory: '{{openshift_memory|default(default_memory)}}'
-    disk: '{{openshift_disk|default(default_disk)}}'
-    vcpu: '{{openshift_vcpu|default(default_vcpu)}}'
+    memory: '{{openshift_master_memory|default(default_memory)}}'
+    disk: '{{openshift_master_disk|default(default_disk)}}'
+    vcpu: '{{openshift_master_vcpu|default(default_vcpu)}}'
     extradisks: true
 
   openshift_worker:
-    memory: '{{openshift_memory|default(default_memory)}}'
-    disk: '{{openshift_disk|default(default_disk)}}'
-    vcpu: '{{openshift_vcpu|default(default_vcpu)}}'
+    memory: '{{openshift_worker_memory|default(default_memory)}}'
+    disk: '{{openshift_worker_disk|default(default_disk)}}'
+    vcpu: '{{openshift_worker_vcpu|default(default_vcpu)}}'
     extradisks: true
