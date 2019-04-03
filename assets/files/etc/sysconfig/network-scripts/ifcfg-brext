@@ -1,0 +1,6 @@
+DEVICE=brext
+NAME=brext
+TYPE=Bridge
+ONBOOT=yes
+NM_CONTROLLED=yes
+BOOTPROTO=dhcp

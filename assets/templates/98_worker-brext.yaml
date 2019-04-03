@@ -1,0 +1,23 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 98-worker-brext
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      files:
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 420
+        path: /etc/sysconfig/network-scripts/ifcfg-brext
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 493
+        path: /etc/NetworkManager/dispatcher.d/98-brextscript
