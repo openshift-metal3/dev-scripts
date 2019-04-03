@@ -60,6 +60,7 @@ PROMETHEUS_ROUTE=`oc get route prometheus --template='{{ .spec.host }}'`
 curl -X "POST" "http://${GRAFANA_ROUTE}/api/datasources" -H "Content-Type: application/json" --user admin:admin --data-binary '{ "name":"Prometheus","type":"prometheus","access":"proxy","url":"http://'${PROMETHEUS_ROUTE}'","basicAuth":false,"isDefault":true }'
 curl -X "POST" "${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-kafka.json
 curl -X "POST" "http://${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-zookeeper.json
+curl -X "PUT" "http://${GRAFANA_ROUTE}/api/org/preferences" -H "Content-Type: application/json;charset=UTF-8" --user admin:admin --data-binary '{"theme":"","homeDashboardId":1,"timezone":"browser"}'
 
 figlet "Deploying Kafka Producer/Consumer" | lolcat
 
