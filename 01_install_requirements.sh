@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -ex
 
-source common.sh
 
 # FIXME ocp-doit required this so leave permissive for now
 sudo setenforce permissive
@@ -42,6 +41,9 @@ sudo yum -y install \
   vim-enhanced \
   wget \
   jq
+
+# moved to after all called software is installed
+source common.sh
 
 # We're reusing some tripleo pieces for this setup so clone them here
 cd
