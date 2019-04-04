@@ -81,8 +81,8 @@ if [[ ! $(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"') =~ ^(centos
 fi
 
 # Check CentOS version
-if [[ $(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"') -ne 7 ]]; then
-  echo "Required CentOS 7"
+if [[ $(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.') -ne 7 ]]; then
+  echo "Required CentOS 7 or RHEL 7"
   exit 1
 fi
 
