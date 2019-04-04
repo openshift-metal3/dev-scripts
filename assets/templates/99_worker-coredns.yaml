@@ -9,39 +9,15 @@ spec:
   config:
     ignition:
       version: 2.2.0
-    systemd:
-      units:
-        - contents: |
-            [Unit]
-            Description=Serve cluster DNS
-            Wants=network-online.target
-            After=network-online.target
-            ConditionPathExists=!/etc/pivot/image-pullspec
-
-            [Service]
-            WorkingDirectory=/etc/coredns
-            ExecStartPre=/usr/local/bin/coredns.sh
-            ExecStart=/usr/bin/podman start -a coredns
-            ExecStop=/usr/bin/podman stop -t 10 coredns
-            TimeoutStartSec=600
-
-            Restart=on-failure
-            RestartSec=5
-
-            [Install]
-            WantedBy=multi-user.target
-
-          enabled: true
-          name: coredns.service
     storage:
       files:
       - contents:
           verification: {}
         filesystem: root
         mode: 0664
-        path: /etc/coredns/Corefile
+        path: /etc/kubernetes/manifests/coredns.yaml
       - contents:
           verification: {}
         filesystem: root
-        mode: 0775
-        path: /usr/local/bin/coredns.sh
+        mode: 0664
+        path: /etc/kubernetes/static-pod-resources/coredns/Corefile.template
