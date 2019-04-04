@@ -48,7 +48,7 @@ export RHCOS_IMAGE_NAME=$(echo $RHCOS_IMAGE_FILENAME_OPENSTACK_GZ | sed -e 's/-o
 # or perhaps a completely new image?
 export RHCOS_IMAGE_FILENAME_OPENSTACK="${RHCOS_IMAGE_NAME}-openstack.qcow2"
 export RHCOS_IMAGE_FILENAME_COMPRESSED="${RHCOS_IMAGE_NAME}-compressed.qcow2"
-export RHCOS_IMAGE_FILENAME_LATEST="rhcos-oopta-latest.qcow2"
+export RHCOS_IMAGE_FILENAME_LATEST="rhcos-ootpa-latest.qcow2"
 
 # Ironic vars
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
