@@ -19,6 +19,7 @@ spec:
             ConditionPathExists=!/etc/pivot/image-pullspec
 
             [Service]
+            User=root
             WorkingDirectory=/etc/coredns
             ExecStartPre=/usr/local/bin/coredns.sh
             ExecStart=/usr/bin/podman start -a coredns

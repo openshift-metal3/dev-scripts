@@ -19,6 +19,7 @@ spec:
             ConditionPathExists=!/etc/pivot/image-pullspec
 
             [Service]
+            User=root
             WorkingDirectory=/etc/haproxy
             ExecStart=/usr/local/bin/haproxy.sh
             Restart=on-failure

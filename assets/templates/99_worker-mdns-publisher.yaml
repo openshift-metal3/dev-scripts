@@ -19,6 +19,7 @@ spec:
             ConditionPathExists=!/etc/pivot/image-pullspec
 
             [Service]
+            User=root
             WorkingDirectory=/etc/mdns
             ExecStartPre=/usr/local/bin/mdns-publisher.sh
             ExecStart=/usr/bin/podman start -a mdns-publisher
