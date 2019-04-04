@@ -1,0 +1,87 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: keepalived
+  namespace: kni-infra
+  creationTimestamp: 
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: kni-infra-vrrp
+spec:
+  volumes:
+  - name: resource-dir
+    hostPath:
+      path: "/etc/kubernetes/static-pod-resources/keepalived"
+  - name: kubeconfig
+    hostPath:
+      path: "/etc/kubernetes/kubeconfig"
+  - name: clusterinfo
+    hostPath:
+      path: "/usr/local/bin/clusterinfo"
+  - name: conf-dir
+    empty-dir: {}
+  initContainers:
+  - name: render-keepalived-conf
+    image: registry.svc.ci.openshift.org/openshift/origin-v4.0-2019-04-04-191054@sha256:89f01a19e46cf592c3ba2446722480ff8a949960465cd458002f153e5673e389
+    command:
+    - "/bin/bash"
+    - "-c"
+    - |
+      #/bin/bash
+      set -e
+      
+      CLUSTER_DOMAIN="$(/usr/local/bin/clusterinfo CLUSTER_DOMAIN)"
+      API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
+      IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
+      SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
+      INTERFACE="$(ip -o addr show to "$SUBNET_CIDR" | awk '{print $2}')"
+      DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
+      INGRESS_VIP="$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
+
+      export API_VIP
+      export DNS_VIP
+      export INTERFACE
+      export INGRESS_VIP
+      envsubst < /etc/kubernetes/static-pod-resources/keepalived.conf.template | tee /etc/keepalived/keepalived.conf
+    resources: {}
+    volumeMounts:
+    - name: resource-dir
+      mountPath: "/etc/kubernetes/static-pod-resources"
+    - name: conf-dir
+      mountPath: "/etc/keepalived"
+    - name: kubeconfig
+      mountPath: "/etc/kubernetes/kubeconfig"
+    imagePullPolicy: IfNotPresent
+  containers:
+  - name: keepalived
+    securityContext:
+      privileged: true
+    image: quay.io/celebdor/keepalived:latest
+    command:
+    - /usr/sbin/keepalived
+    args:
+    - "-f"
+    - "/etc/keepalived/keepalived.conf"
+    - "--dont-fork"
+    - "--vrrp"
+    - "--log-detail"
+    - "--log-console"
+    resources:
+      requests:
+        cpu: 150m
+        memory: 1Gi
+    volumeMounts:
+    - name: resource-dir
+      mountPath: "/etc/kubernetes/static-pod-resources"
+    - name: cert-dir
+      mountPath: "/etc/kubernetes/static-pod-certs"
+    - name: audit-dir
+      mountPath: "/var/log/kube-apiserver"
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+  hostNetwork: true
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}
