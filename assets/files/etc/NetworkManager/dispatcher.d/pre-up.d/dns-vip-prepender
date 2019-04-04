@@ -7,7 +7,7 @@ case "$STATUS" in
     pre-up)
     logger -s "NM dns-vip-prepender triggered by pre-upping ${1}."
     set -e
-    CLUSTER_DOMAIN="$(clusterinfo CLUSTER_DOMAIN)"
+    CLUSTER_DOMAIN="$(/usr/local/bin/clusterinfo DOMAIN)"
     DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
     set +e
     if [[ -n $DNS_VIP ]]; then

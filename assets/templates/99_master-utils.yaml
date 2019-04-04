@@ -16,3 +16,8 @@ spec:
         filesystem: root
         mode: 0775
         path: /usr/local/bin/clusterinfo
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 0775
+        path: /usr/local/bin/get_vip_subnet_cidr

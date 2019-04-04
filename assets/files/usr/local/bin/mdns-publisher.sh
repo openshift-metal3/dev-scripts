@@ -3,9 +3,8 @@ set -e
 
 mkdir --parents /etc/mdns
 
-CLUSTER_DOMAIN="$(clusterinfo CLUSTER_DOMAIN)"
-read -d '.' -a CLUSTER_ARR <<< $CLUSTER_DOMAIN
-CLUSTER_NAME=${CLUSTER_ARR[0]}
+CLUSTER_DOMAIN="$(/usr/local/bin/clusterinfo DOMAIN)"
+CLUSTER_NAME="$(/usr/local/bin/clusterinfo NAME)"
 API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
 SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"

@@ -3,9 +3,8 @@ set -e
 
 mkdir --parents /etc/coredns
 
-CLUSTER_DOMAIN="$(clusterinfo CLUSTER_DOMAIN)"
-read -d '.' -a CLUSTER_ARR <<< $CLUSTER_DOMAIN
-CLUSTER_NAME=${CLUSTER_ARR[0]}
+CLUSTER_DOMAIN="$(/usr/local/bin/clusterinfo DOMAIN)"
+CLUSTER_NAME="$(/usr/local/bin/clusterinfo NAME)"
 DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 grep -v "${DNS_VIP}" /etc/resolv.conf | tee /etc/coredns/resolv.conf
 
