@@ -53,12 +53,16 @@ for FILE in $FILESTOCACHE ; do
     sudo mkdir -p $(dirname $FILE)
     [ -f $FILECACHEDIR/$(basename $FILE) ] && sudo cp $FILECACHEDIR/$(basename $FILE) $FILE
 done
-sudo chown -R notstack /opt/dev-scripts/ironic
+
+sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/kni-install/libvirt
+sudo chown -R notstack /opt/dev-scripts/ironic /opt/data/installer-cache /home/notstack/.cache
 
 # Make yum store its cache on /opt so packages don't need to be downloaded for each job
 sudo sed -i -e '/keepcache=0/d' /etc/yum.conf
-sudo mkdir -p /opt/data/yumcache
 sudo mount -o bind /opt/data/yumcache /var/cache/yum
+
+# Mount the kni-installer cache directory so we don't download a RHCOS image for each run
+sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/kni-install/libvirt
 
 # If directories for the containers exists then we build the images (as they are what triggered the job)
 if [ -d "/home/notstack/metalkube-ironic" ] ; then
