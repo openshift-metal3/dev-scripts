@@ -65,36 +65,33 @@ $ go run "${GOPATH}/src/github.com/openshift-metalkube/facet/main.go" server
 
 - `./04_setup_ironic.sh`
 
-This will setup Ironic on the host server and download the resources it requires
+This will setup containers for the Ironic infrastructure on the host
+server and download the resources it requires.
+
+The Ironic container is stored at https://quay.io/repository/metalkube/metalkube-ironic, built from
+https://github.com/metalkube/metalkube-ironic.
 
 - `./05_build_ocp_installer.sh`
 
 These will pull and build the openshift-install and some other things from
 source.
 
-- `./06_deploy_bootstrap_vm.sh`
+- `./06_create_cluster.sh`
 
-This will run the openshift-install to generate ignition configs and boot the
-bootstrap VM, including a bootstrap ironic all in one container.
-Ironic container is stored at https://quay.io/repository/metalkube/metalkube-ironic, built from https://github.com/metalkube/metalkube-ironic
-Currently no cluster is actually created.
+This will run the kni-installer to generate ignition configs for the
+bootstrap node and the masters.  The installer then launches both the
+bootstrap VM and master nodes using the Terraform providers for libvirt
+and Ironic.  Once bootstrap is complete, the installer removes the
+bootstrap node and the cluster will be online.
 
-When the VM is running, the script will show the IP and you can ssh to the
-VM via ssh core@IP.
+You can view the IP for the bootstrap node by running `virsh
+net-dhcp-leases baremetal`.  You can SSH to it using ssh core@IP.
 
 Then you can interact with the k8s API on the bootstrap VM e.g
 `sudo oc status --verbose --config /etc/kubernetes/kubeconfig`.
 
 You can also see the status of the bootkube.sh script which is running via
 `journalctl -b -f -u bootkube.service`.
-
-- `./07_deploy_masters.sh`
-
-This will deploy the master nodes via ironic, using the Ignition config
-generated in the previous step.
-
-After running `./07_deploy_masters.sh` note that it takes some time for the cluster to
-fully come up, many container images are downloaded before the k8s API is fully available.
 
 - `./08_deploy_bmo.sh`
 
