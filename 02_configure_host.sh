@@ -90,6 +90,9 @@ fi
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     sudo virsh net-destroy baremetal
     sudo virsh net-start baremetal
+    if [ "$INT_IF" ]; then #Need to bring UP the NIC after destroying the libvirt network
+        sudo ifup $INT_IF
+    fi
 fi
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
