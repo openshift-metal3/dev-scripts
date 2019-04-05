@@ -32,8 +32,6 @@ fi
 export OS_TOKEN=fake-token
 export OS_URL=http://localhost:6385/
 
-trap collect_info_on_failure TERM
-
 wait_for_json ironic \
     "${OS_URL}/v1/nodes" \
     10 \
