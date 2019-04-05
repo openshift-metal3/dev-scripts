@@ -4,7 +4,7 @@ set -x
 source common.sh
 
 # Kill and remove the running ironic containers
-for name in ironic ironic-inspector dnsmasq httpd; do 
+for name in ironic ironic-inspector dnsmasq httpd; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -25,7 +25,9 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
 
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/conf.d/dnsmasq.conf
 # There was a bug in this file, it may need to be recreated.
-sudo rm -f /etc/sysconfig/network-scripts/ifcfg-provisioning
+if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
+    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-provisioning
+fi
 sudo virsh net-destroy baremetal
 sudo virsh net-undefine baremetal
 sudo virsh net-destroy provisioning
