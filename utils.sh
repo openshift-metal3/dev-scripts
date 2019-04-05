@@ -30,6 +30,13 @@ function create_cluster() {
     $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create cluster
 }
 
+function wait_for_cvo_finish() {
+    local assets_dir
+
+    assets_dir="$1"
+    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug upi finish
+}
+
 function wait_for_json() {
     local name
     local url
