@@ -57,7 +57,6 @@ sudo virsh net-dhcp-leases baremetal
 
 # disable NoSchedule taints for masters until we have workers deployed
 oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-
-oc label node -l node-role.kubernetes.io/master node-role.kubernetes.io/worker=''
 
 #Verify Ingress controller functionality
 echo "Verifying Ingress controller functionality, first we'll check that router pod responsive"
