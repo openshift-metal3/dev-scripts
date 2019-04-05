@@ -2,6 +2,7 @@
 
 set -ex
 
+source logging.sh
 source common.sh
 
 figlet "Building the Installer" | lolcat

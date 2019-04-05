@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -ex
+source logging.sh
 source common.sh
 
 eval "$(go env)"

@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
 set -eux
+source logging.sh
 source common.sh
 
 figlet "Deploying rook" | lolcat
