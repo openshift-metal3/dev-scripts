@@ -9,49 +9,15 @@ spec:
   config:
     ignition:
       version: 2.2.0
-    systemd:
-      units:
-        - contents: |
-            [Unit]
-            Description=Manage node VIPs with keepalived
-            Wants=network-online.target
-            After=network-online.target
-            ConditionPathExists=!/etc/pivot/image-pullspec
-
-            [Service]
-            WorkingDirectory=/etc/keepalived
-            ExecStartPre=/usr/local/bin/keepalived.sh
-            ExecStart=/usr/bin/podman start -a keepalived
-            ExecStop=/usr/bin/podman stop -t 10 keepalived
-
-            Restart=on-failure
-            RestartSec=5
-            TimeoutStartSec=600
-
-            [Install]
-            WantedBy=multi-user.target
-
-          enabled: true
-          name: keepalived.service
     storage:
       files:
       - contents:
           verification: {}
         filesystem: root
-        mode: 0775
-        path: /usr/local/bin/get_vip_subnet_cidr
+        mode: 0664
+        path: /etc/kubernetes/manifests/keepalived.yaml
       - contents:
           verification: {}
         filesystem: root
         mode: 0664
-        path: /etc/keepalived/keepalived.conf.template
-      - contents:
-          verification: {}
-        filesystem: root
-        mode: 0775
-        path: /usr/local/bin/keepalived.sh
-      - contents:
-          verification: {}
-        filesystem: root
-        mode: 0775
-        path: /etc/keepalived/check_coredns_mdns.sh
+        path: /etc/kubernetes/static-pod-resources/keepalived/keepalived.conf.template

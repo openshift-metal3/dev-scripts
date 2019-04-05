@@ -1,0 +1,98 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: mdns-publisher
+  namespace: kni-infra
+  creationTimestamp:
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: kni-infra-mdns
+spec:
+  volumes:
+  - name: resource-dir
+    hostPath:
+      path: "/etc/kubernetes/static-pod-resources/mdns"
+  - name: kubeconfig
+    hostPath:
+      path: "/etc/kubernetes/kubeconfig"
+  - name: oc
+    hostPath:
+      path: "/bin/oc"
+  - name: clusterinfo
+    hostPath:
+      path: "/usr/local/bin/clusterinfo"
+  - name: get-vip-subnet-cidr
+    hostPath:
+      path: "/usr/local/bin/get_vip_subnet_cidr"
+  - name: conf-dir
+    empty-dir: {}
+  initContainers:
+  - name: render-config
+    image: quay.io/openshift/origin-node:latest
+    command:
+    - "/bin/bash"
+    - "-c"
+    - |
+      #/bin/bash
+      set -e
+      CLUSTER_DOMAIN="$(/usr/local/bin/clusterinfo DOMAIN)"
+      CLUSTER_NAME="$(/usr/local/bin/clusterinfo NAME)"
+      API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
+      IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
+      SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
+      PREFIX="${SUBNET_CIDR#*/}"
+      DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
+      ONE_CIDR="$(ip addr show to "$SUBNET_CIDR" | \
+                  grep -Po 'inet \K[\d.]+/[\d.]+' | \
+                  grep -v "${DNS_VIP}/$PREFIX" | \
+                  grep -v "${API_VIP}/$PREFIX" | \
+                  sort | xargs | cut -f1 -d' ')"
+
+      NON_VIRTUAL_IP="${ONE_CIDR%/*}"
+      MASTER_HOSTNAME="$(hostname -s).local."
+      ETCD_HOSTNAME="$(echo "$MASTER_HOSTNAME" | sed 's;master;etcd;')"
+      export MASTER_HOSTNAME
+      export ETCD_HOSTNAME
+      export NON_VIRTUAL_IP
+      export CLUSTER_NAME
+      /usr/libexec/platform-python -c "from __future__ import print_function
+      import os
+      with open('/etc/kubernetes/static-pod-resources/config.template', 'r') as f:
+          content = f.read()
+      with open('/etc/mdns/config.hcl', 'w') as dest:
+          print(os.path.expandvars(content), file=dest)"
+    resources: {}
+    volumeMounts:
+    - name: resource-dir
+      mountPath: "/etc/kubernetes/static-pod-resources"
+    - name: conf-dir
+      mountPath: "/etc/mdns"
+    - name: kubeconfig
+      mountPath: "/etc/kubernetes/kubeconfig"
+    - name: oc
+      mountPath: "/bin/oc"
+    - name: clusterinfo
+      mountPath: "/usr/local/bin/clusterinfo"
+    - name: get-vip-subnet-cidr
+      mountPath: "/usr/local/bin/get_vip_subnet_cidr"
+    imagePullPolicy: IfNotPresent
+  containers:
+  - name: mdns-publisher
+    image: quay.io/openshift-metalkube/mdns-publisher:latest
+    args:
+    - "--debug"
+    resources:
+      requests:
+        cpu: 150m
+        memory: 1Gi
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/mdns"
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+  hostNetwork: true
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}

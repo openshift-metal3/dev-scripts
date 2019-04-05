@@ -5,7 +5,7 @@ vrrp_script chk_ocp {
 }
 
 vrrp_script chk_dns {
-    script "/etc/keepalived/check_coredns_mdns.sh"
+    script "host -t SRV _etcd-server-ssl._tcp.${CLUSTER_DOMAIN} localhost"
     interval 1
     weight 50
 }

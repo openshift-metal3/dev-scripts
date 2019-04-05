@@ -9,38 +9,15 @@ spec:
   config:
     ignition:
       version: 2.2.0
-    systemd:
-      units:
-        - contents: |
-            [Unit]
-            Description=Publish services with multicast DNS
-            Wants=network-online.target
-            After=network-online.target
-            ConditionPathExists=!/etc/pivot/image-pullspec
-
-            [Service]
-            WorkingDirectory=/etc/mdns
-            ExecStartPre=/usr/local/bin/mdns-publisher.sh
-            ExecStart=/usr/bin/podman start -a mdns-publisher
-            ExecStop=/usr/bin/podman stop -t 10 mdns-publisher
-
-            Restart=on-failure
-            RestartSec=5
-            TimeoutStartSec=600
-
-            [Install]
-            WantedBy=multi-user.target
-          enabled: true
-          name: mdns-publisher.service
     storage:
       files:
       - contents:
           verification: {}
         filesystem: root
         mode: 0664
-        path: /etc/mdns/config.template
+        path: /etc/kubernetes/manifests/mdns-publisher.yaml
       - contents:
           verification: {}
         filesystem: root
-        mode: 0775
-        path: /usr/local/bin/mdns-publisher.sh
+        mode: 0664
+        path: /etc/kubernetes/static-pod-resources/mdns/config.template
