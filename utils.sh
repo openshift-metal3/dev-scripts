@@ -30,6 +30,13 @@ function create_cluster() {
     $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create cluster
 }
 
+function wait_for_cvo_finish() {
+    local assets_dir
+
+    assets_dir="$1"
+    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug upi finish
+}
+
 function wait_for_json() {
     local name
     local url
@@ -84,14 +91,6 @@ function master_node_val() {
     jq -r ".nodes[${n}].${val}" $MASTER_NODES_FILE
 }
 
-function collect_info_on_failure() {
-    $SSH -o ConnectionAttempts=500 core@$IP sudo journalctl -b -u bootkube
-    oc get clusterversion/version
-    oc get clusteroperators
-    oc get pods --all-namespaces | grep -v Running | grep -v Completed
-}
-
-
 function master_node_to_install_config() {
     local master_idx
     master_idx="$1"
@@ -144,13 +143,6 @@ function master_node_to_install_config() {
         deploy_kernel:  "${deploy_kernel}"
         deploy_ramdisk: "${deploy_ramdisk}"
 EOF
-}
-
-function collect_info_on_failure() {
-    $SSH -o ConnectionAttempts=500 core@$IP sudo journalctl -b -u bootkube
-    oc get clusterversion/version
-    oc get clusteroperators
-    oc get pods --all-namespaces | grep -v Running | grep -v Completed
 }
 
 function patch_ep_host_etcd() {
