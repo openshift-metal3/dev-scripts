@@ -28,7 +28,13 @@ sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/con
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     sudo rm -f /etc/sysconfig/network-scripts/ifcfg-provisioning
 fi
-sudo virsh net-destroy baremetal
-sudo virsh net-undefine baremetal
-sudo virsh net-destroy provisioning
-sudo virsh net-undefine provisioning
+sudo virsh net-list --name|grep -q baremetal
+if [ "$?" == "0" ]; then
+    sudo virsh net-destroy baremetal
+    sudo virsh net-undefine baremetal
+fi
+sudo virsh net-list --name|grep -q provisioning
+if [ "$?" == "0" ]; then
+     sudo virsh net-destroy provisioning
+     sudo virsh net-undefine provisioning
+fi
