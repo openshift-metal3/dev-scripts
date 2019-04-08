@@ -35,7 +35,7 @@ export OS_URL=http://localhost:6385/
 
 wait_for_json ironic \
     "${OS_URL}/v1/nodes" \
-    10 \
+    20 \
     -H "Accept: application/json" -H "Content-Type: application/json" -H "User-Agent: wait-for-json" -H "X-Auth-Token: $OS_TOKEN"
 
 if [ $(sudo podman ps | grep -w -e "ironic$" -e "ironic-inspector$" -e "dnsmasq" -e "httpd" | wc -l) != 4 ]; then
