@@ -4,5 +4,4 @@ metadata:
   name: kubevirt-config
   namespace: kubevirt
 data:
-  debug.useEmulation: "true"
-  feature-gates: "DataVolumes"
+  feature-gates: "DataVolumes,LiveMigration"
