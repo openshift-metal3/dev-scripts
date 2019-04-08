@@ -47,3 +47,21 @@ parameters:
   fstype: xfs
 reclaimPolicy: Retain
 EOF
+
+cat <<EOF | oc create -f -
+apiVersion: ceph.rook.io/v1
+kind: CephFilesystem
+metadata:
+  name: myfs
+  namespace: rook-ceph
+spec:
+  metadataPool:
+    replicated:
+      size: 2
+  dataPools:
+    - replicated:
+        size: 2
+  metadataServer:
+    activeCount: 1
+    activeStandby: true
+EOF
