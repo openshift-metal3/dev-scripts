@@ -65,7 +65,7 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     fi
 fi
 
-if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
+if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Create the baremetal bridge
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-baremetal ] ; then
         echo -e "DEVICE=baremetal\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
