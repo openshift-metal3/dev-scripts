@@ -9,7 +9,7 @@ https://kubevirt.io/user-guide/docs/latest/administration/intro.html#2-alternati
 Created using:
 
 ```
-VERSION=v0.15.0
+VERSION=v0.16.0
 curl -Lo 10_cnv_kubevirt_op.yaml https://github.com/kubevirt/kubevirt/releases/download/$VERSION/kubevirt-operator.yaml
 curl -Lo 11_cnv_kubevirt_cr.yaml https://github.com/kubevirt/kubevirt/releases/download/$VERSION/kubevirt-cr.yaml
 cat > 12_cnv_kubevirt_config.yaml <<EOY
