@@ -32,3 +32,7 @@ sudo virsh net-destroy baremetal
 sudo virsh net-undefine baremetal
 sudo virsh net-destroy provisioning
 sudo virsh net-undefine provisioning
+for vm in `sudo virsh list --name|grep "ostest-.*-bootstrap"`; do
+    sudo virsh destroy $vm
+    sudo virsh undefine $vm
+done
