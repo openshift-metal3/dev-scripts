@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# https://github.com/openshift-metalkube/dev-scripts/issues/141#issuecomment-474331659
+# https://github.com/openshift-metalkube/dev-scripts/issues/260
 
 export KUBECONFIG=$(dirname $0)/ocp/auth/kubeconfig
-oc get csr -o name | xargs -n 1 oc adm certificate approve
+for cert in $(oc get csr -o name); do
+    oc adm certificate approve "${cert}"
+done
