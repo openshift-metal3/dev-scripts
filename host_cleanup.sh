@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -x
 
+source logging.sh
 source common.sh
 
 # Kill and remove the running ironic containers
