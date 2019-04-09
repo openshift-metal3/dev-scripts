@@ -51,18 +51,6 @@ oc wait --for condition=ready pod -l name=grafana -n ${KAFKA_NAMESPACE} --timeou
 oc expose svc prometheus -n ${KAFKA_NAMESPACE} || echo "Prometheus route already exists" 
 oc expose svc grafana -n ${KAFKA_NAMESPACE} || echo "Grafana route already exists" 
 
-# Recover Grafana Dashboard
-wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-kafka.json -O metrics/examples/grafana/strimzi-kafka.json
-wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-zookeeper.json -O metrics/examples/grafana/strimzi-zookeeper.json
-
-# Add Grafana Dashboards and Datasource
-GRAFANA_ROUTE=`oc get route grafana --template='{{ .spec.host }}'`
-PROMETHEUS_ROUTE=`oc get route prometheus --template='{{ .spec.host }}'`
-curl -X "POST" "http://${GRAFANA_ROUTE}/api/datasources" -H "Content-Type: application/json" --user admin:admin --data-binary '{ "name":"Prometheus","type":"prometheus","access":"proxy","url":"http://'${PROMETHEUS_ROUTE}'","basicAuth":false,"isDefault":true }'
-curl -X "POST" "${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-kafka.json
-curl -X "POST" "http://${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-zookeeper.json
-curl -X "PUT" "http://${GRAFANA_ROUTE}/api/org/preferences" -H "Content-Type: application/json;charset=UTF-8" --user admin:admin --data-binary '{"theme":"","homeDashboardId":1,"timezone":"browser"}'
-
 figlet "Deploying Kafka Producer/Consumer" | lolcat
 
 # Modify & Deploy Kafka Producer/Consumer
@@ -75,3 +63,16 @@ sed -i "s/\"10000\"/\"${KAFKA_PRODUCER_TIMER}\"/" kafka-producer.yaml
 oc apply -f kafka-producer.yaml -n ${KAFKA_NAMESPACE}
 oc apply -f kafka-consumer.yaml -n ${KAFKA_NAMESPACE}
 oc wait --for condition=ready pod -l app=kafka-consumer -n ${KAFKA_NAMESPACE} --timeout=120s
+
+# Recover Grafana Dashboard
+wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-kafka.json -O metrics/examples/grafana/strimzi-kafka.json
+wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-zookeeper.json -O metrics/examples/grafana/strimzi-zookeeper.json
+
+# Add Grafana Dashboards and Datasource
+GRAFANA_ROUTE=`oc get route grafana --template='{{ .spec.host }}'`
+PROMETHEUS_ROUTE=`oc get route prometheus --template='{{ .spec.host }}'`
+curl -X "POST" "http://${GRAFANA_ROUTE}/api/datasources" -H "Content-Type: application/json" --user admin:admin --data-binary '{ "name":"Prometheus","type":"prometheus","access":"proxy","url":"http://'${PROMETHEUS_ROUTE}'","basicAuth":false,"isDefault":true }'
+curl -X "POST" "${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-kafka.json
+curl -X "POST" "http://${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-zookeeper.json
+curl -X "PUT" "http://${GRAFANA_ROUTE}/api/org/preferences" -H "Content-Type: application/json;charset=UTF-8" --user admin:admin --data-binary '{"theme":"","homeDashboardId":1,"timezone":"browser"}'
+
