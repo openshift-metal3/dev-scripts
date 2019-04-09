@@ -10,16 +10,15 @@ eval "$(go env)"
 export ROOKPATH="$GOPATH/src/github.com/rook/rook"
 cd $ROOKPATH/cluster/examples/kubernetes/ceph
 oc create -f common.yaml
-sed -i '/ROOK_HOSTPATH_REQUIRES_PRIVILEGED/!b;n;c\          value: "true"' operator-openshift.yaml
-sed -i '/FLEXVOLUME_DIR_PATH/!b;n;c\          value: "\/etc/kubernetes\/kubelet-plugins\/volume\/exec"' operator-openshift.yaml
-sed -i 's/# - name: FLEXVOLUME_DIR_PATH/- name: FLEXVOLUME_DIR_PATH/' operator-openshift.yaml
-oc create -f operator-openshift.yaml
+sed '/FLEXVOLUME_DIR_PATH/!b;n;c\          value: "\/etc/kubernetes\/kubelet-plugins\/volume\/exec"' operator-openshift.yaml > operator-openshift-modified.yaml
+sed -i 's/# - name: FLEXVOLUME_DIR_PATH/- name: FLEXVOLUME_DIR_PATH/' operator-openshift-modified.yaml
+oc create -f operator-openshift-modified.yaml
 oc wait --for condition=ready  pod -l app=rook-ceph-operator -n rook-ceph --timeout=120s
 oc wait --for condition=ready  pod -l app=rook-ceph-agent -n rook-ceph --timeout=120s
 oc wait --for condition=ready  pod -l app=rook-discover -n rook-ceph --timeout=120s
-sed -i "s/useAllDevices: .*/useAllDevices: true/" cluster.yaml
-sed -i 's/# port: 8443/port: 8444/' cluster.yaml
-oc create -f cluster.yaml
+sed "s/useAllDevices: .*/useAllDevices: true/" cluster.yaml > cluster-modified.yaml
+sed -i 's/# port: 8443/port: 8444/' cluster-modified.yaml
+oc create -f cluster-modified.yaml
 oc create -f toolbox.yaml
 cat <<EOF | oc create -f -
 apiVersion: ceph.rook.io/v1
