@@ -21,9 +21,6 @@ build:
 ocp_run:
 	./06_create_cluster.sh
 
-deploy_bmo:
-	./08_deploy_bmo.sh
-
 clean: ocp_cleanup host_cleanup
 
 ocp_cleanup:
