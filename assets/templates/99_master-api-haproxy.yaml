@@ -27,7 +27,7 @@ spec:
             [Install]
             WantedBy=multi-user.target
 
-          enabled: true
+          enabled: false
           name: api-haproxy.service
     storage:
       files:
