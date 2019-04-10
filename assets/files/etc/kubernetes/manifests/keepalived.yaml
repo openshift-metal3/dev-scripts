@@ -45,9 +45,10 @@ spec:
       DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
       INGRESS_VIP="$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
 
+      export CLUSTER_DOMAIN
+      export INTERFACE
       export API_VIP
       export DNS_VIP
-      export INTERFACE
       export INGRESS_VIP
       /usr/libexec/platform-python -c "from __future__ import print_function
       import os
