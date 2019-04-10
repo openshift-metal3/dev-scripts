@@ -19,6 +19,26 @@ if [ ! -f /etc/yum.repos.d/epel.repo ] ; then
     fi
 fi
 
+# Install qemu-img-ev on RHEL
+if grep -q "Red Hat Enterprise Linux" /etc/redhat-release ; then
+  sudo bash -c 'cat > /etc/yum.repos.d/sig-virt.repo' << -EOF
+  [sig-virt-libvirt-latest]
+  name=SIG-Virt libvirt packages for CentOS 7 x86_64
+  baseurl=http://mirror.centos.org/centos-7/7/virt/x86_64/libvirt-latest
+  enabled=1
+  gpgcheck=0
+  EOF
+
+  # Enable the latest QEMU packages
+  sudo bash -c 'cat > /etc/yum.repos.d/sig-virt-kvm-common.repo' << -EOF
+  [sig-virt-kvm-common]
+  name=SIG-Virt libvirt packages for CentOS 7 x86_64
+  baseurl=http://mirror.centos.org/centos-7/7/virt/x86_64/kvm-common
+  enabled=1
+  gpgcheck=0
+  EOF
+fi
+
 # Work around a conflict with a newer zeromq from epel
 if ! grep -q zeromq /etc/yum.repos.d/epel.repo; then
   sudo sed -i '/enabled=1/a exclude=zeromq*' /etc/yum.repos.d/epel.repo
