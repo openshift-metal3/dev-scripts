@@ -16,18 +16,25 @@ spec:
   - name: kubeconfig
     hostPath:
       path: "/etc/kubernetes/kubeconfig"
-  - name: oc
-    hostPath:
-      path: "/bin/oc"
-  - name: clusterinfo
-    hostPath:
-      path: "/usr/local/bin/clusterinfo"
   - name: get-vip-subnet-cidr
     hostPath:
       path: "/usr/local/bin/get_vip_subnet_cidr"
   - name: conf-dir
     empty-dir: {}
   initContainers:
+  - name: clusterrc-generation
+    image: quay.io/openshift-metalkube/kubeconfig-extractor:latest
+    command:
+    - "/usr/bin/kubeconfig-extractor"
+    args:
+    - "/etc/kubernetes/kubeconfig"
+    - "/etc/kubernetes/static-pod-resources/clusterrc"
+    resources: {}
+    volumeMounts:
+    - name: resource-dir
+      mountPath: "/etc/kubernetes/static-pod-resources"
+    - name: kubeconfig
+      mountPath: "/etc/kubernetes/kubeconfig"
   - name: render-config
     image: quay.io/openshift/origin-node:latest
     command:
@@ -35,14 +42,15 @@ spec:
     - "-c"
     - |
       #/bin/bash
-      set -e
-      CLUSTER_DOMAIN="$(/usr/local/bin/clusterinfo DOMAIN)"
-      CLUSTER_NAME="$(/usr/local/bin/clusterinfo NAME)"
-      API_VIP="$(dig +noall +answer "api.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
+      set -ex
+
+      source /etc/kubernetes/static-pod-resources/clusterrc
+      CLUSTER_NAME="$NAME"
+      API_VIP="$(dig +noall +answer "api.${DOMAIN}" | awk '{print $NF}')"
       IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
       SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
       PREFIX="${SUBNET_CIDR#*/}"
-      DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
+      DNS_VIP="$(dig +noall +answer "ns1.${DOMAIN}" | awk '{print $NF}')"
       ONE_CIDR="$(ip addr show to "$SUBNET_CIDR" | \
                   grep -Po 'inet \K[\d.]+/[\d.]+' | \
                   grep -v "${DNS_VIP}/$PREFIX" | \
@@ -55,6 +63,7 @@ spec:
       export MASTER_HOSTNAME
       export ETCD_HOSTNAME
       export NON_VIRTUAL_IP
+      export DOMAIN
       export CLUSTER_NAME
       /usr/libexec/platform-python -c "from __future__ import print_function
       import os
@@ -68,12 +77,6 @@ spec:
       mountPath: "/etc/kubernetes/static-pod-resources"
     - name: conf-dir
       mountPath: "/etc/mdns"
-    - name: kubeconfig
-      mountPath: "/etc/kubernetes/kubeconfig"
-    - name: oc
-      mountPath: "/bin/oc"
-    - name: clusterinfo
-      mountPath: "/usr/local/bin/clusterinfo"
     - name: get-vip-subnet-cidr
       mountPath: "/usr/local/bin/get_vip_subnet_cidr"
     imagePullPolicy: IfNotPresent

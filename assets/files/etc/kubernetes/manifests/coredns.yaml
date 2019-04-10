@@ -16,15 +16,22 @@ spec:
   - name: kubeconfig
     hostPath:
       path: "/etc/kubernetes/kubeconfig"
-  - name: oc
-    hostPath:
-      path: "/bin/oc"
-  - name: clusterinfo
-    hostPath:
-      path: "/usr/local/bin/clusterinfo"
   - name: conf-dir
     empty-dir: {}
   initContainers:
+  - name: clusterrc-generation
+    image: quay.io/openshift-metalkube/kubeconfig-extractor:latest
+    command:
+    - "/usr/bin/kubeconfig-extractor"
+    args:
+    - "/etc/kubernetes/kubeconfig"
+    - "/etc/kubernetes/static-pod-resources/clusterrc"
+    resources: {}
+    volumeMounts:
+    - name: resource-dir
+      mountPath: "/etc/kubernetes/static-pod-resources"
+    - name: kubeconfig
+      mountPath: "/etc/kubernetes/kubeconfig"
   - name: render-corefile
     image: quay.io/openshift/origin-node:latest
     command:
@@ -32,13 +39,11 @@ spec:
     - "-c"
     - |
       #/bin/bash
-      set -e
+      set -ex
 
-      CLUSTER_DOMAIN="$(/usr/local/bin/clusterinfo DOMAIN)"
-      CLUSTER_NAME="$(/usr/local/bin/clusterinfo NAME)"
-
-      export CLUSTER_DOMAIN
-      export CLUSTER_NAME
+      source /etc/kubernetes/static-pod-resources/clusterrc
+      export DOMAIN
+      export NAME
       /usr/libexec/platform-python -c "from __future__ import print_function
       import os
       with open('/etc/kubernetes/static-pod-resources/Corefile.template', 'r') as f:
@@ -54,12 +59,6 @@ spec:
       mountPath: "/etc/kubernetes/static-pod-resources"
     - name: conf-dir
       mountPath: "/etc/coredns"
-    - name: kubeconfig
-      mountPath: "/etc/kubernetes/kubeconfig"
-    - name: oc
-      mountPath: "/bin/oc"
-    - name: clusterinfo
-      mountPath: "/usr/local/bin/clusterinfo"
     imagePullPolicy: IfNotPresent
   containers:
   - name: coredns
