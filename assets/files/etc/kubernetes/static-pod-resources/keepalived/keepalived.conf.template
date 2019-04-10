@@ -5,7 +5,7 @@ vrrp_script chk_ocp {
 }
 
 vrrp_script chk_dns {
-    script "host -t SRV _etcd-server-ssl._tcp.${CLUSTER_DOMAIN} localhost"
+    script "host -t SRV _etcd-server-ssl._tcp.${DOMAIN} localhost"
     interval 1
     weight 50
 }
