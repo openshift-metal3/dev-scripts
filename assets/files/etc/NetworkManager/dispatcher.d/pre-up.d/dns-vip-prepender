@@ -6,10 +6,13 @@ STATUS=$2
 case "$STATUS" in
     pre-up)
     logger -s "NM dns-vip-prepender triggered by pre-upping ${1}."
-    set -e
     CLUSTER_DOMAIN="$(/usr/local/bin/clusterinfo DOMAIN)"
-    DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
-    set +e
+    HOST_QUERY="$(host ns1.${CLUSTER_DOMAIN})"
+    if ! HOST_QUERY="$(host ns1.${CLUSTER_DOMAIN})" ; then
+        logger -s "NM dns-vip-prepender: nameserver could not be resolved, exiting"
+        exit 0
+    fi
+    DNS_VIP=$(echo "${HOST_QUERY}" | awk '{print $NF}')
     if [[ -n $DNS_VIP ]]; then
         logger -s "NM dns-vip-prepender: Checking if DNS VIP is the first entry in resolv.conf"
         if grep nameserver /etc/resolv.conf | head -n 1 | grep -q "$DNS_VIP" ; then
