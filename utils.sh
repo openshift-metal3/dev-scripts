@@ -153,10 +153,18 @@ EOF
       root_devices:
 EOF
 
+    [ -n "$ROOT_DISK" ] && ROOT_DISK_NAME="$ROOT_DISK"
+    for _hint in ${!ROOT_DISK_*}; do
+        [ -z "${!_hint}" ] && continue
+        hint_name=${_hint/#ROOT_DISK_/}
+        hint_name=${hint_name,,}
+        hint_value=${!_hint}
+    done
+
     for ((master_idx=0;master_idx<$1;master_idx++)); do
       cat <<EOF
         openshift-master-$master_idx:
-          name: "${ROOT_DISK}"
+          $hint_name: "${hint_value}"
 EOF
     done
 
