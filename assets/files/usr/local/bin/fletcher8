@@ -1,0 +1,10 @@
+#!/usr/libexec/platform-python
+import sys
+
+data = map(ord, sys.argv[1])
+ckA = ckB = 0
+
+for b in data:
+    ckA = (ckA + b) & 0xf
+    ckB = (ckB + ckA) & 0xf
+print((ckB << 4) | ckA )
