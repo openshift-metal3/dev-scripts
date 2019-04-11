@@ -15,9 +15,9 @@ spec:
           verification: {}
         filesystem: root
         mode: 0664
-        path: /etc/kubernetes/manifests/mdns-publisher.yaml
+        path: /etc/kubernetes/manifests/mdns-publisher-worker.yaml
       - contents:
           verification: {}
         filesystem: root
         mode: 0664
-        path: /etc/kubernetes/static-pod-resources/mdns/config.template
+        path: /etc/kubernetes/static-pod-resources/mdns/worker-config.template
