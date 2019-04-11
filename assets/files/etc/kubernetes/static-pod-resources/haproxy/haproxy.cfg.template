@@ -1,0 +1,27 @@
+defaults
+  mode    tcp
+  log     global
+  option  dontlognull
+  retries 3
+  timeout http-request 10s
+  timeout queue        1m
+  timeout connect      10s
+  timeout client       86400s
+  timeout server       86400s
+  timeout tunnel       86400s
+frontend  main
+  bind :7443
+  default_backend masters
+listen stats
+  bind 127.0.0.1:${STAT_PORT}
+  mode http
+  stats enable
+  stats hide-version
+  stats uri /haproxy_stats
+  stats refresh 30s
+  stats auth Username:Password
+backend masters
+   option  httpchk GET /healthz HTTP/1.0
+   option  log-health-checks
+   balance roundrobin
+${BACKENDS}

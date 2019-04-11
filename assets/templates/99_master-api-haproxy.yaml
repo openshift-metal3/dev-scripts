@@ -9,35 +9,20 @@ spec:
   config:
     ignition:
       version: 2.2.0
-    systemd:
-      units:
-        - contents: |
-            [Unit]
-            Description=Load Balance OpenShift API using HAProxy
-            Wants=network-online.target
-            After=network-online.target
-            ConditionPathExists=!/etc/pivot/image-pullspec
-
-            [Service]
-            WorkingDirectory=/etc/haproxy
-            ExecStart=/usr/local/bin/haproxy.sh
-            Restart=on-failure
-            RestartSec=5
-
-            [Install]
-            WantedBy=multi-user.target
-
-          enabled: true
-          name: api-haproxy.service
     storage:
       files:
       - contents:
           verification: {}
         filesystem: root
         mode: 0664
-        path: /etc/haproxy/haproxy.cfg.template
+        path: /etc/kubernetes/manifests/haproxy.yaml
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 0664
+        path: /etc/kubernetes/static-pod-resources/haproxy/haproxy.cfg.template
       - contents:
           verification: {}
         filesystem: root
         mode: 0755
-        path: /usr/local/bin/haproxy.sh
+        path: /etc/kubernetes/static-pod-resources/haproxy/utils.sh
