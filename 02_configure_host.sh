@@ -11,12 +11,13 @@ source ocp_install_env.sh
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
 export ANSIBLE_LIBRARY=./library
+export VM_NODES_FILE=${VM_NODES_FILE:-tripleo-quickstart-config/metalkube-nodes.yml}
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "non_root_user=$USER" \
     -e "working_dir=$WORKING_DIR" \
     -e "roles_path=$PWD/roles" \
-    -e @tripleo-quickstart-config/metalkube-nodes.yml \
+    -e @${VM_NODES_FILE} \
     -e "local_working_dir=$HOME/.quickstart" \
     -e "virthost=$HOSTNAME" \
     -e "platform=$NODES_PLATFORM" \
