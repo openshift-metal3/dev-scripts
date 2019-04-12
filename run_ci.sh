@@ -8,6 +8,11 @@ function getlogs(){
     # Grab the host journal
     sudo journalctl > $LOGDIR/bootstrap-host-system.journal
 
+    # And the VM jornals
+    for HOST in $(sudo virsh net-dhcp-leases baremetal | grep -o '192.168.111.[0-9]\+') ; do
+        sshpass -p notworking $SSH core@$HOST sudo journalctl > $LOGDIR/$HOST-system.journal || true
+    done
+
     # openshift info
     export KUBECONFIG=ocp/auth/kubeconfig
     oc --request-timeout=5s get clusterversion/version > $LOGDIR/cluster_version.log || true
