@@ -67,6 +67,7 @@ function make_bm_workers() {
            -password "$password" \
            -user "$user" \
            -boot-mac "$mac" \
+           -image \
            "$name"
     done
 }
