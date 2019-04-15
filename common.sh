@@ -48,7 +48,7 @@ NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 
-export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-"https://releases-rhcos.svc.ci.openshift.org/storage/releases/ootpa/"}
+export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-"https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/ootpa/"}
 export RHCOS_LATEST="$(curl ${RHCOS_IMAGE_URL}/builds.json | jq -r ".builds[0]")"
 export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-${RHCOS_LATEST}}"
 export RHCOS_IMAGE_FILENAME_OPENSTACK_GZ="$(curl ${RHCOS_IMAGE_URL}/${RHCOS_IMAGE_VERSION}/meta.json | jq -r '.images.openstack.path')"
