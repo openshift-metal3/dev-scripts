@@ -63,6 +63,9 @@ sync_go_repo_and_patch github.com/metalkube/baremetal-operator https://github.co
 # Install rook repository
 sync_go_repo_and_patch github.com/rook/rook https://github.com/rook/rook.git
 
+# Install ceph-mixin repository
+sync_go_repo_and_patch github.com/ceph/ceph-mixins https://github.com/ceph/ceph-mixins.git
+
 # Install Kafka Strimzi repository
 sync_go_repo_and_patch github.com/strimzi/strimzi-kafka-operator https://github.com/strimzi/strimzi-kafka-operator.git
 
