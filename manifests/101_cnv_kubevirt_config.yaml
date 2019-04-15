@@ -5,3 +5,5 @@ metadata:
   namespace: kubevirt
 data:
   feature-gates: "DataVolumes,LiveMigration"
+  migrations: |-
+    nodeDrainTaintKey: node.kubernetes.io/unschedulable
