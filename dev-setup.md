@@ -99,7 +99,7 @@ $ make
 - 03\_ocp\_repo\_sync.sh
   - Clones openshift-installer, facet, and statik from github.com
     - Additionally, rebases both openshift-installer and facet repos on to master
-    - Checks out a branch called ‘we\_dont\_need\_no\_stinkin\_patches’
+    - Checks out a branch called ‘metalkube’
     - Additional information under the section “Developing against facet”
     - Uses yarn to install and build the production facet from source (a static golang binary)
 - 04\_setup\_ironic.sh
