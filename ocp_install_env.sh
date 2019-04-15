@@ -10,8 +10,13 @@ export EXTERNAL_SUBNET="192.168.111.0/24"
 # Not used by the installer.  Used by s.sh.
 export SSH_PRIV_KEY="$HOME/.ssh/id_rsa"
 
-# Temporary workaround pending merge of https://github.com/openshift/machine-api-operator/pull/246
-export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
+#
+# See https://origin-release.svc.ci.openshift.org/ for release details
+#
+# The release we default to here is pinned and known to work with our current
+# version of kni-installer.
+#
+export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="registry.svc.ci.openshift.org/ocp/release:4.0.0-0.ci-2019-04-17-133604"
 
 function generate_ocp_install_config() {
     local outdir

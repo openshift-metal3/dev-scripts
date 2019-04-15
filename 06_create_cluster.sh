@@ -7,6 +7,14 @@ source utils.sh
 source common.sh
 source ocp_install_env.sh
 
+# Do some PULL_SECRET sanity checking
+if [[ "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" == *"registry.svc.ci.openshift.org"* ]]; then
+    if [[ "${PULL_SECRET}" != *"registry.svc.ci.openshift.org"* ]]; then
+        echo "Please get a valid pull secret for registry.svc.ci.openshift.org."
+        exit 1
+    fi
+fi
+
 if [ ! -d ocp ]; then
     mkdir -p ocp
 
