@@ -3,9 +3,6 @@
 
 figlet "Deploying knative" | lolcat
 
-oc project default
-oc adm policy add-scc-to-user privileged -z default -n default
-oc label namespace default istio-injection=enabled
 oc adm policy add-scc-to-user anyuid -z istio-ingress-service-account -n istio-system
 oc adm policy add-scc-to-user anyuid -z default -n istio-system
 oc adm policy add-scc-to-user anyuid -z prometheus -n istio-system
