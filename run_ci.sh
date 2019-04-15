@@ -18,6 +18,20 @@ function getlogs(){
     oc --request-timeout=5s get clusterversion/version > $LOGDIR/cluster_version.log || true
     oc --request-timeout=5s get clusteroperators > $LOGDIR/cluster_operators.log || true
     oc --request-timeout=5s get pods --all-namespaces | grep -v Running | grep -v Completed  > $LOGDIR/failing_pods.log || true
+
+    # ironic logs
+    mnt=$(podman mount ironic)
+    cp $mnt/var/log/ironic/ironic-api.log $LOGDIR/ironic-api.log
+    cp $mnt/var/log/ironic/ironic-conductor.log $LOGDIR/ironic-conductor.log
+    podman umount ironic
+
+    podman logs ironic-inspector 2>&1> $LOGDIR/ironic-inspector.log
+
+    mnt=$(podman mount httpd)
+    cp $mnt/var/log/httpd/* $LOGDIR/
+    podman umount httpd
+
+    podman exec mariadb cat /var/log/mariadb/mariadb.log > $LOGDIR/mariadb.log
 }
 trap getlogs EXIT
 
