@@ -5,3 +5,7 @@ logs/
 config_*.sh
 !config_example.sh
 assets/generated
+
+# Conditionally created for appropriate environments
+assets/templates/99_master-chronyd-redhat.yaml
+assets/templates/99_worker-chronyd-redhat.yaml

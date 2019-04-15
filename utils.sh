@@ -4,7 +4,7 @@ set -o pipefail
 
 function generate_assets() {
   rm -rf assets/generated && mkdir assets/generated
-  for file in $(find assets/templates -type f -printf "%P\n"); do
+  for file in $(find assets/templates/ -iname '*.yaml' -type f -printf "%P\n"); do
       echo "Templating ${file} to assets/generated/${file}"
       cp assets/{templates,generated}/${file}
 
@@ -25,6 +25,11 @@ function create_cluster() {
     cp ${assets_dir}/install-config.yaml{,.tmp}
     $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create manifests
 
+    # TODO - consider adding NTP server config to install-config.yaml instead
+    if host clock.redhat.com ; then
+        cp assets/templates/99_worker-chronyd-redhat.yaml.optional assets/templates/99_worker-chronyd-redhat.yaml
+        cp assets/templates/99_master-chronyd-redhat.yaml.optional assets/templates/99_master-chronyd-redhat.yaml
+    fi
     generate_assets
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
