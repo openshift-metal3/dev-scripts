@@ -20,7 +20,7 @@ function list_masters() {
            mac: .ports[0].address
            } |
            .name + " " +
-           .driver + "://" + .address + ":" + .port + " " +
+           .driver + "://" + .address + (if .port then ":" + .port else "" end) + " " +
            .user + " " + .password + " " + .mac' \
         | sed 's/"//g'
 }
@@ -52,7 +52,7 @@ function list_workers() {
            mac: .ports[0].address
            } |
            .name + " " +
-           .driver + "://" + .address + ":" + .port + " " +
+           .driver + "://" + .address + (if .port then ":" + .port else "" end)  + " " +
            .user + " " + .password + " " + .mac' \
        | sed 's/"//g'
 }
