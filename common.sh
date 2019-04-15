@@ -49,8 +49,8 @@ NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 
 export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-"https://releases-rhcos.svc.ci.openshift.org/storage/releases/ootpa/"}
-export RHCOS_LATEST="$(curl ${RHCOS_IMAGE_URL}/builds.json | jq -r ".builds[0]")"
-export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-${RHCOS_LATEST}}"
+export RHCOS_INSTALLER_PIN=$(jq -r '.buildid' $GOPATH/src/github.com/openshift-metalkube/kni-installer/data/data/rhcos.json)
+export RHCOS_IMAGE_VERSION="${RHCOS_IMAGE_VERSION:-${RHCOS_INSTALLER_PIN}}"
 export RHCOS_IMAGE_FILENAME_OPENSTACK_GZ="$(curl ${RHCOS_IMAGE_URL}/${RHCOS_IMAGE_VERSION}/meta.json | jq -r '.images.openstack.path')"
 export RHCOS_IMAGE_NAME=$(echo $RHCOS_IMAGE_FILENAME_OPENSTACK_GZ | sed -e 's/-openstack.*//')
 # FIXME(shardy) - we need to download the -openstack as its needed
