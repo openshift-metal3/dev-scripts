@@ -2,6 +2,7 @@
 
 set -eux
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 source ${BASEDIR}/common.sh
 
 figlet "Deploying Kafka Strimzi" | lolcat
@@ -64,15 +65,28 @@ oc apply -f kafka-producer.yaml -n ${KAFKA_NAMESPACE}
 oc apply -f kafka-consumer.yaml -n ${KAFKA_NAMESPACE}
 oc wait --for condition=ready pod -l app=kafka-consumer -n ${KAFKA_NAMESPACE} --timeout=120s
 
-# Recover Grafana Dashboard
-wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-kafka.json -O metrics/examples/grafana/strimzi-kafka.json
-wget -q https://raw.githubusercontent.com/ppatierno/rh-osd-2018/master/grafana-dashboards/strimzi-zookeeper.json -O metrics/examples/grafana/strimzi-zookeeper.json
-
 # Add Grafana Dashboards and Datasource
 GRAFANA_ROUTE=`oc get route grafana --template='{{ .spec.host }}'`
 PROMETHEUS_ROUTE=`oc get route prometheus --template='{{ .spec.host }}'`
 curl -X "POST" "http://${GRAFANA_ROUTE}/api/datasources" -H "Content-Type: application/json" --user admin:admin --data-binary '{ "name":"Prometheus","type":"prometheus","access":"proxy","url":"http://'${PROMETHEUS_ROUTE}'","basicAuth":false,"isDefault":true }'
-curl -X "POST" "${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-kafka.json
-curl -X "POST" "http://${GRAFANA_ROUTE}/api/dashboards/db" -H "Content-Type: application/json;charset=UTF-8"  --user admin:admin --data-binary @metrics/examples/grafana/strimzi-zookeeper.json
+
+# build and POST the Kafka dashboard to Grafana
+$DIR/kafka-dashboards/dashboard-template.sh $DIR/kafka-dashboards/strimzi-kafka.json > $DIR/kafka-dashboards/strimzi-kafka-dashboard.json
+
+sed -i 's/${DS_PROMETHEUS}/Prometheus/' $DIR/kafka-dashboards/strimzi-kafka-dashboard.json
+sed -i 's/DS_PROMETHEUS/Prometheus/' $DIR/kafka-dashboards/strimzi-kafka-dashboard.json
+
+curl -X POST http://admin:admin@${GRAFANA_ROUTE}/api/dashboards/db -d @$DIR/kafka-dashboards/strimzi-kafka-dashboard.json --header "Content-Type: application/json"
+
+# build and POST the Zookeeper dashboard to Grafana
+$DIR/kafka-dashboards/dashboard-template.sh $DIR/kafka-dashboards/strimzi-zookeeper.json > $DIR/kafka-dashboards/strimzi-zookeeper-dashboard.json
+
+sed -i 's/${DS_PROMETHEUS}/Prometheus/' $DIR/kafka-dashboards/strimzi-zookeeper-dashboard.json
+sed -i 's/DS_PROMETHEUS/Prometheus/' $DIR/kafka-dashboards/strimzi-zookeeper-dashboard.json
+
+curl -X POST http://admin:admin@${GRAFANA_ROUTE}/api/dashboards/db -d @$DIR/kafka-dashboards/strimzi-zookeeper-dashboard.json --header "Content-Type: application/json"
+
 curl -X "PUT" "http://${GRAFANA_ROUTE}/api/org/preferences" -H "Content-Type: application/json;charset=UTF-8" --user admin:admin --data-binary '{"theme":"","homeDashboardId":1,"timezone":"browser"}'
 
+rm $DIR/kafka-dashboards/strimzi-kafka-dashboard.json
+rm $DIR/kafka-dashboards/strimzi-zookeeper-dashboard.json
