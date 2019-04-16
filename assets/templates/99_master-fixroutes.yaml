@@ -1,0 +1,44 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 99_master-fixroutes.yaml
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      files:
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 0764
+        path: /usr/local/bin/fix_routes.sh
+    systemd:
+      units:
+      - contents: |
+          [Unit]
+          Description=Fix route service
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/fix_routes.sh
+          [Install]
+          WantedBy=default.target
+        enabled: true
+        name: fix_routes.service
+      - contents: |
+          [Unit]
+          Description=Run my job every 6 minutes
+          RefuseManualStart=no
+          RefuseManualStop=no
+          [Timer]
+          Persistent=false
+          OnBootSec=80
+          OnCalendar=*:0/5
+          Unit=fix_routes.service
+          [Install]
+          WantedBy=timers.target
+        enabled: true
+        name: fix_routes.timer
