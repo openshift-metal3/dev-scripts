@@ -7,8 +7,6 @@
 # You also get:
 #
 # - `libvirt/teardown/nodes`
-# - `libvirt/teardown/user`
 dependencies:
   - role: libvirt
   - role: teardown/nodes
-  - role: teardown/user
