@@ -27,8 +27,8 @@ export CONFIG=/opt/data/config_notstack.sh
 # Install moreutils for ts
 sudo yum install -y epel-release
 sudo yum install -y moreutils
-# Install jq for common.sh
-sudo yum install -y jq
+# Install jq and golang for common.sh
+sudo yum install -y jq golang
 sudo yum remove -y epel-release
 
 source common.sh
