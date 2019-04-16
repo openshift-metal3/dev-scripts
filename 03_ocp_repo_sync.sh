@@ -68,3 +68,6 @@ sync_go_repo_and_patch github.com/strimzi/strimzi-kafka-operator https://github.
 
 # Install Kafka Producer/Consumer repository
 sync_go_repo_and_patch github.com/scholzj/kafka-test-apps https://github.com/scholzj/kafka-test-apps.git
+
+# Install web ui operator repository
+sync_go_repo_and_patch github.com/kubevirt/web-ui-operator https://github.com/kubevirt/web-ui-operator
