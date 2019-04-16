@@ -89,13 +89,13 @@ sudo pip install \
   yq
 
 # Install oc client
-oc_version=4.0.22
+oc_version=4.1
 oc_tools_dir=$HOME/oc-${oc_version}
 oc_tools_local_file=openshift-client-${oc_version}.tar.gz
 if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ]; then
   mkdir -p ${oc_tools_dir}
   cd ${oc_tools_dir}
-  wget https://mirror.openshift.com/pub/openshift-v3/clients/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
+  wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
   tar xvzf ${oc_tools_local_file}
   sudo cp oc /usr/local/bin/
 fi
