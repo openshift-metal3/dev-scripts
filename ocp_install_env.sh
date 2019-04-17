@@ -19,10 +19,16 @@ function generate_ocp_install_config() {
     outdir="$1"
 
     cat > "${outdir}/install-config.yaml" << EOF
-apiVersion: v1beta3
+apiVersion: v1beta4
 baseDomain: ${BASE_DOMAIN}
 metadata:
   name: ${CLUSTER_NAME}
+compute:
+- name: worker
+  replicas: 1
+controlPlane:
+  name: master
+  replicas: 3
 platform:
   baremetal:
     nodes:
