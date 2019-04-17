@@ -1,7 +1,7 @@
 . {
     errors
     health
-    mdns $DOMAIN 3 $NAME
+    mdns $DOMAIN 2 $NAME
     forward . /etc/coredns/resolv.conf
     cache 30
     reload
