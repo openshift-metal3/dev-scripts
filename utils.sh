@@ -42,7 +42,7 @@ function wait_for_cvo_finish() {
     local assets_dir
 
     assets_dir="$1"
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug wait-for cluster-ready
+    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug wait-for install-complete
 }
 
 function wait_for_json() {
