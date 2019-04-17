@@ -17,7 +17,7 @@ oc adm policy add-scc-to-user anyuid -z istio-sidecar-injector-service-account -
 oc adm policy add-cluster-role-to-user cluster-admin -z istio-galley-service-account -n istio-system
 oc adm policy add-scc-to-user anyuid -z cluster-local-gateway-service-account -n istio-system
 curl -L https://storage.googleapis.com/knative-releases/serving/latest/istio.yaml | sed 's/LoadBalancer/NodePort/' | oc apply --filename -
-oc get cm istio-sidecar-injector -n istio-system -oyaml | sed -e 's/securityContext:/securityContext:\\n      privileged: true/' | sed -e 's/disabled/enabled/' | oc replace -f -
+oc get cm istio-sidecar-injector -n istio-system -oyaml | sed -e 's/securityContext:/securityContext:\\n      privileged: true/' | oc replace -f -
 oc delete pod -n istio-system -l istio=sidecar-injector
 oc adm policy add-scc-to-user anyuid -z build-controller -n knative-build
 oc adm policy add-scc-to-user anyuid -z controller -n knative-serving
