@@ -51,7 +51,7 @@ spec:
       with open('/etc/coredns/Corefile', 'w') as dest:
           print(os.path.expandvars(content), file=dest)"
 
-      DNS_VIP="$(dig +noall +answer "ns1.${CLUSTER_DOMAIN}" | awk '{print $NF}')"
+      DNS_VIP="$(dig +noall +answer "ns1.${DOMAIN}" | awk '{print $NF}')"
       grep -v "${DNS_VIP}" /etc/resolv.conf | tee /etc/coredns/resolv.conf
     resources: {}
     volumeMounts:
