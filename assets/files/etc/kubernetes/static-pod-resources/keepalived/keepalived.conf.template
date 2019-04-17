@@ -27,7 +27,7 @@ vrrp_instance ${CLUSTER_NAME}_API {
         auth_pass ${CLUSTER_NAME}_api_vip
     }
     virtual_ipaddress {
-        ${API_VIP}
+        ${API_VIP}/${NET_MASK}
     }
     track_script {
         chk_ocp
@@ -45,7 +45,7 @@ vrrp_instance ${CLUSTER_NAME}_DNS {
         auth_pass ${CLUSTER_NAME}_dns_vip
     }
     virtual_ipaddress {
-        ${DNS_VIP}
+        ${DNS_VIP}/${NET_MASK}
     }
     track_script {
         chk_dns
@@ -63,7 +63,7 @@ vrrp_instance ${CLUSTER_NAME}_INGRESS {
         auth_pass cluster_uuid_ingress_vip
     }
     virtual_ipaddress {
-        ${INGRESS_VIP}
+        ${INGRESS_VIP}/${NET_MASK}
     }
     track_script {
         chk_ingress

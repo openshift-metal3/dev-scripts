@@ -52,6 +52,7 @@ spec:
       API_VIP="$(dig +noall +answer "api.${DOMAIN}" | awk '{print $NF}')"
       IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
       SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
+      NET_MASK="$(echo $SUBNET_CIDR | cut -d "/" -f 2)"
       INTERFACE="$(ip -o addr show to "$SUBNET_CIDR" | awk '{print $2}')"
       DNS_VIP="$(dig +noall +answer "ns1.${DOMAIN}" | awk '{print $NF}')"
       INGRESS_VIP="$(dig +noall +answer "test.apps.${DOMAIN}" | awk '{print $NF}')"
@@ -70,6 +71,7 @@ spec:
       export API_VRID
       export DNS_VRID
       export INGRESS_VRID
+      export NET_MASK
       /usr/libexec/platform-python -c "from __future__ import print_function
       import os
       with open('/etc/kubernetes/static-pod-resources/keepalived.conf.template', 'r') as f:
