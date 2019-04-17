@@ -19,3 +19,12 @@ oc --config ocp/auth/kubeconfig apply -f ocp/deploy/role.yaml --namespace=opensh
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/role_binding.yaml
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/crds/metalkube_v1alpha1_baremetalhost_crd.yaml
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/operator.yaml --namespace=openshift-machine-api
+
+# Workaround for https://github.com/metalkube/cluster-api-provider-baremetal/issues/57
+oc scale deployment -n openshift-machine-api machine-api-controllers --replicas=0
+while [ ! $(oc get deployment -n openshift-machine-api machine-api-controllers -o json | jq .spec.replicas) ]
+do
+  echo "Scaling down machine-api-controllers ..."
+done
+echo "Scaling up machine-api-controllers ..."
+oc scale deployment -n openshift-machine-api machine-api-controllers --replicas=1
