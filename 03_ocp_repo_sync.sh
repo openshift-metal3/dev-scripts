@@ -21,13 +21,15 @@ function sync_go_repo_and_patch {
     git am --abort || true
     git checkout master
     git pull --rebase origin master
-    git branch -D we_dont_need_no_stinkin_patches || true
-    git checkout -b we_dont_need_no_stinkin_patches
+    if test "$#" -gt "2" ; then
+        git branch -D metalkube || true
+        git checkout -b metalkube
 
-    shift; shift;
-    for arg in "$@"; do
-        curl -L $arg | git am
-    done
+        shift; shift;
+        for arg in "$@"; do
+            curl -L $arg | git am
+        done
+    fi
     popd
 }
 
