@@ -21,6 +21,19 @@ oc create -f common-modified.yaml
 oc label namespace openshift-storage  "openshift.io/cluster-monitoring=true"
 oc policy add-role-to-user view system:serviceaccount:openshift-monitoring:prometheus-k8s -n openshift-storage
 
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rook-config-override
+  namespace: openshift-storage
+data:
+  config: |
+    [global]
+    osd_pool_default_pg_autoscale_mode = on
+    mon_osd_down_out_interval = "10s"
+EOF
+
 sed 's/namespace: rook-ceph/namespace: openshift-storage/' operator-openshift.yaml > operator-openshift-modified.yaml
 sed -i 's/:rook-ceph:/:openshift-storage:/' operator-openshift-modified.yaml
 sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" operator-openshift-modified.yaml
@@ -54,6 +67,8 @@ spec:
   replicated:
     size: 2
 EOF
+
+oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') --  ceph osd pool set rbd target_size_ratio .3
 
 cat <<EOF | oc create -f -
 apiVersion: storage.k8s.io/v1
