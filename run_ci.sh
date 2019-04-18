@@ -45,7 +45,17 @@ mount | grep root-
 # The CI host has a "/" filesystem that reset for each job, the only partition
 # that persist is /opt (and /boot), we can use this to store data between jobs
 FILECACHEDIR=/opt/data/filecache
-FILESTOCACHE="/opt/dev-scripts/ironic/html/images/$RHCOS_IMAGE_FILENAME_OPENSTACK /opt/dev-scripts/ironic/html/images/ironic-python-agent.initramfs /opt/dev-scripts/ironic/html/images/ironic-python-agent.kernel"
+FILESTOCACHE="/opt/dev-scripts/ironic/html/images/ironic-python-agent.initramfs /opt/dev-scripts/ironic/html/images/ironic-python-agent.kernel"
+
+# Check if we have any openstack images cached, and if so add the most
+# recent to FILESTOCACHE
+compgen -G "$FILECACHEDIR/*-openstack.qcow2"
+retval=$?
+if [ $retval -eq 0 ]
+then
+  LAST_OPENSTACK_IMAGE=$(ls -r $FILECACHEDIR/*-openstack.qcow2 | head -n1)
+  FILESTOCACHE="$FILESTOCACHE $LAST_OPENSTACK_IMAGE"
+fi
 
 # Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
 # to prevent each snapshot taking up too much space we keep some of the larger files
@@ -94,6 +104,9 @@ done
 # Run dev-scripts
 set -o pipefail
 timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
+
+source common.sh
+FILESTOCACHE="$FILESTOCACHE /opt/dev-scripts/ironic/html/images/$RHCOS_IMAGE_FILENAME_OPENSTACK"
 
 # Populate cache for files it doesn't have
 for FILE in $FILESTOCACHE ; do
