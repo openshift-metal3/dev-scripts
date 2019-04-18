@@ -1,5 +1,5 @@
-MetalKube Installer Dev Scripts
-===============================
+OpenShift-MetalKube Installer Dev Scripts
+=========================================
 
 This set of scripts configures some libvirt VMs and associated
 [virtualbmc](https://docs.openstack.org/tripleo-docs/latest/install/environments/virtualbmc.html) processes to enable deploying to them as dummy baremetal nodes.
