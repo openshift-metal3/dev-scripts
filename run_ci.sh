@@ -54,7 +54,7 @@ retval=$?
 if [ $retval -eq 0 ]
 then
   LAST_OPENSTACK_IMAGE=$(ls -r $FILECACHEDIR/*-openstack.qcow2 | head -n1)
-  FILESTOCACHE="$FILESTOCACHE $LAST_OPENSTACK_IMAGE"
+  FILESTOCACHE="$FILESTOCACHE /opt/dev-scripts/ironic/html/images/$(basename $LAST_OPENSTACK_IMAGE)"
 fi
 
 # Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
