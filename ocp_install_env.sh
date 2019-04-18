@@ -33,13 +33,11 @@ compute:
   replicas: 1
 controlPlane:
   name: master
-  replicas: 3
+  replicas: ${NUM_MASTERS}
 platform:
   baremetal:
     nodes:
-$(master_node_to_install_config 0)
-$(master_node_to_install_config 1)
-$(master_node_to_install_config 2)
+$(master_node_map_to_install_config $NUM_MASTERS)
     master_configuration:
       image_source: "http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST"
       image_checksum: $(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
