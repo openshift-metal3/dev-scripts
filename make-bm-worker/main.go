@@ -43,10 +43,12 @@ spec:
   image:
     url: "{{ .ImageSourceURL }}"
     checksum: "{{ .Checksum }}"
-{{ end -}}{{ if .WithMachine }}
+{{ end -}}{{- if .WithMachine }}
   machineRef:
     name: {{ .Machine }}
     namespace: {{ .MachineNamespace }}
+{{ end -}}{{- if .WithHWProfile }}
+  hardwareProfile: {{ .HardwareProfile }}
 {{ end }}
 `
 
@@ -63,6 +65,8 @@ type TemplateArgs struct {
 	WithMachine      bool
 	Machine          string
 	MachineNamespace string
+	WithHWProfile    bool
+	HardwareProfile  string
 }
 
 func encodeToSecret(input string) string {
@@ -81,6 +85,7 @@ func main() {
 		"machine-namespace", "", "specify namespace of a related, existing, machine to link")
 	var bootMAC = flag.String(
 		"boot-mac", "", "specify boot MAC address of host")
+	var hardwareProfile = flag.String("hwprofile", "", "Specify a hardware profile")
 
 	flag.Parse()
 
@@ -113,9 +118,13 @@ func main() {
 		ImageSourceURL:   instanceImageSource,
 		Machine:          strings.TrimSpace(*machine),
 		MachineNamespace: strings.TrimSpace(*machineNamespace),
+		HardwareProfile:  strings.TrimSpace(*hardwareProfile),
 	}
 	if args.Machine != "" {
 		args.WithMachine = true
+	}
+	if args.HardwareProfile != "" {
+		args.WithHWProfile = true
 	}
 	if *verbose {
 		fmt.Fprintf(os.Stderr, "%v", args)

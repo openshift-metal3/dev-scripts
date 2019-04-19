@@ -8,6 +8,10 @@ eval "$(go env)"
 # Get the latest bits for baremetal-operator
 export BMOPATH="$GOPATH/src/github.com/metalkube/baremetal-operator"
 
+if [ "${NODES_PLATFORM}" = "libvirt" ] ; then
+    HW_PROFILE="-hwprofile libvirt"
+fi
+
 function list_masters() {
     cat $MASTER_NODES_FILE | \
         jq '.nodes[] | {
@@ -34,7 +38,7 @@ function make_bm_masters() {
            -user "$user" \
            -machine-namespace openshift-machine-api \
            -machine  "$(echo $name | sed 's/openshift/ostest/')" \
-           -boot-mac "$mac" \
+           -boot-mac "$mac" ${HW_PROFILE} \
            "$name"
     done
 }
@@ -66,7 +70,7 @@ function make_bm_workers() {
            -address "$address" \
            -password "$password" \
            -user "$user" \
-           -boot-mac "$mac" \
+           -boot-mac "$mac" ${HW_PROFILE} \
            "$name"
     done
 }
