@@ -34,7 +34,7 @@ MANAGE_INT_BRIDGE=${MANAGE_INT_BRIDGE:-y}
 # Internal interface, to bridge virbr0
 INT_IF=${INT_IF:-}
 #Root disk to deploy coreOS - use /dev/sda on BM
-ROOT_DISK=${ROOT_DISK:="/dev/vda"}
+ROOT_DISK=${ROOT_DISK:="/dev/sda"}
 # Kafka Strimzi configs
 KAFKA_NAMESPACE=${KAFKA_NAMESPACE:-strimzi}
 KAFKA_CLUSTERNAME=${KAFKA_CLUSTERNAME:-strimzi}
