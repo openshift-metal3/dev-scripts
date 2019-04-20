@@ -30,7 +30,6 @@ oc adm policy add-scc-to-user anyuid -z kubevirt-web-ui-operator
 oc adm policy add-cluster-role-to-user cluster-admin system:serviceaccount:kubevirt-web-ui:kubevirt-web-ui-operator
 oc apply -f role.yaml
 oc apply -f role_binding.yaml
-oc apply -f role_binding_kube-public.yaml
 oc apply -f crds/kubevirt_v1alpha1_kwebui_crd.yaml
 oc apply -f operator.yaml
 sed -i "s/okdvirt/openshiftvirt/" crds/kubevirt_v1alpha1_kwebui_cr.yaml
