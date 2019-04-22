@@ -71,14 +71,10 @@ server and download the resources it requires.
 The Ironic container is stored at https://quay.io/repository/metalkube/metalkube-ironic, built from
 https://github.com/metalkube/metalkube-ironic.
 
-- `./05_build_ocp_installer.sh`
-
-These will pull and build the openshift-install and some other things from
-source.
-
 - `./06_create_cluster.sh`
 
-This will run the kni-installer to generate ignition configs for the
+This will extract openshift-install from the OCP release payload and
+run `openshift-install` to generate ignition configs for the
 bootstrap node and the masters.  The installer then launches both the
 bootstrap VM and master nodes using the Terraform providers for libvirt
 and Ironic.  Once bootstrap is complete, the installer removes the
@@ -133,7 +129,7 @@ e.g. to clean and re-install ocp run:
 ```
 ./ocp_cleanup.sh
 rm -fr ocp
-./05_run_ocp.sh
+./06_create_cluster.sh
 ```
 
 Or, you can run `make clean` which will run all of the cleanup steps.

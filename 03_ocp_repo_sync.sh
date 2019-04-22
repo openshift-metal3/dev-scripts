@@ -34,8 +34,6 @@ function sync_go_repo_and_patch {
     popd
 }
 
-sync_go_repo_and_patch github.com/openshift-metalkube/kni-installer https://github.com/openshift-metalkube/kni-installer.git
-
 # Build facet
 # FIXME(russellb) - disabled due to build failure related to metal3 rename
 #sync_go_repo_and_patch github.com/openshift-metalkube/facet https://github.com/openshift-metalkube/facet.git

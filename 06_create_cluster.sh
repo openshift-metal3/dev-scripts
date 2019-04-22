@@ -8,7 +8,7 @@ source common.sh
 source ocp_install_env.sh
 
 # Do some PULL_SECRET sanity checking
-if [[ "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" == *"registry.svc.ci.openshift.org"* ]]; then
+if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then
     if [[ "${PULL_SECRET}" != *"registry.svc.ci.openshift.org"* ]]; then
         echo "Please get a valid pull secret for registry.svc.ci.openshift.org."
         exit 1
@@ -17,6 +17,9 @@ fi
 
 if [ ! -d ocp ]; then
     mkdir -p ocp
+
+    # Extract openshift-install from the release image
+    extract_installer "${OPENSHIFT_RELEASE_IMAGE}" ocp/
 
     # Create a master_nodes.json file
     jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"

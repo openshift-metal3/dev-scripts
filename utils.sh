@@ -2,6 +2,22 @@
 
 set -o pipefail
 
+function extract_installer() {
+    local release_image
+    local outdir
+
+    release_image="$1"
+    outdir="$2"
+
+    extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
+
+    echo "${PULL_SECRET}" > "${extract_dir}/pullsecret"
+    oc adm release extract --registry-config "${extract_dir}/pullsecret" --command=openshift-install --to "${extract_dir}" "${release_image}"
+    mv "${extract_dir}/openshift-install" "${outdir}"
+
+    rm -rf "${extract_dir}"
+}
+
 function generate_assets() {
   rm -rf assets/generated && mkdir assets/generated
   for file in $(find assets/templates/ -iname '*.yaml' -type f -printf "%P\n"); do
@@ -23,7 +39,7 @@ function create_cluster() {
     export TF_LOG=DEBUG
 
     cp ${assets_dir}/install-config.yaml{,.tmp}
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create manifests
+    "${assets_dir}/openshift-install" --dir "${assets_dir}" --log-level=debug create manifests
 
     # TODO - consider adding NTP server config to install-config.yaml instead
     if host clock.redhat.com ; then
@@ -35,14 +51,14 @@ function create_cluster() {
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
     cp ${assets_dir}/install-config.yaml{.tmp,}
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create cluster
+    "${assets_dir}/openshift-install" --dir "${assets_dir}" --log-level=debug create cluster
 }
 
 function wait_for_cvo_finish() {
     local assets_dir
 
     assets_dir="$1"
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug wait-for install-complete
+    "${assets_dir}/openshift-install" --dir "${assets_dir}" --log-level=debug wait-for install-complete
 }
 
 function wait_for_json() {

@@ -8,8 +8,8 @@ source ocp_install_env.sh
 sudo systemctl stop fix_certs.timer
 
 if [ -d ocp ]; then
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir ocp --log-level=debug destroy bootstrap
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir ocp --log-level=debug destroy cluster
+    ocp/openshift-install --dir ocp --log-level=debug destroy bootstrap
+    ocp/openshift-install --dir ocp --log-level=debug destroy cluster
     rm -rf ocp
 fi
 
