@@ -77,6 +77,9 @@ list_workers | make_bm_workers | tee $SCRIPTDIR/ocp/worker_crs.yaml
 
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/master_crs.yaml --namespace=openshift-machine-api
 
+# Check if file exists
+[ -s "$SCRIPTDIR/ocp/worker_crs.yaml" ] || exit 0
+
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/worker_crs.yaml --namespace=openshift-machine-api
 
 wait_for_worker() {
