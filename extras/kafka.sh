@@ -8,9 +8,13 @@ source ${BASEDIR}/common.sh
 figlet "Deploying Kafka Strimzi" | lolcat
 eval "$(go env)"
 
+STRIMZI_VERSION="0.11.2"
 export KAFKAPATH="$GOPATH/src/github.com/strimzi/strimzi-kafka-operator"
 export KAFKAPRODUCER_PATH="$GOPATH/src/github.com/scholzj/kafka-test-apps"
 cd $KAFKAPATH
+
+# Pinning Strimzi to the latest stable release
+git reset --hard tags/${STRIMZI_VERSION}
 
 # Apply RBAC
 oc new-project ${KAFKA_NAMESPACE}
