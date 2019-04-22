@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# See docs/release-payload.md for more information
+
 # A namespace and imagestream where the release will be published to
 RELEASE_NAMESPACE=kni
 RELEASE_STREAM=release
