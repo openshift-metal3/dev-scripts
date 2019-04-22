@@ -26,6 +26,9 @@
       <source pool='{{ libvirt_volume_pool }}' volume='{{ item.name }}.qcow2'/>
       <target dev='{{ libvirt_diskdev }}' bus='{{ libvirt_diskbus }}'/>
     </disk>
+{% if libvirt_diskbus == 'scsi' %}
+  <controller type='scsi' model='virtio-scsi' />
+{% endif %}
 {% for network in networks %}
     <interface type='bridge'>
       <mac address='{{ node_mac_map.get(item.name).get(network.name) }}'/>

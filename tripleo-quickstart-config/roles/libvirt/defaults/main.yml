@@ -20,8 +20,8 @@ images:
 # `environment/setup` role).
 libvirt_volume_pool: oooq_pool
 libvirt_domain_type: kvm
-libvirt_diskdev: vda
-libvirt_diskbus: virtio
+libvirt_diskdev: sda
+libvirt_diskbus: scsi
 libvirt_arch: x86_64
 libvirt_cpu_mode: host-model
 
