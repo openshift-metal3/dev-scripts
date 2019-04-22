@@ -19,9 +19,7 @@ for node in $(oc --config ocp/auth/kubeconfig get nodes -o template --template='
     if [[ "$machine_name" == *"worker"* ]]; then
         machine_name=$(oc --config ocp/auth/kubeconfig get machines -n openshift-machine-api | grep $node_name | cut -f1 -d' ')
     fi
-    uid=$(echo $node | cut -f1 -d':')
-    addresses=$(oc --config ocp/auth/kubeconfig get node $node_name -o json | jq -c '.status.addresses')
-    curl -X PATCH http://localhost:8001/apis/machine.openshift.io/v1beta1/namespaces/openshift-machine-api/machines/$machine_name/status -H "Content-type: application/merge-patch+json" -d '{"status":{"addresses":'"${addresses}"',"nodeRef":{"kind":"Node","name":"'"${node_name}"'","uid":"'"${uid}"'"}}}'
+    $SCRIPTDIR/link-machine-and-node.sh "$node" "$machine_name"
 done
 
 kill $proxy_pid
