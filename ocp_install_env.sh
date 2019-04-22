@@ -13,7 +13,7 @@ export EXTERNAL_SUBNET="192.168.111.0/24"
 # The release we default to here is pinned and known to work with our current
 # version of kni-installer.
 #
-export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="registry.svc.ci.openshift.org/kni/release:4.1.0-rc.3-kni.0"
+export OPENSHIFT_RELEASE_IMAGE="registry.svc.ci.openshift.org/kni/release:4.1.0-rc.3-kni.0"
 
 function generate_ocp_install_config() {
     local outdir
