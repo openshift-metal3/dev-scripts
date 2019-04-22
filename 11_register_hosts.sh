@@ -88,3 +88,6 @@ wait_for_worker() {
 }
 
 wait_for_worker worker-0
+
+# Ensures IPs get set on the worker Machine
+./add-machine-ips.sh
