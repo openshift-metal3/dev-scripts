@@ -47,7 +47,7 @@ export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"1"}
 export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 
-export RHCOS_INSTALLER_IMAGE_URL=$(jq -r '.baseURI' $GOPATH/src/github.com/openshift-metalkube/kni-installer/data/data/rhcos.json)
+export RHCOS_INSTALLER_IMAGE_URL="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/ootpa/410.8.20190412.1/"
 export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-${RHCOS_INSTALLER_IMAGE_URL}}
 
 export RHCOS_IMAGE_FILENAME_OPENSTACK_GZ="$(curl ${RHCOS_IMAGE_URL}/meta.json | jq -r '.images.openstack.path')"
