@@ -1,5 +1,5 @@
-.PHONY: default all requirements configure repo_sync ironic build ocp_run deploy_bmo clean ocp_cleanup host_cleanup bell
-default: requirements configure repo_sync ironic build ocp_run deploy_bmo bell
+.PHONY: default all requirements configure repo_sync ironic build ocp_run deploy_bmo register_hosts clean ocp_cleanup host_cleanup bell
+default: requirements configure repo_sync ironic build ocp_run deploy_bmo register_hosts bell
 
 all: default
 
@@ -23,6 +23,9 @@ ocp_run:
 
 deploy_bmo:
 	./08_deploy_bmo.sh
+
+register_hosts:
+	./11_register_hosts.sh
 
 clean: ocp_cleanup host_cleanup
 
