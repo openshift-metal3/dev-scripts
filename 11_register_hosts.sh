@@ -78,3 +78,16 @@ list_workers | make_bm_workers | tee $SCRIPTDIR/ocp/worker_crs.yaml
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/master_crs.yaml --namespace=openshift-machine-api
 
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/worker_crs.yaml --namespace=openshift-machine-api
+
+wait_for_worker() {
+    worker=$1
+    echo "Waiting for worker $worker to appear ..."
+    while [ "$(oc get nodes | grep $worker)" = "" ]; do sleep 5; done
+    echo "$worker registered, waiting for Ready condition ..."
+    oc wait node/$worker --for=condition=Ready
+}
+
+wait_for_worker worker-0
+
+# Ensures IPs get set on the worker Machine
+./add-machine-ips.sh

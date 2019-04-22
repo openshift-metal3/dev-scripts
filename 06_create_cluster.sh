@@ -68,20 +68,7 @@ sudo virsh net-dhcp-leases baremetal
 # disable NoSchedule taints for masters until we have workers deployed
 oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-
 
-# BEGIN Hack #260
-# Hack workaround for openshift-metalkube/dev-scripts#260 until it's done automatically
-oc --config ocp/auth/kubeconfig proxy &
-proxy_pid=$!
-
-# Currently only works on masters
-for node in $(oc --config ocp/auth/kubeconfig get nodes -o template --template='{{range .items}}{{.metadata.uid}}:{{.metadata.name}}{{"\n"}}{{end}}'); do
-    name=$(echo $node | cut -f2 -d':')
-    uid=$(echo $node | cut -f1 -d':')
-    addresses=$(oc --config ocp/auth/kubeconfig get node $name -o json | jq -c '.status.addresses')
-    curl -X PATCH http://localhost:8001/apis/machine.openshift.io/v1beta1/namespaces/openshift-machine-api/machines/$CLUSTER_NAME-$name/status -H "Content-type: application/merge-patch+json" -d '{"status":{"addresses":'"${addresses}"',"nodeRef":{"kind":"Node","name":"'"${name}"'","uid":"'"${uid}"'"}}}'
-done
-
-kill $proxy_pid
+./add-machine-ips.sh
 
 # Bounce the machine approver to get it to notice the changes.
 oc scale deployment -n openshift-cluster-machine-approver --replicas=0 machine-approver
