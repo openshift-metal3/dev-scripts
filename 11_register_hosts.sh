@@ -87,7 +87,7 @@ wait_for_worker() {
     echo "Waiting for worker $worker to appear ..."
     while [ "$(oc get nodes | grep $worker)" = "" ]; do sleep 5; done
     echo "$worker registered, waiting for Ready condition ..."
-    oc wait node/$worker --for=condition=Ready
+    oc wait node/$worker --for=condition=Ready --timeout=90s
 }
 
 wait_for_worker worker-0
