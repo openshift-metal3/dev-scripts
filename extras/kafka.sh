@@ -9,6 +9,7 @@ figlet "Deploying Kafka Strimzi" | lolcat
 eval "$(go env)"
 
 STRIMZI_VERSION="0.11.2"
+KAFKA_PRODUCER_VERSION="7463f3d9790229d70304805e327e58406e950f1e"
 export KAFKAPATH="$GOPATH/src/github.com/strimzi/strimzi-kafka-operator"
 export KAFKAPRODUCER_PATH="$GOPATH/src/github.com/scholzj/kafka-test-apps"
 cd $KAFKAPATH
@@ -58,8 +59,13 @@ oc expose svc grafana -n ${KAFKA_NAMESPACE} || echo "Grafana route already exist
 
 figlet "Deploying Kafka Producer/Consumer" | lolcat
 
-# Modify & Deploy Kafka Producer/Consumer
+# Kafka Producer/Consumer Deployment
 cd $KAFKAPRODUCER_PATH 
+
+# Pinning Strimzi to the latest stable release
+git reset --hard tags/${KAFKA_PRODUCER_VERSION}
+
+# Modify & Deploy Kafka Producer/Consumer
 sed -i "s/my-cluster-kafka-bootstrap:9092/${KAFKA_CLUSTERNAME}-kafka-bootstrap:9092/" kafka-producer.yaml
 sed -i "s/my-cluster-kafka-bootstrap:9092/${KAFKA_CLUSTERNAME}-kafka-bootstrap:9092/" kafka-consumer.yaml
 sed -i "s/my-topic/${KAFKA_PRODUCER_TOPIC}/" kafka-producer.yaml
