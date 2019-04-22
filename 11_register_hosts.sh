@@ -3,6 +3,7 @@
 set -ex
 
 source common.sh
+source ocp_install_env.sh
 eval "$(go env)"
 
 # Get the latest bits for baremetal-operator
@@ -33,7 +34,7 @@ function make_bm_masters() {
            -password "$password" \
            -user "$user" \
            -machine-namespace openshift-machine-api \
-           -machine  "$(echo $name | sed 's/openshift/ostest/')" \
+           -machine  "$(echo $name | sed s/openshift/${CLUSTER_NAME}/)" \
            -boot-mac "$mac" \
            "$name"
     done
