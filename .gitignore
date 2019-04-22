@@ -4,6 +4,12 @@ openshift-install.log
 logs/
 config_*.sh
 !config_example.sh
+
+release/release_config_*.sh
+!release/release_config_example.sh
+release/release-kubeconfig
+release/release-pullsecret
+
 assets/generated
 
 # Conditionally created for appropriate environments
