@@ -14,6 +14,14 @@ cp -r $BMOPATH/deploy ocp/.
 sed -i 's/namespace: .*/namespace: openshift-machine-api/g' ocp/deploy/role_binding.yaml
 # FIXME(dhellmann): Use the pre-rename operator until this repo
 # works with the renamed version.
+# Other pre-reqs before this can be removed:
+# - machine-api-operator includes updated RBAC for the metal3.io API
+#   https://github.com/openshift/machine-api-operator/pull/296
+# - openshift/cluster-api-provider-baremetal must get updated to include
+#   https://github.com/metal3-io/cluster-api-provider-baremetal/pull/63
+#   which switches it to the metal3.io API.
+# - We switch to a pinned release of OpenShift that includes builds of
+#   CAPBM and MAO with the above changes.
 sed -i 's|image: quay.io/metalkube/baremetal-operator$|image: quay.io/metalkube/baremetal-operator:metalkube|' ocp/deploy/operator.yaml
 
 # Start deploying on the new cluster
