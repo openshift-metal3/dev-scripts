@@ -17,7 +17,7 @@ data:
   password: cGFzc3dvcmQ=
 
 ---
-apiVersion: metalkube.org/v1alpha1
+apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
 metadata:
   name: worker-99
@@ -50,7 +50,7 @@ data:
   password: cGFzc3dvcmQ=
 
 ---
-apiVersion: metalkube.org/v1alpha1
+apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
 metadata:
   name: worker-99

@@ -57,7 +57,7 @@ undercloud_disk: 50
 # by default
 undercloud_vcpu: 6
 # base domain to use
-cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metalkube.org', true) }}"
+cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metal3.io', true) }}"
 
 # The default deployment has flavors for compute, controllers, ceph
 # nodes, and undercloud nodes.  All flavors defined in the `flavors`

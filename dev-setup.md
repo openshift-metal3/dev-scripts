@@ -58,7 +58,7 @@ Luckily, dev-scripts handles much of the prerequisite software installation heav
 As the rhhi user, clone the dev-scripts repository to a location of your choosing:
 
 ```
-$ git clone git@github.com:openshift-metalkube/dev-scripts.git
+$ git clone git@github.com:openshift-metal3/dev-scripts.git
 ```
 
 Change in to the dev-scripts directory:
@@ -99,7 +99,7 @@ $ make
 - 03\_ocp\_repo\_sync.sh
   - Clones openshift-installer, facet, and statik from github.com
     - Additionally, rebases both openshift-installer and facet repos on to master
-    - Checks out a branch called ‘metalkube’
+    - Checks out a branch called ‘metal3’
     - Additional information under the section “Developing against facet”
     - Uses yarn to install and build the production facet from source (a static golang binary)
 - 04\_setup\_ironic.sh
@@ -145,11 +145,11 @@ Moving forward, the environment variable $GOPATH will be used to reference the G
 $ eval `go env` 
 ```
 
-The 03\_ocp\_repo\_sync.sh script we ran previously, automatically cloned the facet repo.  The repo now exists at $GOPATH/src/github.com/metalkube/facet.  This is necessary for the default facet production build, but needs additional work for active development.
+The 03\_ocp\_repo\_sync.sh script we ran previously, automatically cloned the facet repo.  The repo now exists at $GOPATH/src/github.com/metal3-io/facet.  This is necessary for the default facet production build, but needs additional work for active development.
 
 To run the production build of facet, use the following command:
 ```
-$ go run $GOPATH/src/github.com/openshift-metalkube/facet/main.go server
+$ go run $GOPATH/src/github.com/openshift-metal3/facet/main.go server
 ```
 
 Upon execution, facet can be accessed by the URL printed to the output.
@@ -163,10 +163,10 @@ From here, facet development can be expanded by using the documentation, and sta
 **A**:  It might be desirable to change the listening address of the Go server.  To do so, edit pkg/server/server.go around like 53, replacing the default ‘localhost’ with a different IP address, or 0.0.0.0 for all IPs.  
 
 **Q**:  How do I connect to the masters?  
-**A**:  Connecting to the masters shouldn’t be necessary, but in a pinch, you can access them by ssh core@master-<index>.ostest.test.metalkube.org  
+**A**:  Connecting to the masters shouldn’t be necessary, but in a pinch, you can access them by ssh core@master-<index>.ostest.test.metal3.io  
 
 **Q**:  How about connecting to the bootstrap node?  
-**A**:  This might be more common.  You can access it by ssh core@osetest-bootstrap.api.ostest.test.metalkube.org  
+**A**:  This might be more common.  You can access it by ssh core@osetest-bootstrap.api.ostest.test.metal3.io  
 
 **Q**:  What about the bridges?  
 **A**:  There are two bridges in use by RHHI.Next:
@@ -182,7 +182,7 @@ To see these bridges and which interfaces are associated with them, run:
 sudo brctl show
 ```
 **Q**:  I’ve heard “production api” or “production build” - what’s that?  
-**A**:  “Production build” or “production API” are the product of compiling all the facet server components in to a static asset in to a go module, using statik.  The final binary then becomes $GOPATH/src/github.com/openshift-metalkube/facet/bin/facet.  
+**A**:  “Production build” or “production API” are the product of compiling all the facet server components in to a static asset in to a go module, using statik.  The final binary then becomes $GOPATH/src/github.com/openshift-metal3/facet/bin/facet.  
 
 
 

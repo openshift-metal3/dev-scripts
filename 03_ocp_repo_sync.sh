@@ -23,8 +23,8 @@ function sync_go_repo_and_patch {
     git fetch origin
     git rebase origin/master
     if test "$#" -gt "2" ; then
-        git branch -D metalkube || true
-        git checkout -b metalkube
+        git branch -D metal3 || true
+        git checkout -b metal3
 
         shift; shift;
         for arg in "$@"; do
@@ -34,12 +34,12 @@ function sync_go_repo_and_patch {
     popd
 }
 
-sync_go_repo_and_patch github.com/openshift-metalkube/kni-installer https://github.com/openshift-metalkube/kni-installer.git
-sync_go_repo_and_patch github.com/openshift-metalkube/facet https://github.com/openshift-metalkube/facet.git
+sync_go_repo_and_patch github.com/openshift-metal3/kni-installer https://github.com/openshift-metal3/kni-installer.git
+sync_go_repo_and_patch github.com/openshift-metal3/facet https://github.com/openshift-metal3/facet.git
 
 # Build facet
 go get -v github.com/rakyll/statik
-pushd "${GOPATH}/src/github.com/openshift-metalkube/facet"
+pushd "${GOPATH}/src/github.com/openshift-metal3/facet"
 yarn install
 ./build.sh
 popd
@@ -60,7 +60,7 @@ make install
 popd
 
 # Install baremetal-operator
-sync_go_repo_and_patch github.com/metalkube/baremetal-operator https://github.com/metalkube/baremetal-operator.git
+sync_go_repo_and_patch github.com/metal3-io/baremetal-operator https://github.com/metal3-io/baremetal-operator.git
 # FIXME(dhellmann): Use the pre-rename version of the operator until
 # this repository is ready for the renamed version.
 pushd $GOPATH/src/github.com/metalkube/baremetal-operator

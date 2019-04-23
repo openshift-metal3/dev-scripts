@@ -16,13 +16,13 @@ eval $(go env)
 oc project openshift-machine-api
 
 # First kill off any existing deployments so there is no conflict
-if oc get deployments | grep -q metalkube-baremetal-operator
+if oc get deployments | grep -q metal3-baremetal-operator
 then
     echo "Stopping existing deployment..."
-    oc delete deployment metalkube-baremetal-operator
+    oc delete deployment metal3-baremetal-operator
 fi
 
-cd $GOPATH/src/github.com/metalkube/baremetal-operator
+cd $GOPATH/src/github.com/metal3-io/baremetal-operator
 
 oc apply -f deploy/crds/demo-hosts.yaml
 

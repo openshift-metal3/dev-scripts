@@ -10,7 +10,7 @@ source get_images.sh
 
 # Either pull or build the ironic images
 # To build the IRONIC image set
-# IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
+# IRONIC_IMAGE=https://github.com/metal3-io/ironic-image
 for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE ; do
     IMAGE=${!IMAGE_VAR}
     # Is it a git repo?

@@ -44,7 +44,7 @@ NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 NUM_MASTERS=${NUM_MASTERS:-"3"}
 
-export RHCOS_INSTALLER_IMAGE_URL=$(jq -r '.baseURI' $GOPATH/src/github.com/openshift-metalkube/kni-installer/data/data/rhcos.json)
+export RHCOS_INSTALLER_IMAGE_URL=$(jq -r '.baseURI' $GOPATH/src/github.com/openshift-metal3/kni-installer/data/data/rhcos.json)
 export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-${RHCOS_INSTALLER_IMAGE_URL}}
 export RHCOS_IMAGE_FILENAME_OPENSTACK_GZ="$(curl ${RHCOS_IMAGE_URL}/meta.json | jq -r '.images.openstack.path')"
 export RHCOS_IMAGE_NAME=$(echo $RHCOS_IMAGE_FILENAME_OPENSTACK_GZ | sed -e 's/-openstack.*//')
@@ -56,8 +56,8 @@ export RHCOS_IMAGE_FILENAME_COMPRESSED="${RHCOS_IMAGE_NAME}-compressed.qcow2"
 export RHCOS_IMAGE_FILENAME_LATEST="rhcos-ootpa-latest.qcow2"
 
 # Ironic vars
-export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
-export IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metalkube/metalkube-ironic-inspector"}
+export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic"}
+export IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metal3-io/ironic-inspector"}
 export IRONIC_DATA_DIR="$WORKING_DIR/ironic"
 
 export KUBECONFIG="${SCRIPTDIR}/ocp/auth/kubeconfig"

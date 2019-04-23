@@ -11,7 +11,7 @@ source ocp_install_env.sh
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
 export ANSIBLE_LIBRARY=./library
-export VM_NODES_FILE=${VM_NODES_FILE:-tripleo-quickstart-config/metalkube-nodes.yml}
+export VM_NODES_FILE=${VM_NODES_FILE:-tripleo-quickstart-config/metal3-nodes.yml}
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "non_root_user=$USER" \
@@ -23,8 +23,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e @config/environments/dev_privileged_libvirt.yml \
-    -i tripleo-quickstart-config/metalkube-inventory.ini \
-    -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml
+    -i tripleo-quickstart-config/metal3-inventory.ini \
+    -b -vvv tripleo-quickstart-config/metal3-setup-playbook.yml
 
 # Allow local non-root-user access to libvirt
 # Restart libvirtd service to get the new group membership loaded

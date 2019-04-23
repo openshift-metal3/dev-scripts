@@ -23,7 +23,7 @@ function create_cluster() {
     export TF_LOG=DEBUG
 
     cp ${assets_dir}/install-config.yaml{,.tmp}
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create manifests
+    $GOPATH/src/github.com/openshift-metal3/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create manifests
 
     # TODO - consider adding NTP server config to install-config.yaml instead
     if host clock.redhat.com ; then
@@ -35,14 +35,14 @@ function create_cluster() {
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
     cp ${assets_dir}/install-config.yaml{.tmp,}
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create cluster
+    $GOPATH/src/github.com/openshift-metal3/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug create cluster
 }
 
 function wait_for_cvo_finish() {
     local assets_dir
 
     assets_dir="$1"
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug wait-for install-complete
+    $GOPATH/src/github.com/openshift-metal3/kni-installer/bin/kni-install --dir "${assets_dir}" --log-level=debug wait-for install-complete
 }
 
 function wait_for_json() {

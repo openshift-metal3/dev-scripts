@@ -87,7 +87,7 @@ Edit `custom-images.json` to have a modified image for the BareMetal case:
   "clusterAPIControllerOpenStack": "docker.io/openshift/origin-openstack-machine-controllers:v4.0.0",
   "clusterAPIControllerLibvirt": "docker.io/openshift/origin-libvirt-machine-controllers:v4.0.0",
   "machineAPIOperator": "docker.io/openshift/origin-machine-api-operator:v4.0.0",
-  "clusterAPIControllerBareMetal": "quay.io/openshift-metalkube/origin-baremetal-machine-controllers:latest",
+  "clusterAPIControllerBareMetal": "quay.io/openshift-metal3/origin-baremetal-machine-controllers:latest",
   "clusterAPIControllerAzure": "quay.io/openshift/origin-azure-machine-controllers:v4.0.0"
 }
 ```

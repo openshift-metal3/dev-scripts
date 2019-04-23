@@ -10,13 +10,13 @@ from tripleo-quickstart here.
 We are using this repository as a work space while we figure out what the
 installer needs to do for bare metal provisioning. As that logic is ironed out,
 we are moving it into the [facet wrapper
-API](https://github.com/openshift-metalkube/facet/tree/master/pkg/server), or
+API](https://github.com/openshift-metal3/facet/tree/master/pkg/server), or
 the [go-based
-kni-installer](https://github.com/openshift-metalkube/kni-installer).
+kni-installer](https://github.com/openshift-metal3/kni-installer).
 Eventually that kni-installer fork of
 [openshift-installer](https://github.com/openshift/installer) will be merged
 back, and we won't need much or any of this. For now, these tools are the
-canonical way to set up a metalkube cluster.
+canonical way to set up a metal3 cluster.
 
 # Pre-requisites
 
@@ -56,11 +56,11 @@ local virthost and some other dependencies installed.
 
 - `./03_ocp_repo_sync.sh`
 
-After this step, you can run the [facet](https://github.com/openshift-metalkube/facet)
+After this step, you can run the [facet](https://github.com/openshift-metal3/facet)
 server with:
 
 ```
-$ go run "${GOPATH}/src/github.com/openshift-metalkube/facet/main.go" server
+$ go run "${GOPATH}/src/github.com/openshift-metal3/facet/main.go" server
 ```
 
 - `./04_setup_ironic.sh`
@@ -68,8 +68,8 @@ $ go run "${GOPATH}/src/github.com/openshift-metalkube/facet/main.go" server
 This will setup containers for the Ironic infrastructure on the host
 server and download the resources it requires.
 
-The Ironic container is stored at https://quay.io/repository/metalkube/metalkube-ironic, built from
-https://github.com/metalkube/metalkube-ironic.
+The Ironic container is stored at https://quay.io/repository/metal3-io/ironic, built from
+https://github.com/metal3-io/ironic-image.
 
 - `./05_build_ocp_installer.sh`
 
@@ -163,7 +163,7 @@ If you see `ftype=1` then you have d_type support.
 
 ### Modifying cpu/memory/disk resources
 The default cpu/memory/disk resources when using virtual machines are provided
-by the [tripleo-quickstart-config/metalkube-nodes.yml](tripleo-quickstart-config/metalkube-nodes.yml) file:
+by the [tripleo-quickstart-config/metal3-nodes.yml](tripleo-quickstart-config/metal3-nodes.yml) file:
 
 * 4 vCPU
 * 8 Gb RAM

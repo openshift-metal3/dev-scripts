@@ -1,7 +1,7 @@
 eval "$(go env)"
 
-export OPENSHIFT_INSTALL_DATA="$GOPATH/src/github.com/openshift-metalkube/kni-installer/data/data"
-export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
+export OPENSHIFT_INSTALL_DATA="$GOPATH/src/github.com/openshift-metal3/kni-installer/data/data"
+export BASE_DOMAIN=${BASE_DOMAIN:-test.metal3.io}
 export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="`cat $HOME/.ssh/id_rsa.pub`"
