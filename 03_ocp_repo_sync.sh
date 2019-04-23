@@ -20,7 +20,8 @@ function sync_go_repo_and_patch {
 
     git am --abort || true
     git checkout master
-    git pull --rebase origin master
+    git fetch origin
+    git rebase origin/master
     if test "$#" -gt "2" ; then
         git branch -D metalkube || true
         git checkout -b metalkube
@@ -63,7 +64,7 @@ sync_go_repo_and_patch github.com/metalkube/baremetal-operator https://github.co
 # FIXME(dhellmann): Use the pre-rename version of the operator until
 # this repository is ready for the renamed version.
 pushd $GOPATH/src/github.com/metalkube/baremetal-operator
-git checkout metalkube
+git checkout origin/metalkube
 popd
 
 # Install rook repository
