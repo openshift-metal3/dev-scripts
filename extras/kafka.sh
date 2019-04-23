@@ -76,8 +76,8 @@ oc apply -f kafka-consumer.yaml -n ${KAFKA_NAMESPACE}
 oc wait --for condition=ready pod -l app=kafka-consumer -n ${KAFKA_NAMESPACE} --timeout=300s
 
 # Add Grafana Dashboards and Datasource
-GRAFANA_ROUTE=`oc get route grafana --template='{{ .spec.host }}'`
-PROMETHEUS_ROUTE=`oc get route prometheus --template='{{ .spec.host }}'`
+GRAFANA_ROUTE=`oc get route grafana -n ${KAFKA_NAMESPACE} --template='{{ .spec.host }}'`
+PROMETHEUS_ROUTE=`oc get route prometheus -n ${KAFKA_NAMESPACE} --template='{{ .spec.host }}'`
 curl -X "POST" "http://${GRAFANA_ROUTE}/api/datasources" -H "Content-Type: application/json" --user admin:admin --data-binary '{ "name":"Prometheus","type":"prometheus","access":"proxy","url":"http://'${PROMETHEUS_ROUTE}'","basicAuth":false,"isDefault":true }'
 
 # build and POST the Kafka dashboard to Grafana
