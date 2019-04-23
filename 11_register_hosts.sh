@@ -92,7 +92,9 @@ wait_for_worker() {
     oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
 }
 
-wait_for_worker worker-0
+for worker in $(list_workers | awk {'print $1'} | sed s/openshift-// ); do
+    wait_for_worker $worker
+done
 
 # Ensures IPs get set on the worker Machine
 ./add-machine-ips.sh
