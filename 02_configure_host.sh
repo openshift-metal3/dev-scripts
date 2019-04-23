@@ -96,24 +96,10 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     fi
 fi
 
-# Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
-for port in 80 5050 6385 ; do
-    if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
-        sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT
-    fi
-done
-
 # Allow ipmi to the virtual bmc processes that we just started
 if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT 2>/dev/null ; then
     sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
 fi
-
-#Allow access to dhcp and tftp server for pxeboot
-for port in 67 69 ; do
-    if ! sudo iptables -C INPUT -i provisioning -p udp --dport $port -j ACCEPT 2>/dev/null ; then
-        sudo iptables -I INPUT -i provisioning -p udp --dport $port -j ACCEPT
-    fi
-done
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
