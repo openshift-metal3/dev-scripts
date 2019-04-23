@@ -74,6 +74,7 @@ cd $ROOKPATH/cluster/examples/kubernetes/ceph/monitoring
 sed 's/namespace: rook-ceph/namespace: openshift-storage/' service-monitor.yaml > service-monitor-modified.yaml
 sed -i 's/- rook-ceph/- openshift-storage/' service-monitor-modified.yaml
 sed -i 's/rook_cluster: rook-ceph/rook_cluster: openshift-storage/' service-monitor-modified.yaml
+sed -i 's/interval: 5s/interval: 2s/' service-monitor-modified.yaml
 oc create -f service-monitor-modified.yaml
 
 cd $MIXINPATH/manifests
