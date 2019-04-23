@@ -17,6 +17,6 @@ node_name=$(echo $node | cut -f2 -d':')
 addresses=$(oc --config ocp/auth/kubeconfig get node ${node_name} -o json | jq -c '.status.addresses')
 
 curl -X PATCH \
-     http://localhost:8001/apis/machine.openshift.io/v1beta1/namespaces/openshift-machine-api/machines/$machine_name/status \
+     http://localhost:8001/apis/machine.openshift.io/v1beta1/namespaces/openshift-machine-api/machines/${machine}/status \
      -H "Content-type: application/merge-patch+json" \
      -d '{"status":{"addresses":'"${addresses}"',"nodeRef":{"kind":"Node","name":"'"${node_name}"'","uid":"'"${uid}"'"}}}'
