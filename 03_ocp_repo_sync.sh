@@ -60,6 +60,11 @@ popd
 
 # Install baremetal-operator
 sync_go_repo_and_patch github.com/metalkube/baremetal-operator https://github.com/metalkube/baremetal-operator.git
+# FIXME(dhellmann): Use the pre-rename version of the operator until
+# this repository is ready for the renamed version.
+pushd $GOPATH/src/github.com/metalkube/baremetal-operator
+git checkout before-rename
+popd
 
 # Install rook repository
 sync_go_repo_and_patch github.com/rook/rook https://github.com/rook/rook.git
