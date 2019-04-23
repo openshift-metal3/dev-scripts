@@ -94,6 +94,14 @@ Edit `custom-images.json` to have a modified image for the BareMetal case:
 
 ## 6) Now run the MAO
 
+Before running the MAO, we have to undo the change we did earlier by asking the
+cluster-version-operator to manage the machine-api-operator's deployment again.
+Without this, it will not scale the MAO back up.
+
+```sh
+oc patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","name":"machine-api-operator","namespace":"openshift-machine-api","unmanaged":false}]}}'
+```
+
 Change `custom-images.json` to `pkg/operator/fixtures/images.json` if you
 didn’t build a custom CAPBM.
 
