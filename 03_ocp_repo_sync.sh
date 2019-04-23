@@ -63,7 +63,7 @@ sync_go_repo_and_patch github.com/metalkube/baremetal-operator https://github.co
 # FIXME(dhellmann): Use the pre-rename version of the operator until
 # this repository is ready for the renamed version.
 pushd $GOPATH/src/github.com/metalkube/baremetal-operator
-git checkout before-rename
+git checkout metalkube
 popd
 
 # Install rook repository
