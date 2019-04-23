@@ -17,7 +17,15 @@ It’s assumed that you start by bringing up a cluster as usual.
 
 ## 2) Stop the MAO
 
-Stop the currently running MAO:
+Tell cluster-version-operator to stop managing the machine-api-operator's
+Deployment. Without this, it will scale the MAO back up within a few minutes of
+you scaling it down.
+
+```sh
+oc patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","name":"machine-api-operator","namespace":"openshift-machine-api","unmanaged":true}]}}'
+```
+
+Stop the currently running MAO by scaling it to zero replicas:
 
 ```sh
 oc scale deployment -n openshift-machine-api --replicas=0 machine-api-operator
