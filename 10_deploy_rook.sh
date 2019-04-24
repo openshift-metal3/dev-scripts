@@ -7,9 +7,9 @@ source common.sh
 figlet "Deploying rook" | lolcat
 eval "$(go env)"
 
-CEPH_VERSION="v14.2.0-20190410"
-ROOK_VERSION="v0.9.0-465.g5f6de03"
-GIT_VERSION="5f6de03d47539c1c3d262551d0122f6c3866cb05"
+ROOK_VERSION="v0.9.0-480.gfe2a291"
+GIT_VERSION="fe2a291918379f82a12049c3bd04e9d00c69f5a8"
+
 export MIXINPATH="$GOPATH/src/github.com/ceph/ceph-mixins"
 export ROOKPATH="$GOPATH/src/github.com/rook/rook"
 cd $ROOKPATH/cluster/examples/kubernetes/ceph
@@ -24,6 +24,8 @@ oc policy add-role-to-user view system:serviceaccount:openshift-monitoring:prome
 sed 's/namespace: rook-ceph/namespace: openshift-storage/' operator-openshift.yaml > operator-openshift-modified.yaml
 sed -i 's/:rook-ceph:/:openshift-storage:/' operator-openshift-modified.yaml
 sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" operator-openshift-modified.yaml
+sed -i '/ROOK_MON_HEALTHCHECK_INTERVAL/!b;n;c\          value: "30s"' operator-openshift-modified.yaml
+sed -i '/ROOK_MON_OUT_TIMEOUT/!b;n;c\          value: "40s"' operator-openshift-modified.yaml
 oc create -f operator-openshift-modified.yaml
 sleep 120
 
@@ -31,11 +33,9 @@ oc wait --for condition=ready  pod -l app=rook-ceph-operator -n openshift-storag
 oc wait --for condition=ready  pod -l app=rook-ceph-agent -n openshift-storage --timeout=120s
 oc wait --for condition=ready  pod -l app=rook-discover -n openshift-storage --timeout=120s
 
-sed "s/useAllDevices: .*/useAllDevices: true/" cluster.yaml > cluster-modified.yaml
-sed -i 's/# port: 8443/port: 8444/' cluster-modified.yaml
+sed 's/# port: 8443/port: 8444/' cluster.yaml > cluster-modified.yaml
 sed -i 's/namespace: rook-ceph/namespace: openshift-storage/' cluster-modified.yaml
 sed -i 's/allowUnsupported: false/allowUnsupported: true/' cluster-modified.yaml
-sed -i "s@image: ceph/ceph.*@image: ceph/ceph:$CEPH_VERSION@" cluster-modified.yaml
 oc create -f cluster-modified.yaml
 sleep 120
 
@@ -50,7 +50,7 @@ metadata:
   name: rbd
   namespace: openshift-storage
 spec:
-  failureDomain: osd
+  failureDomain: host
   replicated:
     size: 2
 EOF
