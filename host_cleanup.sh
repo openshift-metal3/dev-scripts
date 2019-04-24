@@ -29,6 +29,10 @@ sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/con
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     sudo rm -f /etc/sysconfig/network-scripts/ifcfg-provisioning
 fi
+# Leaving this around causes issues when the host is rebooted
+if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
+    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-baremetal
+fi
 sudo virsh net-list --name|grep -q baremetal
 if [ "$?" == "0" ]; then
     sudo virsh net-destroy baremetal
