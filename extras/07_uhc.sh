@@ -2,6 +2,7 @@
 
 set -eux
 
+export GIT_SSL_NO_VERIFY=true
 UHC_TOKEN="${UHC_TOKEN:-}"
 
 figlet "Updating uch information" | lolcat
