@@ -8,6 +8,9 @@ function getlogs(){
     # Grab the host journal
     sudo journalctl > $LOGDIR/bootstrap-host-system.journal
 
+    # The logs shared by the ironic containers
+    sudo cp -r /opt/dev-scripts/ironic/log $LOGDIR/container-logs
+
     # And the VM jornals
     for HOST in $(sudo virsh net-dhcp-leases baremetal | grep -o '192.168.111.[0-9]\+') ; do
         sshpass -p notworking $SSH core@$HOST sudo journalctl > $LOGDIR/$HOST-system.journal || true
