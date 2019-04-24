@@ -1,4 +1,4 @@
-MetalKube Installer Dev Scripts
+Metal³ Installer Dev Scripts
 ===============================
 
 This set of scripts configures some libvirt VMs and associated
