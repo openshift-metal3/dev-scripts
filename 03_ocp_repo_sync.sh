@@ -35,14 +35,15 @@ function sync_go_repo_and_patch {
 }
 
 sync_go_repo_and_patch github.com/openshift-metalkube/kni-installer https://github.com/openshift-metalkube/kni-installer.git
-sync_go_repo_and_patch github.com/openshift-metalkube/facet https://github.com/openshift-metalkube/facet.git
 
 # Build facet
-go get -v github.com/rakyll/statik
-pushd "${GOPATH}/src/github.com/openshift-metalkube/facet"
-yarn install
-./build.sh
-popd
+# FIXME(russellb) - disabled due to build failure related to metal3 rename
+#sync_go_repo_and_patch github.com/openshift-metalkube/facet https://github.com/openshift-metalkube/facet.git
+#go get -v github.com/rakyll/statik
+#pushd "${GOPATH}/src/github.com/openshift-metalkube/facet"
+#yarn install
+#./build.sh
+#popd
 
 # Install Go dependency management tool
 # Using pre-compiled binaries instead of installing from source
