@@ -8,7 +8,7 @@ source ${BASEDIR}/common.sh
 # Kafka Strimzi configs
 KAFKA_NAMESPACE=${KAFKA_NAMESPACE:-strimzi}
 KAFKA_CLUSTERNAME=${KAFKA_CLUSTERNAME:-strimzi}
-KAFKA_PVC_SIZE=${KAFKA_PVC_SIZE:-10}
+KAFKA_PVC_SIZE=${KAFKA_PVC_SIZE:-100}
 # Kafka producer will generate 10 msg/sec/pod with a value of 100 (by default)
 KAFKA_PRODUCER_TIMER=${KAFKA_PRODUCER_TIMER:-"100"}
 KAFKA_PRODUCER_TOPIC=${KAFKA_PRODUCER_TOPIC:-strimzi-topic}
@@ -39,7 +39,7 @@ oc wait --for condition=ready pod -l name=strimzi-cluster-operator -n ${KAFKA_NA
 
 # Modify Kafka cluster & Deploy
 sed -i "s/my-cluster/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-metrics.yaml
-sed -i "s/100Gi/${KAFKA_PVC_SIZE}Gi/" metrics/examples/kafka/kafka-metrics.yaml
+sed -i "s/1Gi/${KAFKA_PVC_SIZE}Gi/" metrics/examples/kafka/kafka-metrics.yaml
 sed -i "s/my-cluster/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-connect-metrics.yaml
 sed -i "s/my-connect/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-connect-metrics.yaml
 oc apply -f metrics/examples/kafka/kafka-metrics.yaml -n ${KAFKA_NAMESPACE}
