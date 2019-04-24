@@ -83,6 +83,16 @@ oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/master_crs.yaml --namesp
 
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/worker_crs.yaml --namespace=openshift-machine-api
 
+# We automate waiting for a worker to come up and adding IPs to it for the
+# default virt configuration.  This is a helpful step for the common dev setup,
+# and it also runs in CI. For any other env, we just skip this, because we
+# can't automatically figure out the mapping between Machines and Nodes in
+# other cases, and must rely on running the link-machine-and-node.sh manually.
+
+if [ "${NODES_PLATFORM}" != "libvirt" ] || [ "$(list_workers | wc -l)" != "1" ]; then
+    exit 0
+fi
+
 wait_for_worker() {
     worker=$1
     echo "Waiting for worker $worker to appear ..."
