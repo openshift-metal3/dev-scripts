@@ -1,16 +1,15 @@
 #!/usr/bin/bash
 
-CONSUMER_KEY="${CONSUMER_KEY:-}"
-CONSUMER_SECRET="${CONSUMER_SECRET:-}"
-ACCESS_TOKEN="${ACCESS_TOKEN:-}"
-ACCESS_TOKEN_SECRET="${ACCESS_TOKEN_SECRET:-}"
+CONSUMER_KEY="${CONSUMER_KEY:-XX}"
+CONSUMER_SECRET="${CONSUMER_SECRET:-XX}"
+ACCESS_TOKEN="${ACCESS_TOKEN:-XX}"
+ACCESS_TOKEN_SECRET="${ACCESS_TOKEN_SECRET:-XX}"
 
 figlet "Deploying tweeting service" | lolcat
-if [ -z "$CONSUMER_KEY" ] || [ -z "$CONSUMER_SECRET" ] || [ -z "$ACCESS_TOKEN" ] || [ -z "$ACCESS_TOKEN_SECRET" ] ; then
+if [ "$CONSUMER_KEY" == "XX" ] && [ "$CONSUMER_SECRET" == "XX"] && [ "$ACCESS_TOKEN" == "XX" ] && [ "$ACCESS_TOKEN_SECRET" == "XX" ] ; then
     echo Missing variables to properly deploy knative tweeter service
     echo "Follow instructions at https://developer.twitter.com/en/docs/basics/authentication/guides/access-tokens.html"
-    echo "and set CONSUMER_KEY,CONSUMER_SECRET,ACCESS_TOKEN and ACCESS_TOKEN_SECRET as environment variables"
-    exit
+    echo "and update twitter.creds secret in dotnet project with correct information"
 fi
 
 git clone https://github.com/markito/ktweeter
@@ -22,7 +21,7 @@ oc apply -f eventing/serviceAccount.yaml
 oc adm policy add-scc-to-user privileged -z events-sa
 oc apply -f eventing/channel.yaml
 oc apply -f eventing/k8sEventSource.yaml
-sed "s@dnsName:.*@dnsName: http://http-trigger.default.svc.cluster.local/api/http-trigger@" eventing/subscription.yaml > eventing/subscription-modified.yaml
+sed "s@dnsName:.*@dnsName: http://http-trigger.dotnet.svc.cluster.local/api/http-trigger@" eventing/subscription.yaml > eventing/subscription-modified.yaml
 oc apply -f eventing/subscription-modified.yaml
 cat <<EOF | oc create -f -
 apiVersion: serving.knative.dev/v1alpha1
