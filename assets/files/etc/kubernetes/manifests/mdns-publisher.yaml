@@ -3,7 +3,7 @@ kind: Pod
 apiVersion: v1
 metadata:
   name: mdns-publisher
-  namespace: kni-infra
+  namespace: openshift-kni-infra
   creationTimestamp:
   deletionGracePeriodSeconds: 65
   labels:
