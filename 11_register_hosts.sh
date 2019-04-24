@@ -95,4 +95,7 @@ wait_for_worker() {
 wait_for_worker worker-0
 
 # Ensures IPs get set on the worker Machine
-./add-machine-ips.sh
+# Run only with single worker deployments as a workaround for issue #421
+if [ "$(list_workers | wc -l)" == 1 ]; then
+    ./add-machine-ips.sh
+fi
