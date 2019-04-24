@@ -20,7 +20,7 @@ facet
   - Day 1 Provisioning API
   - Uses an embedded HTTP server to serve Day 1 UI, which will be the primary consumer of this API
   - Provisioning host configuration validation at startup
-- Central integration point for doing MetalKube deployments of OpenShift
+- Central integration point for doing Metal³ deployments of OpenShift
 - Facet Architecture
 
 # Environmental Prerequisites
