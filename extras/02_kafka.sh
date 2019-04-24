@@ -5,6 +5,14 @@ BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 source ${BASEDIR}/common.sh
 
+# Kafka Strimzi configs
+KAFKA_NAMESPACE=${KAFKA_NAMESPACE:-strimzi}
+KAFKA_CLUSTERNAME=${KAFKA_CLUSTERNAME:-strimzi}
+KAFKA_PVC_SIZE=${KAFKA_PVC_SIZE:-10}
+# Kafka producer will generate 10 msg/sec/pod with a value of 100 (by default)
+KAFKA_PRODUCER_TIMER=${KAFKA_PRODUCER_TIMER:-"100"}
+KAFKA_PRODUCER_TOPIC=${KAFKA_PRODUCER_TOPIC:-strimzi-topic}
+
 figlet "Deploying Kafka Strimzi" | lolcat
 eval "$(go env)"
 
@@ -45,6 +53,7 @@ oc wait --for condition=ready pod -l strimzi.io/kind=KafkaConnect -n ${KAFKA_NAM
 sed -i "s/myproject/${KAFKA_CLUSTERNAME}/" metrics/examples/prometheus/prometheus.yaml
 oc apply -f metrics/examples/prometheus/prometheus.yaml -n ${KAFKA_NAMESPACE}
 oc apply -f metrics/examples/prometheus/alerting-rules.yaml -n ${KAFKA_NAMESPACE}
+sleep 5
 oc wait --for condition=ready pod -l name=prometheus -n ${KAFKA_NAMESPACE} --timeout=300s
 oc apply -f metrics/examples/prometheus/alertmanager.yaml -n ${KAFKA_NAMESPACE}
 oc wait --for condition=ready pod -l name=alertmanager -n ${KAFKA_NAMESPACE} --timeout=300s
@@ -63,7 +72,7 @@ figlet "Deploying Kafka Producer/Consumer" | lolcat
 cd $KAFKAPRODUCER_PATH 
 
 # Pinning Strimzi to the latest stable release
-git reset --hard tags/${KAFKA_PRODUCER_VERSION}
+git checkout ${KAFKA_PRODUCER_VERSION}
 
 # Modify & Deploy Kafka Producer/Consumer
 sed -i "s/my-cluster-kafka-bootstrap:9092/${KAFKA_CLUSTERNAME}-kafka-bootstrap:9092/" kafka-producer.yaml
