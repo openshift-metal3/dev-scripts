@@ -74,6 +74,7 @@ metadata:
     template.kubevirt.ui: openshift_win2k12r2-generic-large
     vm.kubevirt.io/template: win2k12r2-generic-large
     workload.template.kubevirt.io/generic: "true"
+    app: windows-app-server
   name: windows-app-server
   namespace: dotnet
 spec:
