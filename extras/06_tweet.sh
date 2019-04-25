@@ -12,6 +12,11 @@ if [ "$CONSUMER_KEY" == "XX" ] && [ "$CONSUMER_SECRET" == "XX"] && [ "$ACCESS_TO
     echo "and update twitter.creds secret in dotnet project with correct information"
 fi
 
+CONSUMER_KEY="$(echo ${CONSUMER_KEY} | base64)"
+CONSUMER_SECRET="$(echo ${CONSUMER_SECRET} | base64)"
+ACCESS_TOKEN="$(echo ${ACCESS_TOKEN} | base64)"
+ACCESS_TOKEN_SECRET="$(echo ${ACCESS_TOKEN_SECRET} | base64)"
+
 git clone https://github.com/markito/ktweeter
 cd ktweeter
 oc patch configmap/config-network -n knative-serving --type json --patch "$(cat patches/patch_config-network.json)"
