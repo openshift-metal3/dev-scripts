@@ -21,13 +21,7 @@ git clone https://github.com/markito/ktweeter
 cd ktweeter
 oc patch configmap/config-network -n knative-serving --type json --patch "$(cat patches/patch_config-network.json)"
 oc project dotnet
-sed -i "s/namespace: default/namespace: dotnet/" eventing/*
-oc apply -f eventing/serviceAccount.yaml
-oc adm policy add-scc-to-user privileged -z events-sa
-oc apply -f eventing/channel.yaml
-oc apply -f eventing/k8sEventSource.yaml
-sed "s@dnsName:.*@dnsName: http://http-trigger.dotnet.svc.cluster.local/api/http-trigger@" eventing/subscription.yaml > eventing/subscription-modified.yaml
-oc apply -f eventing/subscription-modified.yaml
+oc adm policy add-scc-to-user privileged -z default -n dotnet
 cat <<EOF | oc create -f -
 apiVersion: serving.knative.dev/v1alpha1
 kind: Service
@@ -70,6 +64,13 @@ spec:
               httpGet:
                 path: /api/http-trigger
 EOF
+sed -i "s/namespace: default/namespace: dotnet/" eventing/*
+oc apply -f eventing/serviceAccount.yaml
+oc adm policy add-scc-to-user privileged -z events-sa
+oc apply -f eventing/channel.yaml
+oc apply -f eventing/k8sEventSource.yaml
+sed "s@dnsName:.*@dnsName: http://ktweeter.dotnet.svc.cluster.local/api/http-trigger@" eventing/subscription.yaml > eventing/subscription-modified.yaml
+oc apply -f eventing/subscription-modified.yaml
 cat <<EOF | oc create -f -
 apiVersion: v1
 kind: Secret
