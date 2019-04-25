@@ -33,7 +33,7 @@ ocp_cleanup:
 	./ocp_cleanup.sh
 
 ironic_cleanup:
-    ./ironic_cleanup.sh
+	./ironic_cleanup.sh
 
 host_cleanup:
 	./host_cleanup.sh
