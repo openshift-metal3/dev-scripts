@@ -1,5 +1,6 @@
 #!/usr/bin/bash
 
+UIVERSION="${UIVERSION:-v2.0.0-13.1}"
 set -eux
 source common.sh
 
@@ -32,5 +33,6 @@ oc apply -f role.yaml
 oc apply -f role_binding.yaml
 oc apply -f crds/kubevirt_v1alpha1_kwebui_crd.yaml
 oc apply -f operator.yaml
-sed -i "s/okdvirt/openshiftvirt/" crds/kubevirt_v1alpha1_kwebui_cr.yaml
+sed "s/okdvirt/openshiftvirt/" crds/kubevirt_v1alpha1_kwebui_cr.yaml > crds/kubevirt_v1alpha1_kwebui_cr-modified.yaml
+sed -i "s/version: .*/version: \"$UIVERSION\"/" crds/kubevirt_v1alpha1_kwebui_cr-modified.yaml
 oc apply -f crds/kubevirt_v1alpha1_kwebui_cr.yaml
