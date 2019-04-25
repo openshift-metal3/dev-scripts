@@ -30,8 +30,9 @@ metadata:
 data:
   config: |
     [global]
-    osd_pool_default_pg_autoscale_mode = on
-    mon_osd_down_out_interval = "10"
+    osd_pool_default_pg_num = 128
+    osd_pool_default_pgp_num = 128
+    mon_osd_down_out_interval = 10
 EOF
 
 sed 's/namespace: rook-ceph/namespace: openshift-storage/' operator-openshift.yaml > operator-openshift-modified.yaml
@@ -56,9 +57,6 @@ sed 's/namespace: rook-ceph/namespace: openshift-storage/' toolbox.yaml > toolbo
 sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" toolbox-modified.yaml
 oc create -f toolbox-modified.yaml
 
-oc wait --for condition=ready  pod -l app=rook-ceph-tools -n openshift-storage --timeout=120s
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph mgr module enable pg_autoscaler --force
-
 cat <<EOF | oc create -f -
 apiVersion: ceph.rook.io/v1
 kind: CephBlockPool
@@ -70,9 +68,6 @@ spec:
   replicated:
     size: 2
 EOF
-
-sleep 100
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') --  ceph osd pool set rbd target_size_ratio .3
 
 cat <<EOF | oc create -f -
 apiVersion: storage.k8s.io/v1
