@@ -1,9 +1,27 @@
 #!/usr/bin/bash
 
+function check_ceph_pool {
+    # Function to check the existence of Ceph pool
+    NS=openshift-storage
+    LABEL='app=rook-ceph-tools'
+    PODNAME=`oc get pod -n ${NS} -l ${LABEL} --no-headers -o name`
+    CRD_POOL_NAME=`oc get cephblockpool.ceph.rook.io -n ${NS} --no-headers -o name | cut -d/ -f 2`
+    GET_CEPH_POOL="ceph osd pool get ${CRD_POOL_NAME} size"
+    SIZE=`oc rsh -n ${NS} ${PODNAME} ${GET_CEPH_POOL}`
+    if [[ ${PIPESTATUS} == 0 ]]
+    then
+        echo "Ceph Pool Exists: ${CRD_POOL_NAME}"
+    else
+        echo "Ceph Pool does not exist"
+        exit -1
+    fi
+}
+
 set -eux
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 source ${BASEDIR}/common.sh
+check_ceph_pool
 
 # Kafka Strimzi configs
 KAFKA_NAMESPACE=${KAFKA_NAMESPACE:-strimzi}
