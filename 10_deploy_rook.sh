@@ -25,7 +25,6 @@ sed 's/namespace: rook-ceph/namespace: openshift-storage/' operator-openshift.ya
 sed -i 's/:rook-ceph:/:openshift-storage:/' operator-openshift-modified.yaml
 sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" operator-openshift-modified.yaml
 oc create -f operator-openshift-modified.yaml
-sleep 120
 
 oc wait --for condition=ready  pod -l app=rook-ceph-operator -n openshift-storage --timeout=120s
 oc wait --for condition=ready  pod -l app=rook-ceph-agent -n openshift-storage --timeout=120s
@@ -37,7 +36,6 @@ sed -i 's/namespace: rook-ceph/namespace: openshift-storage/' cluster-modified.y
 sed -i 's/allowUnsupported: false/allowUnsupported: true/' cluster-modified.yaml
 sed -i "s@image: ceph/ceph.*@image: ceph/ceph:$CEPH_VERSION@" cluster-modified.yaml
 oc create -f cluster-modified.yaml
-sleep 120
 
 sed 's/namespace: rook-ceph/namespace: openshift-storage/' toolbox.yaml > toolbox-modified.yaml
 sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" toolbox-modified.yaml
