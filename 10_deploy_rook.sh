@@ -30,8 +30,6 @@ metadata:
 data:
   config: |
     [global]
-    osd_pool_default_pg_num = 128
-    osd_pool_default_pgp_num = 128
     mon_osd_down_out_interval = 10
 EOF
 
