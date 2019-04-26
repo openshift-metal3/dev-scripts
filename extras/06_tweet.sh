@@ -9,19 +9,33 @@ figlet "Deploying tweeting service" | lolcat
 if [ "$CONSUMER_KEY" == "XX" ] && [ "$CONSUMER_SECRET" == "XX"] && [ "$ACCESS_TOKEN" == "XX" ] && [ "$ACCESS_TOKEN_SECRET" == "XX" ] ; then
     echo Missing variables to properly deploy knative tweeter service
     echo "Follow instructions at https://developer.twitter.com/en/docs/basics/authentication/guides/access-tokens.html"
-    echo "and update twitter.creds secret in dotnet project with correct information"
+    exit  1
 fi
 
-CONSUMER_KEY="$(echo ${CONSUMER_KEY} | base64)"
-CONSUMER_SECRET="$(echo ${CONSUMER_SECRET} | base64)"
-ACCESS_TOKEN="$(echo ${ACCESS_TOKEN} | base64)"
-ACCESS_TOKEN_SECRET="$(echo ${ACCESS_TOKEN_SECRET} | base64)"
+CONSUMER_KEY="$(echo -n ${CONSUMER_KEY} | base64)"
+CONSUMER_SECRET="$(echo -n ${CONSUMER_SECRET} | base64)"
+ACCESS_TOKEN="$(echo -n ${ACCESS_TOKEN} | base64)"
+ACCESS_TOKEN_SECRET="$(echo -n ${ACCESS_TOKEN_SECRET} | base64)"
+
+oc project dotnet
+oc adm policy add-scc-to-user privileged -z default -n dotnet
+
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: twitter.creds
+type: Opaque
+data:
+  consumer_key: $CONSUMER_KEY
+  consumer_secret: $CONSUMER_SECRET
+  access_token: $ACCESS_TOKEN
+  access_token_secret: $ACCESS_TOKEN_SECRET
+EOF
 
 git clone https://github.com/markito/ktweeter
 cd ktweeter
 oc patch configmap/config-network -n knative-serving --type json --patch "$(cat patches/patch_config-network.json)"
-oc project dotnet
-oc adm policy add-scc-to-user privileged -z default -n dotnet
 cat <<EOF | oc create -f -
 apiVersion: serving.knative.dev/v1alpha1
 kind: Service
@@ -71,15 +85,3 @@ oc apply -f eventing/channel.yaml
 oc apply -f eventing/k8sEventSource.yaml
 sed "s@dnsName:.*@dnsName: http://ktweeter.dotnet.svc.cluster.local/api/http-trigger@" eventing/subscription.yaml > eventing/subscription-modified.yaml
 oc apply -f eventing/subscription-modified.yaml
-cat <<EOF | oc create -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: twitter.creds
-type: Opaque
-data:
-  consumer_key: $CONSUMER_KEY
-  consumer_secret: $CONSUMER_SECRET
-  access_token: $ACCESS_TOKEN
-  access_token_secret: $ACCESS_TOKEN_SECRET
-EOF
