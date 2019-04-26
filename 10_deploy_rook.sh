@@ -7,8 +7,8 @@ source common.sh
 figlet "Deploying rook" | lolcat
 eval "$(go env)"
 
-ROOK_VERSION="v0.9.0-480.gfe2a291"
-GIT_VERSION="fe2a291918379f82a12049c3bd04e9d00c69f5a8"
+ROOK_VERSION="v0.9.0-519.g111610e"
+GIT_VERSION="111610e50f942c84ddc3523b4bf7b57858c19b19"
 
 export MIXINPATH="$GOPATH/src/github.com/ceph/ceph-mixins"
 export ROOKPATH="$GOPATH/src/github.com/rook/rook"
