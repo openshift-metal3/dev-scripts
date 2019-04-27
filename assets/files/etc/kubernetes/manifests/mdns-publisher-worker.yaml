@@ -64,7 +64,7 @@ spec:
       export CLUSTER_NAME
       /usr/libexec/platform-python -c "from __future__ import print_function
       import os
-      with open('/etc/kubernetes/static-pod-resources/config.template', 'r') as f:
+      with open('/etc/kubernetes/static-pod-resources/worker-config.template', 'r') as f:
           content = f.read()
       with open('/etc/mdns/config.hcl', 'w') as dest:
           print(os.path.expandvars(content), file=dest)"

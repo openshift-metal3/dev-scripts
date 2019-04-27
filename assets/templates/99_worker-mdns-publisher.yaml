@@ -21,3 +21,8 @@ spec:
         filesystem: root
         mode: 0664
         path: /etc/kubernetes/static-pod-resources/mdns/worker-config.template
+      - contents:
+          verification: {}
+        filesystem: root
+        mode: 0775
+        path: /usr/local/bin/get_vip_subnet_cidr
