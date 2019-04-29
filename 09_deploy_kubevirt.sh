@@ -35,4 +35,4 @@ oc apply -f crds/kubevirt_v1alpha1_kwebui_crd.yaml
 oc apply -f operator.yaml
 sed "s/okdvirt/openshiftvirt/" crds/kubevirt_v1alpha1_kwebui_cr.yaml > crds/kubevirt_v1alpha1_kwebui_cr-modified.yaml
 sed -i "s/version: .*/version: \"$UIVERSION\"/" crds/kubevirt_v1alpha1_kwebui_cr-modified.yaml
-oc apply -f crds/kubevirt_v1alpha1_kwebui_cr.yaml
+oc apply -f crds/kubevirt_v1alpha1_kwebui_cr-modified.yaml
