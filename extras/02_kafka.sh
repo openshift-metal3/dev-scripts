@@ -73,7 +73,7 @@ oc wait --for condition=ready pod -l strimzi.io/kind=KafkaConnect -n ${KAFKA_NAM
 
 # Modify Prometheus & Deploy
 sed -i "s/myproject/${KAFKA_CLUSTERNAME}/" metrics/examples/prometheus/prometheus.yaml
-sed -i "s/10s/${PROMETHEUS_SCRAPE_PACE}/" metrics/examples/prometheus/prometheus.yaml
+sed -i "s/10s/${PROMETHEUS_SCRAPE_PACE}/g" metrics/examples/prometheus/prometheus.yaml
 oc apply -f metrics/examples/prometheus/prometheus.yaml -n ${KAFKA_NAMESPACE}
 oc apply -f metrics/examples/prometheus/alerting-rules.yaml -n ${KAFKA_NAMESPACE}
 sleep 5
