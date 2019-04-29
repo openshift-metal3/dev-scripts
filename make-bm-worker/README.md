@@ -31,7 +31,7 @@ spec:
 The output can be passed directly to `oc apply` like this:
 
 ```
-$ go run make-bm-worker/main.go -address ipmi://192.168.111.1:6233 -password password -user admin worker-99 | oc apply -f -
+$ go run make-bm-worker/main.go -address ipmi://192.168.111.1:6233 -password password -user admin worker-99 | oc apply -f - -n openshift-machine-api 
 ```
 
 Include the `-image` option to include the image settings needed to
