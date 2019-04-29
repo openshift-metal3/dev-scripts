@@ -5,10 +5,10 @@ set -eux
 export GIT_SSL_NO_VERIFY=true
 UHC_TOKEN="${UHC_TOKEN:-}"
 
-figlet "Updating uch information" | lolcat
+figlet "Updating uhc information" | lolcat
 
 if [ -z "$UHC_TOKEN" ]; then
-    echo Missing TOKEN environment variable
+    echo Missing UHC_TOKEN environment variable
     exit 1
 fi
 
