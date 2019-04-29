@@ -27,9 +27,12 @@ check_ceph_pool
 KAFKA_NAMESPACE=${KAFKA_NAMESPACE:-strimzi}
 KAFKA_CLUSTERNAME=${KAFKA_CLUSTERNAME:-strimzi}
 KAFKA_PVC_SIZE=${KAFKA_PVC_SIZE:-100}
+KAFKA_RETENTION_PERIOD_HOURS=${KAFKA_RETENTION_PERIOD_HOURS:-24}
 # Kafka producer will generate 10 msg/sec/pod with a value of 100 (by default)
 KAFKA_PRODUCER_TIMER=${KAFKA_PRODUCER_TIMER:-"100"}
 KAFKA_PRODUCER_TOPIC=${KAFKA_PRODUCER_TOPIC:-strimzi-topic}
+# Prometheus
+PROMETHEUS_SCRAPE_PACE=${PROMETHEUS_SCRAPE_PACE:-"10s"}
 
 figlet "Deploying Kafka Strimzi" | lolcat
 eval "$(go env)"
@@ -58,6 +61,7 @@ oc wait --for condition=ready pod -l name=strimzi-cluster-operator -n ${KAFKA_NA
 # Modify Kafka cluster & Deploy
 sed -i "s/my-cluster/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-metrics.yaml
 sed -i "s/1Gi/${KAFKA_PVC_SIZE}Gi/" metrics/examples/kafka/kafka-metrics.yaml
+sed -i "/log.message.format.version: \"2.1\"/a\      log.retention.hours: ${KAFKA_RETENTION_PERIOD_HOURS}" metrics/examples/kafka/kafka-metrics.yaml
 sed -i "s/my-cluster/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-connect-metrics.yaml
 sed -i "s/my-connect/${KAFKA_CLUSTERNAME}/" metrics/examples/kafka/kafka-connect-metrics.yaml
 oc apply -f metrics/examples/kafka/kafka-metrics.yaml -n ${KAFKA_NAMESPACE}
@@ -69,6 +73,7 @@ oc wait --for condition=ready pod -l strimzi.io/kind=KafkaConnect -n ${KAFKA_NAM
 
 # Modify Prometheus & Deploy
 sed -i "s/myproject/${KAFKA_CLUSTERNAME}/" metrics/examples/prometheus/prometheus.yaml
+sed -i "s/10s/${PROMETHEUS_SCRAPE_PACE}/g" metrics/examples/prometheus/prometheus.yaml
 oc apply -f metrics/examples/prometheus/prometheus.yaml -n ${KAFKA_NAMESPACE}
 oc apply -f metrics/examples/prometheus/alerting-rules.yaml -n ${KAFKA_NAMESPACE}
 sleep 5

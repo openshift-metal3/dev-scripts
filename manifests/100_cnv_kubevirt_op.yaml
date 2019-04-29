@@ -492,12 +492,12 @@ spec:
         - "2"
         env:
         - name: OPERATOR_IMAGE
-          value: index.docker.io/kubevirt/virt-operator:v0.16.1
+          value: index.docker.io/kubevirt/virt-operator:v0.16.2
         - name: WATCH_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.annotations['olm.targetNamespaces']
-        image: index.docker.io/kubevirt/virt-operator:v0.16.1
+        image: index.docker.io/kubevirt/virt-operator:v0.16.2
         imagePullPolicy: IfNotPresent
         name: virt-operator
         ports:
