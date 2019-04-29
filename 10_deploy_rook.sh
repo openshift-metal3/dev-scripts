@@ -50,6 +50,8 @@ oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false 
 # no warnings!
 oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global mon_pg_warn_min_per_osd 1
 
+# work around pgp_num scaling slowness (will be fixed in 14.2.2)
+oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global mgr_debug_aggressive_pg_num_changes true
 
 cat <<EOF | oc create -f -
 apiVersion: ceph.rook.io/v1
@@ -94,3 +96,6 @@ oc create -f service-monitor-modified.yaml
 
 cd $MIXINPATH/manifests
 oc create -f prometheus-rules.yaml
+
+# clean up mgr change (remove me after 14.2.2)
+oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config rm global mgr_debug_aggressive_pg_num_changes
