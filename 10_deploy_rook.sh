@@ -43,6 +43,7 @@ oc create -f toolbox-modified.yaml
 
 # enable pg_autoscaler
 oc wait --for condition=ready  pod -l app=rook-ceph-tools -n openshift-storage --timeout=180s
+oc wait --for condition=ready  pod -l app=rook-ceph-mon -n openshift-storage --timeout=180s
 oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph mgr module enable pg_autoscaler --force
 oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global osd_pool_default_pg_autoscale_mode on
 
