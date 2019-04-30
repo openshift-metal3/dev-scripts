@@ -30,7 +30,7 @@ metadata:
   name: ${CLUSTER_NAME}
 compute:
 - name: worker
-  replicas: 1
+  replicas: ${NUM_WORKERS}
 controlPlane:
   name: master
   replicas: ${NUM_MASTERS}

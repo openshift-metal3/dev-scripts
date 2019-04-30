@@ -6,9 +6,11 @@ source common.sh
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "working_dir=$WORKING_DIR" \
-    -e "local_working_dir=$HOME/.quickstart" \
+    -e "num_masters=$NUM_MASTERS" \
+    -e "num_workers=$NUM_WORKERS" \
+    -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
-    -e @tripleo-quickstart-config/metalkube-nodes.yml \
+    -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e @config/environments/dev_privileged_libvirt.yml \
     -i tripleo-quickstart-config/metalkube-inventory.ini \
     -b -vvv tripleo-quickstart-config/metalkube-teardown-playbook.yml

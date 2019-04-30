@@ -11,14 +11,21 @@ source ocp_install_env.sh
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
 export ANSIBLE_LIBRARY=./library
-export VM_NODES_FILE=${VM_NODES_FILE:-tripleo-quickstart-config/metalkube-nodes.yml}
+# FIXME(shardy) output an error message temporarily since we've broken an interface
+export VM_NODES_FILE=${VM_NODES_FILE:-}
+if [ ! -z "${VM_NODES_FILE}" ]; then
+  echo "VM_NODES_FILE is no longer supported"
+  echo "Please use NUM_MASTERS, NUM_WORKERS and VM_EXTRADISKS variables instead"
+  exit 1
+fi
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "non_root_user=$USER" \
     -e "working_dir=$WORKING_DIR" \
     -e "roles_path=$PWD/roles" \
-    -e @${VM_NODES_FILE} \
-    -e "local_working_dir=$HOME/.quickstart" \
+    -e "num_masters=$NUM_MASTERS" \
+    -e "num_workers=$NUM_WORKERS" \
+    -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
     -e "platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
