@@ -27,6 +27,7 @@ sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" operator-openshift-modified
 sed -i '/ROOK_MON_HEALTHCHECK_INTERVAL/!b;n;c\          value: "30s"' operator-openshift-modified.yaml
 sed -i '/ROOK_MON_OUT_TIMEOUT/!b;n;c\          value: "40s"' operator-openshift-modified.yaml
 oc create -f operator-openshift-modified.yaml
+sleep 5
 
 oc wait --for condition=ready  pod -l app=rook-ceph-operator -n openshift-storage --timeout=120s
 oc wait --for condition=ready  pod -l app=rook-ceph-agent -n openshift-storage --timeout=120s
@@ -40,6 +41,7 @@ oc create -f cluster-modified.yaml
 sed 's/namespace: rook-ceph/namespace: openshift-storage/' toolbox.yaml > toolbox-modified.yaml
 sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" toolbox-modified.yaml
 oc create -f toolbox-modified.yaml
+sleep 5
 
 # enable pg_autoscaler
 oc wait --for condition=ready  pod -l app=rook-ceph-tools -n openshift-storage --timeout=180s
@@ -50,6 +52,8 @@ oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false 
 # no warnings!
 oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global mon_pg_warn_min_per_osd 1
 
+# work around pgp_num scaling slowness (will be fixed in 14.2.2)
+oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global mgr_debug_aggressive_pg_num_changes true
 
 cat <<EOF | oc create -f -
 apiVersion: ceph.rook.io/v1
@@ -94,3 +98,6 @@ oc create -f service-monitor-modified.yaml
 
 cd $MIXINPATH/manifests
 oc create -f prometheus-rules.yaml
+
+# clean up mgr change (remove me after 14.2.2)
+oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config rm global mgr_debug_aggressive_pg_num_changes
