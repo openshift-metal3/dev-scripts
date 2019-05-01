@@ -7,9 +7,6 @@ export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="`cat $HOME/.ssh/id_rsa.pub`"
 export EXTERNAL_SUBNET="192.168.111.0/24"
 
-# Not used by the installer.  Used by s.sh.
-export SSH_PRIV_KEY="$HOME/.ssh/id_rsa"
-
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
 #
