@@ -27,7 +27,7 @@ sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" operator-openshift-modified
 sed -i '/ROOK_MON_HEALTHCHECK_INTERVAL/!b;n;c\          value: "30s"' operator-openshift-modified.yaml
 sed -i '/ROOK_MON_OUT_TIMEOUT/!b;n;c\          value: "40s"' operator-openshift-modified.yaml
 oc create -f operator-openshift-modified.yaml
-sleep 5
+sleep 10
 
 oc wait --for condition=ready  pod -l app=rook-ceph-operator -n openshift-storage --timeout=120s
 oc wait --for condition=ready  pod -l app=rook-ceph-agent -n openshift-storage --timeout=120s
@@ -41,7 +41,7 @@ oc create -f cluster-modified.yaml
 sed 's/namespace: rook-ceph/namespace: openshift-storage/' toolbox.yaml > toolbox-modified.yaml
 sed -i "s@rook/ceph:master@rook/ceph:$ROOK_VERSION@" toolbox-modified.yaml
 oc create -f toolbox-modified.yaml
-sleep 5
+sleep 10
 
 # enable pg_autoscaler
 oc wait --for condition=ready  pod -l app=rook-ceph-tools -n openshift-storage --timeout=180s
