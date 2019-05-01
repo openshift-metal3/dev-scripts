@@ -20,6 +20,9 @@ spec:
     empty-dir: {}
   - name: conf-dir
     empty-dir: {}
+  - name: chroot-host
+    hostPath:
+      path: "/"
   initContainers:
   - name: clusterrc-generation
     image: quay.io/openshift-metalkube/kubeconfig-extractor:latest
@@ -129,6 +132,8 @@ spec:
       mountPath: "/var/run/haproxy"
     - name: resource-dir
       mountPath: "/etc/kubernetes/static-pod-resources"
+    - name: chroot-host
+      mountPath: "/host"
     terminationMessagePolicy: FallbackToLogsOnError
     imagePullPolicy: IfNotPresent
   hostNetwork: true
