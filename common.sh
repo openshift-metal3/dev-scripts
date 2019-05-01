@@ -49,6 +49,7 @@ export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 
 export RHCOS_INSTALLER_IMAGE_URL=$(jq -r '.baseURI' $GOPATH/src/github.com/openshift-metalkube/kni-installer/data/data/rhcos.json)
 export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-${RHCOS_INSTALLER_IMAGE_URL}}
+
 export RHCOS_IMAGE_FILENAME_OPENSTACK_GZ="$(curl ${RHCOS_IMAGE_URL}/meta.json | jq -r '.images.openstack.path')"
 export RHCOS_IMAGE_NAME=$(echo $RHCOS_IMAGE_FILENAME_OPENSTACK_GZ | sed -e 's/-openstack.*//')
 # FIXME(shardy) - we need to download the -openstack as its needed
