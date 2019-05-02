@@ -210,8 +210,6 @@ rules:
   - list
 - apiGroups:
   - ""
-  resourceNames:
-  - extension-apiserver-authentication
   resources:
   - configmaps
   verbs:
@@ -492,12 +490,12 @@ spec:
         - "2"
         env:
         - name: OPERATOR_IMAGE
-          value: index.docker.io/kubevirt/virt-operator:v0.16.2
+          value: index.docker.io/kubevirt/virt-operator:v0.16.3
         - name: WATCH_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.annotations['olm.targetNamespaces']
-        image: index.docker.io/kubevirt/virt-operator:v0.16.2
+        image: index.docker.io/kubevirt/virt-operator:v0.16.3
         imagePullPolicy: IfNotPresent
         name: virt-operator
         ports:
