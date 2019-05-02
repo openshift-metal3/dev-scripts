@@ -29,9 +29,9 @@ sed -i '/ROOK_MON_OUT_TIMEOUT/!b;n;c\          value: "40s"' operator-openshift-
 oc create -f operator-openshift-modified.yaml
 sleep 5
 
-oc wait --for condition=ready  pod -l app=rook-ceph-operator -n openshift-storage --timeout=120s
-oc wait --for condition=ready  pod -l app=rook-ceph-agent -n openshift-storage --timeout=120s
-oc wait --for condition=ready  pod -l app=rook-discover -n openshift-storage --timeout=120s
+oc wait --for condition=ready  pod -l app=rook-ceph-operator -n openshift-storage --timeout=180s
+oc wait --for condition=ready  pod -l app=rook-ceph-agent -n openshift-storage --timeout=180s
+oc wait --for condition=ready  pod -l app=rook-discover -n openshift-storage --timeout=180s
 
 sed 's/# port: 8443/port: 8444/' cluster.yaml > cluster-modified.yaml
 sed -i 's/namespace: rook-ceph/namespace: openshift-storage/' cluster-modified.yaml
