@@ -5,6 +5,18 @@ source logging.sh
 source common.sh
 source ocp_install_env.sh
 
+# Generate user ssh key
+if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
+    ssh-keygen -f ~/.ssh/id_rsa -P ""
+fi
+
+# root needs a private key to talk to libvirt
+# See tripleo-quickstart-config/roles/virtbmc/tasks/configure-vbmc.yml
+if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
+  sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
+  sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
+fi
+
 # This script will create some libvirt VMs do act as "dummy baremetal"
 # then configure python-virtualbmc to control them - these can later
 # be deployed via the install process similar to how we test TripleO
