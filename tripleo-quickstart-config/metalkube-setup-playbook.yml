@@ -15,6 +15,6 @@
         name: libvirt/setup/overcloud
       when: platform == "libvirt"
     - import_role:
-        name: virtbmc
+        name: virtbmc/setup
       when: platform == "libvirt"
 

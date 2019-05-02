@@ -31,9 +31,6 @@ flavors:
 
 baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.111.0/24', true) }}"
 
-# Enable the virt_bmc ( virtual baremetal controllers )
-enable_vbmc: true
-
 # Set this to `false` if you don't want your undercloud and overcloud vms
 # to have a VNC console available.
 enable_vnc_console: true
