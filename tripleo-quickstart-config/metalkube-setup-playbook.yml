@@ -1,8 +1,5 @@
 ---
-# The `libvirt/setup` role creates the undercloud and overcloud
-# virtual machines, note we only create the "overcloud" machines
-# because the undercloud isn't needed in this environment
-- name: Setup dummy baremetal VMs via tripleo-quickstart
+- name: Setup dummy baremetal VMs
   hosts: virthost
   connection: local
   gather_facts: true

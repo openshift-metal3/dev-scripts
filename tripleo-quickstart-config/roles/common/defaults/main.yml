@@ -5,7 +5,7 @@ ssh_user: "{{ non_root_user }}"
 cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metalkube.org', true) }}"
 
 # allow the nic model to be overridden
-overcloud_libvirt_nic_model: virtio
+libvirt_nic_model: virtio
 
 # These defaults are used if there are no flavor-specific
 # overrides configured.
@@ -31,7 +31,7 @@ flavors:
 
 baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.111.0/24', true) }}"
 
-# Set this to `false` if you don't want your undercloud and overcloud vms
+# Set this to `false` if you don't want your vms
 # to have a VNC console available.
 enable_vnc_console: true
 

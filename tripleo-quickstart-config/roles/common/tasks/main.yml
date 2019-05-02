@@ -1,25 +1,25 @@
 ---
 
 - set_fact:
-    generate_overcloud_nodes: "{{overcloud_nodes is not defined}}"
+    generate_vm_nodes: "{{vm_nodes is not defined}}"
 
-- name: Define overcloud_nodes if not already defined
-  when: generate_overcloud_nodes
+- name: Define vm_nodes if not already defined
+  when: generate_vm_nodes
   block:
-    - name: Generate overcloud_nodes for "{{num_masters}}" masters
+    - name: Generate vm_nodes for "{{num_masters}}" masters
       set_fact:
-        overcloud_nodes: "{{overcloud_nodes|default([]) + [
-                            {'name': 'openshift_master_%s'|format(item),
-                             'flavor': 'openshift_master',
-                             'virtualbmc_port': virtualbmc_base_port+item}]}}"
+        vm_nodes: "{{vm_nodes|default([]) + [
+                     {'name': 'openshift_master_%s'|format(item),
+                      'flavor': 'openshift_master',
+                      'virtualbmc_port': virtualbmc_base_port+item}]}}"
       loop: "{{ range(0, num_masters|int)|list }}"
     
-    - name: Generate overcloud_nodes for "{{num_workers}}" workers
+    - name: Generate vm_nodes for "{{num_workers}}" workers
       set_fact:
-        overcloud_nodes: "{{overcloud_nodes|default([]) + [
-                            {'name': 'openshift_worker_%s'|format(item),
-                             'flavor': 'openshift_worker',
-                             'virtualbmc_port': virtualbmc_base_port+num_masters|int+item} ]}}"
+        vm_nodes: "{{vm_nodes|default([]) + [
+                     {'name': 'openshift_worker_%s'|format(item),
+                      'flavor': 'openshift_worker',
+                      'virtualbmc_port': virtualbmc_base_port+num_masters|int+item} ]}}"
       loop: "{{ range(0, num_workers|int)|list }}"
 
 # Describe our virtual networks.  These networks will be attached to

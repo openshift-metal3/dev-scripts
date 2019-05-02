@@ -17,30 +17,30 @@
     LIBVIRT_DEFAULT_URI: "{{ libvirt_uri }}"
   block:
 
-    - when: overcloud_nodes
+    - when: vm_nodes
       block:
 
-        # Check if the overcloud nodes exist.
-        - name: Check overcloud vms
+        # Check if the vm nodes exist.
+        - name: Check vm vms
           command: >
             virsh domid "{{ item.name }}"
-          with_items: "{{ overcloud_nodes }}"
+          with_items: "{{ vm_nodes }}"
           ignore_errors: true
-          register: overcloud_check
+          register: vm_check
 
-        # Destroy and undefine the overcloud nodes.
-        - name: Destroy overcloud vms
+        # Destroy and undefine the vm nodes.
+        - name: Destroy vm vms
           command:
             virsh destroy "{{ item.item.name }}"
           when: item is success
-          with_items: "{{ overcloud_check.results }}"
+          with_items: "{{ vm_check.results }}"
           ignore_errors: true
 
-        - name: Undefine overcloud vms
+        - name: Undefine vm vms
           command:
             virsh undefine "{{ item.item.name }}"
           when: item is success
-          with_items: "{{ overcloud_check.results }}"
+          with_items: "{{ vm_check.results }}"
 
         # The `virsh vol-dumpxml ... > /dev/null` is here (and elsewhere) due to
         # [1293804].
@@ -52,7 +52,7 @@
               '{{ item.name }}'.qcow2 2>&1 > /dev/null
             virsh vol-delete --pool '{{ libvirt_volume_pool }}' \
               '{{ item.name }}'.qcow2
-          with_items: "{{ overcloud_nodes }}"
+          with_items: "{{ vm_nodes }}"
           ignore_errors: true
 
     # Do the same thing to the supplemental node.

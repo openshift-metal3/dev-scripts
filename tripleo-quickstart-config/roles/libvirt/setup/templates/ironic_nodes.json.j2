@@ -9,7 +9,7 @@
 {% endfor %}
 {
   "nodes": [
-  {% for node in overcloud_nodes %}
+  {% for node in vm_nodes %}
     {
       "name": "{{ node.name|replace('_', '-') }}",
       "driver": "ipmi",

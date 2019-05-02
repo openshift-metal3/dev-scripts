@@ -77,10 +77,10 @@
   command: "vbmc add {{ item.name }} --port {{ item.virtualbmc_port }} --libvirt-uri {{ vbmc_libvirt_uri }}"
   args:
     creates: /root/.vbmc/{{ item.name }}/config
-  with_items: "{{ overcloud_nodes }}"
+  with_items: "{{ vm_nodes }}"
   become: true
 
 - name: Start the Virtual BMCs
   script: vbmc_start.sh {{ item.name }}
-  with_items: "{{ overcloud_nodes }}"
+  with_items: "{{ vm_nodes }}"
   become: true
