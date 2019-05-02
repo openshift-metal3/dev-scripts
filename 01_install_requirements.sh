@@ -3,9 +3,11 @@ set -ex
 
 source logging.sh
 
-# FIXME ocp-doit required this so leave permissive for now
-sudo setenforce permissive
-sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
+if selinuxenabled ; then
+    # FIXME ocp-doit required this so leave permissive for now
+    sudo setenforce permissive
+    sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
+fi
 
 # Update to latest packages first
 sudo yum -y update
