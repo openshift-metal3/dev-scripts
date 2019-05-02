@@ -3,9 +3,11 @@ set -ex
 
 source logging.sh
 
-# FIXME ocp-doit required this so leave permissive for now
-sudo setenforce permissive
-sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
+if selinuxenabled ; then
+    # FIXME ocp-doit required this so leave permissive for now
+    sudo setenforce permissive
+    sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
+fi
 
 # Update to latest packages first
 sudo yum -y update
@@ -98,16 +100,4 @@ if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ]; then
   wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
   tar xvzf ${oc_tools_local_file}
   sudo cp oc /usr/local/bin/
-fi
-
-# Generate user ssh key
-if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
-    ssh-keygen -f ~/.ssh/id_rsa -P ""
-fi
-
-# root needs a private key to talk to libvirt
-# See tripleo-quickstart-config/roles/virtbmc/tasks/configure-vbmc.yml
-if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
-  sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
-  sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
 fi

@@ -1,189 +1,35 @@
-# This directory is used to store a variety of files generated
-# during the deploy process (ansible inventory, ssh configuration, ssh
-# key files, etc)
-local_working_dir: "{{ lookup('env', 'HOME') }}/.quickstart"
-
 # this will define the user that ansible will connect with
 ssh_user: "{{ non_root_user }}"
 
-# This defines the users that deploys the overcloud from the undercloud
-# and accesses overcloud as the orchestration admin user
-undercloud_user: "{{ non_root_user }}"
-overcloud_user: heat-admin
+# base domain to use
+cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metalkube.org', true) }}"
 
-# This is where we store generated artifacts (like ssh config files,
-# keys, deployment scripts, etc) on the undercloud.
-#working_dir: "/opt/dev-scripts"
-
-# This is a directory no the virthost in which we store the downloaded
-# undercloud image.
-image_cache_dir: "/var/cache/tripleo-quickstart/images/{{ release }}"
-
-image_fetch_dir: "{{ working_dir }}"
-
-# This determines whether to download a pre-built undercloud.qcow2 or
-# whether to instead use an overcloud-full.qcow2 and convert it on
-# the fly. The default is to use a pre-built undercloud.qcow2.
-overcloud_as_undercloud: false
-
-# This determines whether or not to treat the undercloud.qcow2 as a
-# stock CentOS or RHEL image.  The default is a pre-built undercloud.qcow2
-baseos_as_undercloud: false
-
-# optionally setup the yum repos on the virthost
-virthost_repo_setup: false
-
-# When a base os image is used in lieu of a quickstart prepared image
-# additional setup steps are required for the undercloud install.
-undercloud_setup: false
-
-# Set selinux, by default RDO builds are always set to selinux permissive
-selinux_enforcing: false
+# allow the nic model to be overridden
+overcloud_libvirt_nic_model: virtio
 
 # These defaults are used if there are no flavor-specific
 # overrides configured.
 default_disk: 50
-default_memory: 8192
-
-# Setting controller and compute nodes to 2 vcpus, so we have more processing
-# power to run the tests
-default_vcpu: 2
-
-# The undercloud needs more than the default amount of memory
-# and disk.
-undercloud_memory: 12288
-undercloud_disk: 50
-# Setting undercloud to 6 cpus, so we continue to have around 10 vcpus
-# by default
-undercloud_vcpu: 6
-# base domain to use
-cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metalkube.org', true) }}"
-
-# The default deployment has flavors for compute, controllers, ceph
-# nodes, and undercloud nodes.  All flavors defined in the `flavors`
-# key will be created with an `oooq_` prefix to avoid conflicts with
-# the pre-defined flavors created by `openstack install undercloud`.
+default_memory: 16384
+default_vcpu: 4
+num_masters: 3
+num_workers: 1
+extradisks: false
+virtualbmc_base_port: 6230
 flavors:
-  compute:
-    memory: '{{ compute_memory|default(default_memory) }}'
-    disk: '{{ compute_disk|default(default_disk) }}'
-    vcpu: '{{ compute_vcpu|default(default_vcpu) }}'
+  openshift_master:
+    memory: '{{openshift_master_memory|default(default_memory)}}'
+    disk: '{{openshift_master_disk|default(default_disk)}}'
+    vcpu: '{{openshift_master_vcpu|default(default_vcpu)}}'
+    extradisks: '{{extradisks}}'
 
-  control:
-    memory: '{{ control_memory|default(default_memory) }}'
-    disk: '{{ control_disk|default(default_disk) }}'
-    vcpu: '{{ control_vcpu|default(default_vcpu) }}'
+  openshift_worker:
+    memory: '{{openshift_worker_memory|default(default_memory)}}'
+    disk: '{{openshift_worker_disk|default(default_disk)}}'
+    vcpu: '{{openshift_worker_vcpu|default(default_vcpu)}}'
+    extradisks: '{{extradisks}}'
 
-  ceph:
-    memory: '{{ ceph_memory|default(default_memory) }}'
-    disk: '{{ ceph_disk|default(default_disk) }}'
-    vcpu: '{{ ceph_vcpu|default(default_vcpu) }}'
-    extradisks: true
-
-  blockstorage:
-    memory: '{{ block_memory|default(default_memory) }}'
-    disk: '{{ block_disk|default(default_disk) }}'
-    vcpu: '{{ block_vcpu|default(default_vcpu) }}'
-
-  objectstorage:
-    memory: '{{ objectstorage_memory|default(default_memory) }}'
-    disk: '{{ objectstorage_disk|default(default_disk) }}'
-    vcpu: '{{ objectstorage_vcpu|default(default_vcpu) }}'
-    extradisks: true
-
-  undercloud:
-    memory: '{{ undercloud_memory|default(undercloud_memory) }}'
-    disk: '{{ undercloud_disk|default(undercloud_disk) }}'
-    vcpu: '{{ undercloud_vcpu|default(undercloud_vcpu) }}'
-
-# We create a single undercloud node.
-undercloud_node:
-  name: undercloud
-  flavor: undercloud
-
-# Do not deploy supplemental nodes by default.
-deploy_supplemental_node: false
-
-# Do not deploy FreeIPA server by default.
-enable_tls_everywhere: false
-
-# allow the nic model to be overridden by environment variable
-overcloud_libvirt_nic_model: virtio
-
-# The overcloud will have three controllers, one compute node,
-# and a ceph storage node.
-overcloud_nodes:
-  - name: control_0
-    flavor: control
-  - name: control_1
-    flavor: control
-  - name: control_2
-    flavor: control
-
-  - name: compute_0
-    flavor: compute
-
-  - name: ceph_0
-    flavor: ceph
-
-# Describe our virtual networks.  These networks will be attached to
-# the undercloud node and to the overcloud nodes in the order in which
-# they are defined with the following caveats:
-#   *  If no networks are using forward_mode: 'nat', then the default libvirt
-#   network will be attached to the undercloud. This is required to ssh from the
-#   virt host to the undercloud
-#   *  The first bridge network defined will be used for pxe booting
-#
 baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.111.0/24', true) }}"
-networks:
-  - name: provisioning
-    bridge: provisioning
-    forward_mode: bridge
-  - name: baremetal
-    bridge: baremetal
-    forward_mode: "{% if manage_baremetal == 'y' %}nat{% else %}bridge{% endif %}"
-    address: "{{ baremetal_network_cidr|nthhost(1) }}"
-    netmask: "{{ baremetal_network_cidr|ipaddr('netmask') }}"
-    dhcp_range:
-      - "{{ baremetal_network_cidr|nthhost(20) }}"
-      - "{{ baremetal_network_cidr|nthhost(60) }}"
-    dhcp_hosts:
-      - name: "master-0"
-        ip: "{{ baremetal_network_cidr | nthhost(20) }}"
-      - name: "master-1"
-        ip: "{{ baremetal_network_cidr | nthhost(21) }}"
-      - name: "master-2"
-        ip: "{{ baremetal_network_cidr | nthhost(22) }}"
-      - name: "worker-0"
-        ip: "{{ baremetal_network_cidr | nthhost(25) }}"
-    nat_port_range:
-      - 1024
-      - 65535
-    domain: "{{ cluster_domain }}"
-    dns:
-      hosts:
-        - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
-          hostnames:
-            - "api"
-        - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
-          hostnames:
-            - "ns1"
-      forwarders:
-        - domain: "apps.{{ cluster_domain }}"
-          addr: "127.0.0.1"
-
-network_isolation: true
-network_isolation_type: 'single-nic-vlans'
-enable_pacemaker: false
-ipv6: false
-
-# This enables the deployment of the overcloud with SSL.
-ssl_overcloud: false
-# If ssl_overcloud is True, then the overcloud public vip must be explicitly
-# specified as part of the deployment configuration. Note that the VIP used has
-# to be set accordingly with the `undercloud_external_network_cidr`.
-overcloud_public_vip: 10.0.0.5
-overcloud_public_vip6: 2001:db8:fd00:1000::14
 
 # Enable the virt_bmc ( virtual baremetal controllers )
 enable_vbmc: true
@@ -191,25 +37,6 @@ enable_vbmc: true
 # Set this to `false` if you don't want your undercloud and overcloud vms
 # to have a VNC console available.
 enable_vnc_console: true
-
-# We have some version specific behaviors, so we need a release variable
-#
-# TODO(trown): It would be better to write a release into the image itself
-# and set this variable from there.
-release: queens
-
-# This option controls whether or not to use the repo setup for TripleO
-# development. Since this requires some other options to be functional,
-# it is best to specify release master-tripleo-ci rather than
-# just flipping this to true.
-devmode: false
-
-# Tuned profile set while provisioning remote hosts to optimize for deployment
-tuned_profile: 'virtual-host'
-
-# This is the name of the user the `provision` role will create on the
-# remote host.
-non_root_group: "{{ non_root_user }}"
 
 # Path for volume storage
 libvirt_volume_path: "{{ working_dir }}/pool"
@@ -222,26 +49,3 @@ libvirt_uri: qemu:///session
 # on the virthost. This requires running libvirt tasks as the root user so
 # that they have sufficient privileges to connect to ovs bridges.
 non_root_chown: false
-
-# Enable port forwarding for tripleo-ui access
-# It is safe to mark this as default true as it only runs on a virthost
-# This variable is set to true in config/environments/default_libvirt.yml
-enable_port_forward_for_tripleo_ui: false
-
-# This enables the run of several tripleo-validations tests through Mistral
-run_tripleo_validations: false
-# This enables the run of tripleo-validations negative tests through shell
-# scripts
-run_tripleo_validations_negative_tests: false
-# Exit tripleo-quickstart on validations failures
-exit_on_validations_failure: false
-
-# Update undercloud and overcloud images with the repos provided via the
-# release config.
-update_images: false
-
-# If running in chroot-like environments (containers)
-chrooted: false
-
-# moved from tqe
-undercloud_generate_service_certificate: true

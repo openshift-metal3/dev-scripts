@@ -5,20 +5,39 @@ source logging.sh
 source common.sh
 source ocp_install_env.sh
 
+# Generate user ssh key
+if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
+    ssh-keygen -f ~/.ssh/id_rsa -P ""
+fi
+
+# root needs a private key to talk to libvirt
+# See tripleo-quickstart-config/roles/virtbmc/tasks/configure-vbmc.yml
+if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
+  sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
+  sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
+fi
+
 # This script will create some libvirt VMs do act as "dummy baremetal"
 # then configure python-virtualbmc to control them - these can later
 # be deployed via the install process similar to how we test TripleO
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
 export ANSIBLE_LIBRARY=./library
-export VM_NODES_FILE=${VM_NODES_FILE:-tripleo-quickstart-config/metalkube-nodes.yml}
+# FIXME(shardy) output an error message temporarily since we've broken an interface
+export VM_NODES_FILE=${VM_NODES_FILE:-}
+if [ ! -z "${VM_NODES_FILE}" ]; then
+  echo "VM_NODES_FILE is no longer supported"
+  echo "Please use NUM_MASTERS, NUM_WORKERS and VM_EXTRADISKS variables instead"
+  exit 1
+fi
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "non_root_user=$USER" \
     -e "working_dir=$WORKING_DIR" \
     -e "roles_path=$PWD/roles" \
-    -e @${VM_NODES_FILE} \
-    -e "local_working_dir=$HOME/.quickstart" \
+    -e "num_masters=$NUM_MASTERS" \
+    -e "num_workers=$NUM_WORKERS" \
+    -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
     -e "platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
