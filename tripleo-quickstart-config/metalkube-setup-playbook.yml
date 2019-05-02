@@ -12,7 +12,7 @@
     - import_role:
         name: environment/setup
     - import_role:
-        name: libvirt/setup/overcloud
+        name: libvirt/setup
       when: platform == "libvirt"
     - import_role:
         name: virtbmc/setup
