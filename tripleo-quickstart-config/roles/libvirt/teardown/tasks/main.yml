@@ -55,59 +55,6 @@
           with_items: "{{ vm_nodes }}"
           ignore_errors: true
 
-    # Do the same thing to the supplemental node.
-    - environment:
-        LIBVIRT_DEFAULT_URI: "{{ libvirt_uri }}"
-      block:
-        - name: Check undercloud vm
-          command: >
-            virsh domid "{{ supplemental_node.name|default('') }}"
-          ignore_errors: true
-          register: supplemental_check
-
-        - name: Destroy supplemental vm
-          command: >
-            virsh destroy "{{ supplemental_node.name|default('') }}"
-          when: supplemental_check is success
-          ignore_errors: true
-
-        - name: Undefine supplemental vm
-          command: >
-            virsh undefine "{{ supplemental_node.name|default('') }}" --remove-all-storage
-          when: supplemental_check is success
-          ignore_errors: true
-
-    # Do the same thing to the undercloud node.
-    - name: Check undercloud vm
-      command: >
-        virsh domid "{{ undercloud_node.name }}"
-      ignore_errors: true
-      register: undercloud_check
-
-    - name: Destroy undercloud vm
-      command: >
-        virsh destroy "{{ undercloud_node.name }}"
-      when: undercloud_check is success
-      ignore_errors: true
-
-    - name: Undefine undercloud vm
-      command: >
-        virsh undefine "{{ undercloud_node.name }}"
-      when: undercloud_check is success
-
-    - name: Delete undercloud vm storage
-      shell: |
-        virsh vol-dumpxml --pool '{{ libvirt_volume_pool }}' \
-          '{{ undercloud_node.name }}'.qcow2 2>&1 > /dev/null
-        virsh vol-delete --pool '{{ libvirt_volume_pool }}' \
-          '{{ undercloud_node.name }}'.qcow2
-      ignore_errors: true
-
-    - name: Destroy intermediate disk image
-      file:
-        path: "{{ working_dir }}/undercloud-resized.qcow2"
-        state: absent
-
     - name: Check volume pool
       command: >
         virsh pool-uuid "{{ libvirt_volume_pool }}"

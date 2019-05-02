@@ -23,11 +23,7 @@
       loop: "{{ range(0, num_workers|int)|list }}"
 
 # Describe our virtual networks.  These networks will be attached to
-# the undercloud node and to the overcloud nodes in the order in which
-# they are defined with the following caveats:
-#   *  If no networks are using forward_mode: 'nat', then the default libvirt
-#   network will be attached to the undercloud. This is required to ssh from the
-#   virt host to the undercloud
+# the vm nodes in the order in which they are defined with the following caveats:
 #   *  The first bridge network defined will be used for pxe booting
 - set_fact:
     generate_networks: "{{networks is not defined}}"
