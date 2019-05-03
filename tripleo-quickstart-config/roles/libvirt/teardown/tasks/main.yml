@@ -2,11 +2,6 @@
 # these tasks may be called before the dependencies of the `virt`
 # module are satisfied.
 
-- name: Include vars for libvirt-nodepool
-  include_vars:
-    file: "{{ role_path }}/../../setup/overcloud/tasks/vars/libvirt_nodepool_vars.yml"
-  when: libvirt_nodepool|default(false)
-
 - name: Check if libvirt is available
   command: >
     virsh uri
@@ -22,30 +17,30 @@
     LIBVIRT_DEFAULT_URI: "{{ libvirt_uri }}"
   block:
 
-    - when: overcloud_nodes
+    - when: vm_nodes
       block:
 
-        # Check if the overcloud nodes exist.
-        - name: Check overcloud vms
+        # Check if the vm nodes exist.
+        - name: Check vm vms
           command: >
             virsh domid "{{ item.name }}"
-          with_items: "{{ overcloud_nodes }}"
+          with_items: "{{ vm_nodes }}"
           ignore_errors: true
-          register: overcloud_check
+          register: vm_check
 
-        # Destroy and undefine the overcloud nodes.
-        - name: Destroy overcloud vms
+        # Destroy and undefine the vm nodes.
+        - name: Destroy vm vms
           command:
             virsh destroy "{{ item.item.name }}"
           when: item is success
-          with_items: "{{ overcloud_check.results }}"
+          with_items: "{{ vm_check.results }}"
           ignore_errors: true
 
-        - name: Undefine overcloud vms
+        - name: Undefine vm vms
           command:
             virsh undefine "{{ item.item.name }}"
           when: item is success
-          with_items: "{{ overcloud_check.results }}"
+          with_items: "{{ vm_check.results }}"
 
         # The `virsh vol-dumpxml ... > /dev/null` is here (and elsewhere) due to
         # [1293804].
@@ -57,61 +52,8 @@
               '{{ item.name }}'.qcow2 2>&1 > /dev/null
             virsh vol-delete --pool '{{ libvirt_volume_pool }}' \
               '{{ item.name }}'.qcow2
-          with_items: "{{ overcloud_nodes }}"
+          with_items: "{{ vm_nodes }}"
           ignore_errors: true
-
-    # Do the same thing to the supplemental node.
-    - environment:
-        LIBVIRT_DEFAULT_URI: "{{ libvirt_uri }}"
-      block:
-        - name: Check undercloud vm
-          command: >
-            virsh domid "{{ supplemental_node.name|default('') }}"
-          ignore_errors: true
-          register: supplemental_check
-
-        - name: Destroy supplemental vm
-          command: >
-            virsh destroy "{{ supplemental_node.name|default('') }}"
-          when: supplemental_check is success
-          ignore_errors: true
-
-        - name: Undefine supplemental vm
-          command: >
-            virsh undefine "{{ supplemental_node.name|default('') }}" --remove-all-storage
-          when: supplemental_check is success
-          ignore_errors: true
-
-    # Do the same thing to the undercloud node.
-    - name: Check undercloud vm
-      command: >
-        virsh domid "{{ undercloud_node.name }}"
-      ignore_errors: true
-      register: undercloud_check
-
-    - name: Destroy undercloud vm
-      command: >
-        virsh destroy "{{ undercloud_node.name }}"
-      when: undercloud_check is success
-      ignore_errors: true
-
-    - name: Undefine undercloud vm
-      command: >
-        virsh undefine "{{ undercloud_node.name }}"
-      when: undercloud_check is success
-
-    - name: Delete undercloud vm storage
-      shell: |
-        virsh vol-dumpxml --pool '{{ libvirt_volume_pool }}' \
-          '{{ undercloud_node.name }}'.qcow2 2>&1 > /dev/null
-        virsh vol-delete --pool '{{ libvirt_volume_pool }}' \
-          '{{ undercloud_node.name }}'.qcow2
-      ignore_errors: true
-
-    - name: Destroy intermediate disk image
-      file:
-        path: "{{ working_dir }}/undercloud-resized.qcow2"
-        state: absent
 
     - name: Check volume pool
       command: >
