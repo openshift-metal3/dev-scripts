@@ -29,9 +29,9 @@ sed -i '/ROOK_MON_OUT_TIMEOUT/!b;n;c\          value: "40s"' operator-openshift-
 oc create -f operator-openshift-modified.yaml
 sleep 10
 
-oc wait --for condition=ready  pod -l app=rook-ceph-operator -n openshift-storage --timeout=240s
-oc wait --for condition=ready  pod -l app=rook-ceph-agent -n openshift-storage --timeout=240s
-oc wait --for condition=ready  pod -l app=rook-discover -n openshift-storage --timeout=240s
+oc wait --for condition=ready  pod -l app=rook-ceph-operator -n openshift-storage --timeout=1200s
+oc wait --for condition=ready  pod -l app=rook-ceph-agent -n openshift-storage --timeout=1200s
+oc wait --for condition=ready  pod -l app=rook-discover -n openshift-storage --timeout=1200s
 
 sed 's/# port: 8443/port: 8444/' cluster.yaml > cluster-modified.yaml
 sed -i 's/namespace: rook-ceph/namespace: openshift-storage/' cluster-modified.yaml
@@ -44,8 +44,8 @@ oc create -f toolbox-modified.yaml
 sleep 10
 
 # enable pg_autoscaler
-oc wait --for condition=ready  pod -l app=rook-ceph-tools -n openshift-storage --timeout=360s
-oc wait --for condition=ready  pod -l app=rook-ceph-mon -n openshift-storage --timeout=360s
+oc wait --for condition=ready  pod -l app=rook-ceph-tools -n openshift-storage --timeout=1200s
+oc wait --for condition=ready  pod -l app=rook-ceph-mon -n openshift-storage --timeout=1200s
 oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph mgr module enable pg_autoscaler --force
 oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global osd_pool_default_pg_autoscale_mode on
 
