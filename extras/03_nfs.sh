@@ -11,15 +11,6 @@ sudo chcon -t svirt_sandbox_file_t /windows
 sudo chmod 777 /windows
 sudo exportfs -r
 sudo systemctl start nfs ; sudo systemctl enable nfs-server
-#Allow access to nfs
-for port in 111 20048 ; do
-    if ! sudo iptables -C INPUT -i baremetal -p udp --dport $port -j ACCEPT 2>/dev/null ; then
-        sudo iptables -I INPUT -i baremetal -p udp --dport $port -j ACCEPT
-    fi
-    if ! sudo iptables -C INPUT -i baremetal -p tcp --dport $port -j ACCEPT 2>/dev/null ; then
-        sudo iptables -I INPUT -i baremetal -p tcp --dport $port -j ACCEPT
-    fi
-done
-if ! sudo iptables -C INPUT -i baremetal -p tcp --dport 2049 -j ACCEPT 2>/dev/null ; then
-        sudo iptables -I INPUT -i baremetal -p tcp --dport 2049 -j ACCEPT
-fi
+sudo firewall-cmd --permanent --add-service=nfs
+sudo firewall-cmd --permanent --add-service=mountd
+sudo firewall-cmd --permanent --add-service=rpc-bind

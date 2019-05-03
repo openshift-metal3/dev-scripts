@@ -31,7 +31,7 @@ spec:
     server: ${SERVER_IP}
   persistentVolumeReclaimPolicy: Recycle
 EOF
-[ -f /windows/disk.img ] && curl ${WINDOWS_IMAGE} > /windows/disk.img
+[ ! -f /windows/disk.img ] && curl ${WINDOWS_IMAGE} > /windows/disk.img
 chown 777 /windows/*
 cat <<EOF | oc apply -f -
 apiVersion: v1
