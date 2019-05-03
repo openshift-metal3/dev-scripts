@@ -3,6 +3,7 @@ set -ex
 
 source logging.sh
 
+sudo yum install -y libselinux-utils
 if selinuxenabled ; then
     # FIXME ocp-doit required this so leave permissive for now
     sudo setenforce permissive
