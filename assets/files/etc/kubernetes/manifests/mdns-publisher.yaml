@@ -35,6 +35,7 @@ spec:
       mountPath: "/etc/kubernetes/static-pod-resources"
     - name: kubeconfig
       mountPath: "/etc/kubernetes/kubeconfig"
+    imagePullPolicy: IfNotPresent
   - name: render-config
     image: quay.io/openshift/origin-node:latest
     command:
