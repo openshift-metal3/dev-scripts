@@ -1,8 +1,8 @@
 - include_tasks: install_setup_tasks.yml
-  when: action == "setup"
+  when: libvirt_action == "setup"
 - include_tasks: network_setup_tasks.yml
-  when: action == "setup"
+  when: libvirt_action == "setup"
 - include_tasks: vm_setup_tasks.yml
-  when: action == "setup" and vm_platform == "libvirt"
+  when: libvirt_action == "setup" and vm_platform == "libvirt"
 - include_tasks: teardown_tasks.yml
-  when: action == "teardown"
+  when: libvirt_action == "teardown"
