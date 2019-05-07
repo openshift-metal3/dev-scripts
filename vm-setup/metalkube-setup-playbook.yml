@@ -9,7 +9,7 @@
     - import_role:
         name: environment/setup
     - import_role:
-        name: libvirt/setup
+        name: libvirt
       when: platform == "libvirt"
     - import_role:
         name: virtbmc/setup

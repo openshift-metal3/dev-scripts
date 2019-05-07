@@ -1,0 +1,4 @@
+- include_tasks: setup_tasks.yml
+  when: action == "setup"
+- include_tasks: teardown_tasks.yml
+  when: action == "teardown"

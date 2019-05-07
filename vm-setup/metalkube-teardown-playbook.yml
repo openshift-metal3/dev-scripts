@@ -3,7 +3,13 @@
   hosts: virthost
   connection: local
   gather_facts: true
-  roles:
-    - common
-    - libvirt/teardown
-    - virtbmc/teardown
+  tasks:
+    - import_role:
+        name: common
+    - import_role:
+        name: libvirt
+      vars:
+        action: "teardown"
+    - import_role:
+        name: virtbmc/teardown
+
