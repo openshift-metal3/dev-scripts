@@ -22,7 +22,6 @@ fi
 # be deployed via the install process similar to how we test TripleO
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
-export ANSIBLE_LIBRARY=./library
 # FIXME(shardy) output an error message temporarily since we've broken an interface
 export VM_NODES_FILE=${VM_NODES_FILE:-}
 if [ ! -z "${VM_NODES_FILE}" ]; then
@@ -39,7 +38,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "num_workers=$NUM_WORKERS" \
     -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
-    -e "platform=$NODES_PLATFORM" \
+    -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -i vm-setup/metalkube-inventory.ini \
     -b -vvv vm-setup/metalkube-setup-playbook.yml
