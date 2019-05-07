@@ -2,6 +2,5 @@
 # anything required by our parent `environment` module).
 dependencies:
   - common
-  - parts/kvm
   - parts/libvirt
   - environment
