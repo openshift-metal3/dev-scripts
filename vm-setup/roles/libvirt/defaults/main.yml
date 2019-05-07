@@ -1,6 +1,10 @@
 # When action==teardown we destroy the existing configuration
 action: setup
 
+# For some baremetal testing we set this to "baremetal" so that only the
+# libvirt networking is configured, not the nodes
+vm_platform: libvirt
+
 # Which libvirt session should we use?  Using `qemu://session` does
 # not require privileged access (but does require the setup performed by the
 # `environment/setup` role).

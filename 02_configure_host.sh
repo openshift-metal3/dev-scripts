@@ -38,7 +38,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "num_workers=$NUM_WORKERS" \
     -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
-    -e "platform=$NODES_PLATFORM" \
+    -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -i vm-setup/metalkube-inventory.ini \
     -b -vvv vm-setup/metalkube-setup-playbook.yml
