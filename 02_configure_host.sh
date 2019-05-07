@@ -11,7 +11,7 @@ if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
 fi
 
 # root needs a private key to talk to libvirt
-# See tripleo-quickstart-config/roles/virtbmc/tasks/configure-vbmc.yml
+# See vm-setup/roles/virtbmc/tasks/configure-vbmc.yml
 if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
   sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
   sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
@@ -42,8 +42,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e @config/environments/dev_privileged_libvirt.yml \
-    -i tripleo-quickstart-config/metalkube-inventory.ini \
-    -b -vvv tripleo-quickstart-config/metalkube-setup-playbook.yml
+    -i vm-setup/metalkube-inventory.ini \
+    -b -vvv vm-setup/metalkube-setup-playbook.yml
 
 # Allow local non-root-user access to libvirt
 # Restart libvirtd service to get the new group membership loaded

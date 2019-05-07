@@ -163,7 +163,7 @@ If you see `ftype=1` then you have d_type support.
 
 ### Modifying cpu/memory/disk resources
 The default cpu/memory/disk resources when using virtual machines are provided
-by the [tripleo-quickstart-config/metalkube-nodes.yml](tripleo-quickstart-config/metalkube-nodes.yml) file:
+by the [vm-setup/metalkube-nodes.yml](vm-setup/metalkube-nodes.yml) file:
 
 * 4 vCPU
 * 8 Gb RAM
