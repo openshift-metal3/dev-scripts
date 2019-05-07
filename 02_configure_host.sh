@@ -22,7 +22,6 @@ fi
 # be deployed via the install process similar to how we test TripleO
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
-export ANSIBLE_LIBRARY=./library
 # FIXME(shardy) output an error message temporarily since we've broken an interface
 export VM_NODES_FILE=${VM_NODES_FILE:-}
 if [ ! -z "${VM_NODES_FILE}" ]; then
