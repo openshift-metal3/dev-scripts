@@ -11,7 +11,6 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
-    -e @config/environments/dev_privileged_libvirt.yml \
     -i vm-setup/metalkube-inventory.ini \
     -b -vvv vm-setup/metalkube-teardown-playbook.yml
 

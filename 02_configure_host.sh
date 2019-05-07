@@ -41,7 +41,6 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "virthost=$HOSTNAME" \
     -e "platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
-    -e @config/environments/dev_privileged_libvirt.yml \
     -i vm-setup/metalkube-inventory.ini \
     -b -vvv vm-setup/metalkube-setup-playbook.yml
 
