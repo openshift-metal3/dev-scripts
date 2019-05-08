@@ -24,8 +24,8 @@ if [ -z "${RELEASE_CONFIG:-}" ]; then
 fi
 source $RELEASE_CONFIG
 
-RELEASE_PULLSPEC="$1"
-INSTALLER_PULLSPEC="$2"
+RELEASE_PULLSPEC="$1"; shift
+INSTALLER_PULLSPEC="$1"; shift
 if [ -z "${RELEASE_PULLSPEC}" -a -z "${INSTALLER_PULLSPEC}" ]; then
     echo "usage: $0 <release pullspec> <kni installer pullspec>" >&2
     echo "example: $0 registry.svc.ci.openshift.org/ocp/release:4.0.0-0.9 registry.svc.ci.openshift.org/kni/installer:4.0.0-0.9" >&2
@@ -58,9 +58,7 @@ if [ -z "${RELEASE_REPO}" -o "${RELEASE_REPO}" = "null" ]; then
     exit 1
 fi
 
-INSTALLER_DIGEST=$(oc image info -a "${RELEASE_PULLSECRET}" "${INSTALLER_PULLSPEC}" -o json | jq -r .digest)
-
-RELEASE_TMPDIR=$(mktemp -d "release-${RELEASE_VERSION}-XXXXXXXXXX")
+RELEASE_TMPDIR=$(mktemp --tmpdir -d "release-${RELEASE_VERSION}-XXXXXXXXXX")
 trap "rm -rf ${RELEASE_TMPDIR}" EXIT
 
 # extract image-references
@@ -72,27 +70,25 @@ if ! oc --config "${RELEASE_KUBECONFIG}" get imagestream "${RELEASE_VERSION}" 2>
     echo "Expected '${RELEASE_VERSION}' imagestream?" >&2
     exit 1
 fi
-
-# Tag our installer into this image stream
-oc --config "${RELEASE_KUBECONFIG}" tag "${INSTALLER_PULLSPEC}" "${RELEASE_VERSION}:installer"
+rm -f "${RELEASE_TMPDIR}/image-references"
 
 function wait_for_tag() {
     local is
     local tag
-    local expect
 
     is="$1"
     tag="$2"
-    expect="$3"
 
     while true; do
         got=$(oc --config "${RELEASE_KUBECONFIG}" get imagestream "${is}" -o json | jq -r '.status.tags[]? | select(.tag == "'"${tag}"'") | .items[0].image')
-        [ "${got}" = "${expect}" ] && break
+        [ -n "${got}" ] && break
         sleep 2
     done
 }
 
-wait_for_tag "${RELEASE_VERSION}" "installer" "${INSTALLER_DIGEST}"
+# Tag our installer into the image stream
+oc --config "${RELEASE_KUBECONFIG}" tag "${INSTALLER_PULLSPEC}" "${RELEASE_VERSION}:installer"
+wait_for_tag "${RELEASE_VERSION}" "installer"
 
 # create the new release payload
 oc --config "${RELEASE_KUBECONFIG}" adm release new \
