@@ -15,9 +15,9 @@ spec:
           verification: {}
         filesystem: root
         mode: 0664
-        path: /etc/dhcp/dhclient.conf
+        path: /etc/dhcp/dhclient.conf.template
       - contents:
           verification: {}
         filesystem: root
         mode: 0755
-        path: /etc/NetworkManager/dispatcher.d/pre-up.d/dns-vip-prepender
+        path: /etc/NetworkManager/dispatcher.d/pre-up.d/dns-vip-prepender-worker
