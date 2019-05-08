@@ -5,3 +5,8 @@
 # Currently this is required because of hard-coded node-name expectations in the
 # kni-installer terraform templates
 ironic_prefix: "openshift_"
+
+# We enable more memory and masters in dev-scripts compared to the minimal setup
+# in metal3-dev-env
+default_memory: 16384
+num_masters: 3
