@@ -23,13 +23,3 @@ fi
 if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
     sudo rm -f /etc/sysconfig/network-scripts/ifcfg-baremetal
 fi
-sudo virsh net-list --name|grep -q baremetal
-if [ "$?" == "0" ]; then
-    sudo virsh net-destroy baremetal
-    sudo virsh net-undefine baremetal
-fi
-sudo virsh net-list --name|grep -q provisioning
-if [ "$?" == "0" ]; then
-     sudo virsh net-destroy provisioning
-     sudo virsh net-undefine provisioning
-fi
