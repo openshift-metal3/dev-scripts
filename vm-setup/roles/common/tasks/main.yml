@@ -9,16 +9,16 @@
     - name: Generate vm_nodes for "{{num_masters}}" masters
       set_fact:
         vm_nodes: "{{vm_nodes|default([]) + [
-                     {'name': 'openshift_master_%s'|format(item),
-                      'flavor': 'openshift_master',
+                     {'name': ironic_prefix + 'master_%s'|format(item),
+                      'flavor': 'master',
                       'virtualbmc_port': virtualbmc_base_port+item}]}}"
       loop: "{{ range(0, num_masters|int)|list }}"
     
     - name: Generate vm_nodes for "{{num_workers}}" workers
       set_fact:
         vm_nodes: "{{vm_nodes|default([]) + [
-                     {'name': 'openshift_worker_%s'|format(item),
-                      'flavor': 'openshift_worker',
+                     {'name': ironic_prefix + 'worker_%s'|format(item),
+                      'flavor': 'worker',
                       'virtualbmc_port': virtualbmc_base_port+num_masters|int+item} ]}}"
       loop: "{{ range(0, num_workers|int)|list }}"
 

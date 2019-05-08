@@ -1,7 +1,6 @@
 {% set nat_port_range = item.nat_port_range|default([1024, 65535]) %}
 {% set netmask = item.netmask|default('255.255.255.0') %}
 {% if item.dhcp_hosts is defined %}
-{% set ironic_prefix = "openshift_" %}
 {% set dhcp_hosts_names = item.dhcp_hosts | map(attribute='name') | map('replace', '-', '_') | list %}
 {% endif %}
 <network>
