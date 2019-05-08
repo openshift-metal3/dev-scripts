@@ -11,8 +11,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
-    -i vm-setup/metalkube-inventory.ini \
-    -b -vvv vm-setup/metalkube-teardown-playbook.yml
+    -i vm-setup/inventory.ini \
+    -b -vvv vm-setup/teardown-playbook.yml
 
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/conf.d/dnsmasq.conf
 # There was a bug in this file, it may need to be recreated.

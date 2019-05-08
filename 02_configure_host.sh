@@ -40,8 +40,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
-    -i vm-setup/metalkube-inventory.ini \
-    -b -vvv vm-setup/metalkube-setup-playbook.yml
+    -i vm-setup/inventory.ini \
+    -b -vvv vm-setup/setup-playbook.yml
 
 # Allow local non-root-user access to libvirt
 # Restart libvirtd service to get the new group membership loaded
