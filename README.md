@@ -163,12 +163,12 @@ If you see `ftype=1` then you have d_type support.
 
 ### Modifying cpu/memory/disk resources
 The default cpu/memory/disk resources when using virtual machines are provided
-by the [vm-setup/metalkube-nodes.yml](vm-setup/metalkube-nodes.yml) file:
+by the [vm-setup/roles/common/defaults/main.yml](vm-setup/roles/common/defaults/main.yml) file:
 
 * 4 vCPU
 * 8 Gb RAM
 * 50 Gb HDD
 
-If required, the cpu/memory/disk can be customzied per host role
-(`openshift_master_memory`, `openshift_worker_memory`,...) by modifying that
+If required, the cpu/memory/disk can be customized per host role
+(`default_vcpu`, `default_memory`, etc.) by modifying that
 file prior to run the [04_setup_ironic.sh](04_setup_ironic.sh) script.
