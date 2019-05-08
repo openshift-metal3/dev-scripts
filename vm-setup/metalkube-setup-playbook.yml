@@ -9,5 +9,5 @@
     - import_role:
         name: libvirt
     - import_role:
-        name: virtbmc/setup
-      when: vm_platform == "libvirt"
+        name: virtbmc
+      when: vm_platform|default("libvirt") == "libvirt"
