@@ -32,7 +32,6 @@ fi
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \
-    -e "non_root_user=$USER" \
     -e "working_dir=$WORKING_DIR" \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$NUM_WORKERS" \

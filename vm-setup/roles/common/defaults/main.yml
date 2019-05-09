@@ -1,3 +1,5 @@
+non_root_user: "{{ lookup('env', 'USER') }}"
+
 # base domain to use
 cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metalkube.org', true) }}"
 
