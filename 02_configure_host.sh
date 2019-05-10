@@ -31,17 +31,16 @@ if [ ! -z "${VM_NODES_FILE}" ]; then
 fi
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
-    -e "non_root_user=$USER" \
+    -e @vm_setup_vars.yml \
     -e "working_dir=$WORKING_DIR" \
-    -e "roles_path=$PWD/roles" \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$NUM_WORKERS" \
     -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
-    -i vm-setup/metalkube-inventory.ini \
-    -b -vvv vm-setup/metalkube-setup-playbook.yml
+    -i vm-setup/inventory.ini \
+    -b -vvv vm-setup/setup-playbook.yml
 
 # Allow local non-root-user access to libvirt
 # Restart libvirtd service to get the new group membership loaded

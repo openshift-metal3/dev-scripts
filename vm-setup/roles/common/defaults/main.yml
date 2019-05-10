@@ -1,3 +1,5 @@
+non_root_user: "{{ lookup('env', 'USER') }}"
+
 # base domain to use
 cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metalkube.org', true) }}"
 
@@ -7,24 +9,27 @@ libvirt_nic_model: virtio
 # These defaults are used if there are no flavor-specific
 # overrides configured.
 default_disk: 50
-default_memory: 16384
+default_memory: 8096
 default_vcpu: 4
-num_masters: 3
+num_masters: 1
 num_workers: 1
 extradisks: false
 virtualbmc_base_port: 6230
 flavors:
-  openshift_master:
-    memory: '{{openshift_master_memory|default(default_memory)}}'
-    disk: '{{openshift_master_disk|default(default_disk)}}'
-    vcpu: '{{openshift_master_vcpu|default(default_vcpu)}}'
+  master:
+    memory: '{{master_memory|default(default_memory)}}'
+    disk: '{{master_disk|default(default_disk)}}'
+    vcpu: '{{master_vcpu|default(default_vcpu)}}'
     extradisks: '{{extradisks}}'
 
-  openshift_worker:
-    memory: '{{openshift_worker_memory|default(default_memory)}}'
-    disk: '{{openshift_worker_disk|default(default_disk)}}'
-    vcpu: '{{openshift_worker_vcpu|default(default_vcpu)}}'
+  worker:
+    memory: '{{worker_memory|default(default_memory)}}'
+    disk: '{{worker_disk|default(default_disk)}}'
+    vcpu: '{{worker_vcpu|default(default_vcpu)}}'
     extradisks: '{{extradisks}}'
+
+# For dev-scripts usage this currently needs to be set to "openshift_"
+ironic_prefix: ""
 
 baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.111.0/24', true) }}"
 
