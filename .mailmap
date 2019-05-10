@@ -1,0 +1,41 @@
+# See git-shortlog(1) for official documentation of this file format.
+#
+# Name <email>
+#   Use "Name" for any commit with address "<email>".  This is useful when a person
+#   has commits using different spellings of their name, but with the same email
+#   address.
+#
+# Name <email> <email2>
+#   Use "Name" and "<email>" for any commit with the address "<email2>".  This is useful
+#   when a person has used more than one email address.
+
+Alexander Chuzhoy <achuzhoy@redhat.com> <achuzhoy@users.noreply.github.com>
+Amit Ugol <augol@redhat.com> <amit.ugol@gmail.com>
+Antoni Segura Puimedon <antoni@redhat.com> <antonisp@celebdor.com>
+Antoni Segura Puimedon <antoni@redhat.com> <celebdor@gmail.com>
+Beth Elwell <belwell@redhat.com> <e.r.elwell@gmail.com>
+Bob Fournie <bfournie@redhat.com>
+Ben Nemec <bnemec@redhat.com> <cybertron@nemebean.com>
+Dan Trainor <dtrainor@redhat.com> <dan.trainor@gmail.com>
+Dmitry Tantsur <dtantsur@redhat.com> <divius.inside@gmail.com>
+Doug Hellmann <dhellmann@redhat.com> <doug@doughellmann.com>
+Eduardo Minguez Perez <edu@redhat.com> <e.minguez@gmail.com>
+Fabian Deutsch <fdeutsch@redhat.com> <fabiand@fedoraproject.org>
+Florian Fuchs <flfuchs@redhat.com> <flofuchs@users.noreply.github.com>
+Honza Pokorny <hpokorny@redhat.com> <me@honza.ca>
+Ihar Hrachyshka <ihar@redhat.com> <ihrachys@redhat.com>
+Jason E. Rist <jrist@redhat.com> <knowncitizen@users.noreply.github.com>
+Juan Manuel Parrilla Madrid <jparrill@redhat.com>
+Julia Kreger <jkreger@redhat.com> <jkreger@gmail.com>
+Julia Kreger <jkreger@redhat.com> <juliaashleykreger@gmail.com>
+Karim Boumedhel <karim@redhat.com> <1840387+karmab@users.noreply.github.com>
+Karim Boumedhel <karim@redhat.com> <karimboumedhel@gmail.com>
+Michael Hrivnak <mhrivnak@redhat.com> <mhrivnak@hrivnak.org>
+Paolo Patierno <ppatiern@redhat.com> <ppatierno@live.com>
+Riccardo Pittau <rpittau@redhat.com> <elfosardo@gmail.com>
+Riccardo Pittau <rpittau@redhat.com> <elfosardo@users.noreply.github.com>
+Russell Bryant <rbryant@redhat.com> <russell@russellbryant.net>
+Stephen Benjamin <stephen@redhat.com> <stephen@bitbin.de>
+Umanga Chapagain <uchapaga@redhat.com> <chapagainumanga@gmail.com>
+Vadim Rutkovsky <vrutkovs@redhat.com> <roignac@gmail.com>
+Yossi Boaron <yboaron@redhat.com> <yossi.boaron.1234@gmail.com>
