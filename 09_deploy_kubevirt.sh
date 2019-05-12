@@ -16,6 +16,7 @@ eval "$(go env)"
 # These will ultimately be deployed via kni-installer to the bootstrap node
 # where they will then be applied to the cluster, but for now we do it
 # manually
+export CURRENT_PROJECT=$(oc project -q)
 cd manifests
 for manifest in $(ls -1 *.yaml | sort -h); do
   oc --as system:admin --config ../ocp/auth/kubeconfig apply -f ${manifest}
@@ -36,3 +37,4 @@ oc apply -f operator.yaml
 sed "s/okdvirt/openshiftvirt/" crds/kubevirt_v1alpha1_kwebui_cr.yaml > crds/kubevirt_v1alpha1_kwebui_cr-modified.yaml
 sed -i "s/version: .*/version: \"$UIVERSION\"/" crds/kubevirt_v1alpha1_kwebui_cr-modified.yaml
 oc apply -f crds/kubevirt_v1alpha1_kwebui_cr-modified.yaml
+oc project ${CURRENT_PROJECT}
