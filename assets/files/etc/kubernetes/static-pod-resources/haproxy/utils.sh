@@ -64,7 +64,7 @@ function ensure_prerouting_rules {
     declare -r api_vip="$1"
     declare -r api_port="$2"
     declare -r lb_port="$3"
-    declare -r rules=$(iptables -L PREROUTING -n -t nat --line-numbers | awk '/OCP_API_LB_REDIRECT/ {print $1}'  | tac)
+    declare -r rules=$(iptables -w 10 -L PREROUTING -n -t nat --line-numbers | awk '/OCP_API_LB_REDIRECT/ {print $1}'  | tac)
     if [[ -z "$rules" ]]; then
             (>&2 echo "Setting prerouting rule from ${api_vip}:${api_port} to port $lb_port")
             iptables -t nat -I PREROUTING --src 0/0 --dst "$api_vip" -p tcp --dport "$api_port" -j REDIRECT --to-ports "$lb_port" -m comment --comment "OCP_API_LB_REDIRECT"
@@ -74,7 +74,7 @@ function ensure_prerouting_rules {
 function clean_prerouting_rules {
     (>&2 echo "Deleting API HAProxy IPtables rule")
 
-    declare -r rules=$(iptables -L PREROUTING -n -t nat --line-numbers | awk '/OCP_API_LB_REDIRECT/ {print $1}'  | tac)
+    declare -r rules=$(iptables -w 10 -L PREROUTING -n -t nat --line-numbers | awk '/OCP_API_LB_REDIRECT/ {print $1}'  | tac)
     for rule in $rules; do
        iptables -t nat -D PREROUTING  "$rule"
     done
