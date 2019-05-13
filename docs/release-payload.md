@@ -105,6 +105,7 @@ and tag it into the release imagestream:
 
 ```
 $ ./prep_release.sh \
+    4.0.0-0.ci-2019-04-17-133604-kni \
     registry.svc.ci.openshift.org/ocp/release:4.0.0-0.ci-2019-04-17-133604 \
     registry.svc.ci.openshift.org/kni/installer:4.0.0-0.ci-2019-04-17-133604
 ```

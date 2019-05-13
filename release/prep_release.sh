@@ -24,11 +24,12 @@ if [ -z "${RELEASE_CONFIG:-}" ]; then
 fi
 source $RELEASE_CONFIG
 
+RELEASE_NAME="$1"; shift
 RELEASE_PULLSPEC="$1"; shift
 INSTALLER_PULLSPEC="$1"; shift
-if [ -z "${RELEASE_PULLSPEC}" -a -z "${INSTALLER_PULLSPEC}" ]; then
-    echo "usage: $0 <release pullspec> <kni installer pullspec>" >&2
-    echo "example: $0 registry.svc.ci.openshift.org/ocp/release:4.0.0-0.9 registry.svc.ci.openshift.org/kni/installer:4.0.0-0.9" >&2
+if [ -z "${RELEASE_NAME}" -o -z "${RELEASE_PULLSPEC}" -o -z "${INSTALLER_PULLSPEC}" ]; then
+    echo "usage: $0 <release name> <release pullspec> <kni installer pullspec>" >&2
+    echo "example: $0 4.0.0-0.9-kni registry.svc.ci.openshift.org/ocp/release:4.0.0-0.9 registry.svc.ci.openshift.org/kni/installer:4.0.0-0.9" >&2
     exit 1
 fi
 
@@ -39,7 +40,7 @@ if [ -z "${RELEASE_VERSION}" -o "${RELEASE_VERSION}" = "null" ]; then
     exit 1
 fi
 
-echo "Preparing a release based on version ${RELEASE_VERSION}"
+echo "Preparing a ${RELEASE_NAME} release based on version ${RELEASE_VERSION}"
 
 # Check prerequisites
 if [ $(oc --config "${RELEASE_KUBECONFIG}" project -q) != "${RELEASE_NAMESPACE}" ]; then
@@ -92,9 +93,10 @@ wait_for_tag "${RELEASE_VERSION}" "installer"
 
 # create the new release payload
 oc --config "${RELEASE_KUBECONFIG}" adm release new \
+    --name "${RELEASE_NAME}" \
     --registry-config "${RELEASE_PULLSECRET}" \
     --from-image-stream "${RELEASE_VERSION}" \
     --reference-mode source \
-    --to-image "${RELEASE_REPO}:${RELEASE_VERSION}"
+    --to-image "${RELEASE_REPO}:${RELEASE_NAME}"
 
-echo "New release payload available to ${RELEASE_REPO}:${RELEASE_VERSION}"
+echo "New ${RELEASE_NAME} release payload available to ${RELEASE_REPO}:${RELEASE_NAME}"
