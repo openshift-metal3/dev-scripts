@@ -109,3 +109,36 @@ $ ./prep_release.sh \
     registry.svc.ci.openshift.org/ocp/release:4.0.0-0.ci-2019-04-17-133604 \
     registry.svc.ci.openshift.org/kni/installer:4.0.0-0.ci-2019-04-17-133604
 ```
+
+## Adding additional Cluster Operators
+
+In order to experiment with the possibility of adding additional,
+KNI-specific cluster operators, we first build the new cluster
+operator by taking an existing operator and building a new image layer
+containing the manifests for the release payload, and adding the
+`io.openshift.release.operator = true` label:
+
+```
+$> ./build_clusteroperator.sh virt-operator index.docker.io/kubevirt/virt-operator v0.16.3
+```
+
+And then we can include this cluster operator - and the dependencies
+listed in its `image-references` manifest - in our custom release
+payload:
+
+```
+$ ./prep_release.sh \
+    4.0.0-0.ci-2019-04-17-133604-kni-kubevirt \
+    registry.svc.ci.openshift.org/ocp/release:4.0.0-0.ci-2019-04-17-133604 \
+    registry.svc.ci.openshift.org/kni/installer:4.0.0-0.ci-2019-04-17-133604 \
+    virt-operator=registry.svc.ci.openshift.org/kni/virt-operator:v0.16.3
+```
+
+You can test upgrading between these payloads by deploing with the
+first one and then doing:
+
+```
+$ oc --config ocp/auth/kubeconfig adm upgrade \
+    --to-image
+    registry.svc.ci.openshift.org/kni/release:4.0.0-0.ci-2019-04-17-133604-kni-kubevirt
+```

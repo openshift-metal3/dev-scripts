@@ -28,10 +28,17 @@ RELEASE_NAME="$1"; shift
 RELEASE_PULLSPEC="$1"; shift
 INSTALLER_PULLSPEC="$1"; shift
 if [ -z "${RELEASE_NAME}" -o -z "${RELEASE_PULLSPEC}" -o -z "${INSTALLER_PULLSPEC}" ]; then
-    echo "usage: $0 <release name> <release pullspec> <kni installer pullspec>" >&2
-    echo "example: $0 4.0.0-0.9-kni registry.svc.ci.openshift.org/ocp/release:4.0.0-0.9 registry.svc.ci.openshift.org/kni/installer:4.0.0-0.9" >&2
+    echo "usage: $0 <release name> <release pullspec> <kni installer pullspec> [<extra operator>=<pullspec> <extra operator>=<pullspec>]" >&2
+    echo "example: $0 4.0.0-0.9-kni registry.svc.ci.openshift.org/ocp/release:4.0.0-0.9 registry.svc.ci.openshift.org/kni/installer:4.0.0-0.9 registry.svc.ci.openshift.org/kni/virt-operator:v0.16.3" >&2
     exit 1
 fi
+
+EXTRA_OPERATORS=("$@")
+for op in "${EXTRA_OPERATORS[@]}"; do
+  if [ -z "${op%=*}" -o -z "${op#*=}" ]; then
+      echo "Extra operator parameters take the form <name>=<pullspec>" >&2
+  fi
+done
 
 # Fetch the release version from payload metadata
 RELEASE_VERSION=$(oc adm release info --registry-config "${RELEASE_PULLSECRET}" "${RELEASE_PULLSPEC}" -o json | jq -r .metadata.version)
@@ -90,6 +97,32 @@ function wait_for_tag() {
 # Tag our installer into the image stream
 oc --config "${RELEASE_KUBECONFIG}" tag "${INSTALLER_PULLSPEC}" "${RELEASE_VERSION}:installer"
 wait_for_tag "${RELEASE_VERSION}" "installer"
+
+# Tag the extra operators into the image stream
+for op in "${EXTRA_OPERATORS[@]}"; do
+  op_name="${op%=*}"
+  op_pullspec="${op#*=}"
+
+  oc --config "${RELEASE_KUBECONFIG}" tag "${op_pullspec}" "${RELEASE_VERSION}:${op_name}"
+  wait_for_tag "${RELEASE_VERSION}" "${op_name}"
+
+  # now tag is dependencies
+  oc image extract --registry-config "${RELEASE_PULLSECRET}" "${op_pullspec}" --path "/manifests/image-references:${RELEASE_TMPDIR}"
+
+  for ref_name in $(yq -r .spec.tags[].name "${RELEASE_TMPDIR}/image-references"); do
+    # the operator or one of its dependencies may already be tagged
+    if oc --config "${RELEASE_KUBECONFIG}" get imagestreamtag "${RELEASE_VERSION}:${ref_name}" >/dev/null 2>&1; then
+        continue
+    fi
+
+    ref_pullspec=$(yq -r '.spec.tags[] | select(.name == "'"${ref_name}"'") | .from.name' "${RELEASE_TMPDIR}/image-references")
+
+    oc --config "${RELEASE_KUBECONFIG}" tag "${ref_pullspec}" "${RELEASE_VERSION}:${ref_name}"
+    wait_for_tag "${RELEASE_VERSION}" "${ref_name}"
+  done
+
+  rm -f "${RELEASE_TMPDIR}/image-references"
+done
 
 # create the new release payload
 oc --config "${RELEASE_KUBECONFIG}" adm release new \
