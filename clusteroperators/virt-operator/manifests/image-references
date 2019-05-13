@@ -1,0 +1,32 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+spec:
+  tags:
+  - name: virt-operator
+    from:
+      kind: DockerImage
+      name: index.docker.io/kubevirt/virt-operator:v0.16.3
+  - name: cni-plugins
+    from:
+      kind: DockerImage
+      name: quay.io/kubevirt/cni-default-plugins:latest
+  - name: sriov-device-plugin
+    from:
+      kind: DockerImage
+      name: quay.io/booxter/sriov-device-plugin:latest
+  - name: sriov-cni
+    from:
+      kind: DockerImage
+      name: docker.io/nfvpe/sriov-cni:latest
+  - name: node
+    from:
+      kind: DockerImage
+      name: docker.io/openshift/origin-node:latest
+  - name: ovs-cni-plugin
+    from:
+      kind: DockerImage
+      name: quay.io/kubevirt/ovs-cni-plugin:latest
+  - name: ovs-cni-marker
+    from:
+      kind: DockerImage
+      name: quay.io/kubevirt/ovs-cni-marker:latest
