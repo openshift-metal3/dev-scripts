@@ -493,7 +493,7 @@ spec:
         - name: OPERATOR_VERSION
           value: "0.0.1-snapshot"
         - name: OPERATOR_IMAGE
-          value: index.docker.io/kubevirt/virt-operator:v0.16.3
+          value: index.docker.io/markbmc/virt-operator:v0.16.3-kni
         - name: API_IMAGE
           value: index.docker.io/kubevirt/virt-api:v0.16.3
         - name: CONTROLLER_IMAGE
@@ -506,7 +506,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.annotations['olm.targetNamespaces']
-        image: index.docker.io/kubevirt/virt-operator:v0.16.3
+        image: index.docker.io/markbmc/virt-operator:v0.16.3-kni
         imagePullPolicy: IfNotPresent
         name: virt-operator
         ports:

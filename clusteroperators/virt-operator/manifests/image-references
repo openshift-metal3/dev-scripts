@@ -5,7 +5,7 @@ spec:
   - name: virt-operator
     from:
       kind: DockerImage
-      name: index.docker.io/kubevirt/virt-operator:v0.16.3
+      name: index.docker.io/markbmc/virt-operator:v0.16.3-kni
   - name: virt-api
     from:
       kind: DockerImage

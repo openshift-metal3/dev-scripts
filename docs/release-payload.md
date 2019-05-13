@@ -119,7 +119,7 @@ containing the manifests for the release payload, and adding the
 `io.openshift.release.operator = true` label:
 
 ```
-$> ./build_clusteroperator.sh virt-operator index.docker.io/kubevirt/virt-operator v0.16.3
+$> ./build_clusteroperator.sh virt-operator index.docker.io/markbmc/virt-operator v0.16.3-kni
 ```
 
 And then we can include this cluster operator - and the dependencies
@@ -131,7 +131,7 @@ $ ./prep_release.sh \
     4.0.0-0.ci-2019-04-17-133604-kni-kubevirt \
     registry.svc.ci.openshift.org/ocp/release:4.0.0-0.ci-2019-04-17-133604 \
     registry.svc.ci.openshift.org/kni/installer:4.0.0-0.ci-2019-04-17-133604 \
-    virt-operator=registry.svc.ci.openshift.org/kni/virt-operator:v0.16.3
+    virt-operator=registry.svc.ci.openshift.org/kni/virt-operator:v0.16.3-kni
 ```
 
 You can test upgrading between these payloads by deploing with the
