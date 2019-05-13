@@ -6,6 +6,22 @@ spec:
     from:
       kind: DockerImage
       name: index.docker.io/kubevirt/virt-operator:v0.16.3
+  - name: virt-api
+    from:
+      kind: DockerImage
+      name: index.docker.io/kubevirt/virt-api:v0.16.3
+  - name: virt-controller
+    from:
+      kind: DockerImage
+      name: index.docker.io/kubevirt/virt-controller:v0.16.3
+  - name: virt-launcher
+    from:
+      kind: DockerImage
+      name: index.docker.io/kubevirt/virt-launcher:v0.16.3
+  - name: virt-handler
+    from:
+      kind: DockerImage
+      name: index.docker.io/kubevirt/virt-handler:v0.16.3
   - name: cni-plugins
     from:
       kind: DockerImage

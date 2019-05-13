@@ -491,6 +491,14 @@ spec:
         env:
         - name: OPERATOR_IMAGE
           value: index.docker.io/kubevirt/virt-operator:v0.16.3
+        - name: API_IMAGE
+          value: index.docker.io/kubevirt/virt-api:v0.16.3
+        - name: CONTROLLER_IMAGE
+          value: index.docker.io/kubevirt/virt-controller:v0.16.3
+        - name: LAUNCHER_IMAGE
+          value: index.docker.io/kubevirt/virt-launcher:v0.16.3
+        - name: HANDLER_IMAGE
+          value: index.docker.io/kubevirt/virt-handler:v0.16.3
         - name: WATCH_NAMESPACE
           valueFrom:
             fieldRef:
