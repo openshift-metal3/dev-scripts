@@ -16,6 +16,8 @@ eval "$(go env)"
 # These will ultimately be deployed via kni-installer to the bootstrap node
 # where they will then be applied to the cluster, but for now we do it
 # manually
+export CURRENT_PROJECT=$(oc project -q)
+trap "oc project ${CURRENT_PROJECT}" EXIT
 cd manifests
 for manifest in $(ls -1 *.yaml | sort -h); do
   oc --as system:admin --config ../ocp/auth/kubeconfig apply -f ${manifest}
