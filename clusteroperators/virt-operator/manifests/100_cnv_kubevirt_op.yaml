@@ -484,6 +484,7 @@ spec:
       containers:
       - command:
         - virt-operator
+        - --cluster-operator
         - --port
         - "8443"
         - -v
