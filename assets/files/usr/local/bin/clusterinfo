@@ -6,6 +6,7 @@ NAME=$(oc config view -o "jsonpath={.contexts[?(@.name == '""$CURRENT_CONTEXT""'
 APIURL=$(oc config view -o "jsonpath={.clusters[?(@.name == '""$NAME""')].cluster.server}")
 APIHOST=$(echo $APIURL | sed -e 's/.*\/\/\([^:]\+\).*/\1/g')
 DOMAIN=${APIHOST#*.}
+NAME_FROM_DOMAIN=${DOMAIN%%.*}
 BASE_DOMAIN=${DOMAIN#*.}
 
 echo ${!1}
