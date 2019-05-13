@@ -489,6 +489,8 @@ spec:
         - -v
         - "2"
         env:
+        - name: OPERATOR_VERSION
+          value: "0.0.1-snapshot"
         - name: OPERATOR_IMAGE
           value: index.docker.io/kubevirt/virt-operator:v0.16.3
         - name: API_IMAGE
