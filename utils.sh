@@ -247,3 +247,31 @@ EOF
     )" "$host_etcd_ep" "${etcd_hosts[@]}")
     oc -n kube-system patch ep/host-etcd --patch "$patch"
 }
+
+function sync_repo_and_patch {
+    REPO_PATH=${REPO_PATH:-$HOME}
+    DEST="${REPO_PATH}/$1"
+    figlet "Syncing $1" | lolcat
+
+    if [ ! -d $DEST ]; then
+        mkdir -p $DEST
+        git clone $2 $DEST
+    fi
+
+    pushd $DEST
+
+    git am --abort || true
+    git checkout master
+    git fetch origin
+    git rebase origin/master
+    if test "$#" -gt "2" ; then
+        git branch -D metalkube || true
+        git checkout -b metalkube
+
+        shift; shift;
+        for arg in "$@"; do
+            curl -L $arg | git am
+        done
+    fi
+    popd
+}
