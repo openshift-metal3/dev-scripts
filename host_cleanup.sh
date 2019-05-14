@@ -3,6 +3,11 @@ set -x
 
 source logging.sh
 source common.sh
+source utils.sh
+
+export REPO_PATH=${WORKING_DIR}
+sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
+VM_SETUP_PATH="${REPO_PATH}/metal3-dev-env/vm-setup"
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \
@@ -12,8 +17,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
-    -i vm-setup/inventory.ini \
-    -b -vvv vm-setup/teardown-playbook.yml
+    -i ${VM_SETUP_PATH}/inventory.ini \
+    -b -vvv ${VM_SETUP_PATH}/teardown-playbook.yml
 
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf /etc/NetworkManager/conf.d/dnsmasq.conf
 # There was a bug in this file, it may need to be recreated.

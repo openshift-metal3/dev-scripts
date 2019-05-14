@@ -3,6 +3,7 @@ set -xe
 
 source logging.sh
 source common.sh
+source utils.sh
 source ocp_install_env.sh
 
 # Generate user ssh key
@@ -12,6 +13,8 @@ fi
 
 # root needs a private key to talk to libvirt
 # See vm-setup/roles/virtbmc/tasks/configure-vbmc.yml
+# in https://github.com/metal3-io/metal3-dev-env.git
+# FIXME(shardy) this should be in the ansible role ...
 if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
   sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
   sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
@@ -30,6 +33,10 @@ if [ ! -z "${VM_NODES_FILE}" ]; then
   exit 1
 fi
 
+export REPO_PATH=${WORKING_DIR}
+sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
+VM_SETUP_PATH="${REPO_PATH}/metal3-dev-env/vm-setup"
+
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \
     -e "working_dir=$WORKING_DIR" \
@@ -39,8 +46,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
-    -i vm-setup/inventory.ini \
-    -b -vvv vm-setup/setup-playbook.yml
+    -i ${VM_SETUP_PATH}/inventory.ini \
+    -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 
 # Allow local non-root-user access to libvirt
 # Restart libvirtd service to get the new group membership loaded
