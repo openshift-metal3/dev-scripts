@@ -9,3 +9,14 @@ ironic_prefix: "openshift_"
 # in metal3-dev-env
 default_memory: 16384
 num_masters: 3
+
+# For OpenShift we create some additional DNS records for the API/DNS VIPs
+baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.111.0/24', true) }}"
+dns_extrahosts:
+  - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
+    hostnames:
+      - "api"
+      - "api-int"
+  - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
+    hostnames:
+      - "ns1"
