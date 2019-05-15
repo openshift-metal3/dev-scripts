@@ -31,3 +31,5 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
     sudo ifdown baremetal || true
     sudo rm -f /etc/sysconfig/network-scripts/ifcfg-baremetal
 fi
+# Kill any lingering proxy
+sudo pkill -f oc.*proxy
