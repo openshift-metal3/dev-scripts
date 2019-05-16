@@ -15,6 +15,11 @@ if [[ "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" == *"registry.svc.ci.openshi
     fi
 fi
 
+if [[ "${PULL_SECRET}" != *"cloud.openshift.com"* ]]; then
+    echo "Please get a valid pull secret for cloud.openshift.com."
+    exit 1
+fi
+
 if [ ! -d ocp ]; then
     mkdir -p ocp
 
