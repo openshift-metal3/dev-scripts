@@ -60,8 +60,8 @@ export RHCOS_IMAGE_FILENAME_COMPRESSED="${RHCOS_IMAGE_NAME}-compressed.qcow2"
 export RHCOS_IMAGE_FILENAME_LATEST="rhcos-ootpa-latest.qcow2"
 
 # Ironic vars
-export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metalkube/metalkube-ironic"}
-export IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metalkube/metalkube-ironic-inspector"}
+export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic"}
+export IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metal3-io/ironic-inspector"}
 export IRONIC_DATA_DIR="$WORKING_DIR/ironic"
 
 export KUBECONFIG="${SCRIPTDIR}/ocp/auth/kubeconfig"
