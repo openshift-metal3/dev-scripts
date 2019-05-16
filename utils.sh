@@ -211,7 +211,7 @@ function patch_ep_host_etcd() {
     declare -r domain="$1"
     declare -r srv_record="_etcd-server-ssl._tcp.$domain"
     declare -r api_domain="api.$domain"
-    host_etcd_ep=$(oc get ep -n kube-system host-etcd -o json | jq -r '{"subsets": .subsets}')
+    host_etcd_ep=$(oc get ep -n openshift-etcd host-etcd -o json | jq -r '{"subsets": .subsets}')
     echo -n "Looking for etcd records"
     while ! host -t SRV "$srv_record" "$api_domain" >/dev/null 2>&1; do
         echo -n "."
@@ -245,7 +245,7 @@ patch['subsets'][0]['addresses'] = addresses
 print(yaml.safe_dump(patch))
 EOF
     )" "$host_etcd_ep" "${etcd_hosts[@]}")
-    oc -n kube-system patch ep/host-etcd --patch "$patch"
+    oc -n openshift-etcd patch ep/host-etcd --patch "$patch"
 }
 
 function sync_repo_and_patch {
