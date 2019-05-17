@@ -9,8 +9,8 @@ sudo systemctl stop fix_certs.timer
 systemctl is-failed fix_certs.service >/dev/null && sudo systemctl reset-failed fix_certs.service
 
 if [ -d ocp ]; then
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir ocp --log-level=debug destroy bootstrap
-    $GOPATH/src/github.com/openshift-metalkube/kni-installer/bin/kni-install --dir ocp --log-level=debug destroy cluster
+    ocp/openshift-install --dir ocp --log-level=debug destroy bootstrap
+    ocp/openshift-install --dir ocp --log-level=debug destroy cluster
     rm -rf ocp
 fi
 

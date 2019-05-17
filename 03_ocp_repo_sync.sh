@@ -10,8 +10,6 @@ echo "$GOPATH" | lolcat # should print $HOME/go or something like that
 # REPO_PATH is used in sync_repo_and_patch from utils.sh
 export REPO_PATH="$GOPATH/src"
 
-sync_repo_and_patch github.com/openshift-metalkube/kni-installer https://github.com/openshift-metalkube/kni-installer.git
-
 # Build facet
 # FIXME(russellb) - disabled due to build failure related to metal3 rename
 #sync_repo_and_patch github.com/openshift-metalkube/facet https://github.com/openshift-metalkube/facet.git
