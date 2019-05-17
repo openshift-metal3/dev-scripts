@@ -79,8 +79,8 @@ When we want to move to a newer OpenShift release, we pick a release
 payload:
 
 ```
-$ oc adm release info registry.svc.ci.openshift.org/ocp/release:4.0.0-0.ci-2019-04-17-133604 -a release-pullsecret -o json | jq -r .metadata.version
-4.0.0-0.ci-2019-04-17-133604
+$ oc adm release info quay.io/openshift-release-dev/ocp-release:4.1.0-rc.3 -a release-pullsecret -o json | jq -r .metadata.version
+4.1.0-rc.3
 ```
 
 Next, rebase ```openshift-metal3/kni-installer``` to the
@@ -88,16 +88,16 @@ Next, rebase ```openshift-metal3/kni-installer``` to the
 
 ```
 $ oc adm release info -a release-pullsecret -o json \
-    registry.svc.ci.openshift.org/ocp/release:4.0.0-0.ci-2019-04-17-133604 \
+    quay.io/openshift-release-dev/ocp-release:4.1.0-rc.3 | \
     jq -r '.references.spec.tags[] | select(.name == "installer") | .annotations["io.openshift.build.commit.id"]'
-8c607f66662f8e35570960484612d0589c26b654
+403a93d1f683384800597ac38e9c2fc0180b3a5d
 ```
 
 And then kick off a build, with the resulting image tagged into the
 installer image stream using the supplied version as the tag:
 
 ```
-$ ./build_installer.sh 4.0.0-0.ci-2019-04-17-133604
+$ ./build_installer.sh 4.1.0-rc.3-kni.0
 ```
 
 Now, finally, we can build a new payload referencing our installer,
@@ -105,7 +105,8 @@ and tag it into the release imagestream:
 
 ```
 $ ./prep_release.sh \
-    4.0.0-0.ci-2019-04-17-133604-kni \
-    registry.svc.ci.openshift.org/ocp/release:4.0.0-0.ci-2019-04-17-133604 \
-    registry.svc.ci.openshift.org/kni/installer:4.0.0-0.ci-2019-04-17-133604
+    4.1.0-rc.3-kni.1 \
+    quay.io/openshift-release-dev/ocp-release:4.1.0-rc.3 \
+    installer=registry.svc.ci.openshift.org/kni/installer:4.1.0-rc.3-kni.0 \
+    baremetal-machine-controllers=quay.io/openshift-metal3/baremetal-machine-controllers@sha256:1faf4a863b261c948f5f38c148421603f51c74cbf44142882826ee6cb37d8bd3
 ```

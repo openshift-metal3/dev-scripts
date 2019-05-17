@@ -26,12 +26,18 @@ source $RELEASE_CONFIG
 
 RELEASE_NAME="$1"; shift
 RELEASE_PULLSPEC="$1"; shift
-INSTALLER_PULLSPEC="$1"; shift
-if [ -z "${RELEASE_NAME}" -o -z "${RELEASE_PULLSPEC}" -o -z "${INSTALLER_PULLSPEC}" ]; then
-    echo "usage: $0 <release name> <release pullspec> <kni installer pullspec>" >&2
-    echo "example: $0 4.0.0-0.9-kni registry.svc.ci.openshift.org/ocp/release:4.0.0-0.9 registry.svc.ci.openshift.org/kni/installer:4.0.0-0.9" >&2
+if [ -z "${RELEASE_NAME}" -o -z "${RELEASE_PULLSPEC}" ]; then
+    echo "usage: $0 <release name> <release pullspec> [<tag>=<pullspec> <tag>=<pullspec>]" >&2
+    echo "example: $0 4.0.0-0.9-kni registry.svc.ci.openshift.org/ocp/release:4.0.0-0.9 installer=registry.svc.ci.openshift.org/kni/installer:4.0.0-0.9" >&2
     exit 1
 fi
+
+EXTRA_IMAGES=("$@")
+for extra in "${EXTRA_IMAGES[@]}"; do
+  if [ -z "${extra%=*}" -o -z "${extra#*=}" ]; then
+      echo "Extra image parameters take the form <name>=<pullspec>" >&2
+  fi
+done
 
 # Fetch the release version from payload metadata
 RELEASE_VERSION=$(oc adm release info --registry-config "${RELEASE_PULLSECRET}" "${RELEASE_PULLSPEC}" -o json | jq -r .metadata.version)
@@ -87,9 +93,14 @@ function wait_for_tag() {
     done
 }
 
-# Tag our installer into the image stream
-oc --config "${RELEASE_KUBECONFIG}" tag "${INSTALLER_PULLSPEC}" "${RELEASE_VERSION}:installer"
-wait_for_tag "${RELEASE_VERSION}" "installer"
+# Tag the extra images into the image stream
+for extra in "${EXTRA_IMAGES[@]}"; do
+  extra_name="${extra%=*}"
+  extra_pullspec="${extra#*=}"
+
+  oc --config "${RELEASE_KUBECONFIG}" tag "${extra_pullspec}" "${RELEASE_VERSION}:${extra_name}"
+  wait_for_tag "${RELEASE_VERSION}" "${extra_name}"
+done
 
 # create the new release payload
 oc --config "${RELEASE_KUBECONFIG}" adm release new \
