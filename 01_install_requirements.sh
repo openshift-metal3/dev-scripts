@@ -95,7 +95,11 @@ sudo pip install \
 oc_version=4.1
 oc_tools_dir=$HOME/oc-${oc_version}
 oc_tools_local_file=openshift-client-${oc_version}.tar.gz
-if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ]; then
+oc_date=0
+if which oc 2>&1 >/dev/null ; then
+    oc_date=$(date -d $(oc version -o json  | jq -r '.clientVersion.buildDate') +%s)
+fi
+if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ] || [ $oc_date -lt 1558047075 ]; then
   mkdir -p ${oc_tools_dir}
   cd ${oc_tools_dir}
   wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
