@@ -76,4 +76,5 @@ sudo podman run -d --net host --privileged --name ironic --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE}
 
 # Start Ironic Inspector 
-sudo podman run -d --net host --privileged --name ironic-inspector --pod ironic-pod "${IRONIC_INSPECTOR_IMAGE}"
+sudo podman run -d --net host --privileged --name ironic-inspector \
+     --pod ironic-pod -v $IRONIC_DATA_DIR:/shared "${IRONIC_INSPECTOR_IMAGE}"
