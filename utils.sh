@@ -39,7 +39,7 @@ function create_cluster() {
     export TF_LOG=DEBUG
 
     cp ${assets_dir}/install-config.yaml{,.tmp}
-    "${assets_dir}/openshift-install" --dir "${assets_dir}" --log-level=debug create manifests
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create manifests
 
     # TODO - consider adding NTP server config to install-config.yaml instead
     if host clock.redhat.com ; then
@@ -51,14 +51,14 @@ function create_cluster() {
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
     cp ${assets_dir}/install-config.yaml{.tmp,}
-    "${assets_dir}/openshift-install" --dir "${assets_dir}" --log-level=debug create cluster
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
 }
 
 function wait_for_cvo_finish() {
     local assets_dir
 
     assets_dir="$1"
-    "${assets_dir}/openshift-install" --dir "${assets_dir}" --log-level=debug wait-for install-complete
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for install-complete
 }
 
 function wait_for_json() {
