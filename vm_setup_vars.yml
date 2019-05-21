@@ -16,7 +16,6 @@ dns_extrahosts:
   - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
     hostnames:
       - "api"
-      - "api-int"
   - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
     hostnames:
       - "ns1"
