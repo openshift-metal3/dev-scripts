@@ -23,8 +23,14 @@ fi
 if [ ! -d ocp ]; then
     mkdir -p ocp
 
-    # Extract openshift-install from the release image
-    extract_installer "${OPENSHIFT_RELEASE_IMAGE}" ocp/
+    if [ -z "$INSTALL_FROM_GIT" ]; then
+      # Extract openshift-install from the release image
+      extract_installer "${OPENSHIFT_RELEASE_IMAGE}" ocp/
+    else
+      # Clone and build the installer from source
+      clone_installer
+      build_installer
+    fi
 
     # Create a master_nodes.json file
     jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
