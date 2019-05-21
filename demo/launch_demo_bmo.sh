@@ -22,7 +22,7 @@ then
     oc delete deployment metalkube-baremetal-operator
 fi
 
-cd $GOPATH/src/github.com/metalkube/baremetal-operator
+cd $GOPATH/src/github.com/metal3-io/baremetal-operator
 
 oc apply -f deploy/crds/demo-hosts.yaml
 

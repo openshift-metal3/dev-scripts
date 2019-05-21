@@ -7,7 +7,7 @@ source ocp_install_env.sh
 eval "$(go env)"
 
 # Get the latest bits for baremetal-operator
-export BMOPATH="$GOPATH/src/github.com/metalkube/baremetal-operator"
+export BMOPATH="$GOPATH/src/github.com/metal3-io/baremetal-operator"
 
 function list_masters() {
     cat $MASTER_NODES_FILE | \
