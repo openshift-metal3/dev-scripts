@@ -4,6 +4,8 @@ set -ex
 
 source common.sh
 source ocp_install_env.sh
+source logging.sh
+
 eval "$(go env)"
 
 # Get the latest bits for baremetal-operator
