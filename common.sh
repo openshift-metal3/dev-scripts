@@ -127,5 +127,3 @@ fi
 sudo chown "${USER}:${USER}" "$WORKING_DIR"
 chmod 755 "$WORKING_DIR"
 
-# Allow overriding openshift-install binary location, to e.g. build from git
-export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-"ocp/openshift-install"}

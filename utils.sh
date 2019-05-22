@@ -2,22 +2,6 @@
 
 set -o pipefail
 
-function extract_installer() {
-    local release_image
-    local outdir
-
-    release_image="$1"
-    outdir="$2"
-
-    extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
-
-    echo "${PULL_SECRET}" > "${extract_dir}/pullsecret"
-    oc adm release extract --registry-config "${extract_dir}/pullsecret" --command=openshift-install --to "${extract_dir}" "${release_image}"
-    mv "${extract_dir}/openshift-install" "${outdir}"
-
-    rm -rf "${extract_dir}"
-}
-
 function generate_assets() {
   rm -rf assets/generated && mkdir assets/generated
   for file in $(find assets/templates/ -iname '*.yaml' -type f -printf "%P\n"); do

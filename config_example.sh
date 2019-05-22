@@ -10,9 +10,6 @@ set -x
 #export IRONIC_INSPECTOR_IMAGE=https://github.com/metal3-io/ironic-inspector
 #export IRONIC_IMAGE=https://github.com/metal3-io/ironic
 
-# Uncomment to use a local copy of kni-installer instead
-#export OPENSHIFT_INSTALLER="~/go/src/github.com/openshift-metalkube/kni-installer/bin/kni-install"
-
 # SSH key used to ssh into deployed hosts.  This must be the contents of the
 # variable, not the filename. The contents of ~/.ssh/id_rsa.pub are used by
 # default.

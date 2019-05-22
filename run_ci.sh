@@ -106,6 +106,7 @@ done
 
 # Run dev-scripts
 set -o pipefail
+export KNI_INSTALL_FROM_GIT=true
 timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 source common.sh
