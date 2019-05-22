@@ -23,7 +23,7 @@ fi
 if [ ! -d ocp ]; then
     mkdir -p ocp
 
-    if [ -z "$INSTALL_FROM_GIT" ]; then
+    if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       # Extract openshift-install from the release image
       extract_installer "${OPENSHIFT_RELEASE_IMAGE}" ocp/
     else
