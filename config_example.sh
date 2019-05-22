@@ -17,3 +17,6 @@ set -x
 # variable, not the filename. The contents of ~/.ssh/id_rsa.pub are used by
 # default.
 #export SSH_PUB_KEY=$(cat ~/.ssh/id_rsa.pub)
+
+# Configure custom ntp servers if needed
+#export NTP_SERVERS="00.my.internal.ntp.server.com;01.other.ntp.server.com"
