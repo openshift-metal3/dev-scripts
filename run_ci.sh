@@ -11,6 +11,10 @@ function getlogs(){
     # The logs shared by the ironic containers
     sudo cp -r /opt/dev-scripts/ironic/log $LOGDIR/container-logs
 
+
+    sudo podman logs coreos-downloader > $LOGDIR/coreos-downloader.log
+    sudo podman logs ipa-downloader > $LOGDIR/ipa-downloader.log
+
     # And the VM jornals
     for HOST in $(sudo virsh net-dhcp-leases baremetal | grep -o '192.168.111.[0-9]\+') ; do
         sshpass -p notworking $SSH core@$HOST sudo journalctl > $LOGDIR/$HOST-system.journal || true
@@ -49,16 +53,6 @@ mount | grep root-
 # that persist is /opt (and /boot), we can use this to store data between jobs
 FILECACHEDIR=/opt/data/filecache
 FILESTOCACHE="/opt/dev-scripts/ironic/html/images/ironic-python-agent.initramfs /opt/dev-scripts/ironic/html/images/ironic-python-agent.kernel"
-
-# Check if we have any openstack images cached, and if so add the most
-# recent to FILESTOCACHE
-compgen -G "$FILECACHEDIR/*-openstack.qcow2"
-retval=$?
-if [ $retval -eq 0 ]
-then
-  LAST_OPENSTACK_IMAGE=$(ls -r $FILECACHEDIR/*-openstack.qcow2 | head -n1)
-  FILESTOCACHE="$FILESTOCACHE /opt/dev-scripts/ironic/html/images/$(basename $LAST_OPENSTACK_IMAGE)"
-fi
 
 # Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
 # to prevent each snapshot taking up too much space we keep some of the larger files
@@ -128,9 +122,6 @@ done
 # Run dev-scripts
 set -o pipefail
 timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
-
-source common.sh
-FILESTOCACHE="$FILESTOCACHE /opt/dev-scripts/ironic/html/images/$RHCOS_IMAGE_FILENAME_OPENSTACK"
 
 # Populate cache for files it doesn't have, or that have changed
 for FILE in $FILESTOCACHE ; do

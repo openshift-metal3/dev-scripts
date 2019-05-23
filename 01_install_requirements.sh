@@ -63,7 +63,6 @@ sudo yum -y install \
   ansible \
   bind-utils \
   jq \
-  libguestfs-tools \
   libvirt \
   libvirt-devel \
   libvirt-daemon-kvm \
