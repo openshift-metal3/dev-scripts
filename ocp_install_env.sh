@@ -69,6 +69,7 @@ controlPlane:
   replicas: ${NUM_MASTERS}
 platform:
   baremetal:
+    api_vip: ${API_VIP}
     nodes:
 $(master_node_map_to_install_config $NUM_MASTERS)
     master_configuration:
