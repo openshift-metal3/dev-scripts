@@ -77,7 +77,7 @@ $(master_node_map_to_install_config $NUM_MASTERS)
       image_checksum: $(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
       root_gb: 25
 pullSecret: |
-  ${PULL_SECRET}
+  $(echo $PULL_SECRET | jq -c .)
 sshKey: |
   ${SSH_PUB_KEY}
 EOF
