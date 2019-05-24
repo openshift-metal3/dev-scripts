@@ -91,7 +91,7 @@ if [ -d "/home/notstack/metalkube-ironic-inspector" ] ; then
 fi
 
 # If directories for go projects exist, copy them to where go expects them
-for PROJ in facet ; do
+for PROJ in facet kni-installer ; do
     [ ! -d /home/notstack/$PROJ ] && continue
 
     # Set origin so that sync_repo_and_patch is rebasing against the correct source
