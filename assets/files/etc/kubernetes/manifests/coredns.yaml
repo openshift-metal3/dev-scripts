@@ -44,6 +44,9 @@ spec:
       source /etc/kubernetes/static-pod-resources/clusterrc
       export DOMAIN
       export NAME
+      # This should eventually be looked up from the config
+      API_VIP="$(dig +noall +answer "api.${DOMAIN}" | awk '{print $NF}')"
+      export API_VIP
       /usr/libexec/platform-python -c "from __future__ import print_function
       import os
       with open('/etc/kubernetes/static-pod-resources/Corefile.template', 'r') as f:
