@@ -56,6 +56,9 @@ function generate_ocp_install_config() {
 
     outdir="$1"
 
+    deploy_kernel=$(master_node_val 0 "driver_info.deploy_kernel")
+    deploy_ramdisk=$(master_node_val 0 "driver_info.deploy_ramdisk")
+
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1beta4
 baseDomain: ${BASE_DOMAIN}
@@ -70,12 +73,13 @@ controlPlane:
 platform:
   baremetal:
     api_vip: ${API_VIP}
-    nodes:
+    hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)
-    master_configuration:
-      image_source: "http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST"
-      image_checksum: $(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
-      root_gb: 25
+    image:
+      source: "http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST"
+      checksum: $(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
+      deployKernel: ${deploy_kernel}
+      deployRamdisk: ${deploy_ramdisk}
 pullSecret: |
   $(echo $PULL_SECRET | jq -c .)
 sshKey: |
