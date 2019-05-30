@@ -36,12 +36,7 @@ make install
 popd
 
 # Install baremetal-operator
-sync_repo_and_patch github.com/metalkube/baremetal-operator https://github.com/metalkube/baremetal-operator.git
-# FIXME(dhellmann): Use the pre-rename version of the operator until
-# this repository is ready for the renamed version.
-pushd $GOPATH/src/github.com/metalkube/baremetal-operator
-git checkout origin/metalkube
-popd
+sync_repo_and_patch github.com/metal3-io/baremetal-operator https://github.com/metal3-io/baremetal-operator.git
 
 # Install rook repository
 sync_repo_and_patch github.com/rook/rook https://github.com/rook/rook.git
