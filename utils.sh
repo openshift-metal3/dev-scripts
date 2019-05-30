@@ -256,6 +256,40 @@ EOF
     oc -n openshift-etcd patch ep/host-etcd --patch "$patch"
 }
 
+function which_commit {
+    for repo_sha in $repos; do
+        IFS=\; read repo sha <<<"$repo_sha"
+        if [ "$1" = "$repo" ]; then
+            echo "$sha"
+            return
+        fi
+    done
+    echo "master"
+}
+
+function record_commit {
+    REPO_PATH=$1
+    COMMIT=$(git rev-parse HEAD)
+    if [ -e "$REPO_PATH/repos" ]; then
+        source $REPO_PATH/repos
+    fi
+    repos=""
+    found=0
+    for repo_sha in $recorded_repos; do
+        IFS=\; read repo sha <<<"$repo_sha"
+        if [ "$2" = "$repo" ]; then
+            repos="$2;$COMMIT $repos"
+            found=1
+        else
+            repos="$repo;$sha $repos"
+        fi
+    done
+    if [ "$found" -eq "0" ]; then
+        repos="$2;$COMMIT $repos"
+    fi
+    echo "recorded_repos=\"$repos\"" > $REPO_PATH/repos
+}
+
 function sync_repo_and_patch {
     REPO_PATH=${REPO_PATH:-$HOME}
     DEST="${REPO_PATH}/$1"
@@ -266,12 +300,14 @@ function sync_repo_and_patch {
         git clone $2 $DEST
     fi
 
+    COMMIT=$(which_commit $1)
     pushd $DEST
 
     git am --abort || true
-    git checkout master
+    git checkout $COMMIT
     git fetch origin
-    git rebase origin/master
+    git rebase origin/$COMMIT
+    record_commit $REPO_PATH $1
     if test "$#" -gt "2" ; then
         git branch -D metalkube || true
         git checkout -b metalkube
