@@ -10,7 +10,7 @@ $ KNI_INSTALL_FROM_GIT=true make
 ```
 
 If you have a copy of the installer already in
-`$GOPATH/src/github.com/openshift-metalkube/kni-install`, it will build
+`$GOPATH/src/github.com/openshift-metalkube/kni-installer`, it will build
 on whatever branch you currently have checked out. If there is not
 already a checkout of the installer, it will clone the repo from GitHub
 and build from the master branch.
