@@ -68,14 +68,43 @@ spec:
     imagePullPolicy: IfNotPresent
   containers:
   - name: haproxy
-    image: docker.io/library/haproxy:latest
-    args:
-    - "-W"
-    - "-db"
-    - "-S"
-    - "/var/run/haproxy/haproxy-master.sock,level,admin"
-    - "-f"
-    - "/etc/haproxy/haproxy.cfg"
+    image: quay.io/openshift/origin-haproxy-router:latest
+    command:
+    - "/bin/bash"
+    - "-c"
+    - |
+      #/bin/bash
+      reload_haproxy()
+      {
+        old_pids=$(pidof haproxy)
+        if [ -n "$old_pids" ]; then
+            /usr/sbin/haproxy -W -db -f /etc/haproxy/haproxy.cfg  -p /var/lib/haproxy/run/haproxy.pid -x /var/lib/haproxy/run/haproxy.sock -sf $old_pids &
+        else
+            /usr/sbin/haproxy -W -db -f /etc/haproxy/haproxy.cfg  -p /var/lib/haproxy/run/haproxy.pid &
+        fi
+      }
+
+      msg_handler()
+      {
+        while read -r line; do
+            echo "The client send: $line"  >&2
+            # currently only 'reload' msg is supported
+            if [ "$line" = reload ]; then
+                reload_haproxy
+            fi
+        done
+      }
+
+      set -ex
+      declare -r haproxy_sock="/var/run/haproxy/haproxy-master.sock"
+      export -f msg_handler
+      export -f reload_haproxy
+      if [ -S "$haproxy_sock" ]; then
+          rm "$haproxy_sock"
+      fi
+
+      /usr/sbin/haproxy -W -db -f /etc/haproxy/haproxy.cfg  -p /var/lib/haproxy/run/haproxy.pid &
+      socat UNIX-LISTEN:${haproxy_sock},fork system:'bash -c msg_handler'
     volumeMounts:
     - name: conf-dir
       mountPath: "/etc/haproxy"
