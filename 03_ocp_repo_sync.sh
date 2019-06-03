@@ -49,11 +49,5 @@ sync_repo_and_patch github.com/rook/rook https://github.com/rook/rook.git
 # Install ceph-mixin repository
 sync_repo_and_patch github.com/ceph/ceph-mixins https://github.com/ceph/ceph-mixins.git
 
-# Install Kafka Strimzi repository
-sync_repo_and_patch github.com/strimzi/strimzi-kafka-operator https://github.com/strimzi/strimzi-kafka-operator.git
-
-# Install Kafka Producer/Consumer repository
-sync_repo_and_patch github.com/scholzj/kafka-test-apps https://github.com/scholzj/kafka-test-apps.git
-
 # Install web ui operator repository
 sync_repo_and_patch github.com/kubevirt/web-ui-operator https://github.com/kubevirt/web-ui-operator
