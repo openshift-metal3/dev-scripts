@@ -94,6 +94,10 @@ fi
 for PROJ in facet kni-installer ; do
     [ ! -d /home/notstack/$PROJ ] && continue
 
+    if [ "$PROJ" == "kni-installer" ]; then
+      export KNI_INSTALL_FROM_GIT=true
+    fi
+
     # Set origin so that sync_repo_and_patch is rebasing against the correct source
     cd /home/notstack/$PROJ
     git branch -M master
@@ -106,7 +110,6 @@ done
 
 # Run dev-scripts
 set -o pipefail
-export KNI_INSTALL_FROM_GIT=true
 timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 source common.sh
