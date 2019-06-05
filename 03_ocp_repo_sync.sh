@@ -6,7 +6,7 @@ source common.sh
 source utils.sh
 
 eval "$(go env)"
-echo "$GOPATH" | lolcat # should print $HOME/go or something like that
+echo "GOPATH: $GOPATH" # should print $HOME/go or something like that
 # REPO_PATH is used in sync_repo_and_patch from utils.sh
 export REPO_PATH="$GOPATH/src"
 

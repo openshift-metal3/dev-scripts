@@ -28,7 +28,6 @@ sudo yum -y install \
   crudini \
   curl \
   dnsmasq \
-  figlet \
   golang \
   NetworkManager \
   nmap \
@@ -83,7 +82,6 @@ sudo yum -y install \
 
 # Install python packages not included as rpms
 sudo pip install \
-  lolcat \
   yq
 
 # Install oc client

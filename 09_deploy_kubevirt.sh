@@ -6,7 +6,7 @@ source common.sh
 
 source logging.sh
 
-figlet "Deploying kubevirt" | lolcat
+echo "Deploying kubevirt"
 eval "$(go env)"
 
 
