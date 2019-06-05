@@ -14,6 +14,24 @@ function generate_assets() {
   done
 }
 
+function custom_ntp(){
+  # TODO - consider adding NTP server config to install-config.yaml instead
+  if [ -z ${NTP_SERVERS} ] && $(host clock.redhat.com > /dev/null); then
+    NTP_SERVERS="clock.redhat.com"
+  fi
+
+  if [ "$NTP_SERVERS" ]; then
+    cp assets/templates/99_worker-chronyd-custom.yaml.optional assets/generated/99_worker-chronyd-custom.yaml
+    cp assets/templates/99_master-chronyd-custom.yaml.optional assets/generated/99_master-chronyd-custom.yaml
+    NTPFILECONTENT=$(cat assets/files/etc/chrony.conf)
+    for ntp in $(echo $NTP_SERVERS | tr ";" "\n"); do
+      NTPFILECONTENT="${NTPFILECONTENT}"$'\n'"pool ${ntp} iburst"
+    done
+    NTPFILECONTENT=$(echo "${NTPFILECONTENT}" | base64 -w0)
+    sed -i -e "s/NTPFILECONTENT/${NTPFILECONTENT}/g" assets/generated/*-chronyd-custom.yaml
+  fi
+}
+
 function create_cluster() {
     local assets_dir
 
@@ -25,20 +43,9 @@ function create_cluster() {
     cp ${assets_dir}/install-config.yaml{,.tmp}
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create manifests
 
-    # TODO - consider adding NTP server config to install-config.yaml instead
-    if [ -z ${NTP_SERVERS} ] && $(host clock.redhat.com > /dev/null); then
-      NTP_SERVERS="clock.redhat.com"
-    fi
-
-    if [ "$NTP_SERVERS" ]; then
-      for ntp in $(echo $NTP_SERVERS | tr ";" "\n"); do
-        echo "pool ${ntp} iburst" >> assets/files/etc/chrony.conf
-      done
-      cp assets/templates/99_worker-chronyd-custom.yaml.optional assets/templates/99_worker-chronyd-custom.yaml
-      cp assets/templates/99_master-chronyd-custom.yaml.optional assets/templates/99_master-chronyd-custom.yaml
-    fi
-
     generate_assets
+    custom_ntp
+
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
