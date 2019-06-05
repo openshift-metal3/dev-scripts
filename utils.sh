@@ -195,7 +195,7 @@ EOF
 function sync_repo_and_patch {
     REPO_PATH=${REPO_PATH:-$HOME}
     DEST="${REPO_PATH}/$1"
-    figlet "Syncing $1" | lolcat
+    echo "Syncing $1"
 
     if [ ! -d $DEST ]; then
         mkdir -p $DEST

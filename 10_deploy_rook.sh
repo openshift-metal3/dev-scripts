@@ -4,7 +4,7 @@ set -eux
 source logging.sh
 source common.sh
 
-figlet "Deploying rook" | lolcat
+echo "Deploying rook"
 eval "$(go env)"
 
 ROOK_VERSION="v0.9.0-519.g111610e"
