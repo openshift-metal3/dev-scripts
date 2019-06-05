@@ -35,8 +35,9 @@ Make a copy of the `config_example.sh` to `config_$USER.sh`, and set the
 
 For baremetal test setups where you don't require the VM fake-baremetal nodes,
 you may also set `NODES_FILE` to reference a manually created json file with
-the node details (see [ironic_hosts.json.example](ironic_hosts.json.example)),
-and `NODES_PLATFORM` which can be set to e.g "baremetal" to disable the libvirt
+the node details (see [ironic_hosts.json.example](ironic_hosts.json.example) -
+make sure the ironic nodes names follow the openshift-master-* and openshift-worker-*
+format), and `NODES_PLATFORM` which can be set to e.g "baremetal" to disable the libvirt
 master/worker node setup. See [common.sh](common.sh) for other variables that
 can be overridden.
 
