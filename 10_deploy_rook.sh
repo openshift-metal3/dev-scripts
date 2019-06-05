@@ -46,14 +46,14 @@ sleep 10
 # enable pg_autoscaler
 oc wait --for condition=ready  pod -l app=rook-ceph-tools -n openshift-storage --timeout=1200s
 oc wait --for condition=ready  pod -l app=rook-ceph-mon -n openshift-storage --timeout=1200s
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph mgr module enable pg_autoscaler --force
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global osd_pool_default_pg_autoscale_mode on
+oc -n openshift-storage exec $(oc -n openshift-storage get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph mgr module enable pg_autoscaler --force
+oc -n openshift-storage exec $(oc -n openshift-storage get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global osd_pool_default_pg_autoscale_mode on
 
 # no warnings!
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global mon_pg_warn_min_per_osd 1
+oc -n openshift-storage exec $(oc -n openshift-storage get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global mon_pg_warn_min_per_osd 1
 
 # work around pgp_num scaling slowness (will be fixed in 14.2.2)
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global mgr_debug_aggressive_pg_num_changes true
+oc -n openshift-storage exec $(oc -n openshift-storage get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config set global mgr_debug_aggressive_pg_num_changes true
 
 cat <<EOF | oc create -f -
 apiVersion: ceph.rook.io/v1
@@ -83,11 +83,11 @@ reclaimPolicy: Retain
 EOF
 
 # wait for rbd pool to be created
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- bash -c 'while ! ceph osd pool ls | grep rbd ; do sleep 1 ; done'
+oc -n openshift-storage exec $(oc -n openshift-storage get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- bash -c 'while ! ceph osd pool ls | grep rbd ; do sleep 1 ; done'
 
 # tell ceph that the rbd pool will use ~50% of the cluster
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph osd pool set rbd pg_autoscale_mode on
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph osd pool set rbd target_size_ratio .5
+oc -n openshift-storage exec $(oc -n openshift-storage get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph osd pool set rbd pg_autoscale_mode on
+oc -n openshift-storage exec $(oc -n openshift-storage get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph osd pool set rbd target_size_ratio .5
 
 
 cd $ROOKPATH/cluster/examples/kubernetes/ceph/monitoring
@@ -101,4 +101,4 @@ cd $MIXINPATH/manifests
 oc create -f prometheus-rules.yaml
 
 # clean up mgr change (remove me after 14.2.2)
-oc -n openshift-storage exec $(oc -n openshift-storage get pod --show-all=false -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config rm global mgr_debug_aggressive_pg_num_changes
+oc -n openshift-storage exec $(oc -n openshift-storage get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') -- ceph config rm global mgr_debug_aggressive_pg_num_changes
