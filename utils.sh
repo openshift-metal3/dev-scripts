@@ -128,7 +128,7 @@ function master_node_map_to_install_config() {
       address=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_address")
 
       bmc_uri=${driver}://${address}
-      if [ -n $port ]; then
+      if [ -n "$port" ]; then
         bmc_uri=$bmc_uri:${port}
       fi
 
