@@ -13,6 +13,7 @@ spec:
       files:
       - contents:
           verification: {}
+          source: 'data:text/plain;charset=utf-8;base64,NTPFILECONTENT'
         filesystem: root
         mode: 0644
         path: /etc/chrony.conf
