@@ -84,9 +84,14 @@ if [[ ! $(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"') =~ ^(centos
 fi
 
 # Check CentOS version
-if [[ $(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.') -ne 7 ]]; then
-  echo "Required CentOS 7 or RHEL 7"
+VER=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
+if [[ ${VER} -ne 7 ]] && [[ ${VER} -ne 8 ]]; then
+  echo "Required CentOS 7 / RHEL 7 / RHEL 8"
   exit 1
+fi
+
+if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null ; then
+    export RHEL8="True"
 fi
 
 # Check d_type support

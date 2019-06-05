@@ -71,12 +71,16 @@ EOF
     virsh pool-autostart default
 fi
 
+if [ "${RHEL8}" = "True" ] ; then
+    ZONE="\nZONE=libvirt"
+fi
+
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Adding an IP address in the libvirt definition for this network results in
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
-        echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+        echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
     fi
     sudo ifdown provisioning || true
     sudo ifup provisioning
@@ -92,7 +96,7 @@ fi
 if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Create the baremetal bridge
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-baremetal ] ; then
-        echo -e "DEVICE=baremetal\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
+        echo -e "DEVICE=baremetal\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
     fi
     sudo ifdown baremetal || true
     sudo ifup baremetal
@@ -121,22 +125,43 @@ fi
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
 for port in 80 5050 6385 ; do
-    if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
-        sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT
+    if [ "${RHEL8}" = "True" ] ; then
+        sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp
+        sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp --permanent
+    else
+        if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
+            sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT
+        fi
     fi
 done
 
 # Allow ipmi to the virtual bmc processes that we just started
-if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT 2>/dev/null ; then
-    sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
+if [ "${RHEL8}" = "True" ] ; then
+    sudo firewall-cmd --zone=libvirt --add-port=6230-6235/udp
+    sudo firewall-cmd --zone=libvirt --add-port=6230-6235/udp --permanent
+else
+    if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT 2>/dev/null ; then
+        sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
+    fi
 fi
 
 #Allow access to dhcp and tftp server for pxeboot
 for port in 67 69 ; do
-    if ! sudo iptables -C INPUT -i provisioning -p udp --dport $port -j ACCEPT 2>/dev/null ; then
-        sudo iptables -I INPUT -i provisioning -p udp --dport $port -j ACCEPT
+    if [ "${RHEL8}" = "True" ] ; then
+        sudo firewall-cmd --zone=libvirt --add-port=${port}/udp
+        sudo firewall-cmd --zone=libvirt --add-port=${port}/udp --permanent
+    else
+        if ! sudo iptables -C INPUT -i provisioning -p udp --dport $port -j ACCEPT 2>/dev/null ; then
+            sudo iptables -I INPUT -i provisioning -p udp --dport $port -j ACCEPT
+        fi
     fi
 done
+
+# mDNS
+if [ "${RHEL8}" = "True" ] ; then
+    sudo firewall-cmd --zone=libvirt --add-port=5353/udp
+    sudo firewall-cmd --zone=libvirt --add-port=5353/udp --permanent
+fi
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
@@ -157,7 +182,7 @@ fi
 # Switch NetworkManager to internal DNS
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
   sudo mkdir -p /etc/NetworkManager/conf.d/
-  sudo crudini --set /etc/NetworkManager/conf.d/dnsmasq.conf main dns dnsmasq
+  sudo $(which crudini) --set /etc/NetworkManager/conf.d/dnsmasq.conf main dns dnsmasq
   if [ "$ADDN_DNS" ] ; then
     echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
   fi
