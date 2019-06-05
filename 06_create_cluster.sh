@@ -70,7 +70,7 @@ create_cluster ocp
 
 # Run the fix_certs.sh script periodically as a workaround for
 # https://github.com/openshift-metalkube/dev-scripts/issues/260
-sudo systemd-run --on-active=30s --on-unit-active=30m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
+sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
 
 # Update kube-system ep/host-etcd used by cluster-kube-apiserver-operator to
 # generate storageConfig.urls
