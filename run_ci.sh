@@ -69,7 +69,7 @@ sudo find /opt/libvirt-images /opt/dev-scripts -mindepth 1 -maxdepth 1 -exec rm 
 sudo mkdir -p $FILECACHEDIR
 for FILE in $FILESTOCACHE ; do
     sudo mkdir -p $(dirname $FILE)
-    [ -f $FILECACHEDIR/$(basename $FILE) ] && sudo cp $FILECACHEDIR/$(basename $FILE) $FILE
+    [ -f $FILECACHEDIR/$(basename $FILE) ] && sudo cp -p $FILECACHEDIR/$(basename $FILE) $FILE
 done
 
 sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/kni-install/libvirt
@@ -115,9 +115,15 @@ timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_
 source common.sh
 FILESTOCACHE="$FILESTOCACHE /opt/dev-scripts/ironic/html/images/$RHCOS_IMAGE_FILENAME_OPENSTACK"
 
-# Populate cache for files it doesn't have
+# Populate cache for files it doesn't have, or that have changed
 for FILE in $FILESTOCACHE ; do
-    if [ ! -f $FILECACHEDIR/$(basename $FILE) ] ; then
-        sudo cp $FILE $FILECACHEDIR/$(basename $FILE)
+    cached=$FILECACHEDIR/$(basename $FILE)
+    current_hash=$(md5sum $FILE | cut -f1 -d' ')
+    if [ -f $cached ]; then
+      cached_hash=$(md5sum $cached | cut -f1 -d' ')
+    fi
+
+    if [ ! -f $cached ] || [ x"$current_hash" != x"$cached_hash" ] ; then
+        sudo cp -p $FILE $cached
     fi
 done
