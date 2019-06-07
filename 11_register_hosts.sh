@@ -8,9 +8,6 @@ source logging.sh
 
 eval "$(go env)"
 
-# Get the latest bits for baremetal-operator
-export BMOPATH="$GOPATH/src/github.com/metalkube/baremetal-operator"
-
 function list_masters() {
     cat $MASTER_NODES_FILE | \
         jq '.nodes[] | {
