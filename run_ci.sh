@@ -83,11 +83,11 @@ sudo mount -o bind /opt/data/yumcache /var/cache/yum
 sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/kni-install/libvirt
 
 # If directories for the containers exists then we build the images (as they are what triggered the job)
-if [ -d "/home/notstack/metalkube-ironic" ] ; then
-    export IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
+if [ -d "/home/notstack/ironic-image" ] ; then
+    export IRONIC_IMAGE=https://github.com/metal3-io/ironic-image
 fi
-if [ -d "/home/notstack/metalkube-ironic-inspector" ] ; then
-    export IRONIC_INSPECTOR_IMAGE=https://github.com/metalkube/metalkube-ironic-inspector
+if [ -d "/home/notstack/ironic-inspector-image" ] ; then
+    export IRONIC_INSPECTOR_IMAGE=https://github.com/metal3-io/ironic-inspector-image
 fi
 
 # If directories for go projects exist, copy them to where go expects them
@@ -101,11 +101,11 @@ for PROJ in facet kni-installer ; do
     # Set origin so that sync_repo_and_patch is rebasing against the correct source
     cd /home/notstack/$PROJ
     git branch -M master
-    git remote set-url origin https://github.com/openshift-metalkube/$PROJ
+    git remote set-url origin https://github.com/openshift-metal3/$PROJ
     cd -
 
-    mkdir -p $HOME/go/src/github.com/openshift-metalkube
-    mv /home/notstack/$PROJ $HOME/go/src/github.com/openshift-metalkube
+    mkdir -p $HOME/go/src/github.com/openshift-metal3
+    mv /home/notstack/$PROJ $HOME/go/src/github.com/openshift-metal3
 done
 
 # Run dev-scripts
