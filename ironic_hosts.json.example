@@ -8,8 +8,8 @@
         "ipmi_username": "root",
         "ipmi_password": "passw0rd",
         "ipmi_address": "1.1.1.1",
-        "deploy_kernel": "http://172.22.0.1/images/ironic-python-agent.kernel",
-        "deploy_ramdisk": "http://172.22.0.1/images/ironic-python-agent.initramfs"
+        "deploy_kernel": "http://172.22.0.2/images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs"
       },
       "ports": [{
         "address": "09:e1:e4:56:44:e5",
@@ -28,8 +28,8 @@
         "ipmi_username": "root",
         "ipmi_password": "passw0rd",
         "ipmi_address": "1.1.1.2",
-        "deploy_kernel": "http://172.22.0.1/images/ironic-python-agent.kernel",
-        "deploy_ramdisk": "http://172.22.0.1/images/ironic-python-agent.initramfs"
+        "deploy_kernel": "http://172.22.0.2/images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs"
       },
       "ports": [{
         "address": "cb:77:ab:53:9c:30",
@@ -48,8 +48,8 @@
         "ipmi_username": "root",
         "ipmi_password": "passw0rd",
         "ipmi_address": "1.1.1.3",
-        "deploy_kernel": "http://172.22.0.1/images/ironic-python-agent.kernel",
-        "deploy_ramdisk": "http://172.22.0.1/images/ironic-python-agent.initramfs"
+        "deploy_kernel": "http://172.22.0.2/images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs"
       },
       "ports": [{
         "address": "8e:af:c4:d0:a3:b4",
@@ -68,8 +68,8 @@
         "ipmi_username": "root",
         "ipmi_password": "passw0rd",
         "ipmi_address": "1.1.1.4",
-        "deploy_kernel": "http://172.22.0.1/images/ironic-python-agent.kernel",
-        "deploy_ramdisk": "http://172.22.0.1/images/ironic-python-agent.initramfs"
+        "deploy_kernel": "http://172.22.0.2/images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs"
       },
       "ports": [{
         "address": "8e:af:c4:d0:a3:b5",
@@ -88,8 +88,8 @@
         "ipmi_username": "root",
         "ipmi_password": "passw0rd",
         "ipmi_address": "1.1.1.5",
-        "deploy_kernel": "http://172.22.0.1/images/ironic-python-agent.kernel",
-        "deploy_ramdisk": "http://172.22.0.1/images/ironic-python-agent.initramfs"
+        "deploy_kernel": "http://172.22.0.2/images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs"
       },
       "ports": [{
         "address": "8e:af:c4:d0:a3:b6",
@@ -108,8 +108,8 @@
         "ipmi_username": "root",
         "ipmi_password": "passw0rd",
         "ipmi_address": "1.1.1.6",
-        "deploy_kernel": "http://172.22.0.1/images/ironic-python-agent.kernel",
-        "deploy_ramdisk": "http://172.22.0.1/images/ironic-python-agent.initramfs"
+        "deploy_kernel": "http://172.22.0.2/images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs"
       },
       "ports": [{
         "address": "8e:af:c4:d0:a3:b7",

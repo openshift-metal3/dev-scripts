@@ -78,11 +78,6 @@ platform:
     dnsVIP: ${DNS_VIP}
     hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)
-    image:
-      source: "http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST"
-      checksum: $(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
-      deployKernel: ${deploy_kernel}
-      deployRamdisk: ${deploy_ramdisk}
 pullSecret: |
   $(echo $PULL_SECRET | jq -c .)
 sshKey: |
