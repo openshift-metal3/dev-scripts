@@ -28,3 +28,10 @@ fi
 if test -f assets/templates/99_worker-chronyd-redhat.yaml ; then
     rm -f assets/templates/99_worker-chronyd-redhat.yaml
 fi
+
+# If the installer fails before terraform completes the destroy bootstrap
+# cleanup doesn't clean up the VM/volumes created..
+for vm in $(sudo virsh list --all --name | grep "^${CLUSTER_NAME}.*bootstrap"); do
+  sudo virsh destroy $vm
+  sudo virsh undefine $vm --remove-all-storage
+done
