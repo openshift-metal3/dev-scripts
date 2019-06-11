@@ -82,6 +82,22 @@ sudo mount -o bind /opt/data/yumcache /var/cache/yum
 # Mount the kni-installer cache directory so we don't download a RHCOS image for each run
 sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/kni-install/libvirt
 
+# Clone the project being tested, "dev-scripts" will have been cloned in the jenkins
+# job definition, for all others we do it here
+ORG=openshift-metal3
+if [[ "${REPO#*/}" =~ ^(baremetal-operator|metal3-dev-env|ironic-inspector-image|ironic-image|metal3-io.github.io|metal3-docs|base-image)$ ]] ; then
+    ORG=metal3-io
+fi
+if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
+    if [ ! -d ${REPO#*/} ] ; then
+        git clone https://github.com/\\\$ORG/${REPO#*/}
+        cd ${REPO#*/}
+        git pull --no-edit  https://github.com/$REPO $BRANCH
+        git log --oneline -10 --graph
+        cd ..
+    fi
+fi
+
 # If directories for the containers exists then we build the images (as they are what triggered the job)
 if [ -d "/home/notstack/ironic-image" ] ; then
     export IRONIC_IMAGE=https://github.com/metal3-io/ironic-image
