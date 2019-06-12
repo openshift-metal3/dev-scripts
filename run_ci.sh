@@ -90,7 +90,7 @@ if [[ "${REPO#*/}" =~ ^(baremetal-operator|metal3-dev-env|ironic-inspector-image
 fi
 if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
     if [ ! -d ${REPO#*/} ] ; then
-        git clone https://github.com/\\\$ORG/${REPO#*/}
+        git clone https://github.com/$ORG/${REPO#*/}
         cd ${REPO#*/}
         git pull --no-edit  https://github.com/$REPO $BRANCH
         git log --oneline -10 --graph
