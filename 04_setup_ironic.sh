@@ -78,3 +78,12 @@ sudo podman run -d --net host --privileged --name ironic --pod ironic-pod \
 # Start Ironic Inspector 
 sudo podman run -d --net host --privileged --name ironic-inspector \
      --pod ironic-pod -v $IRONIC_DATA_DIR:/shared "${IRONIC_INSPECTOR_IMAGE}"
+
+sudo mkdir -p /etc/openstack
+sudo cat > /etc/openstack/clouds.yaml <<EOF
+clouds:
+  metal3:
+    auth_type: none
+    baremetal_endpoint_override: http://127.0.0.1:6385
+    baremetal_introspection_endpoint_override: http://127.0.0.1:5050
+EOF

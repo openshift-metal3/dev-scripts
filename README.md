@@ -113,9 +113,9 @@ master-2   Ready     master    20m       v1.12.4+50c2f2340a
 For manual debugging via openstackclient, you can use the following:
 
 ```
-export OS_TOKEN=fake-token
-export OS_URL=http://localhost:6385/
+export OS_CLOUD=metal3
 openstack baremetal node list
+openstack baremetal introspection list
 ...
 ```
 
