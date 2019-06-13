@@ -153,52 +153,6 @@ EOF
     done
 }
 
-function patch_ep_host_etcd() {
-    local host_etcd_ep
-    local hostnames
-    local address
-
-    declare -a etcd_hosts
-    declare -r domain="$1"
-    declare -r srv_record="_etcd-server-ssl._tcp.$domain"
-    declare -r api_domain="api.$domain"
-    host_etcd_ep=$(oc get ep -n openshift-etcd host-etcd -o json | jq -r '{"subsets": .subsets}')
-    echo -n "Looking for etcd records"
-    while ! host -t SRV "$srv_record" "$api_domain" >/dev/null 2>&1; do
-        echo -n "."
-        sleep 1
-    done
-    echo " Found!"
-
-    mapfile -t hostnames < <(dig +noall +answer -t SRV "$srv_record" "@$api_domain" | awk '{print substr($NF, 1, length($NF)-1)}')
-
-    for hostname in "${hostnames[@]}"; do
-        address=$(dig +noall +answer "$hostname" "@$api_domain" | awk '$4 == "A" {print $NF}')
-        etcd_hosts+=($address\ $hostname)
-    done
-    patch=$(python -c "$(cat << 'EOF'
-import json
-import sys
-import yaml
-
-patch = json.loads(sys.argv[1])
-addresses = []
-for entry in sys.argv[2:]:
-    ip, hostname = entry.split()
-
-    if '.' in hostname:
-        hostname = hostname.split('.')[0]
-    addresses.append({'ip': ip, 'hostname': hostname})
-
-# remove old address entries
-del patch['subsets'][0]['addresses']
-patch['subsets'][0]['addresses'] = addresses
-print(yaml.safe_dump(patch))
-EOF
-    )" "$host_etcd_ep" "${etcd_hosts[@]}")
-    oc -n openshift-etcd patch ep/host-etcd --patch "$patch"
-}
-
 function sync_repo_and_patch {
     REPO_PATH=${REPO_PATH:-$HOME}
     DEST="${REPO_PATH}/$1"
