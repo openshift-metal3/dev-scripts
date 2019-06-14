@@ -65,12 +65,12 @@ if [ $(sudo podman ps | grep -w -e "ironic$" -e "ironic-inspector$" -e "dnsmasq"
     exit 1
 fi
 
-# Call kni-installer to deploy the bootstrap node and masters
-create_cluster ocp
-
 # Run the fix_certs.sh script periodically as a workaround for
 # https://github.com/openshift-metalkube/dev-scripts/issues/260
 sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
+
+# Call kni-installer to deploy the bootstrap node and masters
+create_cluster ocp
 
 echo "Master nodes up, you can ssh to the following IPs with core@<IP>"
 sudo virsh net-dhcp-leases baremetal
