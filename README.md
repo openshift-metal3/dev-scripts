@@ -25,6 +25,7 @@ canonical way to set up a metalkube cluster.
 - ideally on a bare metal host
 - run as a user with passwordless sudo access
 - get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret
+- hostnames for masters and workers must be in the format XX-master-# (e.g. openshift-master-0), or XX-worker-# (e.g. openshift-worker-0)
 
 # Instructions
 
