@@ -89,13 +89,14 @@ if [[ "${REPO#*/}" =~ ^(baremetal-operator|metal3-dev-env|ironic-inspector-image
     ORG=metal3-io
 fi
 if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
+    pushd ~
     if [ ! -d ${REPO#*/} ] ; then
         git clone https://github.com/$ORG/${REPO#*/}
         cd ${REPO#*/}
         git pull --no-edit  https://github.com/$REPO $BRANCH
         git log --oneline -10 --graph
-        cd ..
     fi
+    popd
 fi
 
 # If directories for the containers exists then we build the images (as they are what triggered the job)
