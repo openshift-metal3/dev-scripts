@@ -73,6 +73,7 @@ sudo podman run -d --net host --privileged --name mariadb --pod ironic-pod \
 
 sudo podman run -d --net host --privileged --name ironic --pod ironic-pod \
      --env MARIADB_PASSWORD=$mariadb_password \
+     --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE}
 
 # Start Ironic Inspector 
