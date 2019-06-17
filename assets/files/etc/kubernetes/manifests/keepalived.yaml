@@ -94,7 +94,7 @@ spec:
   - name: keepalived
     securityContext:
       privileged: true
-    image: quay.io/celebdor/keepalived:latest
+    image: registry.svc.ci.openshift.org/ocp/4.2@sha256:daa9f390c43563b67546cd5b4cf3d8e351c3530f8091f523a73061fa441e8818
     command:
     - /usr/sbin/keepalived
     args:

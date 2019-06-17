@@ -1,17 +1,22 @@
+global_defs {
+    enable_script_security
+    script_user root
+}
+
 vrrp_script chk_ocp {
-    script "curl -o /dev/null -kLs https://0:6443/readyz"
+    script "/usr/bin/curl -o /dev/null -kLs https://0:6443/readyz"
     interval 1
     weight 50
 }
 
 vrrp_script chk_dns {
-    script "host -t SRV _etcd-server-ssl._tcp.${DOMAIN} localhost"
+    script "/usr/bin/host -t SRV _etcd-server-ssl._tcp.${DOMAIN} localhost"
     interval 1
     weight 50
 }
 
 vrrp_script chk_ingress {
-    script "curl -o /dev/null -kLs https://0:1936/healthz"
+    script "/usr/bin/curl -o /dev/null -kLs https://0:1936/healthz"
     interval 1
     weight 50
 }
