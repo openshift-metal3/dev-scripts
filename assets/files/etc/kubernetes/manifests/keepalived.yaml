@@ -53,7 +53,7 @@ spec:
       IFACE_CIDRS="$(ip addr show | grep -v "scope host" | grep -Po 'inet \K[\d.]+/[\d.]+' | xargs)"
       SUBNET_CIDR="$(/usr/local/bin/get_vip_subnet_cidr "$API_VIP" "$IFACE_CIDRS")"
       NET_MASK="$(echo $SUBNET_CIDR | cut -d "/" -f 2)"
-      INTERFACE="$(ip -o addr show to "$SUBNET_CIDR" | awk '{print $2}')"
+      INTERFACE="$(ip -o addr show to "$SUBNET_CIDR" | awk '{print $2;exit}')"
       DNS_VIP="$(dig +noall +answer "ns1.${DOMAIN}" | awk '{print $NF}')"
       INGRESS_VIP="$(dig +noall +answer "test.apps.${DOMAIN}" | awk '{print $NF}')"
 
