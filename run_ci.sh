@@ -113,16 +113,19 @@ for PROJ in facet kni-installer ; do
 
     if [ "$PROJ" == "kni-installer" ]; then
       export KNI_INSTALL_FROM_GIT=true
+      GITHUB_ORGANIZATION=openshift-metalkube
+    else
+      GITHUB_ORGANIZATION=openshift-metal3
     fi
 
     # Set origin so that sync_repo_and_patch is rebasing against the correct source
     cd /home/notstack/$PROJ
     git branch -M master
-    git remote set-url origin https://github.com/openshift-metal3/$PROJ
+    git remote set-url origin https://github.com/$GITHUB_ORGANIZATION/$PROJ
     cd -
 
-    mkdir -p $HOME/go/src/github.com/openshift-metal3
-    mv /home/notstack/$PROJ $HOME/go/src/github.com/openshift-metal3
+    mkdir -p $HOME/go/src/github.com/$GITHUB_ORGANIZATION
+    mv /home/notstack/$PROJ $HOME/go/src/github.com/$GITHUB_ORGANIZATION
 done
 
 # Run dev-scripts
