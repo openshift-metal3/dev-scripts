@@ -40,13 +40,13 @@ sudo podman pod create -n ironic-pod
 
 # We start only the httpd and *downloader containers so that we can provide
 # cached images to the bootstrap VM
-sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
+sudo podman run -d --net host --name httpd --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
-sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
+sudo podman run -d --net host --name ipa-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
-sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
+sudo podman run -d --net host --name coreos-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
 
 # Wait for the downloader containers to finish, if they are updating an existing cache
