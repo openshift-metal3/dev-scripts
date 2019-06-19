@@ -60,10 +60,12 @@ fi
 # Display the "/" filesystem mounted incase we need artifacts from it after the job
 mount | grep root-
 
+
+IMAGESDIR=/opt/dev-scripts/ironic/html/images
 # The CI host has a "/" filesystem that reset for each job, the only partition
 # that persist is /opt (and /boot), we can use this to store data between jobs
 FILECACHEDIR=/opt/data/filecache
-FILESTOCACHE="/opt/dev-scripts/ironic/html/images/ironic-python-agent.initramfs /opt/dev-scripts/ironic/html/images/ironic-python-agent.kernel"
+FILESTOCACHE="$IMAGESDIR/ironic-python-agent.tar $IMAGESDIR/ironic-python-agent.tar.headers $IMAGESDIR/rhcos-ootpa-latest.qcow2 $IMAGESDIR/rhcos-ootpa-latest.qcow2.headers $IMAGESDIR/rhcos-ootpa-latest.qcow2.md5sum"
 
 # Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
 # to prevent each snapshot taking up too much space we keep some of the larger files
@@ -76,6 +78,19 @@ for FILE in $FILESTOCACHE ; do
     sudo mkdir -p $(dirname $FILE)
     [ -f $FILECACHEDIR/$(basename $FILE) ] && sudo cp -p $FILECACHEDIR/$(basename $FILE) $FILE
 done
+
+if [ -e "$IMAGESDIR/ironic-python-agent.tar.headers" ] ; then
+    ETAG=$(awk '/ETag:/ {print $2}' $IMAGESDIR/ironic-python-agent.tar.headers | tr -d "\"\r")
+    sudo mkdir -p $IMAGESDIR/ironic-python-agent-$ETAG
+    pushd $IMAGESDIR/ironic-python-agent-$ETAG
+    sudo mv ../ironic-python-agent.tar ../ironic-python-agent.tar.headers .
+    sudo tar -xf ironic-python-agent.tar
+    cd ..
+    sudo ln -sf ironic-python-agent-$ETAG/ironic-python-agent.tar.headers ironic-python-agent.tar.headers
+    sudo ln -sf ironic-python-agent-$ETAG/ironic-python-agent.initramfs ironic-python-agent.initramfs
+    sudo ln -sf ironic-python-agent-$ETAG/ironic-python-agent.kernel ironic-python-agent.kernel
+    popd
+fi
 
 sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
 sudo chown -R notstack /opt/dev-scripts/ironic /opt/data/installer-cache /home/notstack/.cache
@@ -156,6 +171,10 @@ wait_for_worker() {
     oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
 }
 wait_for_worker worker-0
+
+# The ipa downloader image doesn't create this link but we need it for the caching logic
+sudo ln -s $(dirname $(realpath $IMAGESDIR/ironic-python-agent.tar.headers)/ironic-python-agent.tar) \
+           $IMAGESDIR/ironic-python-agent.tar
 
 # Populate cache for files it doesn't have, or that have changed
 for FILE in $FILESTOCACHE ; do
