@@ -5,13 +5,10 @@ set -ex
 source logging.sh
 source common.sh
 
-# Get the various images
-source get_images.sh
-
 # Either pull or build the ironic images
 # To build the IRONIC image set
 # IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
-for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE ; do
+for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE IPA_DOWNLOADER_IMAGE COREOS_DOWNLOADER_IMAGE ; do
     IMAGE=${!IMAGE_VAR}
     # Is it a git repo?
     if [[ "$IMAGE" =~ "://" ]] ; then
@@ -27,24 +24,7 @@ for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE ; do
     fi
 done
 
-pushd $IRONIC_DATA_DIR/html/images
-
-# Compress the qcow2 image so that it can be downloaded into
-# a smaller /tmp by IPA
-if [ ! -e "$RHCOS_IMAGE_FILENAME_COMPRESSED" ] ; then
-    qemu-img convert -O qcow2 -c "$RHCOS_IMAGE_FILENAME_OPENSTACK" "$RHCOS_IMAGE_FILENAME_COMPRESSED"
-fi
-
-if [ ! -e "${RHCOS_IMAGE_FILENAME_COMPRESSED}.md5sum" -o \
-     "$RHCOS_IMAGE_FILENAME_COMPRESSED" -nt "$RHCOS_IMAGE_FILENAME_COMPRESSED.md5sum" ] ; then
-    md5sum "$RHCOS_IMAGE_FILENAME_COMPRESSED" | cut -f 1 -d " " > "$RHCOS_IMAGE_FILENAME_COMPRESSED.md5sum"
-fi
-
-ln -sf "$RHCOS_IMAGE_FILENAME_COMPRESSED" "$RHCOS_IMAGE_FILENAME_LATEST"
-ln -sf "$RHCOS_IMAGE_FILENAME_COMPRESSED.md5sum" "$RHCOS_IMAGE_FILENAME_LATEST.md5sum"
-popd
-
-for name in ironic ironic-inspector dnsmasq httpd mariadb; do
+for name in ironic ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -76,6 +56,15 @@ sudo podman run -d --net host --privileged --name ironic --pod ironic-pod \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE}
 
+sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
+     -v $IRONIC_DATA_DIR:/shared ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
+
+sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
+     -v $IRONIC_DATA_DIR:/shared ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
+
 # Start Ironic Inspector 
 sudo podman run -d --net host --privileged --name ironic-inspector \
      --pod ironic-pod -v $IRONIC_DATA_DIR:/shared "${IRONIC_INSPECTOR_IMAGE}"
+
+# Wait for images to be downloaded/ready
+while ! curl --fail http://localhost:80/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1 ; done
