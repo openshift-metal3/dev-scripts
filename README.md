@@ -34,6 +34,12 @@ canonical way to set up a metalkube cluster.
 Make a copy of the `config_example.sh` to `config_$USER.sh`, and set the
 `PULL_SECRET` variable to the secret obtained from cloud.openshift.com.
 
+There are variable defaults set in both the `common.sh` and the `ocp_install_env.sh`
+scripts, which may be important to override for your particular environment. You can
+set override values in your `config_$USER.sh` script.
+
+### Baremetal
+
 For baremetal test setups where you don't require the VM fake-baremetal nodes,
 you may also set `NODES_FILE` to reference a manually created json file with
 the node details (see [ironic_hosts.json.example](ironic_hosts.json.example) -
@@ -41,6 +47,27 @@ make sure the ironic nodes names follow the openshift-master-* and openshift-wor
 format), and `NODES_PLATFORM` which can be set to e.g "baremetal" to disable the libvirt
 master/worker node setup. See [common.sh](common.sh) for other variables that
 can be overridden.
+
+Important values to consider for override in your `config_$USER.sh` script:
+```bash
+# Deploy only the masters and no workers
+NUM_WORKERS=0
+# Indicate that this is a baremetal deployment
+NODES_PLATFORM="baremetal"
+# Path to your ironic_hosts.json file per the above
+NODES_FILE="/root/dev-scripts/ironic_hosts.json"
+# Set to the interface used by the baremetal bridge
+INT_IF="em2"
+# Set to the interface used by the provisioning bridge
+PRO_IF="em1"
+# Don't allow the baremetal bridge to be managed by libvirt
+MANAGE_BR_BRIDGE="n"
+# Set your valid DNS domain
+BASE_DOMAIN=your.valid.domain.com
+# Set your valid DNS cluster name
+# (will be used as ${CLUSTER_NAME}.${BASE_DOMAIN}
+CLUSTER_NAME=clustername
+```
 
 ## Installation
 
