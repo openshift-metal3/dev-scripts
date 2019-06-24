@@ -22,6 +22,11 @@ case "$STATUS" in
 
             logger -s "NM dns-vip-prepender-worker: Looking for 'search $CLUSTER_DOMAIN' in /etc/resolv.conf to place 'nameserver $DNS_VIP'"
             sed -i "/^search .*$/a nameserver $DNS_VIP" /etc/resolv.conf
+            logger -s -f /etc/resolv.conf
+            if ! grep -q $DNS_VIP /etc/resolv.conf; then
+                logger -s "NM dns-vip-prepender-worker: Failed to add DNS VIP to resolv.conf"
+                exit 1
+            fi
         fi
     fi
     ;;
