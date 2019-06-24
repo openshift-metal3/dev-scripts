@@ -122,12 +122,12 @@ for PROJ in facet kni-installer ; do
 
       # Run some of openshift CI checks
       pushd .
-      cd $PROJ
-      ./hack/go-fmt.sh
-      ./hack/go-lint.sh
-      ./hack/shellcheck.sh
-      ./hack/tf-fmt.sh
-      ./hack/tf-lint.sh
+      cd /home/notstack/$PROJ
+      sudo ./hack/go-fmt.sh
+      sudo ./hack/go-lint.sh
+      sudo ./hack/shellcheck.sh
+      sudo ./hack/tf-fmt.sh
+      sudo ./hack/tf-lint.sh
       popd
     else
       GITHUB_ORGANIZATION=openshift-metal3
