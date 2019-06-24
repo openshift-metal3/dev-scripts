@@ -121,7 +121,7 @@ for PROJ in facet kni-installer ; do
       GITHUB_ORGANIZATION=openshift-metalkube
 
       # Run some of openshift CI checks
-      pushd
+      pushd .
       cd $PROJ
       ./hack/go-fmt.sh
       ./hack/go-lint.sh
