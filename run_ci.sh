@@ -93,6 +93,15 @@ if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
     popd
 fi
 
+# Install terraform
+if [ ! -f /usr/local/bin/terraform ]; then
+    sudo yum install -y unzip
+    curl -O https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip
+    unzip terraform_*.zip
+    sudo install terraform /usr/local/bin
+    rm -f terraform_*.zip terraform
+fi
+
 # If directories for the containers exists then we build the images (as they are what triggered the job)
 if [ -d "/home/notstack/ironic-image" ] ; then
     export IRONIC_IMAGE=https://github.com/metal3-io/ironic-image
@@ -101,13 +110,25 @@ if [ -d "/home/notstack/ironic-inspector-image" ] ; then
     export IRONIC_INSPECTOR_IMAGE=https://github.com/metal3-io/ironic-inspector-image
 fi
 
-# If directories for go projects exist, copy them to where go expects them
+# Project-specific actions. If these directories exist in $HOME, move
+# them to the correct $GOPATH locations. If installer, run some of
+# their CI checks.
 for PROJ in facet kni-installer ; do
     [ ! -d /home/notstack/$PROJ ] && continue
 
     if [ "$PROJ" == "kni-installer" ]; then
       export KNI_INSTALL_FROM_GIT=true
       GITHUB_ORGANIZATION=openshift-metalkube
+
+      # Run some of openshift CI checks
+      pushd
+      cd $PROJ
+      ./hack/go-fmt.sh
+      ./hack/go-lint.sh
+      ./hack/shellcheck.sh
+      ./hack/tf-fmt.sh
+      ./hack/tf-lint.sh
+      popd
     else
       GITHUB_ORGANIZATION=openshift-metal3
     fi
