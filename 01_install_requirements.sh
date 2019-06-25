@@ -152,6 +152,7 @@ else
       python-openstackclient \
       python-virtualbmc \
       qemu-kvm \
+      redhat-lsb-core \
       virt-install \
       unzip \
       yarn
