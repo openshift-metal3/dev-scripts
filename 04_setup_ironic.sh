@@ -24,7 +24,7 @@ for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE IPA_DOWNLOADER_IMAGE COREOS
     fi
 done
 
-for name in ironic ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
+for name in ironic ironic-api ironic-conductor ironic-exporter ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -51,9 +51,19 @@ sudo podman run -d --net host --privileged --name mariadb --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runmariadb \
      --env MARIADB_PASSWORD=$mariadb_password ${IRONIC_IMAGE}
 
-sudo podman run -d --net host --privileged --name ironic --pod ironic-pod \
+sudo podman run -d --net host --privileged --name ironic-conductor --pod ironic-pod \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
+     --entrypoint /bin/runironic-conductor \
+     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE}
+
+sudo podman run -d --net host --privileged --name ironic-api --pod ironic-pod \
+     --env MARIADB_PASSWORD=$mariadb_password \
+     --entrypoint /bin/runironic-api \
+     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE}
+
+sudo podman run -d --net host --privileged --name ironic-exporter --pod ironic-pod \
+     --entrypoint /bin/runironic-exporter \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE}
 
 sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
