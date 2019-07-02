@@ -128,6 +128,7 @@ for PROJ in facet kni-installer ; do
       sudo ./hack/shellcheck.sh
       sudo ./hack/tf-fmt.sh
       sudo ./hack/tf-lint.sh
+      sudo ./hack/go-test.sh
       popd
     else
       GITHUB_ORGANIZATION=openshift-metal3
