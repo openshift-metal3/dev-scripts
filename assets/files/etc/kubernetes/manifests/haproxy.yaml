@@ -25,7 +25,7 @@ spec:
       path: "/"
   initContainers:
   - name: clusterrc-generation
-    image: quay.io/openshift-metalkube/kubeconfig-extractor:latest
+    image: quay.io/openshift-metal3/kubeconfig-extractor:latest
     command:
     - "/usr/bin/kubeconfig-extractor"
     args:
