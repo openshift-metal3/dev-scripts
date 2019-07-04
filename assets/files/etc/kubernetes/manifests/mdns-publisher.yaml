@@ -23,7 +23,7 @@ spec:
     empty-dir: {}
   initContainers:
   - name: clusterrc-generation
-    image: quay.io/openshift-metalkube/kubeconfig-extractor:latest
+    image: quay.io/openshift-metal3/kubeconfig-extractor:latest
     command:
     - "/usr/bin/kubeconfig-extractor"
     args:
@@ -82,7 +82,7 @@ spec:
     imagePullPolicy: IfNotPresent
   containers:
   - name: mdns-publisher
-    image: quay.io/openshift-metalkube/mdns-publisher:latest
+    image: quay.io/openshift-metal3/mdns-publisher:latest
     args:
     - "--debug"
     resources:
