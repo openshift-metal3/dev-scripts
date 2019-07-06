@@ -47,7 +47,7 @@ export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"1"}
 export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 
-export RHCOS_INSTALLER_IMAGE_URL="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/ootpa/420.8.20190624.0/"
+export RHCOS_INSTALLER_IMAGE_URL="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/420.8.20190624.0/"
 export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-${RHCOS_INSTALLER_IMAGE_URL}}
 export RHCOS_IMAGE_FILENAME_LATEST="rhcos-ootpa-latest.qcow2"
 
