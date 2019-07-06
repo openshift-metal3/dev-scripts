@@ -14,7 +14,7 @@ export EXTERNAL_SUBNET="192.168.111.0/24"
 # The release we default to here is pinned and known to work with our current
 # version of kni-installer.
 #
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.ci-2019-07-03-145946-kni.1}"
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.ci-2019-07-03-145946-kni.2}"
 
 function extract_installer() {
     local release_image
