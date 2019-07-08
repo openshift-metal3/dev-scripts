@@ -32,15 +32,15 @@ function make_bm_masters() {
            -address "$address" \
            -password "$password" \
            -user "$user" \
-           -machine-namespace openshift-machine-api \
-           -machine  "$(echo $name | sed s/openshift/${CLUSTER_NAME}/)" \
+           -consumer-namespace openshift-machine-api \
+           -consumer  "$(echo $name | sed s/openshift/${CLUSTER_NAME}/)" \
            -boot-mac "$mac" \
            "$name"
     done
 }
 
 function list_workers() {
-    # Includes -machine and -machine-namespace
+    # Includes -consumer and -consumer-namespace
     cat $NODES_FILE | \
         jq '.nodes[] | select(.name | contains("worker")) | {
            name,
@@ -57,10 +57,10 @@ function list_workers() {
        | sed 's/"//g'
 }
 
-# Register the workers without a machine reference so they are
+# Register the workers without a consumer reference so they are
 # available for provisioning.
 function make_bm_workers() {
-    # Does not include -machine or -machine-namespace
+    # Does not include -consumer or -consumer-namespace
     while read name address user password mac; do
         go run $SCRIPTDIR/make-bm-worker/main.go \
            -address "$address" \
