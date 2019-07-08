@@ -43,25 +43,27 @@ spec:
   image:
     url: "{{ .ImageSourceURL }}"
     checksum: "{{ .Checksum }}"
-{{ end -}}{{ if .Consumer }}
+{{ end -}}{{ if .Machine }}
   consumerRef:
-    name: {{ .Consumer }}
-    namespace: {{ .ConsumerNamespace }}
+    name: {{ .Machine }}
+    kind: Machine
+    apiVersion: machine.openshift.io/v1beta1
+    namespace: {{ .MachineNamespace }}
 {{ end }}
 `
 
 // TemplateArgs holds the arguments to pass to the template.
 type TemplateArgs struct {
-	Name              string
-	BMCAddress        string
-	MAC               string
-	EncodedUsername   string
-	EncodedPassword   string
-	WithImage         bool
-	Checksum          string
-	ImageSourceURL    string
-	Consumer          string
-	ConsumerNamespace string
+	Name             string
+	BMCAddress       string
+	MAC              string
+	EncodedUsername  string
+	EncodedPassword  string
+	WithImage        bool
+	Checksum         string
+	ImageSourceURL   string
+	Machine          string
+	MachineNamespace string
 }
 
 func encodeToSecret(input string) string {
@@ -74,10 +76,10 @@ func main() {
 	var bmcAddress = flag.String("address", "", "address URL for BMC")
 	var verbose = flag.Bool("v", false, "turn on verbose output")
 	var withImage = flag.Bool("image", false, "include the image settings to trigger deployment")
-	var consumer = flag.String(
-		"consumer", "", "specify name of a related, existing, consumer to link")
-	var consumerNamespace = flag.String(
-		"consumer-namespace", "", "specify namespace of a related, existing, consumer to link")
+	var machine = flag.String(
+		"machine", "", "specify name of a related, existing, Machine to link")
+	var machineNamespace = flag.String(
+		"machine-namespace", "", "specify namespace of a related, existing, Machine to link")
 	var bootMAC = flag.String(
 		"boot-mac", "", "specify boot MAC address of host")
 
@@ -102,16 +104,16 @@ func main() {
 	}
 
 	args := TemplateArgs{
-		Name:              strings.Replace(hostName, "_", "-", -1),
-		BMCAddress:        *bmcAddress,
-		MAC:               *bootMAC,
-		EncodedUsername:   encodeToSecret(*username),
-		EncodedPassword:   encodeToSecret(*password),
-		WithImage:         *withImage,
-		Checksum:          instanceImageChecksumURL,
-		ImageSourceURL:    instanceImageSource,
-		Consumer:          strings.TrimSpace(*consumer),
-		ConsumerNamespace: strings.TrimSpace(*consumerNamespace),
+		Name:             strings.Replace(hostName, "_", "-", -1),
+		BMCAddress:       *bmcAddress,
+		MAC:              *bootMAC,
+		EncodedUsername:  encodeToSecret(*username),
+		EncodedPassword:  encodeToSecret(*password),
+		WithImage:        *withImage,
+		Checksum:         instanceImageChecksumURL,
+		ImageSourceURL:   instanceImageSource,
+		Machine:          strings.TrimSpace(*machine),
+		MachineNamespace: strings.TrimSpace(*machineNamespace),
 	}
 	if *verbose {
 		fmt.Fprintf(os.Stderr, "%v", args)
