@@ -74,7 +74,6 @@ controlPlane:
     baremetal: {}
 platform:
   baremetal:
-    api_vip: ${API_VIP}
     hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)
     image:
