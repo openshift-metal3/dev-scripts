@@ -78,15 +78,11 @@ sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/kni-install/l
 
 # Clone the project being tested, "dev-scripts" will have been cloned in the jenkins
 # job definition, for all others we do it here
-ORG=openshift-metal3
-if [[ "${REPO#*/}" =~ ^(baremetal-operator|metal3-dev-env|ironic-inspector-image|ironic-image|metal3-io.github.io|metal3-docs|base-image)$ ]] ; then
-    ORG=metal3-io
-fi
 if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
     pushd ~
-    if [ ! -d ${REPO#*/} ] ; then
-        git clone https://github.com/$ORG/${REPO#*/}
-        cd ${REPO#*/}
+    if [ ! -d ${BASE_REPO#*/} ] ; then
+        git clone https://github.com/$BASE_REPO
+        cd ${BASE_REPO#*/}
         git pull --no-edit  https://github.com/$REPO $BRANCH
         git log --oneline -10 --graph
     fi
