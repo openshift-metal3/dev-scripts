@@ -14,9 +14,11 @@ function get_backends {
     declare -r domain="$1"
     declare -r api_port="$2"
     local ip
+    local members_ips=()
 
     for item in $(etcd_members "$domain"); do
-        if ip="$(first_a_addr "$item")" && [[ -n "$ip" ]]; then
+        if ip="$(first_a_addr "$item")" && [[ -n "$ip" ]] && [[ ! " ${members_ips[@]} " =~ " ${ip} " ]]; then
+            members_ips+=("$ip")
             echo "   server $item ${ip}:$api_port weight 1 verify none check check-ssl inter 3s fall 3 rise 3"
         fi
     done
