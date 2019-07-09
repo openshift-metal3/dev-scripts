@@ -1,0 +1,288 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metal3-baremetal-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: metal3-baremetal-operator
+  template:
+    metadata:
+      labels:
+        name: metal3-baremetal-operator
+    spec:
+      serviceAccountName: metal3-baremetal-operator
+      hostNetwork: true
+      initContainers:
+        - name: ipa-downloader
+          image: quay.io/metal3-io/ironic-ipa-downloader:master
+          command:
+            - /usr/local/bin/get-resource.sh
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: CACHEURL
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: cache_url
+        - name: rhcos-downloader
+          image: quay.io/openshift-metal3/rhcos-downloader:master
+          command:
+            - /usr/local/bin/get-resource.sh
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: RHCOS_IMAGE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: rhcos_image_url
+            - name: CACHEURL
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: cache_url
+        - name: static-ip-set
+          image: quay.io/metal3-io/static-ip-manager:latest
+          command:
+            - /set-static-ip
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          env:
+            - name: PROVISIONING_IP
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_ip
+            - name: PROVISIONING_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_interface
+      containers:
+        - name: baremetal-operator
+          image: quay.io/metal3-io/baremetal-operator:master
+          ports:
+            - containerPort: 60000
+              name: metrics
+          command:
+            - /baremetal-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "baremetal-operator"
+            - name: DEPLOY_KERNEL_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: deploy_kernel_url
+            - name: DEPLOY_RAMDISK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: deploy_ramdisk_url
+            - name: IRONIC_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: ironic_endpoint
+            - name: IRONIC_INSPECTOR_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: ironic_inspector_endpoint
+        - name: ironic-dnsmasq
+          image: quay.io/metal3-io/ironic:master
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          command:
+            - /bin/rundnsmasq
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: HTTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: http_port
+            - name: PROVISIONING_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_interface
+            - name: DHCP_RANGE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: dhcp_range
+        - name: mariadb
+          image: quay.io/metal3-io/ironic:master
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          command:
+            - /bin/runmariadb
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-password
+                  key: password
+        - name: ironic-httpd
+          image: quay.io/metal3-io/ironic:master
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          command:
+            - /bin/runhttpd
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: HTTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: http_port
+            - name: PROVISIONING_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_interface
+        - name: ironic-conductor
+          image: quay.io/metal3-io/ironic:master
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          command:
+            - /bin/runironic-conductor
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-password
+                  key: password
+            - name: HTTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: http_port
+            - name: PROVISIONING_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_interface
+        - name: ironic-api
+          image: quay.io/metal3-io/ironic:master
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          command:
+            - /bin/runironic-api
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-password
+                  key: password
+            - name: HTTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: http_port
+            - name: PROVISIONING_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_interface
+        - name: ironic-exporter
+          image: quay.io/metal3-io/ironic:master
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          command:
+            - /bin/runironic-exporter
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-password
+                  key: password
+            - name: HTTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: http_port
+            - name: PROVISIONING_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_interface
+        - name: ironic-inspector
+          image: quay.io/metal3-io/ironic-inspector:master
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /shared
+              name: ironic-data-volume
+          env:
+            - name: PROVISIONING_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_interface
+        - name: static-ip-refresh
+          image: quay.io/metal3-io/static-ip-manager:latest
+          command:
+            - /refresh-static-ip
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          env:
+            - name: PROVISIONING_IP
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_ip
+            - name: PROVISIONING_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: ironic-bmo-configmap
+                  key: provisioning_interface
+      volumes:
+        - name: ironic-data-volume
+          emptyDir: {}

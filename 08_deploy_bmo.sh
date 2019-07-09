@@ -3,7 +3,7 @@
 set -ex
 
 source logging.sh
-#source common.sh
+source common.sh
 eval "$(go env)"
 
 # Get the latest bits for baremetal-operator
@@ -12,6 +12,9 @@ export BMOPATH="$GOPATH/src/github.com/metal3-io/baremetal-operator"
 # Make a local copy of the baremetal-operator code to make changes
 cp -r $BMOPATH/deploy ocp/.
 sed -i 's/namespace: .*/namespace: openshift-machine-api/g' ocp/deploy/role_binding.yaml
+cp $SCRIPTDIR/operator_ironic.yaml ocp/deploy
+cp $SCRIPTDIR/ironic_bmo_configmap.yaml ocp/deploy
+sed -i "s#__RHCOS_IMAGE_URL__#${RHCOS_IMAGE_URL}#" ocp/deploy/ironic_bmo_configmap.yaml
 
 # Kill the dnsmasq container on the host since it is performing DHCP and doesn't
 # allow our pod in openshift to take over.
