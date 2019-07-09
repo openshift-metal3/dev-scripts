@@ -37,7 +37,7 @@ oc --config ocp/auth/kubeconfig apply -f ocp/deploy/operator_ironic.yaml -n open
 POD_NAME=$(oc --config ocp/auth/kubeconfig get pods -n openshift-machine-api | grep metal3-baremetal-operator | cut -f 1 -d ' ')
 
 # Make sure our pod is running.
-echo "Waiting for baremetal-operator pod to become ready" | lolcat
+echo "Waiting for baremetal-operator pod to become ready"
 while [ $(oc --config ocp/auth/kubeconfig get pod $POD_NAME -n openshift-machine-api -o json | jq .status.phase) != '"Running"' ]
 do
     sleep 5
