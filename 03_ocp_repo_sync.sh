@@ -31,7 +31,6 @@ sync_repo_and_patch github.com/operator-framework/operator-sdk https://github.co
 # Build operator-sdk
 pushd "${GOPATH}/src/github.com/operator-framework/operator-sdk"
 git checkout master
-make dep
 make install
 popd
 
