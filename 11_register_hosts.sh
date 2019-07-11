@@ -35,6 +35,7 @@ function make_bm_masters() {
            -machine-namespace openshift-machine-api \
            -machine  "$(echo $name | sed s/openshift/${CLUSTER_NAME}/)" \
            -boot-mac "$mac" \
+           -externally-provisioned \
            "$name"
     done
 }

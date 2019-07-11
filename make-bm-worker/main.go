@@ -49,21 +49,24 @@ spec:
     kind: Machine
     apiVersion: machine.openshift.io/v1beta1
     namespace: {{ .MachineNamespace }}
-{{ end }}
+{{ end }}{{ if .ExternallyProvisioned }}
+  externallyProvisioned: true
+{{ end}}
 `
 
 // TemplateArgs holds the arguments to pass to the template.
 type TemplateArgs struct {
-	Name             string
-	BMCAddress       string
-	MAC              string
-	EncodedUsername  string
-	EncodedPassword  string
-	WithImage        bool
-	Checksum         string
-	ImageSourceURL   string
-	Machine          string
-	MachineNamespace string
+	Name                  string
+	BMCAddress            string
+	MAC                   string
+	EncodedUsername       string
+	EncodedPassword       string
+	WithImage             bool
+	Checksum              string
+	ImageSourceURL        string
+	Machine               string
+	MachineNamespace      string
+	ExternallyProvisioned bool
 }
 
 func encodeToSecret(input string) string {
@@ -82,6 +85,8 @@ func main() {
 		"machine-namespace", "", "specify namespace of a related, existing, Machine to link")
 	var bootMAC = flag.String(
 		"boot-mac", "", "specify boot MAC address of host")
+	var externallyProvisioned = flag.Bool("externally-provisioned", false,
+		"the host was externally provisioned (typically a master node)")
 
 	flag.Parse()
 
@@ -104,16 +109,17 @@ func main() {
 	}
 
 	args := TemplateArgs{
-		Name:             strings.Replace(hostName, "_", "-", -1),
-		BMCAddress:       *bmcAddress,
-		MAC:              *bootMAC,
-		EncodedUsername:  encodeToSecret(*username),
-		EncodedPassword:  encodeToSecret(*password),
-		WithImage:        *withImage,
-		Checksum:         instanceImageChecksumURL,
-		ImageSourceURL:   instanceImageSource,
-		Machine:          strings.TrimSpace(*machine),
-		MachineNamespace: strings.TrimSpace(*machineNamespace),
+		Name:                  strings.Replace(hostName, "_", "-", -1),
+		BMCAddress:            *bmcAddress,
+		MAC:                   *bootMAC,
+		EncodedUsername:       encodeToSecret(*username),
+		EncodedPassword:       encodeToSecret(*password),
+		WithImage:             *withImage,
+		Checksum:              instanceImageChecksumURL,
+		ImageSourceURL:        instanceImageSource,
+		Machine:               strings.TrimSpace(*machine),
+		MachineNamespace:      strings.TrimSpace(*machineNamespace),
+		ExternallyProvisioned: *externallyProvisioned,
 	}
 	if *verbose {
 		fmt.Fprintf(os.Stderr, "%v", args)
