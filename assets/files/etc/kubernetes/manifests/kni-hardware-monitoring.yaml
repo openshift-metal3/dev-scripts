@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kni-monitoring
+  namespace: openshift-machine-api
+  labels:
+    k8s-app: metal3-node-agents
+spec:
+  selector:
+    matchLabels:
+      name: kni-monitoring
+  template:
+    metadata:
+      labels:
+        name: kni-monitoring
+    spec:
+      hostNetwork: true
+      tolerations:
+      - key: node-role.kubernetes.io/infra
+        effect: NoSchedule
+      containers:
+      - name: metal3-hardware-inventory-recorder
+        image: quay.io/metal3-io/ironic-hardware-inventory-recorder:latest
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      - name: metal3-smart-exporter
+        image: quay.io/metal3-io/smart-exporter:latest
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      terminationGracePeriodSeconds: 30 
