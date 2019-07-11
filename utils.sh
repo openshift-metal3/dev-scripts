@@ -147,7 +147,7 @@ function master_node_map_to_install_config() {
           username: ${username}
           password: ${password}
         bootMACAddress: ${mac}
-        hardwareProfile: default
+        hardwareProfile: ${MASTER_HARDWARE_PROFILE:-default}
 EOF
 
     done
