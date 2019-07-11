@@ -53,7 +53,7 @@ fi
 
 # Make sure Ironic is up
 export OS_TOKEN=fake-token
-export OS_URL=http://localhost:6385/
+export OS_URL=http://localhost:6385
 
 wait_for_json ironic \
     "${OS_URL}/v1/nodes" \
