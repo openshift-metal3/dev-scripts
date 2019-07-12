@@ -7,6 +7,7 @@ export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 export EXTERNAL_SUBNET="192.168.111.0/24"
+export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
@@ -74,6 +75,7 @@ controlPlane:
     baremetal: {}
 platform:
   baremetal:
+    dnsVIP: ${DNS_VIP}
     hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)
     image:
