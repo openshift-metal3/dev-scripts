@@ -135,6 +135,11 @@ for port in 80 5050 6385 ; do
     fi
 done
 
+# Allow access to httpd on baremetal network for image cache.
+if ! sudo iptables -C INPUT -i baremetal -p tcp -m tcp --dport 80 -j ACCEPT > /dev/null 2>&1; then
+    sudo iptables -I INPUT -i baremetal -p tcp -m tcp --dport 80 -j ACCEPT
+fi
+
 # Allow ipmi to the virtual bmc processes that we just started
 if [ "${RHEL8}" = "True" ] ; then
     sudo firewall-cmd --zone=libvirt --add-port=6230-6235/udp
