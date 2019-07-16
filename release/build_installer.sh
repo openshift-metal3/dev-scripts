@@ -31,7 +31,7 @@ if [ -z "${INSTALLER_VERSION}" ]; then
     exit 1
 fi
 
-echo "Building kni-installer from ${INSTALLER_GIT_URI}:${INSTALLER_GIT_REF} to ${INSTALLER_STREAM}:${INSTALLER_VERSION}"
+echo "Building openshift-installer from ${INSTALLER_GIT_URI}:${INSTALLER_GIT_REF} to ${INSTALLER_STREAM}:${INSTALLER_VERSION}"
 
 # Check prerequisites
 if [ $(oc --config "${RELEASE_KUBECONFIG}" project -q) != "${RELEASE_NAMESPACE}" ]; then
@@ -48,7 +48,7 @@ oc --config "${RELEASE_KUBECONFIG}" apply -f - <<EOF
 apiVersion: build.openshift.io/v1
 kind: Build
 metadata:
-  name: kni-installer-${INSTALLER_VERSION}
+  name: openshift-installer-${INSTALLER_VERSION}
 spec:
   source:
     type: Git
@@ -66,13 +66,13 @@ spec:
       name: ${INSTALLER_STREAM}:${INSTALLER_VERSION}
 EOF
 
-BUILD_POD=$(oc --config "${RELEASE_KUBECONFIG}" get build "kni-installer-${INSTALLER_VERSION}" -o json | jq -r '.metadata.annotations["openshift.io/build.pod-name"]')
+BUILD_POD=$(oc --config "${RELEASE_KUBECONFIG}" get build "openshift-installer-${INSTALLER_VERSION}" -o json | jq -r '.metadata.annotations["openshift.io/build.pod-name"]')
 oc --config "${RELEASE_KUBECONFIG}" wait --for condition=Ready pod "${BUILD_POD}"
 oc --config "${RELEASE_KUBECONFIG}" logs -f "${BUILD_POD}"
 
-BUILD_PHASE=$(oc --config release-kubeconfig get build "kni-installer-${INSTALLER_VERSION}" -o json | jq -r .status.phase)
+BUILD_PHASE=$(oc --config release-kubeconfig get build "openshift-installer-${INSTALLER_VERSION}" -o json | jq -r .status.phase)
 if [ "${BUILD_PHASE}" = "Complete" ]; then
-    BUILD_OUTPUT=$(oc --config release-kubeconfig get build "kni-installer-${INSTALLER_VERSION}" -o json | jq -r .status.output.to.imageDigest)
+    BUILD_OUTPUT=$(oc --config release-kubeconfig get build "openshift-installer-${INSTALLER_VERSION}" -o json | jq -r .status.output.to.imageDigest)
     echo "Installer built to ${BUILD_OUTPUT}"
 else
     echo "Installer build failed? Build phase is ${BUILD_PHASE}"
