@@ -15,7 +15,7 @@ export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 # The release we default to here is pinned and known to work with our current
 # version of kni-installer.
 #
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.ci-2019-07-03-145946-kni.2}"
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.nightly-2019-07-12-041904-kni.0}"
 
 function extract_installer() {
     local release_image
