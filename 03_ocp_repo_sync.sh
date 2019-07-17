@@ -25,14 +25,5 @@ mkdir -p $GOPATH/bin
 curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 export PATH="${GOPATH}/bin:$PATH"
 
-# Install operator-sdk for use by the baremetal-operator
-sync_repo_and_patch github.com/operator-framework/operator-sdk https://github.com/operator-framework/operator-sdk.git
-
-# Build operator-sdk
-pushd "${GOPATH}/src/github.com/operator-framework/operator-sdk"
-git checkout master
-make install
-popd
-
 # Install baremetal-operator
 sync_repo_and_patch github.com/metal3-io/baremetal-operator https://github.com/metal3-io/baremetal-operator.git
