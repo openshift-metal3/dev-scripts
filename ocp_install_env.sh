@@ -8,6 +8,7 @@ export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 export EXTERNAL_SUBNET="192.168.111.0/24"
 export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
+export KNI_INSTALL_FROM_GIT=true
 
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
@@ -38,7 +39,7 @@ function extract_installer() {
 function clone_installer() {
   # Clone repo, if not already present
   if [[ ! -d $OPENSHIFT_INSTALL_PATH ]]; then
-    sync_repo_and_patch go/src/github.com/openshift/installer https://github.com/openshift/installer.git
+    sync_repo_and_patch go/src/github.com/openshift/installer https://github.com/openshift/installer.git https://patch-diff.githubusercontent.com/raw/openshift/installer/pull/2079.patch
   fi
 }
 
