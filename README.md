@@ -147,6 +147,14 @@ openstack baremetal node list
 ...
 ```
 
+Note that after deployment of the master nodes, some ironic services (particularly dnsmasq) are stopped on the host and Ironic is then available running inside the baremetal operator pod on the cluster.  To access this instance of Ironic export the following OS_URL:
+
+```
+export OS_URL=http://172.22.0.3:6385
+```
+
+This references the provisioning network IP on the master node that is running the baremetal-operator pod.
+
 ## Cleanup
 
 - To clean up the ocp deployment run `./ocp_cleanup.sh`
