@@ -74,15 +74,15 @@ for FILE in $FILESTOCACHE ; do
     [ -f $FILECACHEDIR/$(basename $FILE) ] && sudo cp -p $FILECACHEDIR/$(basename $FILE) $FILE
 done
 
-sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/kni-install/libvirt
+sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
 sudo chown -R notstack /opt/dev-scripts/ironic /opt/data/installer-cache /home/notstack/.cache
 
 # Make yum store its cache on /opt so packages don't need to be downloaded for each job
 sudo sed -i -e '/keepcache=0/d' /etc/yum.conf
 sudo mount -o bind /opt/data/yumcache /var/cache/yum
 
-# Mount the kni-installer cache directory so we don't download a RHCOS image for each run
-sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/kni-install/libvirt
+# Mount the openshift-installer cache directory so we don't download a RHCOS image for each run
+sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
 
 # Clone the project being tested, "dev-scripts" will have been cloned in the jenkins
 # job definition, for all others we do it here
@@ -117,12 +117,12 @@ fi
 # Project-specific actions. If these directories exist in $HOME, move
 # them to the correct $GOPATH locations. If installer, run some of
 # their CI checks.
-for PROJ in facet kni-installer ; do
+for PROJ in facet installer ; do
     [ ! -d /home/notstack/$PROJ ] && continue
 
-    if [ "$PROJ" == "kni-installer" ]; then
+    if [ "$PROJ" == "installer" ]; then
       export KNI_INSTALL_FROM_GIT=true
-      GITHUB_ORGANIZATION=openshift-metalkube
+      GITHUB_ORGANIZATION=openshift
 
       # Run some of openshift CI checks
       pushd .

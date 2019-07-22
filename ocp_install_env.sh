@@ -1,6 +1,6 @@
 eval "$(go env)"
 
-export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift-metalkube/kni-installer"
+export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 export OPENSHIFT_INSTALL_DATA="$OPENSHIFT_INSTALL_PATH/data/data"
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
@@ -12,10 +12,10 @@ export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
 #
-# The release we default to here is pinned and known to work with our current
-# version of kni-installer.
+# The release we default to here is pinned and known to work with the
+# baremetal platform in openshift-installer
 #
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.nightly-2019-07-12-041904-kni.0}"
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.ci-2019-07-22-025130-kni.1}"
 
 function extract_installer() {
     local release_image
@@ -38,7 +38,7 @@ function extract_installer() {
 function clone_installer() {
   # Clone repo, if not already present
   if [[ ! -d $OPENSHIFT_INSTALL_PATH ]]; then
-    sync_repo_and_patch go/src/github.com/openshift-metalkube/kni-installer https://github.com/openshift-metalkube/kni-installer.git
+    sync_repo_and_patch go/src/github.com/openshift/installer https://github.com/openshift/installer.git
   fi
 }
 
@@ -49,7 +49,7 @@ function build_installer() {
   RELEASE_IMAGE="$OPENSHIFT_RELEASE_IMAGE" TAGS="libvirt baremetal" hack/build.sh
   popd
 
-  export OPENSHIFT_INSTALLER="$OPENSHIFT_INSTALL_PATH/bin/kni-install"
+  export OPENSHIFT_INSTALLER="$OPENSHIFT_INSTALL_PATH/bin/openshift-install"
 }
 
 function generate_ocp_install_config() {

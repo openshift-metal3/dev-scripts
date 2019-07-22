@@ -69,11 +69,9 @@ fi
 # https://github.com/openshift-metalkube/dev-scripts/issues/260
 sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
 
-# Call kni-installer to deploy the bootstrap node and masters
+# Call openshift-installer to deploy the bootstrap node and masters
 create_cluster ocp
 
-# TODO: remove this once the early exit is dropped from the installer
-wait_for_cvo_finish ocp
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"
 
 # The deployment is complete, but we must manually add the IPs for the masters,

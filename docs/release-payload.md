@@ -68,7 +68,7 @@ RELEASE_STREAM=release
 INSTALLER_STREAM=installer
 RELEASE_KUBECONFIG=release-kubeconfig
 RELEASE_PULLSECRET=release-pullsecret
-INSTALLER_GIT_URI=https://github.com/openshift-metal3/kni-installer.git
+INSTALLER_GIT_URI=https://github.com/openshift/installer.git
 INSTALLER_GIT_REF=master
 EOF
 ```
@@ -76,25 +76,16 @@ EOF
 ## Building an Installer and Payload
 
 When we want to move to a newer OpenShift release, we pick a release
-payload:
+payload, and then build an installer image with the baremetal platform
+enabled:
 
 ```
 $ oc adm release info quay.io/openshift-release-dev/ocp-release:4.1.0-rc.3 -a release-pullsecret -o json | jq -r .metadata.version
 4.1.0-rc.3
 ```
 
-Next, rebase ```openshift-metal3/kni-installer``` to the
-```openshift/installer``` commit referenced by that payload:
-
-```
-$ oc adm release info -a release-pullsecret -o json \
-    quay.io/openshift-release-dev/ocp-release:4.1.0-rc.3 | \
-    jq -r '.references.spec.tags[] | select(.name == "installer") | .annotations["io.openshift.build.commit.id"]'
-403a93d1f683384800597ac38e9c2fc0180b3a5d
-```
-
-And then kick off a build, with the resulting image tagged into the
-installer image stream using the supplied version as the tag:
+Kick off a build, with the resulting image tagged into the installer
+image stream using the supplied version as the tag:
 
 ```
 $ ./build_installer.sh 4.1.0-rc.3-kni.0

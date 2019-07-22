@@ -13,10 +13,10 @@ RELEASE_KUBECONFIG=release-kubeconfig
 # images referenced by the payload - are hosted
 RELEASE_PULLSECRET=release-pullsecret
 
-# The imagestream in $RELEASE_NAMESPACE where kni-installer will be
+# The imagestream in $RELEASE_NAMESPACE where openshift-installer will be
 # published to
 INSTALLER_STREAM=installer
 
-# The git repository and ref (e.g. branch) to build kni-installer from
-INSTALLER_GIT_URI=https://github.com/openshift-metalkube/kni-installer.git
+# The git repository and ref (e.g. branch) to build openshift-installer from
+INSTALLER_GIT_URI=https://github.com/openshift/installer.git
 INSTALLER_GIT_REF=master

@@ -53,13 +53,6 @@ function create_cluster() {
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
 }
 
-function wait_for_cvo_finish() {
-    local assets_dir
-
-    assets_dir="$1"
-    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for install-complete
-}
-
 function wait_for_json() {
     local name
     local url
