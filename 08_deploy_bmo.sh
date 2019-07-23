@@ -9,42 +9,82 @@ eval "$(go env)"
 DEV_SCRIPTS_DIR=$(realpath $(dirname $0))
 KUBECONFIG="${DEV_SCRIPTS_DIR}/ocp/auth/kubeconfig"
 
+custom_capbm() {
+    test -n "${CAPBM_IMAGE_SOURCE:-}"
+}
+custom_mao() {
+    test "${USE_CUSTOM_MAO:-false}" = "true"
+}
+
 sudo podman stop machine-api-operator || echo 'No local machine-api-operator running'
 
-if [ -n "${CAPBM_IMAGE_SOURCE:-}" ]; then
+if custom_capbm || custom_mao; then
     oc --config=${KUBECONFIG} patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","group":"","name":"machine-api-operator","namespace":"openshift-machine-api","unmanaged":true}]}}'
 
-    oc --config=${KUBECONFIG} scale deployment -n openshift-machine-api --replicas=0 machine-api-operator
-
-    # This is in the instructions but doesn't seem to be required (deployment does not exist)
-    #oc --config=${KUBECONFIG} delete deployment -n openshift-machine-api clusterapi-manager-controllers
-
-    MAO_PATH="${GOPATH}/src/github.com/openshift/machine-api-operator"
+    MAO_REPO="github.com/openshift/machine-api-operator"
+    MAO_BRANCH="release-4.2"
     IMAGES_FILE="pkg/operator/fixtures/images.json"
 
-    if [ ! -d "${MAO_PATH}" ]; then
-        go get -d github.com/openshift/machine-api-operator/cmd/machine-api-operator
+    MAO_IMAGES="${DEV_SCRIPTS_DIR}/ocp/deploy/mao-images.json"
 
-        pushd ${MAO_PATH}
-        git checkout release-4.2
+    if custom_mao; then
+        oc --config=${KUBECONFIG} scale deployment -n openshift-machine-api --replicas=0 machine-api-operator
 
-        sed -i -e 's/docker/quay/' -e 's/v4.0.0/4.2.0/' "${IMAGES_FILE}"
-        if ! git diff --quiet -- "${IMAGES_FILE}"; then
-            git add "${IMAGES_FILE}"
-            git commit -m 'Use 4.2 images'
+        MAO_PATH="${GOPATH}/src/${MAO_REPO}"
+
+        if [ ! -d "${MAO_PATH}" ]; then
+            go get -d "${MAO_REPO}/cmd/machine-api-operator"
+
+            pushd ${MAO_PATH}
+            git checkout ${MAO_BRANCH}
+
+            sed -i -e 's/docker/quay/' -e 's/v4.0.0/4.2.0/' "${IMAGES_FILE}"
+            if ! git diff --quiet -- "${IMAGES_FILE}"; then
+                git add "${IMAGES_FILE}"
+                git commit -m 'Use 4.2 images'
+            fi
+        else
+            pushd ${MAO_PATH}
         fi
+
+        cp "${MAO_PATH}/${IMAGES_FILE}" ${MAO_IMAGES}
     else
-        pushd ${MAO_PATH}
+        wget -O - https://${MAO_REPO/github.com/raw.githubusercontent.com}/${MAO_BRANCH}/${IMAGES_FILE} >${MAO_IMAGES}
     fi
 
-    sed -e "/cluster-api-provider-baremetal/ s/http:.*/${CAPBM_IMAGE_SOURCE}/" "${MAO_PATH}/${IMAGES_FILE}" >ocp/deploy/mao-images.json
+    if custom_capbm; then
+        sed -i -e "/clusterAPIControllerBareMetal/ s|: \"[^\"]*\"|: \"${CAPBM_IMAGE_SOURCE}\"|" ${MAO_IMAGES}
+    fi
 
-    sudo podman run --rm -v ${MAO_PATH}:/go/src/github.com/openshift/machine-api-operator:Z -w /go/src/github.com/openshift/machine-api-operator golang:1.10 ./hack/go-build.sh machine-api-operator
-    popd
+    if custom_mao; then
+        sudo podman run --rm -v ${MAO_PATH}:/go/src/${MAO_REPO}:Z -w /go/src/${MAO_REPO} golang:1.10 ./hack/go-build.sh machine-api-operator
+        popd
 
-    # Run our machine-api-operator locally
-    sudo podman create --rm -v ${MAO_PATH}:/go/src/${MAO_REPO}:Z -v $(dirname ${MAO_IMAGES})/..:/ocp:Z -w /go/src/${MAO_REPO} --name machine-api-operator --net=host alpine ./bin/machine-api-operator start --images-json=/ocp/deploy/$(basename ${MAO_IMAGES}) --kubeconfig=/ocp/auth/kubeconfig --v=4
-    sudo podman start machine-api-operator
+        # Run our machine-api-operator locally
+        sudo podman create --rm -v ${MAO_PATH}:/go/src/${MAO_REPO}:Z -v $(dirname ${MAO_IMAGES})/..:/ocp:Z -w /go/src/${MAO_REPO} --name machine-api-operator --net=host alpine ./bin/machine-api-operator start --images-json=/ocp/deploy/$(basename ${MAO_IMAGES}) --kubeconfig=/ocp/auth/kubeconfig --v=4
+        sudo podman start machine-api-operator
+    else
+        # Create a new configMap with the images we want
+        CONFIG_NAME="machine-api-operator-images-$(date -u +%Y%m%d%H%M%S)"
+        cat <<EOF | oc --config=${KUBECONFIG} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${CONFIG_NAME}
+  namespace: openshift-machine-api
+data:
+  images.json: >
+$(cat ${MAO_IMAGES} | sed -e 's/^/    /')
+EOF
+
+        # Use our new configMap. Note that this takes 2 minutes before the
+        # machine-api-controllers pod is updated with the new images
+        oc --config=${KUBECONFIG} patch deployment machine-api-operator --namespace openshift-machine-api --type json -p '[{"op": "replace", "path": "/spec/template/spec/volumes/0/configMap/name", "value": "'${CONFIG_NAME}'"}]'
+        # Clean up any old config maps
+        oc --config=${KUBECONFIG} delete $(oc --config=${KUBECONFIG} get configmap -o name | egrep 'machine-api-operator-images-[0-9]{14}' | grep -v "${CONFIG_NAME}")
+        # Scale to 1 replica in case we previously used a local MAO
+        oc --config=${KUBECONFIG} scale deployment -n openshift-machine-api --replicas=1 machine-api-operator
+    fi
 else
     # Remove any overrides so that the CVO will begin managing things again
     oc --config=${KUBECONFIG} patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[]}}'

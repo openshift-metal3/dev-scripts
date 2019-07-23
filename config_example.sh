@@ -25,3 +25,6 @@ set -x
 # Setting this will also result in running the openshift-origin version of the
 # machine-api-operator, rather than the one managed by the CVO.
 #export CAPBM_IMAGE_SOURCE="quay.io/openshift/origin-baremetal-machine-controllers:4.2"
+
+# Uncomment to use a custom build of the machine-api-operator running locally
+#export USE_CUSTOM_MAO=true
