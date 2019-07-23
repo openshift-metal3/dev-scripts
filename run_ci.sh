@@ -140,6 +140,19 @@ done
 set -o pipefail
 timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
+# Deployment is complete, but now wait to ensure the worker node comes up.
+export KUBECONFIG=ocp/auth/kubeconfig
+
+wait_for_worker() {
+    worker=$1
+    echo "Waiting for worker $worker to appear ..."
+    while [ "$(oc get nodes | grep $worker)" = "" ]; do sleep 5; done
+    TIMEOUT_MINUTES=15
+    echo "$worker registered, waiting $TIMEOUT_MINUTES minutes for Ready condition ..."
+    oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
+}
+wait_for_worker worker-0
+
 # Populate cache for files it doesn't have, or that have changed
 for FILE in $FILESTOCACHE ; do
     cached=$FILECACHEDIR/$(basename $FILE)

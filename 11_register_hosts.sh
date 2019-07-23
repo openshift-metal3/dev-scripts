@@ -83,29 +83,8 @@ oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/master_crs.yaml --namesp
 
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/worker_crs.yaml --namespace=openshift-machine-api
 
-# We automate waiting for a worker to come up and adding IPs to it for the
-# default virt configuration.  This is a helpful step for the common dev setup,
-# and it also runs in CI. For any other env, we just skip this, because we
-# can't automatically figure out the mapping between Machines and Nodes in
-# other cases, and must rely on running the link-machine-and-node.sh manually.
-
-if [ "${NODES_PLATFORM}" != "libvirt" ] || [ "$(list_workers | wc -l)" != "1" ]; then
-    exit 0
-fi
-
-wait_for_worker() {
-    worker=$1
-    echo "Waiting for worker $worker to appear ..."
-    while [ "$(oc get nodes | grep $worker)" = "" ]; do sleep 5; done
-    TIMEOUT_MINUTES=15
-    echo "$worker registered, waiting $TIMEOUT_MINUTES minutes for Ready condition ..."
-    oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
-}
-
-wait_for_worker worker-0
-
-# Ensures IPs get set on the worker Machine
-# Run only with single worker deployments as a workaround for issue #421
-if [ "$(list_workers | wc -l)" == 1 ]; then
-    ./add-machine-ips.sh
-fi
+# Run the fix_certs.sh script periodically as a workaround for
+# https://github.com/openshift-metalkube/dev-scripts/issues/260 This is only
+# required to approve certs for workers, as the master certs are approved
+# automatically during the bootstrap phase.
+sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
