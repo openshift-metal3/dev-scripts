@@ -122,17 +122,6 @@ for PROJ in facet installer ; do
     if [ "$PROJ" == "installer" ]; then
       export KNI_INSTALL_FROM_GIT=true
       GITHUB_ORGANIZATION=openshift
-
-      # Run some of openshift CI checks
-      pushd .
-      cd /home/notstack/$PROJ
-      sudo ./hack/go-fmt.sh
-      sudo ./hack/go-lint.sh
-      sudo ./hack/shellcheck.sh
-      sudo ./hack/tf-fmt.sh
-      sudo ./hack/tf-lint.sh
-      sudo ./hack/go-test.sh
-      popd
     else
       GITHUB_ORGANIZATION=openshift-metal3
     fi
