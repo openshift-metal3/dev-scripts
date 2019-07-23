@@ -106,7 +106,7 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     if [ "$INT_IF" ]; then
         echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
         if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-            echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal
+            echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-$INT_IF
             sudo systemctl restart network
         else
            sudo systemctl restart network
