@@ -19,11 +19,5 @@ export REPO_PATH="$GOPATH/src"
 #./build.sh
 #popd
 
-# Install Go dependency management tool
-# Using pre-compiled binaries instead of installing from source
-mkdir -p $GOPATH/bin
-curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-export PATH="${GOPATH}/bin:$PATH"
-
 # Install baremetal-operator
 sync_repo_and_patch github.com/metal3-io/baremetal-operator https://github.com/metal3-io/baremetal-operator.git
