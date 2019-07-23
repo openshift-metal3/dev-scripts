@@ -11,9 +11,9 @@ image.  You can check with a command like:
 oc adm release info registry.svc.ci.openshift.org/openshift/origin-release:v4.0 --commits | grep baremetal
 ```
 
-The script ``custom-mao.sh`` will automate most of this for you once you have a
-cluster up and running. The following explains in more detail how to follow the
-process manually.
+The script ``08_deploy_bmo.sh`` can automate this for you; see the
+configuration options in ``config_example.sh`` for details . The following
+explains in more detail how to follow the process manually.
 
 ## 1) Launch a cluster as usual
 

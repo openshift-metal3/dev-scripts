@@ -8,6 +8,8 @@ source ocp_install_env.sh
 sudo systemctl stop fix_certs.timer
 systemctl is-failed fix_certs.service >/dev/null && sudo systemctl reset-failed fix_certs.service
 
+sudo podman stop machine-api-operator || echo "No local machine-api-operator running"
+
 if [ -d ocp ]; then
     ocp/openshift-install --dir ocp --log-level=debug destroy bootstrap
     ocp/openshift-install --dir ocp --log-level=debug destroy cluster

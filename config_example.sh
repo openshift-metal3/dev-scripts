@@ -17,3 +17,11 @@ set -x
 
 # Configure custom ntp servers if needed
 #export NTP_SERVERS="00.my.internal.ntp.server.com;01.other.ntp.server.com"
+
+# Uncomment to use a custom cluster-api-provider-baremetal image. The CAPBM
+# image must be based on the openshift-origin version of the CAPBM from
+# https://github.com/openshift/cluster-api-provider-baremetal in order to match
+# the machine-api-operator.
+# Setting this will also result in running the openshift-origin version of the
+# machine-api-operator, rather than the one managed by the CVO.
+#export CAPBM_IMAGE_SOURCE="quay.io/openshift/origin-baremetal-machine-controllers:4.2"
