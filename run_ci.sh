@@ -11,7 +11,6 @@ function getlogs(){
     # The logs shared by the ironic containers
     sudo cp -r /opt/dev-scripts/ironic/log $LOGDIR/container-logs
 
-    sudo podman logs ironic-exporter > $LOGDIR/ironic-exporter.log
     sudo podman logs coreos-downloader > $LOGDIR/coreos-downloader.log
     sudo podman logs ipa-downloader > $LOGDIR/ipa-downloader.log
 

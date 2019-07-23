@@ -225,32 +225,6 @@ spec:
                 configMapKeyRef:
                   name: ironic-bmo-configmap
                   key: provisioning_interface
-        - name: ironic-exporter
-          image: quay.io/metal3-io/ironic:master
-          imagePullPolicy: Always
-          securityContext:
-            privileged: true
-          command:
-            - /bin/runironic-exporter
-          volumeMounts:
-            - mountPath: /shared
-              name: ironic-data-volume
-          env:
-            - name: MARIADB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mariadb-password
-                  key: password
-            - name: HTTP_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: ironic-bmo-configmap
-                  key: http_port
-            - name: PROVISIONING_INTERFACE
-              valueFrom:
-                configMapKeyRef:
-                  name: ironic-bmo-configmap
-                  key: provisioning_interface
         - name: ironic-inspector
           image: quay.io/metal3-io/ironic-inspector:master
           imagePullPolicy: Always
