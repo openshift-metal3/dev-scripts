@@ -3,6 +3,8 @@ default: requirements configure repo_sync ironic ocp_run deploy_bmo register_hos
 
 all: default
 
+redeploy: ocp_cleanup ironic_cleanup ironic ocp_run deploy_bmo register_hosts bell
+
 requirements:
 	./01_install_requirements.sh
 
