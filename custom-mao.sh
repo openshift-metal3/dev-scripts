@@ -25,10 +25,6 @@ eval "$(go env)"
 MAO_PATH="${GOPATH}/src/github.com/openshift/machine-api-operator"
 IMAGES_FILE="pkg/operator/fixtures/images.json"
 
-build_mao() {
-    sudo podman run --rm -v ${MAO_PATH}:/go/src/github.com/openshift/machine-api-operator:Z -w /go/src/github.com/openshift/machine-api-operator golang:1.10 ./hack/go-build.sh machine-api-operator
-}
-
 if [ ! -d "${MAO_PATH}" ]; then
     go get -d github.com/openshift/machine-api-operator/cmd/machine-api-operator
 
@@ -40,21 +36,12 @@ if [ ! -d "${MAO_PATH}" ]; then
         git add "${IMAGES_FILE}"
         git commit -m 'Use 4.2 images'
     fi
-    build_mao
-    popd
 else
-    git_head() {
-        git log -1 --pretty=format:%H
-    }
-
     pushd ${MAO_PATH}
-    before=$(git_head)
-    git pull --rebase
-    if [ ${before} != $(git_head) ]; then
-        build_mao
-    fi
-    popd
 fi
+
+sudo podman run --rm -v ${MAO_PATH}:/go/src/github.com/openshift/machine-api-operator:Z -w /go/src/github.com/openshift/machine-api-operator golang:1.10 ./hack/go-build.sh machine-api-operator
+popd
 
 # A custom cluster-api-provider-baremetal image can be specified in the file
 # pkg/operator/fixtures/images.json. The CAPBM image must be based on the
