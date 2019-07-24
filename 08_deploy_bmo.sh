@@ -7,7 +7,7 @@ source common.sh
 eval "$(go env)"
 
 # Set default value for provisioning interface
-CLUSTER_PRO_IF=${PRO_IF:-ens3}
+CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-ens3}
 
 # Get Baremetal ip
 BAREMETAL_IP=$(ip -o -f inet addr show baremetal | awk '{print $4}' | tail -1 | cut -d/ -f1)
