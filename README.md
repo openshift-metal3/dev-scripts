@@ -54,8 +54,10 @@ NODES_PLATFORM="baremetal"
 NODES_FILE="/root/dev-scripts/ironic_hosts.json"
 # Set to the interface used by the baremetal bridge
 INT_IF="em2"
-# Set to the interface used by the provisioning bridge
+# Set to the interface used by the provisioning bridge on the bootstrap host
 PRO_IF="em1"
+# Set to the interface used as the provisioning interface on the cluster nodes
+CLUSTER_PRO_IF="ens1"
 # Don't allow the baremetal bridge to be managed by libvirt
 MANAGE_BR_BRIDGE="n"
 # Set your valid DNS domain

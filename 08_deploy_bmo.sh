@@ -7,7 +7,7 @@ source common.sh
 eval "$(go env)"
 
 # Set default value for provisioning interface
-PROV_IF=${PRO_IF:-ens3}
+CLUSTER_PRO_IF=${PRO_IF:-ens3}
 
 # Get Baremetal ip
 BAREMETAL_IP=$(ip -o -f inet addr show baremetal | awk '{print $4}' | tail -1 | cut -d/ -f1)
@@ -22,7 +22,7 @@ sed -i 's/namespace: .*/namespace: openshift-machine-api/g' ocp/deploy/role_bind
 cp $SCRIPTDIR/operator_ironic.yaml ocp/deploy
 cp $SCRIPTDIR/ironic_bmo_configmap.yaml ocp/deploy
 sed -i "s#__RHCOS_IMAGE_URL__#${RHCOS_IMAGE_URL}#" ocp/deploy/ironic_bmo_configmap.yaml
-sed -i "s#provisioning_interface: \"ens3\"#provisioning_interface: \"${PROV_IF}\"#" ocp/deploy/ironic_bmo_configmap.yaml
+sed -i "s#provisioning_interface: \"ens3\"#provisioning_interface: \"${CLUSTER_PRO_IF}\"#" ocp/deploy/ironic_bmo_configmap.yaml
 sed -i "s#cache_url: \"http://192.168.111.1/images\"#cache_url: \"http://${BAREMETAL_IP}/images\"#" ocp/deploy/ironic_bmo_configmap.yaml
 
 # Kill the dnsmasq container on the host since it is performing DHCP and doesn't
