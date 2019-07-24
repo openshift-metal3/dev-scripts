@@ -65,32 +65,7 @@ if [ $(sudo podman ps | grep -w -e "ironic-api$" -e "ironic-conductor$" -e "iron
     exit 1
 fi
 
-# Run the fix_certs.sh script periodically as a workaround for
-# https://github.com/openshift-metalkube/dev-scripts/issues/260
-sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
-
 # Call openshift-installer to deploy the bootstrap node and masters
 create_cluster ocp
 
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"
-
-# The deployment is complete, but we must manually add the IPs for the masters,
-# as we don't have a way to do that automatically yet. This is required for
-# CSRs to get auto approved for masters.
-# https://github.com/openshift-metal3/dev-scripts/issues/260
-# https://github.com/metal3-io/baremetal-operator/issues/242
-./add-machine-ips.sh
-
-# Bounce the machine approver to get it to notice the changes.
-oc scale deployment -n openshift-cluster-machine-approver --replicas=0 machine-approver
-while [ ! $(oc get deployment -n openshift-cluster-machine-approver machine-approver -o json | jq .spec.replicas) ]
-do
-  echo "Scaling down machine-approver..."
-done
-echo "Scaling up machine-approver..."
-oc scale deployment -n openshift-cluster-machine-approver --replicas=1 machine-approver
-
-# Wait a tiny bit, then list the csrs
-sleep 5
-oc get csr
-# END Hack
