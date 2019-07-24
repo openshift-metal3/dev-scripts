@@ -112,6 +112,12 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     fi
 fi
 
+# If there were modifications to the /etc/sysconfig/network-scripts/ifcfg-*
+# files, it is required to enable the network service
+if [ "$MANAGE_INT_BRIDGE" == "y" ] || [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
+  sudo systemctl enable network
+fi
+
 # restart the libvirt network so it applies an ip to the bridge
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     sudo virsh net-destroy baremetal
