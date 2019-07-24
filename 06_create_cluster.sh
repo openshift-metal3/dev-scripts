@@ -44,6 +44,13 @@ if [ ! -d ocp ]; then
       build_installer
     fi
 
+    # Validate there are enough nodes to avoid confusing errors later..
+    NODES_LEN=$(jq '.nodes | length' ${NODES_FILE})
+    if (( $NODES_LEN < ( $NUM_MASTERS + $NUM_WORKERS ) )); then
+        echo "ERROR: ${NODES_FILE} contains ${NODES_LEN} nodes, but ${NUM_MASTERS} masters and ${NUM_WORKERS} workers requested"
+        exit 1
+    fi
+
     # Create a master_nodes.json file
     jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
 
