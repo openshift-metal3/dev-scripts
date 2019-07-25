@@ -93,8 +93,11 @@ if [ "${RHEL8}" = "True" ] ; then
 
     # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
     pushd ~
+    # Clone a new repo because git.openstack.org is down, we'll clone
+    # a new repo with the github.com mirror as origin so pull -r works
+    mv virtualbmc virtualbmc.old
     if [ ! -d virtualbmc ] ; then
-        git clone https://git.openstack.org/openstack/virtualbmc
+        git clone https://github.com/openstack/virtualbmc
     fi
     pushd virtualbmc
     git pull -r
@@ -108,8 +111,11 @@ if [ "${RHEL8}" = "True" ] ; then
     sudo dnf groupinstall -y "Development Tools"
     sudo dnf install -y python36-devel
     pushd ~
+    # Clone a new repo because git.openstack.org is down, we'll clone
+    # a new repo with the github.com mirror as origin so pull -r works
+    mv openstackclient openstackclient.old
     if [ ! -d openstackclient ] ; then
-        git clone https://git.openstack.org/openstack/openstackclient
+        git clone https://github.com/openstack/openstackclient
     fi
     pushd openstackclient
     git pull -r
@@ -119,7 +125,7 @@ else
     # We're reusing some tripleo pieces for this setup so clone them here
     cd
     if [ ! -d tripleo-repos ]; then
-      git clone https://git.openstack.org/openstack/tripleo-repos
+      git clone https://github.com/openstack/tripleo-repos
     fi
     pushd tripleo-repos
     sudo python setup.py install
