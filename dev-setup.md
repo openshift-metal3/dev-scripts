@@ -15,14 +15,6 @@ dev-scripts
 - Launches the Ironic containers using Podman on the Provisioning Host
   - Downloads the current images of RHCOS that are needed for a deployment (bootstrap VM, baremetal hosts)
 
-facet
-- Provides a UI and RESTful API for our services
-  - Day 1 Provisioning API
-  - Uses an embedded HTTP server to serve Day 1 UI, which will be the primary consumer of this API
-  - Provisioning host configuration validation at startup
-- Central integration point for doing Metal³ deployments of OpenShift
-- Facet Architecture
-
 # Environmental Prerequisites
 
 You will need a dedicated hardware host to be effective with your development tasks.  This is due to the fact that your deployment 
@@ -92,16 +84,12 @@ $ make
 ‘make’ looks for a Makefile, inside of which is a canonical list of steps.  These steps execute the following dev-scripts in order:
 - 01\_install\_requirements.sh
   - Responsible for installing software prerequisites, adding additional repositories as necessary
-  - Yarn, Node.js, golang, Ironic, and the OpenShift Origin Client Tools, and libvirt are all examples of software that gets installed
+  - golang, Ironic, and the OpenShift Origin Client Tools, and libvirt are all examples of software that gets installed
 - 02\_configure\_host.sh
   - Mostly responsible for running a limited implementation of tripleo-quickstart for the virtualized deployments, configuring libvirt, iptables, creating the 
     baremetal and provisioning bridges for system connectivity, and configuring NetworkManager for things such as DNS resolution of internal hostnames
 - 03\_ocp\_repo\_sync.sh
-  - Clones openshift-installer, facet, and statik from github.com
-    - Additionally, rebases both openshift-installer and facet repos on to master
-    - Checks out a branch called ‘metalkube’
-    - Additional information under the section “Developing against facet”
-    - Uses yarn to install and build the production facet from source (a static golang binary)
+    - clones the baremetal-operator
 - 04\_setup\_ironic.sh
   - Builds podman containers for Ironic and Ironic Inspector
   - Configures Ironic Inspector for pxebooting of virtualized systems
@@ -137,30 +125,7 @@ To clean up the entire environment, run:
 $ make clean
 ```
 
-# Developing against facet
-Up until this point, we’ve just set up the Host, the Masters, three Workers, and cloned the necessary repositories.  This has not started facet.
-
-Moving forward, the environment variable $GOPATH will be used to reference the Golang library path.  We can use the ‘go’ binary to create some environment variables in addition to $GOPATH:
-```
-$ eval `go env` 
-```
-
-The 03\_ocp\_repo\_sync.sh script we ran previously, automatically cloned the facet repo.  The repo now exists at $GOPATH/src/github.com/metalkube/facet.  This is necessary for the default facet production build, but needs additional work for active development.
-
-To run the production build of facet, use the following command:
-```
-$ go run $GOPATH/src/github.com/openshift-metalkube/facet/main.go server
-```
-
-Upon execution, facet can be accessed by the URL printed to the output.
-
-From here, facet development can be expanded by using the documentation, and standard development practices apply moving forward.
-
-
 # Q/A
-
-**Q**:  How do I make facet listen on an IP / host other than ‘localhost’?  
-**A**:  It might be desirable to change the listening address of the Go server.  To do so, edit pkg/server/server.go around like 53, replacing the default ‘localhost’ with a different IP address, or 0.0.0.0 for all IPs.  
 
 **Q**:  How do I connect to the masters?  
 **A**:  Connecting to the masters shouldn’t be necessary, but in a pinch, you can access them by ssh core@master-<index>.ostest.test.metalkube.org  
@@ -181,9 +146,3 @@ To see these bridges and which interfaces are associated with them, run:
 ```
 sudo brctl show
 ```
-**Q**:  I’ve heard “production api” or “production build” - what’s that?  
-**A**:  “Production build” or “production API” are the product of compiling all the facet server components in to a static asset in to a go module, using statik.  The final binary then becomes $GOPATH/src/github.com/openshift-metalkube/facet/bin/facet.  
-
-
-
-
