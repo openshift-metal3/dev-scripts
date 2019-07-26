@@ -11,8 +11,10 @@ function getlogs(){
     # The logs shared by the ironic containers
     sudo cp -r /opt/dev-scripts/ironic/log $LOGDIR/container-logs
 
-    sudo podman logs coreos-downloader > $LOGDIR/coreos-downloader.log
-    sudo podman logs ipa-downloader > $LOGDIR/ipa-downloader.log
+    mkdir $LOGDIR/podman-logs
+    for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
+        sudo podman logs $name > $LOGDIR/podman-logs/$name.log || true
+    done
 
     # And the VM jornals
     for HOST in $(sudo virsh net-dhcp-leases baremetal | grep -o '192.168.111.[0-9]\+') ; do
