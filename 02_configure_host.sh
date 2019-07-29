@@ -178,16 +178,6 @@ if [ "$EXT_IF" ]; then
   sudo iptables -A FORWARD --in-interface baremetal -j ACCEPT
 fi
 
-# Add access to backend Facet server from remote locations
-if ! sudo iptables -C INPUT -p tcp --dport 8080 -j ACCEPT 2>/dev/null ; then
-  sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
-fi
-
-# Add access to Yarn development server from remote locations
-if ! sudo iptables -C INPUT -p tcp --dport 3000 -j ACCEPT 2>/dev/null ; then
-  sudo iptables -I INPUT -p tcp --dport 3000 -j ACCEPT
-fi
-
 # Switch NetworkManager to internal DNS
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
   sudo mkdir -p /etc/NetworkManager/conf.d/

@@ -9,10 +9,9 @@ from tripleo-quickstart here.
 
 We are using this repository as a work space while we figure out what the
 installer needs to do for bare metal provisioning. As that logic is ironed out,
-we are moving it into the [facet wrapper
-API](https://github.com/openshift-metalkube/facet/tree/master/pkg/server), or
-the [go-based
-openshift-installer](https://github.com/openshift/installer).
+we are moving it into the
+the [go-based openshift-installer](https://github.com/openshift/installer) or
+to other components of OpenShift.
 
 # Pre-requisites
 
@@ -82,13 +81,6 @@ This should result in some (stopped) VMs created by tripleo-quickstart on the
 local virthost and some other dependencies installed.
 
 - `./03_ocp_repo_sync.sh`
-
-After this step, you can run the [facet](https://github.com/openshift-metalkube/facet)
-server with:
-
-```
-$ go run "${GOPATH}/src/github.com/openshift-metalkube/facet/main.go" server
-```
 
 - `./04_setup_ironic.sh`
 

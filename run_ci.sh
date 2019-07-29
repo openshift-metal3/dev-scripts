@@ -116,7 +116,7 @@ fi
 # Project-specific actions. If these directories exist in $HOME, move
 # them to the correct $GOPATH locations. If installer, run some of
 # their CI checks.
-for PROJ in facet installer ; do
+for PROJ in installer ; do
     [ ! -d /home/notstack/$PROJ ] && continue
 
     if [ "$PROJ" == "installer" ]; then
