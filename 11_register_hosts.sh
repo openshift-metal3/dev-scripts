@@ -78,13 +78,13 @@ list_workers | make_bm_workers | tee $SCRIPTDIR/ocp/worker_crs.yaml
 
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/master_crs.yaml --namespace=openshift-machine-api
 
-# Check if file exists
-[ -s "$SCRIPTDIR/ocp/worker_crs.yaml" ] || exit 0
-
-oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/worker_crs.yaml --namespace=openshift-machine-api
-
 # Run the fix_certs.sh script periodically as a workaround for
 # https://github.com/openshift-metalkube/dev-scripts/issues/260 This is only
 # required to approve certs for workers, as the master certs are approved
 # automatically during the bootstrap phase.
 sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
+
+# Check if file exists
+[ -s "$SCRIPTDIR/ocp/worker_crs.yaml" ] || exit 0
+
+oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/worker_crs.yaml --namespace=openshift-machine-api
