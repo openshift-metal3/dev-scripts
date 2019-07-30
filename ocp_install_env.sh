@@ -15,7 +15,7 @@ export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 # The release we default to here is pinned and known to work with the
 # baremetal platform in openshift-installer
 #
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.ci-2019-07-22-025130-kni.1}"
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.ci-2019-07-31-123929-kni.0}"
 
 function extract_installer() {
     local release_image
