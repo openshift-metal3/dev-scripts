@@ -25,6 +25,11 @@ sed -i "s#__RHCOS_IMAGE_URL__#${RHCOS_IMAGE_URL}#" ocp/deploy/ironic_bmo_configm
 sed -i "s#provisioning_interface: \"ens3\"#provisioning_interface: \"${CLUSTER_PRO_IF}\"#" ocp/deploy/ironic_bmo_configmap.yaml
 sed -i "s#cache_url: \"http://192.168.111.1/images\"#cache_url: \"http://${BAREMETAL_IP}/images\"#" ocp/deploy/ironic_bmo_configmap.yaml
 
+if [ "${NODES_PLATFORM}" = "baremetal" ]; then
+  PROVISIONING_IP=$(ip -o -f inet addr show provisioning | awk '{print $4}' | tail -1 | cut -d/ -f1)
+  sed -i "s/172.22.0.3/${PROVISIONING_IP}/g" ocp/deploy/ironic_bmo_configmap.yaml
+fi
+
 # Kill the dnsmasq container on the host since it is performing DHCP and doesn't
 # allow our pod in openshift to take over.  We don't want to take down all of ironic
 # as it makes cleanup "make clean" not work properly.
