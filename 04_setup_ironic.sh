@@ -68,9 +68,12 @@ sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-po
 sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
 
-# Start Ironic Inspector 
+# Start Ironic Inspector
 sudo podman run -d --net host --privileged --name ironic-inspector \
      --pod ironic-pod -v $IRONIC_DATA_DIR:/shared "${IRONIC_INSPECTOR_IMAGE}"
 
 # Wait for images to be downloaded/ready
-while ! curl --fail http://localhost:80/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1 ; done
+while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1 ; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.tar.headers ; do sleep 1; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
