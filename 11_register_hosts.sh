@@ -81,9 +81,6 @@ if test ${NUM_WORKERS} -gt 0 ; then
     # baremetal-operator
     oc scale machineset -n openshift-machine-api ${CLUSTER_NAME}-worker-0 --replicas=${NUM_WORKERS}
 
-    # Run the fix_certs.sh script periodically as a workaround for
-    # https://github.com/openshift-metalkube/dev-scripts/issues/260
-    sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
 fi
 
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/master_crs.yaml --namespace=openshift-machine-api

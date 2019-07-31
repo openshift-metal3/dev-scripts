@@ -57,5 +57,6 @@ create_cluster ocp
 for name in dnsmasq ironic-inspector ; do
     sudo podman ps | grep -w "$name$" && sudo podman stop $name
 done
+oc --config ${KUBECONFIG} create -f autoapprover.yml
 
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"
