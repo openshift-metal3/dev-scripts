@@ -9,7 +9,7 @@ if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null 
     RHEL8="True"
 fi
 
-sudo yum install -y libselinux-utils
+sudo yum install -y libselinux-utils docker-distribution
 if selinuxenabled ; then
     # FIXME ocp-doit required this so leave permissive for now
     sudo setenforce permissive
@@ -26,6 +26,9 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -i vm-setup/inventory.ini \
   -b -vvv vm-setup/install-package-playbook.yml
 popd
+
+# needed if we are using locally built images
+sudo systemctl start docker-distribution
 
 # Install oc client
 oc_version=4.2

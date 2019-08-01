@@ -39,6 +39,11 @@ source $CONFIG
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 
+if env | grep -q "_LOCAL_IMAGE=" ; then
+    # We need a custome installer (allows http image pulls for local images)
+    KNI_INSTALL_FROM_GIT=true
+fi
+
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-ocp/openshift-baremetal-install}
  else
@@ -53,6 +58,11 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     # Until we can align OPENSHIFT_RELEASE_IMAGE with the installer default, we still need
     # to set OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE for openshift-install source builds
     export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE}"
+fi
+
+if env | grep -q "_LOCAL_IMAGE=" ; then
+    # We're going to be using a locally modified release image
+    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="192.168.111.1:5000/localimages/local-release-image:latest" 
 fi
 
 # Set variables

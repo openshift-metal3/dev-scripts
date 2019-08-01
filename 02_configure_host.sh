@@ -125,18 +125,20 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     fi
 fi
 
-# Add firewall rules to ensure the image cache can be reached on the host
-if [ "${RHEL8}" = "True" ] ; then
-    sudo firewall-cmd --zone=libvirt --add-port=80/tcp
-    sudo firewall-cmd --zone=libvirt --add-port=80/tcp --permanent
-else
-    if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport 80 -j ACCEPT > /dev/null 2>&1; then
-        sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport 80 -j ACCEPT
+# Add firewall rules to ensure the image caches can be reached on the host
+for PORT in 80 5000 ; do
+    if [ "${RHEL8}" = "True" ] ; then
+        sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp
+        sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp --permanent
+    else
+        if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
+            sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $PORT -j ACCEPT
+        fi
+        if ! sudo iptables -C INPUT -i baremetal -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
+            sudo iptables -I INPUT -i baremetal -p tcp -m tcp --dport $PORT -j ACCEPT
+        fi
     fi
-    if ! sudo iptables -C INPUT -i baremetal -p tcp -m tcp --dport 80 -j ACCEPT > /dev/null 2>&1; then
-        sudo iptables -I INPUT -i baremetal -p tcp -m tcp --dport 80 -j ACCEPT
-    fi
-fi
+done
 
 # Allow ipmi to the virtual bmc processes that we just started
 if [ "${RHEL8}" = "True" ] ; then

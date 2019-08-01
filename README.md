@@ -201,6 +201,20 @@ The default cpu/memory/disk resources when using virtual machines are provided
 by the [vm_setup_vars.yml](vm_setup_vars.yml) file, which sets some dev-scripts
 variables that override the defaults in metal3-dev-env
 
+### Testing a custom container images with dev-scripts
+dev-scripts uses an openshift release image that contains references to openshift
+containers, any of these containers can be overridden by setting environment
+variables of the form <NAME>_LOCAL_IMAGE to build or use copy of container
+images locally e.g. to use a custom ironic container image and build a container
+image from a git repository for the machine-config-operator you could set
+
+export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
+export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
+
+The value for <NAME> needs to match the name of the tags for images (found in the
+openshift release images in /release-manifests/image-references), converted to uppercase
+and with "-"'s converted to "_"'s.
+
 ### Testing a custom machine-api-operator image with this deployment
 
 The script `run-custom-mao.sh` allows the machine-api-operator pod to be re-deployed with a custom image.
