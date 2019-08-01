@@ -26,6 +26,11 @@ if custom_capbm || custom_mao; then
     IMAGES_FILE="pkg/operator/fixtures/images.json"
 
     MAO_IMAGES="${DEV_SCRIPTS_DIR}/ocp/deploy/mao-images.json"
+    mkdir -p $(dirname ${MAO_IMAGES})
+
+    save_images_file() {
+        sed -e 's/docker/quay/' -e 's/v4.0.0/4.2.0/' >${MAO_IMAGES}
+    }
 
     if custom_mao; then
         oc --config=${KUBECONFIG} scale deployment -n openshift-machine-api --replicas=0 machine-api-operator
@@ -37,19 +42,13 @@ if custom_capbm || custom_mao; then
 
             pushd ${MAO_PATH}
             git checkout ${MAO_BRANCH}
-
-            sed -i -e 's/docker/quay/' -e 's/v4.0.0/4.2.0/' "${IMAGES_FILE}"
-            if ! git diff --quiet -- "${IMAGES_FILE}"; then
-                git add "${IMAGES_FILE}"
-                git commit -m 'Use 4.2 images'
-            fi
         else
             pushd ${MAO_PATH}
         fi
 
-        cp "${MAO_PATH}/${IMAGES_FILE}" ${MAO_IMAGES}
+        save_images_file <${IMAGES_FILE}
     else
-        wget -O - https://${MAO_REPO/github.com/raw.githubusercontent.com}/${MAO_BRANCH}/${IMAGES_FILE} >${MAO_IMAGES}
+        wget -O - https://${MAO_REPO/github.com/raw.githubusercontent.com}/${MAO_BRANCH}/${IMAGES_FILE} | save_images_file
     fi
 
     if custom_capbm; then
