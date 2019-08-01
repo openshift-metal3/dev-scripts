@@ -64,6 +64,8 @@ BASE_DOMAIN=your.valid.domain.com
 # Set your valid DNS cluster name
 # (will be used as ${CLUSTER_NAME}.${BASE_DOMAIN}
 CLUSTER_NAME=clustername
+# Set your valid DNS VIP, such as 1.1.1.1 for 'ns1.example.com'
+DNS_VIP="1.1.1.1"
 ```
 
 ## Installation
