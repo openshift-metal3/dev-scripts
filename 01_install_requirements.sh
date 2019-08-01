@@ -61,6 +61,7 @@ fi
 sudo yum -y install \
   curl \
   dnsmasq \
+  docker-distribution \
   golang \
   NetworkManager \
   nmap \
@@ -155,6 +156,9 @@ else
     sudo pip install \
       yq
 fi
+
+# needed if we are using locally built images
+sudo systemctl start docker-distribution
 
 # Install oc client
 oc_version=4.2

@@ -16,7 +16,7 @@ spec:
       hostNetwork: true
       initContainers:
         - name: ipa-downloader
-          image: quay.io/metal3-io/ironic-ipa-downloader:master
+          image: $IPA_DOWNLOADER_IMAGE
           command:
             - /usr/local/bin/get-resource.sh
           imagePullPolicy: Always
@@ -32,7 +32,7 @@ spec:
                   name: metal3-config
                   key: cache_url
         - name: rhcos-downloader
-          image: quay.io/openshift-metal3/rhcos-downloader:master
+          image: $COREOS_DOWNLOADER_IMAGE
           command:
             - /usr/local/bin/get-resource.sh
           imagePullPolicy: Always
@@ -111,7 +111,7 @@ spec:
                   name: metal3-config
                   key: ironic_inspector_endpoint
         - name: ironic-dnsmasq
-          image: quay.io/metal3-io/ironic:master
+          image: $IRONIC_IMAGE
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -137,7 +137,7 @@ spec:
                   name: metal3-config
                   key: dhcp_range
         - name: mariadb
-          image: quay.io/metal3-io/ironic:master
+          image: $IRONIC_IMAGE
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -153,7 +153,7 @@ spec:
                   name: mariadb-password
                   key: password
         - name: ironic-httpd
-          image: quay.io/metal3-io/ironic:master
+          image: $IRONIC_IMAGE
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -174,7 +174,7 @@ spec:
                   name: metal3-config
                   key: provisioning_interface
         - name: ironic-conductor
-          image: quay.io/metal3-io/ironic:master
+          image: $IRONIC_IMAGE
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -200,7 +200,7 @@ spec:
                   name: metal3-config
                   key: provisioning_interface
         - name: ironic-api
-          image: quay.io/metal3-io/ironic:master
+          image: $IRONIC_IMAGE
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -226,7 +226,7 @@ spec:
                   name: metal3-config
                   key: provisioning_interface
         - name: ironic-inspector
-          image: quay.io/metal3-io/ironic-inspector:master
+          image: $IRONIC_INSPECTOR_IMAGE
           imagePullPolicy: Always
           securityContext:
             privileged: true

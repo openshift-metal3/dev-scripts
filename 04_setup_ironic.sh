@@ -8,6 +8,7 @@ source common.sh
 # Either pull or build the ironic images
 # To build the IRONIC image set
 # IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
+rm -f assets/templates/99_master-localimages.yaml
 for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE IPA_DOWNLOADER_IMAGE COREOS_DOWNLOADER_IMAGE ; do
     IMAGE=${!IMAGE_VAR}
     # Is it a git repo?
@@ -16,13 +17,19 @@ for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE IPA_DOWNLOADER_IMAGE COREOS
         # Clone to ~ if not there already
         [ -e "$REPOPATH" ] || git clone $IMAGE $REPOPATH
         cd $REPOPATH
-        export $IMAGE_VAR=localhost/${IMAGE##*/}:latest
+        export $IMAGE_VAR=${IMAGE##*/}:latest
         sudo podman build -t ${!IMAGE_VAR} .
         cd -
+        cp assets/templates/99_master-localimages.yaml.optional assets/templates/99_master-localimages.yaml
+        sudo podman push --tls-verify=false ${!IMAGE_VAR} localhost:5000/localimages/${!IMAGE_VAR}
+        export $IMAGE_VAR=192.168.111.1:5000/localimages/${!IMAGE_VAR}
+        sudo podman pull --tls-verify=false ${!IMAGE_VAR}
     else
         sudo podman pull "$IMAGE"
     fi
 done
+
+envsubst < operator_ironic.yaml.template > operator_ironic.yaml
 
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
