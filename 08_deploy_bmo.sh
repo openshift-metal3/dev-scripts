@@ -45,3 +45,5 @@ oc --config ocp/auth/kubeconfig create secret generic mariadb-password --from-li
 
 oc --config ocp/auth/kubeconfig adm --as system:admin policy add-scc-to-user privileged system:serviceaccount:openshift-machine-api:baremetal-operator
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/operator_ironic.yaml -n openshift-machine-api
+
+oc wait -n openshift-machine-api --for condition=ready pod -l name=metal3-baremetal-operator --timeout=2400s
