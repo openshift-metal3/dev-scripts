@@ -12,7 +12,7 @@ KUBECONFIG="${DEV_SCRIPTS_DIR}/ocp/auth/kubeconfig"
 sudo podman stop machine-api-operator || echo 'No local machine-api-operator running'
 
 if [ -n "${CAPBM_IMAGE_SOURCE:-}" ]; then
-    oc --config=${KUBECONFIG} patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","name":"machine-api-operator","namespace":"openshift-machine-api","unmanaged":true}]}}'
+    oc --config=${KUBECONFIG} patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","group":"","name":"machine-api-operator","namespace":"openshift-machine-api","unmanaged":true}]}}'
 
     oc --config=${KUBECONFIG} scale deployment -n openshift-machine-api --replicas=0 machine-api-operator
 
