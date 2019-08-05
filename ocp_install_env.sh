@@ -63,6 +63,8 @@ function generate_ocp_install_config() {
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1beta4
 baseDomain: ${BASE_DOMAIN}
+networking:
+  machineCIDR: ${EXTERNAL_SUBNET}
 metadata:
   name: ${CLUSTER_NAME}
 compute:
