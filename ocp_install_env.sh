@@ -16,7 +16,7 @@ export KNI_INSTALL_FROM_GIT=true
 # The release we default to here is pinned and known to work with the
 # baremetal platform in openshift-installer
 #
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.ci-2019-07-31-123929-kni.0}"
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2.0-0.ci-2019-08-05-122243}"
 
 function extract_installer() {
     local release_image
