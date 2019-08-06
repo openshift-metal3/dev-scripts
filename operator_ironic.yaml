@@ -29,7 +29,7 @@ spec:
             - name: CACHEURL
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: cache_url
         - name: rhcos-downloader
           image: quay.io/openshift-metal3/rhcos-downloader:master
@@ -45,12 +45,12 @@ spec:
             - name: RHCOS_IMAGE_URL
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: rhcos_image_url
             - name: CACHEURL
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: cache_url
         - name: static-ip-set
           image: quay.io/metal3-io/static-ip-manager:latest
@@ -63,12 +63,12 @@ spec:
             - name: PROVISIONING_IP
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_ip
             - name: PROVISIONING_INTERFACE
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_interface
       containers:
         - name: baremetal-operator
@@ -93,22 +93,22 @@ spec:
             - name: DEPLOY_KERNEL_URL
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: deploy_kernel_url
             - name: DEPLOY_RAMDISK_URL
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: deploy_ramdisk_url
             - name: IRONIC_ENDPOINT
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: ironic_endpoint
             - name: IRONIC_INSPECTOR_ENDPOINT
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: ironic_inspector_endpoint
         - name: ironic-dnsmasq
           image: quay.io/metal3-io/ironic:master
@@ -124,17 +124,17 @@ spec:
             - name: HTTP_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: http_port
             - name: PROVISIONING_INTERFACE
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_interface
             - name: DHCP_RANGE
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: dhcp_range
         - name: mariadb
           image: quay.io/metal3-io/ironic:master
@@ -166,12 +166,12 @@ spec:
             - name: HTTP_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: http_port
             - name: PROVISIONING_INTERFACE
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_interface
         - name: ironic-conductor
           image: quay.io/metal3-io/ironic:master
@@ -192,12 +192,12 @@ spec:
             - name: HTTP_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: http_port
             - name: PROVISIONING_INTERFACE
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_interface
         - name: ironic-api
           image: quay.io/metal3-io/ironic:master
@@ -218,12 +218,12 @@ spec:
             - name: HTTP_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: http_port
             - name: PROVISIONING_INTERFACE
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_interface
         - name: ironic-inspector
           image: quay.io/metal3-io/ironic-inspector:master
@@ -237,7 +237,7 @@ spec:
             - name: PROVISIONING_INTERFACE
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_interface
         - name: static-ip-refresh
           image: quay.io/metal3-io/static-ip-manager:latest
@@ -250,12 +250,12 @@ spec:
             - name: PROVISIONING_IP
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_ip
             - name: PROVISIONING_INTERFACE
               valueFrom:
                 configMapKeyRef:
-                  name: ironic-bmo-configmap
+                  name: metal3-config
                   key: provisioning_interface
       volumes:
         - name: ironic-data-volume
