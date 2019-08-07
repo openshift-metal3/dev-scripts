@@ -45,6 +45,7 @@ function create_cluster() {
 
     generate_assets
     custom_ntp
+    bmo_config_map
 
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
@@ -172,4 +173,20 @@ function sync_repo_and_patch {
         done
     fi
     popd
+}
+
+function bmo_config_map {
+    # Set default value for provisioning interface
+    CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-ens3}
+    
+    # Get Baremetal ip
+    BAREMETAL_IP=$(ip -o -f inet addr show baremetal | awk '{print $4}' | tail -1 | cut -d/ -f1)
+    
+    mkdir -p ocp/deploy
+    cp $SCRIPTDIR/metal3-config.yaml ocp/deploy
+    sed -i "s#__RHCOS_IMAGE_URL__#${RHCOS_IMAGE_URL}#" ocp/deploy/metal3-config.yaml
+    sed -i "s#provisioning_interface: \"ens3\"#provisioning_interface: \"${CLUSTER_PRO_IF}\"#" ocp/deploy/metal3-config.yaml
+    sed -i "s#cache_url: \"http://192.168.111.1/images\"#cache_url: \"http://${BAREMETAL_IP}/images\"#" ocp/deploy/metal3-config.yaml
+    
+    cp ocp/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
 }

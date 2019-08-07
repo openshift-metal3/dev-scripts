@@ -1,9 +1,9 @@
-.PHONY: default all requirements configure repo_sync ironic ocp_run deploy_bmo register_hosts clean ocp_cleanup ironic_cleanup host_cleanup bell csr_hack
-default: requirements configure repo_sync ironic ocp_run deploy_bmo register_hosts csr_hack bell
+.PHONY: default all requirements configure repo_sync ironic ocp_run register_hosts clean ocp_cleanup ironic_cleanup host_cleanup bell csr_hack
+default: requirements configure repo_sync ironic ocp_run register_hosts csr_hack bell
 
 all: default
 
-redeploy: ocp_cleanup ironic_cleanup ironic ocp_run deploy_bmo register_hosts csr_hack bell
+redeploy: ocp_cleanup ironic_cleanup ironic ocp_run register_hosts csr_hack bell
 
 requirements:
 	./01_install_requirements.sh
@@ -19,9 +19,6 @@ ironic:
 
 ocp_run:
 	./06_create_cluster.sh
-
-deploy_bmo:
-	./08_deploy_bmo.sh
 
 register_hosts:
 	./11_register_hosts.sh

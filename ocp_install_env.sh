@@ -15,7 +15,8 @@ export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 # The release we default to here is pinned and known to work with the
 # baremetal platform in openshift-installer
 #
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/kni/release:4.2.0-0.ci-2019-07-31-123929-kni.0}"
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2.0-0.ci-2019-08-13-201601}"
+export KNI_INSTALL_FROM_GIT=true
 
 function extract_installer() {
     local release_image
@@ -60,6 +61,13 @@ function generate_ocp_install_config() {
     deploy_kernel=$(master_node_val 0 "driver_info.deploy_kernel")
     deploy_ramdisk=$(master_node_val 0 "driver_info.deploy_ramdisk")
 
+    # Always deploy with 0 workers by default.  We do not yet support
+    # automatically deploying workers at install time anyway.  We can scale up
+    # the worker MachineSet after deploying the baremetal-operator
+    #
+    # TODO - Change worker replicas to ${NUM_WORKERS} once the machine-api-operator
+    # deploys the baremetal-operator
+
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1beta4
 baseDomain: ${BASE_DOMAIN}
@@ -69,7 +77,7 @@ metadata:
   name: ${CLUSTER_NAME}
 compute:
 - name: worker
-  replicas: ${NUM_WORKERS}
+  replicas: 0
 controlPlane:
   name: master
   replicas: ${NUM_MASTERS}
