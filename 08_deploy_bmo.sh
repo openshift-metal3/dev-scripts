@@ -20,10 +20,10 @@ cp -r $BMOPATH/deploy ocp/.
 sed -i 's/namespace: .*/namespace: openshift-machine-api/g' ocp/deploy/role_binding.yaml
 
 cp $SCRIPTDIR/operator_ironic.yaml ocp/deploy
-cp $SCRIPTDIR/ironic_bmo_configmap.yaml ocp/deploy
-sed -i "s#__RHCOS_IMAGE_URL__#${RHCOS_IMAGE_URL}#" ocp/deploy/ironic_bmo_configmap.yaml
-sed -i "s#provisioning_interface: \"ens3\"#provisioning_interface: \"${CLUSTER_PRO_IF}\"#" ocp/deploy/ironic_bmo_configmap.yaml
-sed -i "s#cache_url: \"http://192.168.111.1/images\"#cache_url: \"http://${BAREMETAL_IP}/images\"#" ocp/deploy/ironic_bmo_configmap.yaml
+cp $SCRIPTDIR/metal3-config.yaml ocp/deploy
+sed -i "s#__RHCOS_IMAGE_URL__#${RHCOS_IMAGE_URL}#" ocp/deploy/metal3-config.yaml
+sed -i "s#provisioning_interface: \"ens3\"#provisioning_interface: \"${CLUSTER_PRO_IF}\"#" ocp/deploy/metal3-config.yaml
+sed -i "s#cache_url: \"http://192.168.111.1/images\"#cache_url: \"http://${BAREMETAL_IP}/images\"#" ocp/deploy/metal3-config.yaml
 
 # Kill the dnsmasq container on the host since it is performing DHCP and doesn't
 # allow our pod in openshift to take over.  We don't want to take down all of ironic
@@ -38,7 +38,7 @@ oc --config ocp/auth/kubeconfig apply -f ocp/deploy/role.yaml --namespace=opensh
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/role_binding.yaml
 oc --config ocp/auth/kubeconfig apply -f ocp/deploy/crds/metal3_v1alpha1_baremetalhost_crd.yaml
 
-oc --config ocp/auth/kubeconfig apply -f ocp/deploy/ironic_bmo_configmap.yaml --namespace=openshift-machine-api
+oc --config ocp/auth/kubeconfig apply -f ocp/deploy/metal3-config.yaml --namespace=openshift-machine-api
 # I'm leaving this as is for debugging but we could easily generate a random password here.
 oc --config ocp/auth/kubeconfig delete secret mariadb-password --namespace=openshift-machine-api || true
 oc --config ocp/auth/kubeconfig create secret generic mariadb-password --from-literal password=password --namespace=openshift-machine-api
