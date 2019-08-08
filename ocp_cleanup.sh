@@ -35,3 +35,7 @@ for vm in $(sudo virsh list --all --name | grep "^${CLUSTER_NAME}.*bootstrap"); 
   sudo virsh destroy $vm
   sudo virsh undefine $vm --remove-all-storage
 done
+
+if [ -d assets/generated ]; then
+  rm -rf assets/generated
+fi
