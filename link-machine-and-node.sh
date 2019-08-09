@@ -21,6 +21,10 @@ node_name=$(echo $node | cut -f2 -d':')
 # Also see https://github.com/metalkube/cluster-api-provider-baremetal/issues/49
 oc --config ocp/auth/kubeconfig proxy &
 proxy_pid=$!
+function kill_proxy {
+    kill $proxy_pid
+}
+trap kill_proxy EXIT SIGINT
 
 HOST_PROXY_API_PATH="http://localhost:8001/apis/metal3.io/v1alpha1/namespaces/openshift-machine-api/baremetalhosts"
 
@@ -120,4 +124,3 @@ curl -s \
 
 oc get baremetalhost -n openshift-machine-api -o yaml "${host}"
 
-kill $proxy_pid
