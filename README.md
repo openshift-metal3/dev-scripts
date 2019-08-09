@@ -66,6 +66,8 @@ BASE_DOMAIN=your.valid.domain.com
 CLUSTER_NAME=clustername
 # Set your valid DNS VIP, such as 1.1.1.1 for 'ns1.example.com'
 DNS_VIP="1.1.1.1"
+# Set to the subnet in use on the external (baremetal) network
+EXTERNAL_SUBNET="192.168.111.0/24"
 ```
 
 ## Installation
