@@ -58,24 +58,6 @@ if [ ! -d ocp ]; then
     generate_ocp_install_config ocp
 fi
 
-# Make sure Ironic is up
-export OS_TOKEN=fake-token
-export OS_URL=http://localhost:6385
-
-wait_for_json ironic \
-    "${OS_URL}/v1/nodes" \
-    20 \
-    -H "Accept: application/json" -H "Content-Type: application/json" -H "User-Agent: wait-for-json" -H "X-Auth-Token: $OS_TOKEN"
-
-if [ $(sudo podman ps | grep -w -e "ironic-api$" -e "ironic-conductor$" -e "ironic-inspector$" -e "dnsmasq" -e "httpd" | wc -l) != 5 ]; then
-    echo "Can't find required containers"
-    exit 1
-fi
-
-# Run the fix_certs.sh script periodically as a workaround for
-# https://github.com/openshift-metalkube/dev-scripts/issues/260
-sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
-
 # Call openshift-installer to deploy the bootstrap node and masters
 create_cluster ocp
 

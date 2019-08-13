@@ -8,6 +8,7 @@ export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
 export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
+export KNI_INSTALL_FROM_GIT=true
 
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
@@ -88,11 +89,6 @@ platform:
     dnsVIP: ${DNS_VIP}
     hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)
-    image:
-      source: "http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST"
-      checksum: $(curl http://172.22.0.1/images/$RHCOS_IMAGE_FILENAME_LATEST.md5sum)
-      deployKernel: ${deploy_kernel}
-      deployRamdisk: ${deploy_ramdisk}
 pullSecret: |
   $(echo $PULL_SECRET | jq -c .)
 sshKey: |
