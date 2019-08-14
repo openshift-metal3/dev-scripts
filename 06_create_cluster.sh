@@ -8,7 +8,7 @@ source common.sh
 source ocp_install_env.sh
 
 # Do some PULL_SECRET sanity checking
-if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then
+if [[ "${OPENSHIFT_RELEASE_IMAGE_OVERRIDE}" == *"registry.svc.ci.openshift.org"* ]]; then
     if [[ "${PULL_SECRET}" != *"registry.svc.ci.openshift.org"* ]]; then
         echo "Please get a valid pull secret for registry.svc.ci.openshift.org."
         exit 1
@@ -37,7 +37,7 @@ if [ ! -d ocp ]; then
 
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       # Extract openshift-install from the release image
-      extract_installer "${OPENSHIFT_RELEASE_IMAGE}" ocp/
+      extract_installer "${OPENSHIFT_RELEASE_IMAGE_OVERRIDE}" ocp/
     else
       # Clone and build the installer from source
       clone_installer

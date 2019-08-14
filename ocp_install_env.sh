@@ -16,7 +16,7 @@ export KNI_INSTALL_FROM_GIT=true
 # The release we default to here is pinned and known to work with the
 # baremetal platform in openshift-installer
 #
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2.0-0.ci-2019-08-13-201601}"
+export OPENSHIFT_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE_OVERRIDE:-registry.svc.ci.openshift.org/ocp/release:4.2.0-0.ci-2019-08-14-165546}"
 export KNI_INSTALL_FROM_GIT=true
 
 function extract_installer() {
@@ -48,7 +48,7 @@ function build_installer() {
   # Build installer
   pushd .
   cd $OPENSHIFT_INSTALL_PATH
-  RELEASE_IMAGE="$OPENSHIFT_RELEASE_IMAGE" TAGS="libvirt baremetal" hack/build.sh
+  RELEASE_IMAGE="$OPENSHIFT_RELEASE_IMAGE_OVERRIDE" TAGS="libvirt baremetal" hack/build.sh
   popd
 
   export OPENSHIFT_INSTALLER="$OPENSHIFT_INSTALL_PATH/bin/openshift-install"
