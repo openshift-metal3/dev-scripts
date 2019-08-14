@@ -189,4 +189,6 @@ function bmo_config_map {
     sed -i "s#cache_url: \"http://192.168.111.1/images\"#cache_url: \"http://${BAREMETAL_IP}/images\"#" ocp/deploy/metal3-config.yaml
     
     cp ocp/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
+
+    cp mariadb-password.yaml assets/generated/99_metal3-mariadb-password.yaml
 }
