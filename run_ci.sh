@@ -156,15 +156,20 @@ fi
 
 set -e
 
-wait_for_worker() {
-    worker=$1
-    echo "Waiting for worker $worker to appear ..."
-    while [ "$(oc get nodes | grep $worker)" = "" ]; do sleep 5; done
-    TIMEOUT_MINUTES=15
-    echo "$worker registered, waiting $TIMEOUT_MINUTES minutes for Ready condition ..."
-    oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
-}
-wait_for_worker worker-0
+# TODO -
+# We do not expect a worker to come up right now, as the machine-api-operator
+# managed metal3 deployment is known to be failing. We also do the deployment
+# only configured with 3 masters and 0 workers.  We'll need to update this to
+# scale the worker machine set up to 1 here.
+#wait_for_worker() {
+#    worker=$1
+#    echo "Waiting for worker $worker to appear ..."
+#    while [ "$(oc get nodes | grep $worker)" = "" ]; do sleep 5; done
+#    TIMEOUT_MINUTES=15
+#    echo "$worker registered, waiting $TIMEOUT_MINUTES minutes for Ready condition ..."
+#    oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
+#}
+#wait_for_worker worker-0
 
 # Populate cache for files it doesn't have, or that have changed
 for FILE in $FILESTOCACHE ; do
