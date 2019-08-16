@@ -13,11 +13,7 @@ export KNI_INSTALL_FROM_GIT=true
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
 #
-# The release we default to here is pinned and known to work with the
-# baremetal platform in openshift-installer
-#
-export OPENSHIFT_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE_OVERRIDE:-registry.svc.ci.openshift.org/ocp/release:4.2.0-0.ci-2019-08-14-165546}"
-export KNI_INSTALL_FROM_GIT=true
+export OPENSHIFT_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE_OVERRIDE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
 
 function extract_installer() {
     local release_image
@@ -27,14 +23,19 @@ function extract_installer() {
     outdir="$2"
 
     extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
+    pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
 
+    echo "${PULL_SECRET}" > "${pullsecret_file}"
+    # FIXME: Find the pullspec for baremetal-installer image and extract the image, until
+    # https://github.com/openshift/oc/pull/57 is merged
+    baremetal_image=$(oc adm release info --registry-config "${pullsecret_file}" $OPENSHIFT_RELEASE_IMAGE_OVERRIDE -o json | jq -r '.references.spec.tags[] | select(.name == "baremetal-installer") | .from.name')
+    oc image extract --registry-config "${pullsecret_file}" $baremetal_image --path usr/bin/openshift-install:${extract_dir}
 
-    echo "${PULL_SECRET}" > "${extract_dir}/pullsecret"
-    oc adm release extract --registry-config "${extract_dir}/pullsecret" --command=openshift-install --to "${extract_dir}" "${release_image}"
     mv "${extract_dir}/openshift-install" "${outdir}"
     export OPENSHIFT_INSTALLER="${outdir}/openshift-install"
 
     rm -rf "${extract_dir}"
+    rm -rf "${pullsecret_dir}"
 }
 
 function clone_installer() {
