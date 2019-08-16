@@ -8,7 +8,7 @@ source common.sh
 source ocp_install_env.sh
 
 # Do some PULL_SECRET sanity checking
-if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then
+if [[ "${OPENSHIFT_RELEASE_IMAGE_OVERRIDE}" == *"registry.svc.ci.openshift.org"* ]]; then
     if [[ "${PULL_SECRET}" != *"registry.svc.ci.openshift.org"* ]]; then
         echo "Please get a valid pull secret for registry.svc.ci.openshift.org."
         exit 1
@@ -37,7 +37,7 @@ if [ ! -d ocp ]; then
 
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       # Extract openshift-install from the release image
-      extract_installer "${OPENSHIFT_RELEASE_IMAGE}" ocp/
+      extract_installer "${OPENSHIFT_RELEASE_IMAGE_OVERRIDE}" ocp/
     else
       # Clone and build the installer from source
       clone_installer
@@ -58,25 +58,14 @@ if [ ! -d ocp ]; then
     generate_ocp_install_config ocp
 fi
 
-# Make sure Ironic is up
-export OS_TOKEN=fake-token
-export OS_URL=http://localhost:6385
-
-wait_for_json ironic \
-    "${OS_URL}/v1/nodes" \
-    20 \
-    -H "Accept: application/json" -H "Content-Type: application/json" -H "User-Agent: wait-for-json" -H "X-Auth-Token: $OS_TOKEN"
-
-if [ $(sudo podman ps | grep -w -e "ironic-api$" -e "ironic-conductor$" -e "ironic-inspector$" -e "dnsmasq" -e "httpd" | wc -l) != 5 ]; then
-    echo "Can't find required containers"
-    exit 1
-fi
-
-# Run the fix_certs.sh script periodically as a workaround for
-# https://github.com/openshift-metalkube/dev-scripts/issues/260
-sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
-
 # Call openshift-installer to deploy the bootstrap node and masters
 create_cluster ocp
+
+# Kill the dnsmasq container on the host since it is performing DHCP and doesn't
+# allow our pod in openshift to take over.  We don't want to take down all of ironic
+# as it makes cleanup "make clean" not work properly.
+for name in dnsmasq ironic-inspector ; do
+    sudo podman ps | grep -w "$name$" && sudo podman stop $name
+done
 
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"

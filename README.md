@@ -112,12 +112,6 @@ Then you can interact with the k8s API on the bootstrap VM e.g
 You can also see the status of the bootkube.sh script which is running via
 `journalctl -b -f -u bootkube.service`.
 
-- `./08_deploy_bmo.sh`
-
-After running `./08_deploy_bmo.sh` the cluster that becomes active in the previous step
-is updated by deploying the baremetal-operator into the pre-existing "openshift-machine-api"
-project/namespace.
-
 ## Interacting with the deployed cluster
 
 When the master nodes are up and the cluster is active, you can interact with the API:
