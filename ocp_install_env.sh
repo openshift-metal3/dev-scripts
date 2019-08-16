@@ -12,7 +12,7 @@ export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
 #
-export OPENSHIFT_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE_OVERRIDE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
+export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
 
 function extract_installer() {
     local release_image
@@ -27,7 +27,7 @@ function extract_installer() {
     echo "${PULL_SECRET}" > "${pullsecret_file}"
     # FIXME: Find the pullspec for baremetal-installer image and extract the image, until
     # https://github.com/openshift/oc/pull/57 is merged
-    baremetal_image=$(oc adm release info --registry-config "${pullsecret_file}" $OPENSHIFT_RELEASE_IMAGE_OVERRIDE -o json | jq -r '.references.spec.tags[] | select(.name == "baremetal-installer") | .from.name')
+    baremetal_image=$(oc adm release info --registry-config "${pullsecret_file}" $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -o json | jq -r '.references.spec.tags[] | select(.name == "baremetal-installer") | .from.name')
     oc image extract --registry-config "${pullsecret_file}" $baremetal_image --path usr/bin/openshift-install:${extract_dir}
 
     chmod 755 "${extract_dir}/openshift-install"
@@ -49,7 +49,7 @@ function build_installer() {
   # Build installer
   pushd .
   cd $OPENSHIFT_INSTALL_PATH
-  RELEASE_IMAGE="$OPENSHIFT_RELEASE_IMAGE_OVERRIDE" TAGS="libvirt baremetal" hack/build.sh
+  TAGS="libvirt baremetal" hack/build.sh
   popd
 
   export OPENSHIFT_INSTALLER="$OPENSHIFT_INSTALL_PATH/bin/openshift-install"
