@@ -30,6 +30,7 @@ function extract_installer() {
     baremetal_image=$(oc adm release info --registry-config "${pullsecret_file}" $OPENSHIFT_RELEASE_IMAGE_OVERRIDE -o json | jq -r '.references.spec.tags[] | select(.name == "baremetal-installer") | .from.name')
     oc image extract --registry-config "${pullsecret_file}" $baremetal_image --path usr/bin/openshift-install:${extract_dir}
 
+    chmod 755 "${extract_dir}/openshift-install"
     mv "${extract_dir}/openshift-install" "${outdir}"
     export OPENSHIFT_INSTALLER="${outdir}/openshift-install"
 
