@@ -8,7 +8,6 @@ export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
 export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
-export KNI_INSTALL_FROM_GIT=true
 
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
