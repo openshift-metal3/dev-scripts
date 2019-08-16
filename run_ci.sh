@@ -31,7 +31,7 @@ function getlogs(){
 
     # Baremetal Operator info
     mkdir -p $LOGDIR/baremetal-operator
-    BMO_POD=$(oc --request-timeout=5s get pods --namespace openshift-machine-api | grep metal3-baremetal-operator | awk '{print $1}')
+    BMO_POD=$(oc --request-timeout=5s get pods --namespace openshift-machine-api | grep metal3 | awk '{print $1}')
     BMO_CONTAINERS=$(oc --request-timeout=5s get pods ${BMO_POD} -n openshift-machine-api -o jsonpath="{.spec['containers','initContainers'][*].name}")
     for c in ${BMO_CONTAINERS}; do
         oc --request-timeout=5s logs ${BMO_POD} -c ${c} --namespace openshift-machine-api > $LOGDIR/baremetal-operator/${c}.log
