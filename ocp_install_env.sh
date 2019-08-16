@@ -49,7 +49,7 @@ function build_installer() {
   # Build installer
   pushd .
   cd $OPENSHIFT_INSTALL_PATH
-  RELEASE_IMAGE="$OPENSHIFT_RELEASE_IMAGE_OVERRIDE" TAGS="libvirt baremetal" hack/build.sh
+  TAGS="libvirt baremetal" hack/build.sh
   popd
 
   export OPENSHIFT_INSTALLER="$OPENSHIFT_INSTALL_PATH/bin/openshift-install"
