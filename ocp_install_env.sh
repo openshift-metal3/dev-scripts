@@ -35,7 +35,7 @@ function extract_installer() {
     export OPENSHIFT_INSTALLER="${outdir}/openshift-install"
 
     rm -rf "${extract_dir}"
-    rm -rf "${pullsecret_dir}"
+    rm -rf "${pullsecret_file}"
 }
 
 function clone_installer() {
