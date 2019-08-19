@@ -103,7 +103,7 @@ while true; do
                  ${HOST_PROXY_API_PATH}/${host}/status \
                  -H "Accept: application/json" \
                  -H "Content-Type: application/json" \
-                 -H "User-Agent: linck-machine-and-node" \
+                 -H "User-Agent: link-machine-and-node" \
                 | jq '.status.provisioning.state' \
                 | sed 's/"//g')
     echo "$state"
