@@ -130,7 +130,7 @@ For manual debugging via openstackclient, you can use the following:
 
 ```
 export OS_TOKEN=fake-token
-export OS_URL=http://localhost:6385/
+export OS_URL=http://172.22.0.2:6385/
 openstack baremetal node list
 ...
 ```
