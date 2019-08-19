@@ -126,19 +126,22 @@ master-2   Ready     master    20m       v1.12.4+50c2f2340a
 
 ## Interacting with Ironic directly
 
-For manual debugging via openstackclient, you can use the following:
+For manual debugging via openstackclient, you can use the following, noting that the IP address is that of the bootstrap VM which is ephemeral and won't be available once the masters have been deployed:
 
 ```
 export OS_TOKEN=fake-token
-export OS_URL=http://localhost:6385/
+export OS_URL=http://172.22.0.2:6385/
 openstack baremetal node list
 ...
 ```
 
-Note that after deployment of the master nodes, some ironic services (particularly dnsmasq) are stopped on the host and Ironic is then available running inside the baremetal operator pod on the cluster.  To access this instance of Ironic export the following OS_URL:
+Note that the OS_URL above refers to the provisioning network IP of the bootstrap VM, configured by `openshift-install` on the provisioning host. After the initial bootstrapping has completed this VM is destroyed, and Ironic services are started on the deployed cluster inside the baremetal operator.
+
+To access this instance, update OS_URL to the provisioning network IP on the master node that is running the baremetal-operator pod:
 
 ```
 export OS_URL=http://172.22.0.3:6385
+openstack baremetal node list
 ```
 
 This references the provisioning network IP on the master node that is running the baremetal-operator pod.
