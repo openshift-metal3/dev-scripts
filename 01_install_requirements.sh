@@ -100,6 +100,7 @@ if [ "${RHEL8}" = "True" ] ; then
     git pull -r
     sudo pip3 install .
     curl 'https://review.rdoproject.org/r/gitweb?p=openstack/virtualbmc-distgit.git;a=blob_plain;f=virtualbmc.service;hb=HEAD' > virtualbmc.service
+    sed -i 's|/usr/bin/vbmcd|/usr/local/bin/vbmcd|' virtualbmc.service
     sudo mv virtualbmc.service /etc/systemd/system/.
     sudo systemctl daemon-reload
     popd ; popd
