@@ -17,3 +17,6 @@ set -x
 
 # Configure custom ntp servers if needed
 #export NTP_SERVERS="00.my.internal.ntp.server.com;01.other.ntp.server.com"
+
+# Configure custom registries if needed
+#export REGISTRIES="myregistry:8888;hisregistry:5000"

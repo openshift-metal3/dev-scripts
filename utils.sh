@@ -32,6 +32,15 @@ function custom_ntp(){
   fi
 }
 
+function custom_registries(){
+  if [ "REGISTRIES" ]; then
+    export REGISTRIES="'"$(echo $REGISTRIES | sed "s/,/','/g")"'"
+    export REGISTRY_CONTENT=$(envsubst assets/files/etc/containers/registries.conf | base64 -w0)
+    envsubst assets/templates/99_master-registries-custom.yaml.optional > assets/generated/99_master-registries-custom.yaml
+    envsubst assets/templates/99_worker-registries-custom.yaml.optional > assets/generated/99_worker-registries-custom.yaml
+  fi
+}
+
 function create_cluster() {
     local assets_dir
 
@@ -45,6 +54,7 @@ function create_cluster() {
 
     generate_assets
     custom_ntp
+    custom_registries
     bmo_config_map
 
     mkdir -p ${assets_dir}/openshift
