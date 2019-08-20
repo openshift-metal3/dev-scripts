@@ -2,6 +2,8 @@
 set -ex
 
 source logging.sh
+source common.sh
+source utils.sh
 
 sudo yum install -y libselinux-utils
 if selinuxenabled ; then
@@ -51,23 +53,7 @@ if [ "${RHEL8}" = "True" ] ; then
     git pull -r
     sudo pip3 install -U .
     popd ; popd
-else
-    sudo yum -y install \
-        crudini \
-        python-pip \
-        python-requests \
-        python-setuptools
 fi
-sudo yum -y install \
-  curl \
-  dnsmasq \
-  golang \
-  NetworkManager \
-  nmap \
-  patch \
-  psmisc \
-  vim-enhanced \
-  wget
 
 if [ "${RHEL8}" = "True" ] ; then
     sudo subscription-manager repos --enable=ansible-2-for-rhel-8-x86_64-rpms
@@ -75,25 +61,14 @@ if [ "${RHEL8}" = "True" ] ; then
     # make sure additional requirments are installed
     sudo yum -y install \
       ansible \
-      python3-netaddr \
-      redhat-lsb-core \
-      bind-utils \
-      jq \
-      libvirt \
-      libvirt-devel \
-      libvirt-daemon-kvm \
       podman \
-      qemu-kvm \
-      virt-install \
-      unzip \
       network-scripts \
-      ipmitool
+      ipmitool \
+      redhat-lsb-core
 
     # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
     sudo dnf groupinstall -y "Development Tools"
     sudo dnf install -y python36-devel
-
-    sudo pip3 install -U yq
 
     # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
     pushd ~
@@ -136,28 +111,20 @@ else
     # make sure additional requirments are installed
     sudo yum -y install \
       ansible \
-      bind-utils \
-      jq \
-      libvirt \
-      libvirt-devel \
-      libvirt-daemon-kvm \
       podman \
-      python-ironicclient \
-      python-ironic-inspector-client \
-      python-lxml \
-      python-netaddr \
-      python-openstackclient \
-      python-virtualbmc \
-      qemu-kvm \
-      redhat-lsb-core \
-      virt-install \
-      unzip
-
-    # Install python packages not included as rpms
-    sudo pip install \
-      yq
+      redhat-lsb-core
 fi
 
+export REPO_PATH=${WORKING_DIR}
+sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
+
+VM_SETUP_PATH="${REPO_PATH}/metal3-dev-env/vm-setup"
+
+ANSIBLE_FORCE_COLOR=true ansible-playbook \
+  -e "working_dir=$WORKING_DIR" \
+  -e "virthost=$HOSTNAME" \
+  -i ${VM_SETUP_PATH}/inventory.ini \
+  -b -vvv ${VM_SETUP_PATH}/install-package-playbook.yml
 # Install oc client
 oc_version=4.2
 oc_tools_dir=$HOME/oc-${oc_version}
