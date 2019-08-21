@@ -71,7 +71,7 @@ function generate_ocp_install_config() {
     # deploys the baremetal-operator
 
     cat > "${outdir}/install-config.yaml" << EOF
-apiVersion: v1beta4
+apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
 networking:
   machineCIDR: ${EXTERNAL_SUBNET}
