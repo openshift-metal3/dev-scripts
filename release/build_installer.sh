@@ -67,7 +67,7 @@ spec:
 EOF
 
 BUILD_POD=$(oc --config "${RELEASE_KUBECONFIG}" get build "openshift-installer-${INSTALLER_VERSION}" -o json | jq -r '.metadata.annotations["openshift.io/build.pod-name"]')
-oc --config "${RELEASE_KUBECONFIG}" wait --for condition=Ready pod "${BUILD_POD}"
+oc --config "${RELEASE_KUBECONFIG}" wait --for condition=Ready pod "${BUILD_POD}" --timeout=240s
 oc --config "${RELEASE_KUBECONFIG}" logs -f "${BUILD_POD}"
 
 BUILD_PHASE=$(oc --config release-kubeconfig get build "openshift-installer-${INSTALLER_VERSION}" -o json | jq -r .status.phase)
