@@ -142,24 +142,12 @@ done
 
 # Run dev-scripts
 set -o pipefail
-set +e
 # TODO - Run all steps again once the baremetal-operator pod is fixed
 #timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 timeout -s 9 85m make requirements configure repo_sync ironic ocp_run register_hosts |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
-INSTALL_RESULT=$?
 
 # Deployment is complete, but now wait to ensure the worker node comes up.
 export KUBECONFIG=ocp/auth/kubeconfig
-
-if [ "$INSTALL_RESULT" != "0" ] ; then
-    if oc get clusterversion version | grep "the cluster operator machine-api has not yet successfully rolled out" ; then
-        echo "IGNORING FAILING MACHINE-API-OPERATOR TEMPORARILY"
-    else
-        exit 1
-    fi
-fi
-
-set -e
 
 # TODO -
 # We do not expect a worker to come up right now, as the machine-api-operator
