@@ -17,3 +17,39 @@ set -x
 
 # Configure custom ntp servers if needed
 #export NTP_SERVERS="00.my.internal.ntp.server.com;01.other.ntp.server.com"
+
+# Indicate number of workers to deploy
+#export NUM_WORKERS=0
+
+# Provisioning interface on the helper ndoe
+#export PRO_IF="eno1"
+
+# Internal interface
+#export INT_IF="eno2"
+
+# Provisioning interface within the cluster
+#export CLUSTER_PRO_IF="eno1"
+
+# Which disk to deploy 
+#export ROOT_DISK="/dev/sda"
+
+# Cluster name
+#export CLUSTER_NAME="mycluster"
+
+# Domain name
+#export BASE_DOMAIN="kni.lab.metal3.io"
+
+# Manage bridge
+#export MANAGE_BR_BRIDGE=n
+
+# Path to the json files with ipmi credentials
+#export NODES_FILE="/root/git/dev-scripts/bm.json"
+
+# Whether the installation is on baremetal or not
+#export NODES_PLATFORM=BM
+
+# DNS_VIP
+#export DNS_VIP="11.0.0.2"
+
+# External subnet
+#export EXTERNAL_SUBNET="11.0.0.0/24"
