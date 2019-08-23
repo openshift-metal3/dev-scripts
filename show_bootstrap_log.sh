@@ -1,5 +1,5 @@
 #!/bin/bash
 
-BOOTSTRAP_VM_IP=$(sudo virsh net-dhcp-leases baremetal | grep -v master | grep ipv4 | tail -n1 | sed -e 's/.*\(192.*\)\/.*/\1/')
-echo "Attempting to follow $1 on ${BOOTSTRAP_VM_IP} ..."
+BOOTSTRAP_VM_IP="172.22.0.2"
+echo "Attempting to follow $1 on bootstrap node ..."
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no core@${BOOTSTRAP_VM_IP} journalctl -b -f -u $1
