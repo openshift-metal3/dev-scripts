@@ -127,21 +127,17 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     fi
 fi
 
-# Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
-for port in 80 5050 6385 ; do
-    if [ "${RHEL8}" = "True" ] ; then
-        sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp
-        sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp --permanent
-    else
-        if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
-            sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT
-        fi
+# Add firewall rules to ensure the image cache can be reached on the host
+if [ "${RHEL8}" = "True" ] ; then
+    sudo firewall-cmd --zone=libvirt --add-port=80/tcp
+    sudo firewall-cmd --zone=libvirt --add-port=80/tcp --permanent
+else
+    if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport 80 -j ACCEPT > /dev/null 2>&1; then
+        sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport 80 -j ACCEPT
     fi
-done
-
-# Allow access to httpd on baremetal network for image cache.
-if ! sudo iptables -C INPUT -i baremetal -p tcp -m tcp --dport 80 -j ACCEPT > /dev/null 2>&1; then
-    sudo iptables -I INPUT -i baremetal -p tcp -m tcp --dport 80 -j ACCEPT
+    if ! sudo iptables -C INPUT -i baremetal -p tcp -m tcp --dport 80 -j ACCEPT > /dev/null 2>&1; then
+        sudo iptables -I INPUT -i baremetal -p tcp -m tcp --dport 80 -j ACCEPT
+    fi
 fi
 
 # Allow ipmi to the virtual bmc processes that we just started
@@ -152,24 +148,6 @@ else
     if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT 2>/dev/null ; then
         sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
     fi
-fi
-
-#Allow access to dhcp and tftp server for pxeboot
-for port in 67 69 ; do
-    if [ "${RHEL8}" = "True" ] ; then
-        sudo firewall-cmd --zone=libvirt --add-port=${port}/udp
-        sudo firewall-cmd --zone=libvirt --add-port=${port}/udp --permanent
-    else
-        if ! sudo iptables -C INPUT -i provisioning -p udp --dport $port -j ACCEPT 2>/dev/null ; then
-            sudo iptables -I INPUT -i provisioning -p udp --dport $port -j ACCEPT
-        fi
-    fi
-done
-
-# mDNS
-if [ "${RHEL8}" = "True" ] ; then
-    sudo firewall-cmd --zone=libvirt --add-port=5353/udp
-    sudo firewall-cmd --zone=libvirt --add-port=5353/udp --permanent
 fi
 
 # Need to route traffic from the provisioning host.
