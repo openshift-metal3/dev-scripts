@@ -12,7 +12,36 @@ export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 #
 # See https://origin-release.svc.ci.openshift.org/ for release details
 #
-export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
+
+function extract_command() {
+    local release_image
+    local cmd
+    local outdir
+    local extract_dir
+
+    cmd="$1"
+    release_image="$2"
+    outdir="$3"
+
+    extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
+    pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
+
+    echo "${PULL_SECRET}" > "${pullsecret_file}"
+    oc adm release extract --registry-config "${pullsecret_file}" --command=$cmd --to "${extract_dir}" ${release_image}
+
+    mv "${extract_dir}/${cmd}" "${outdir}"
+    rm -rf "${extract_dir}"
+    rm -rf "${pullsecret_file}"
+}
+
+# Let's always grab the `oc` from the release we're using.
+function extract_oc() {
+    extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
+    extract_command oc "$1" "${extract_dir}"
+    sudo mv "${extract_dir}/oc" /usr/local/bin
+    rm -rf "${extract_dir}"
+}
 
 function extract_installer() {
     local release_image
@@ -21,21 +50,8 @@ function extract_installer() {
     release_image="$1"
     outdir="$2"
 
-    extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
-    pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
-
-    echo "${PULL_SECRET}" > "${pullsecret_file}"
-    # FIXME: Find the pullspec for baremetal-installer image and extract the image, until
-    # https://github.com/openshift/oc/pull/57 is merged
-    baremetal_image=$(oc adm release info --registry-config "${pullsecret_file}" $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -o json | jq -r '.references.spec.tags[] | select(.name == "baremetal-installer") | .from.name')
-    oc image extract --registry-config "${pullsecret_file}" $baremetal_image --path usr/bin/openshift-install:${extract_dir}
-
-    chmod 755 "${extract_dir}/openshift-install"
-    mv "${extract_dir}/openshift-install" "${outdir}"
-    export OPENSHIFT_INSTALLER="${outdir}/openshift-install"
-
-    rm -rf "${extract_dir}"
-    rm -rf "${pullsecret_file}"
+    extract_command openshift-baremetal-install "$1" "$2"
+    export OPENSHIFT_INSTALLER="${outdir}/openshift-baremetal-install"
 }
 
 function clone_installer() {
