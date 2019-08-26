@@ -1,4 +1,4 @@
-# Using Custom Machine API Operator and Actuator
+# Using Custom Machine API Operator and Actuator or Baremetal Operator
 
 This document shows how to run a custom build of both the machine-api-operator
 (MAO) and the BareMetal Machine actuator, cluster-api-provider-baremetal
@@ -30,16 +30,21 @@ Both of these steps are handled by the "stop-mao.sh" script.
 ./stop-mao.sh
 ```
 
-## 3) Stop the cluster-api controllers
+## Run a custom cluster-api provider
 
-The MAO probably started a set of cluster-api controllers that need to be
-stopped, as well:
+If you want to run a custom version of the
+cluster-api-provider-baremetal (CAPB or "actuator"), you need to
+disable the version the machine-api-operator started. You do not need
+to follow this step if you are only going to run a custom version of
+the baremetal-operator.
+
+### 1) Stop the cluster-api controllers
 
 ```sh
 oc delete deployment -n openshift-machine-api clusterapi-manager-controllers
 ```
 
-## 4) Prepare the MAO to run locally
+### 2) Prepare the MAO to run locally
 
 ```sh
 git clone https://github.com/openshift/machine-api-operator
@@ -55,7 +60,7 @@ running podman manually.  Fix the paths to reflect your environment, first.
 sudo podman run --rm -v "/home/${USER}/go/src/github.com/openshift/machine-api-operator":/go/src/github.com/openshift/machine-api-operator:Z -w /go/src/github.com/openshift/machine-api-operator golang:1.10 ./hack/go-build.sh machine-api-operator
 ```
 
-## 5) Prepare a custom build of CAPBM
+### 3) Prepare a custom build of CAPBM
 
 This step is only needed if you want to run a custom build of the actuator, and
 not just a custom build of the MAO.
@@ -91,7 +96,7 @@ Edit `custom-images.json` to have a modified image for the BareMetal case:
 }
 ```
 
-## 6) Now run the MAO
+### 4) Now run the MAO
 
 Change `custom-images.json` to `pkg/operator/fixtures/images.json` if you
 didn’t build a custom CAPBM.
@@ -100,4 +105,27 @@ Update the `kubeconfig` path to reflect your own environment.
 
 ```sh
 bin/machine-api-operator start --images-json=custom-images.json --kubeconfig=/home/${USER}/dev-scripts/ocp/auth/kubeconfig -v 4
+```
+
+## Run a custom baremetal-operator
+
+This step assumes that the machine-api-operator has been completely
+stopped, as described above.
+
+### 1) Remove the metal3 deployment
+
+The machine-api-provider creates a "metal3" deployment, which needs to
+be deleted.
+
+```sh
+oc delete deployment -n openshift-machine-api metal3
+```
+
+### 2) Launch the metal3 support services in the cluster
+
+metal3 relies on ironic, a database, and other services that normally
+run inside the cluster. These can be launched with the script "metal3-dev/run.sh".
+
+```sh
+./metal3-dev/run.sh
 ```

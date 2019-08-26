@@ -1,0 +1,282 @@
+#
+# Configuration settings go in the metal3-config ConfigMap, which must
+# already exist.
+#
+
+#
+# The Secret containing the database password
+#
+---
+apiVersion: v1
+data:
+  password: cGFzc3dvcmQ=
+kind: Secret
+metadata:
+  name: mariadb-password
+type: Opaque
+
+#
+# The Deployment manages the software
+#
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metal3-development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: metal3-baremetal-operator
+  template:
+    metadata:
+      labels:
+        name: metal3-baremetal-operator
+    spec:
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsNonRoot: false
+      serviceAccount: machine-api-controllers
+      serviceAccountName: machine-api-controllers
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+        tolerationSeconds: 120
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+        tolerationSeconds: 120
+
+      containers:
+
+      - name: metal3-dnsmasq
+        command:
+        - /bin/rundnsmasq
+        env:
+        - name: HTTP_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: http_port
+              name: metal3-config
+        - name: PROVISIONING_INTERFACE
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_interface
+              name: metal3-config
+        - name: DHCP_RANGE
+          valueFrom:
+            configMapKeyRef:
+              key: dhcp_range
+              name: metal3-config
+        image: quay.io/metal3-io/ironic
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /shared
+          name: metal3-shared
+
+      - name: metal3-mariadb
+        command:
+        - /bin/runmariadb
+        env:
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mariadb-password
+        image: quay.io/metal3-io/ironic
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /shared
+          name: metal3-shared
+
+      - name: metal3-httpd
+        command:
+        - /bin/runhttpd
+        env:
+        - name: HTTP_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: http_port
+              name: metal3-config
+        - name: PROVISIONING_INTERFACE
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_interface
+              name: metal3-config
+        image: quay.io/metal3-io/ironic
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /shared
+          name: metal3-shared
+
+      - name: metal3-ironic-conductor
+        command:
+        - /bin/runironic-conductor
+        env:
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mariadb-password
+        - name: HTTP_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: http_port
+              name: metal3-config
+        - name: PROVISIONING_INTERFACE
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_interface
+              name: metal3-config
+        image: quay.io/metal3-io/ironic
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /shared
+          name: metal3-shared
+
+      - name: metal3-ironic-api
+        command:
+        - /bin/runironic-api
+        env:
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mariadb-password
+        - name: HTTP_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: http_port
+              name: metal3-config
+        - name: PROVISIONING_INTERFACE
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_interface
+              name: metal3-config
+        image: quay.io/metal3-io/ironic
+        imagePullPolicy: Always
+        resources: {}
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /shared
+          name: metal3-shared
+
+      - name: metal3-ironic-inspector
+        env:
+        - name: PROVISIONING_INTERFACE
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_interface
+              name: metal3-config
+        image: quay.io/metal3-io/ironic-inspector
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /shared
+          name: metal3-shared
+
+      - name: metal3-static-ip-manager
+        command:
+        - /refresh-static-ip
+        env:
+        - name: PROVISIONING_IP
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_ip
+              name: metal3-config
+        - name: PROVISIONING_INTERFACE
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_interface
+              name: metal3-config
+        image: quay.io/metal3-io/static-ip-manager
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+
+      initContainers:
+
+      - name: metal3-ipa-downloader
+        command:
+        - /usr/local/bin/get-resource.sh
+        env:
+        - name: CACHEURL
+          valueFrom:
+            configMapKeyRef:
+              key: cache_url
+              name: metal3-config
+        image: quay.io/metal3-io/ironic-ipa-downloader
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /shared
+          name: metal3-shared
+
+      - name: metal3-rhcos-downloader
+        command:
+        - /usr/local/bin/get-resource.sh
+        env:
+        - name: RHCOS_IMAGE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: rhcos_image_url
+              name: metal3-config
+        - name: CACHEURL
+          valueFrom:
+            configMapKeyRef:
+              key: cache_url
+              name: metal3-config
+        image: quay.io/openshift-metal3/rhcos-downloader
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /shared
+          name: metal3-shared
+
+      - name: metal3-static-ip-set
+        command:
+        - /set-static-ip
+        env:
+        - name: PROVISIONING_IP
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_ip
+              name: metal3-config
+        - name: PROVISIONING_INTERFACE
+          valueFrom:
+            configMapKeyRef:
+              key: provisioning_interface
+              name: metal3-config
+        image: quay.io/metal3-io/static-ip-manager
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+
+      volumes:
+      - emptyDir: {}
+        name: metal3-shared
