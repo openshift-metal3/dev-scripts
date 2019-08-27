@@ -41,6 +41,9 @@ if [ ! -d ocp ]; then
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       # Extract openshift-install from the release image
       extract_installer "${OPENSHIFT_RELEASE_IMAGE}" ocp/
+    elif [ -f openshift-install ] ; then
+      # If the binary is in the directory, use this one
+      cp openshift-install ocp
     else
       # Clone and build the installer from source
       clone_installer
