@@ -84,8 +84,6 @@ The Makefile will run the scripts in this order:
 This should result in some (stopped) VMs created by tripleo-quickstart on the
 local virthost and some other dependencies installed.
 
-- `./03_ocp_repo_sync.sh`
-
 - `./04_setup_ironic.sh`
 
 This will setup containers for the Ironic infrastructure on the host
