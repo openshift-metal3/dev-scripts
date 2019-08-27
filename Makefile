@@ -1,5 +1,5 @@
-.PHONY: default all requirements configure repo_sync ironic ocp_run register_hosts clean ocp_cleanup ironic_cleanup host_cleanup bell csr_hack
-default: requirements configure repo_sync ironic ocp_run register_hosts csr_hack bell
+.PHONY: default all requirements configure ironic ocp_run register_hosts clean ocp_cleanup ironic_cleanup host_cleanup bell csr_hack
+default: requirements configure ironic ocp_run register_hosts csr_hack bell
 
 all: default
 
@@ -10,9 +10,6 @@ requirements:
 
 configure:
 	./02_configure_host.sh
-
-repo_sync:
-	./03_ocp_repo_sync.sh
 
 ironic:
 	./04_setup_ironic.sh
