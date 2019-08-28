@@ -22,7 +22,7 @@ Deployment. Without this, it will scale the MAO back up within a few minutes of
 you scaling it down.
 
 ```sh
-oc patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","name":"machine-api-operator","namespace":"openshift-machine-api","unmanaged":true}]}}'
+oc patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","group":"apps/v1","name":"machine-api-operator","namespace":"openshift-machine-api","unmanaged":true}]}}'
 ```
 
 Stop the currently running MAO by scaling it to zero replicas:
