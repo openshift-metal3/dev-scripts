@@ -69,6 +69,13 @@ function build_installer() {
   popd
 
   export OPENSHIFT_INSTALLER="$OPENSHIFT_INSTALL_PATH/bin/openshift-install"
+
+  # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.2
+  # Which currently don't work for us ref
+  # https://github.com/openshift/ironic-inspector-image/pull/17
+  # Until we can align OPENSHIFT_RELEASE_IMAGE with the installer default, we still need
+  # to set OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE for openshift-install source builds
+  export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE}"
 }
 
 function generate_ocp_install_config() {
