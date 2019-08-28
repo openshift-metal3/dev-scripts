@@ -144,7 +144,7 @@ done
 set -o pipefail
 # TODO - Run all steps again once the baremetal-operator pod is fixed
 #timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
-timeout -s 9 85m make requirements configure repo_sync ironic ocp_run register_hosts |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
+timeout -s 9 85m make requirements configure ironic ocp_run register_hosts |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Deployment is complete, but now wait to ensure the worker node comes up.
 export KUBECONFIG=ocp/auth/kubeconfig
