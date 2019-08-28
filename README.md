@@ -127,18 +127,19 @@ master-2   Ready     master    20m       v1.12.4+50c2f2340a
 For manual debugging via openstackclient, you can use the following, noting that the IP address is that of the bootstrap VM which is ephemeral and won't be available once the masters have been deployed:
 
 ```
-export OS_TOKEN=fake-token
-export OS_URL=http://172.22.0.2:6385/
+export OS_AUTH_TYPE=none
+export OS_ENDPOINT=http://172.22.0.2:6385/
 openstack baremetal node list
 ...
 ```
 
-Note that the OS_URL above refers to the provisioning network IP of the bootstrap VM, configured by `openshift-install` on the provisioning host. After the initial bootstrapping has completed this VM is destroyed, and Ironic services are started on the deployed cluster inside the baremetal operator.
+Note that the OS_ENDPOINT above refers to the provisioning network IP of the bootstrap VM, configured by `openshift-install` on the provisioning host. After the initial bootstrapping has completed this VM is destroyed, and Ironic services are started on the deployed cluster inside the baremetal operator.
 
-To access this instance, update OS_URL to the provisioning network IP on the master node that is running the baremetal-operator pod:
+To access this instance, update OS_ENDPOINT to the provisioning network IP on the master node that is running the baremetal-operator pod:
 
 ```
-export OS_URL=http://172.22.0.3:6385
+export OS_AUTH_TYPE=none
+export OS_ENDPOINT=http://172.22.0.3:6385
 openstack baremetal node list
 ```
 
