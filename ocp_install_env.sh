@@ -1,18 +1,11 @@
 eval "$(go env)"
 
-export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
-export OPENSHIFT_INSTALL_DATA="$OPENSHIFT_INSTALL_PATH/data/data"
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
 export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
-
-#
-# See https://origin-release.svc.ci.openshift.org/ for release details
-#
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
 
 function extract_command() {
     local release_image
@@ -51,7 +44,6 @@ function extract_installer() {
     outdir="$2"
 
     extract_command openshift-baremetal-install "$1" "$2"
-    export OPENSHIFT_INSTALLER="${outdir}/openshift-baremetal-install"
 }
 
 function clone_installer() {
@@ -67,15 +59,6 @@ function build_installer() {
   cd $OPENSHIFT_INSTALL_PATH
   TAGS="libvirt baremetal" hack/build.sh
   popd
-
-  export OPENSHIFT_INSTALLER="$OPENSHIFT_INSTALL_PATH/bin/openshift-install"
-
-  # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.2
-  # Which currently don't work for us ref
-  # https://github.com/openshift/ironic-inspector-image/pull/17
-  # Until we can align OPENSHIFT_RELEASE_IMAGE with the installer default, we still need
-  # to set OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE for openshift-install source builds
-  export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE}"
 }
 
 function generate_ocp_install_config() {
@@ -93,6 +76,7 @@ function generate_ocp_install_config() {
     # TODO - Change worker replicas to ${NUM_WORKERS} once the machine-api-operator
     # deploys the baremetal-operator
 
+    mkdir -p "${outdir}"
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}

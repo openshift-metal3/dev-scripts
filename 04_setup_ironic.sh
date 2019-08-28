@@ -4,6 +4,7 @@ set -ex
 
 source logging.sh
 source common.sh
+source rhcos.sh
 
 # Either pull or build the ironic images
 # To build the IRONIC image set
