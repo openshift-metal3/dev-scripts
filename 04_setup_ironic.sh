@@ -49,6 +49,10 @@ sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-po
 sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
 
+# Wait for the downloader containers to finish, if they are updating an existing cache
+# the checks below will pass because old data exists
+sudo podman wait -i 1000 ipa-downloader coreos-downloader
+
 # Wait for images to be downloaded/ready
 while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1 ; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
