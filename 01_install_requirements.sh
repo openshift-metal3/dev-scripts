@@ -83,6 +83,7 @@ if [ "${RHEL8}" = "True" ] ; then
       libvirt-devel \
       libvirt-daemon-kvm \
       podman \
+      buildah \
       qemu-kvm \
       virt-install \
       unzip \
@@ -141,6 +142,7 @@ else
       libvirt-devel \
       libvirt-daemon-kvm \
       podman \
+      buildah \
       python-ironicclient \
       python-ironic-inspector-client \
       python-lxml \

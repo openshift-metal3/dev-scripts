@@ -33,6 +33,32 @@ else
     INGRESS_VIP=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
 fi
 
+# Override release images with ones built from our local git repos if the
+# configuration calls for it.
+IMAGE_OVERRIDES=""
+if [ -n "$COREDNS_IMAGE" ]; then
+    pushd "$COREDNS_IMAGE"
+    coredns_id=$(sudo buildah bud -f Dockerfile.openshift . | tail -n 1)
+    sudo podman tag $coredns_id quay.io/cybertron/coredns
+    sudo podman push quay.io/cybertron/coredns
+    IMAGE_OVERRIDES="$IMAGE_OVERRIDES coredns=quay.io/cybertron/coredns:latest"
+    popd
+fi
+# TODO: Build mdns-publisher and baremetal-runtimecfg images
+
+# Build a new release, based on the configured release, that overrides the
+# appropriate images built above.
+if [ -n "$IMAGE_OVERRIDES" ]; then
+    # This is consistently failing for me for some reason. It seems to be
+    # completing anyway though...
+    oc adm release new -n ocp \
+        --server https://api.ci.openshift.org \
+        --from-release "$OPENSHIFT_RELEASE_IMAGE" \
+        --to-image quay.io/cybertron/origin-release:v4.2 \
+        $IMAGE_OVERRIDES || :
+    OPENSHIFT_RELEASE_IMAGE="quay.io/cybertron/origin-release:v4.2"
+fi
+
 if [ ! -f ocp/install-config.yaml ]; then
     # Validate there are enough nodes to avoid confusing errors later..
     NODES_LEN=$(jq '.nodes | length' ${NODES_FILE})
