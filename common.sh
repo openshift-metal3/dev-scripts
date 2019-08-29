@@ -19,6 +19,28 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 
+#
+# See https://origin-release.svc.ci.openshift.org/ for release details
+#
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
+export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
+
+if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
+    export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-ocp/openshift-baremetal-install}
+ else
+    export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-$OPENSHIFT_INSTALL_PATH/bin/openshift-install}
+
+    # This is an URI so we can use curl for either the file on GitHub, or locally
+    export OPENSHIFT_INSTALLER_RHCOS=${OPENSHIFT_INSTALLER_RHCOS:-file:///$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json}
+
+    # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.2
+    # Which currently don't work for us ref
+    # https://github.com/openshift/ironic-inspector-image/pull/17
+    # Until we can align OPENSHIFT_RELEASE_IMAGE with the installer default, we still need
+    # to set OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE for openshift-install source builds
+    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE}"
+fi
+
 # Set variables
 # Additional DNS
 ADDN_DNS=${ADDN_DNS:-}
@@ -46,10 +68,6 @@ MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"1"}
 export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
-
-export RHCOS_INSTALLER_IMAGE_URL="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/42.80.20190827.1/rhcos-42.80.20190827.1-openstack.qcow2"
-export RHCOS_IMAGE_URL=${RHCOS_IMAGE_URL:-${RHCOS_INSTALLER_IMAGE_URL}}
-export RHCOS_IMAGE_FILENAME_LATEST="rhcos-ootpa-latest.qcow2"
 
 # Ironic vars
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:master"}

@@ -6,6 +6,7 @@ source logging.sh
 source utils.sh
 source common.sh
 source ocp_install_env.sh
+source rhcos.sh
 
 # Do some PULL_SECRET sanity checking
 if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then
@@ -32,21 +33,7 @@ else
     INGRESS_VIP=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
 fi
 
-if [ ! -d ocp ]; then
-    mkdir -p ocp
-
-    # Extract an updated client tools from the release image
-    extract_oc ${OPENSHIFT_RELEASE_IMAGE}
-
-    if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-      # Extract openshift-install from the release image
-      extract_installer "${OPENSHIFT_RELEASE_IMAGE}" ocp/
-    else
-      # Clone and build the installer from source
-      clone_installer
-      build_installer
-    fi
-
+if [ ! -f ocp/install-config.yaml ]; then
     # Validate there are enough nodes to avoid confusing errors later..
     NODES_LEN=$(jq '.nodes | length' ${NODES_FILE})
     if (( $NODES_LEN < ( $NUM_MASTERS + $NUM_WORKERS ) )); then
