@@ -75,10 +75,16 @@ function make_bm_workers() {
 list_masters | make_bm_masters | tee $SCRIPTDIR/ocp/master_crs.yaml
 
 list_workers | make_bm_workers | tee $SCRIPTDIR/ocp/worker_crs.yaml
-# TODO - remove this once we set worker replicas to ${NUM_WORKERS} in
-# install-config, which will be after the machine-api-operator can deploy the
-# baremetal-operator
-oc scale machineset -n openshift-machine-api ${CLUSTER_NAME}-worker-0 --replicas=${NUM_WORKERS}
+if test ${NUM_WORKERS} -gt 0 ; then
+    # TODO - remove this once we set worker replicas to ${NUM_WORKERS} in
+    # install-config, which will be after the machine-api-operator can deploy the
+    # baremetal-operator
+    oc scale machineset -n openshift-machine-api ${CLUSTER_NAME}-worker-0 --replicas=${NUM_WORKERS}
+
+    # Run the fix_certs.sh script periodically as a workaround for
+    # https://github.com/openshift-metalkube/dev-scripts/issues/260
+    sudo systemd-run --on-active=30s --on-unit-active=1m --unit=fix_certs.service $(dirname $0)/fix_certs.sh
+fi
 
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/master_crs.yaml --namespace=openshift-machine-api
 
