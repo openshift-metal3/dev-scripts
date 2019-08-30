@@ -125,7 +125,10 @@ oc delete deployment -n openshift-machine-api metal3
 ### 2) Launch the metal3 support services in the cluster
 
 metal3 relies on ironic, a database, and other services that normally
-run inside the cluster. These can be launched with the script "metal3-dev/run.sh".
+run inside the cluster. These can be launched with the script
+"metal3-dev/run.sh". The script creates a Deployment called
+"metal3-development" to differentiate it from the standard "metal3"
+deployment.
 
 ```sh
 ./metal3-dev/run.sh
