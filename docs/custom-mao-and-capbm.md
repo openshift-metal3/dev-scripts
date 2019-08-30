@@ -110,7 +110,8 @@ bin/machine-api-operator start --images-json=custom-images.json --kubeconfig=/ho
 ## Run a custom baremetal-operator
 
 This step assumes that the machine-api-operator has been completely
-stopped, as described above.
+stopped, as described above, so that it does not re-deploy metal3 and
+break the manual configuration performed below.
 
 ### 1) Remove the metal3 deployment
 
