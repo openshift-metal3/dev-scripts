@@ -2,6 +2,14 @@
 
 eval "$(go env)"
 
+# Ensure if a go program crashes we get a coredump (especially to nail
+# down that's causing https://github.com/openshift/oc/issues/58).
+#
+# To get the dump, use coredumpctl:
+#   coredumpctl -o oc.coredump dump /usr/local/bin/oc
+#
+export GOTRACEBACK=crash
+
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=`whoami`
 
