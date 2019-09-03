@@ -44,7 +44,15 @@ if [ -n "$COREDNS_IMAGE" ]; then
     IMAGE_OVERRIDES="$IMAGE_OVERRIDES coredns=quay.io/cybertron/coredns:latest"
     popd
 fi
-# TODO: Build mdns-publisher and baremetal-runtimecfg images
+if [ -n "$BAREMETAL_RUNTIMECFG_IMAGE" ]; then
+    pushd "$BAREMETAL_RUNTIMECFG_IMAGE"
+    baremetal_runtimecfg_id=$(sudo buildah bud -f Dockerfile . | tail -n 1)
+    sudo podman tag $baremetal_runtimecfg_id quay.io/cybertron/baremetal-runtimecfg
+    sudo podman push quay.io/cybertron/baremetal-runtimecfg
+    IMAGE_OVERRIDES="$IMAGE_OVERRIDES baremetal-runtimecfg=quay.io/cybertron/baremetal-runtimecfg:latest"
+    popd
+fi
+# TODO: Build mdns-publisher
 
 # Build a new release, based on the configured release, that overrides the
 # appropriate images built above.
