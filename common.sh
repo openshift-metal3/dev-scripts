@@ -2,13 +2,19 @@
 
 eval "$(go env)"
 
-# Ensure if a go program crashes we get a coredump (especially to nail
-# down that's causing https://github.com/openshift/oc/issues/58).
+
+# Ensure if a go program crashes we get a coredump
 #
 # To get the dump, use coredumpctl:
 #   coredumpctl -o oc.coredump dump /usr/local/bin/oc
 #
 export GOTRACEBACK=crash
+
+# Do not use pigz due to race condition in vendored docker code
+# that oc uses.
+# See: https://github.com/openshift/oc/issues/58,
+#      https://github.com/moby/moby/issues/39859
+export MOBY_DISABLE_PIGZ=true
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=`whoami`
