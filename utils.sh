@@ -177,7 +177,7 @@ function sync_repo_and_patch {
 
 function bmo_config_map {
     # Set default value for provisioning interface
-    CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-ens3}
+    CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
     
     # Get Baremetal ip
     BAREMETAL_IP=$(ip -o -f inet addr show baremetal | awk '{print $4}' | tail -1 | cut -d/ -f1)
