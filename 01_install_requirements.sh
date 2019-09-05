@@ -49,7 +49,7 @@ if [ "${RHEL8}" = "True" ] ; then
     fi
     pushd crudini
     git pull -r
-    sudo pip3 install .
+    sudo pip3 install -U .
     popd ; popd
 else
     sudo yum -y install \
@@ -89,7 +89,7 @@ if [ "${RHEL8}" = "True" ] ; then
       network-scripts \
       ipmitool
 
-    sudo pip3 install yq
+    sudo pip3 install -U yq
 
     # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
     pushd ~
@@ -98,7 +98,7 @@ if [ "${RHEL8}" = "True" ] ; then
     fi
     pushd virtualbmc
     git pull -r
-    sudo pip3 install .
+    sudo pip3 install -U .
     curl 'https://review.rdoproject.org/r/gitweb?p=openstack/virtualbmc-distgit.git;a=blob_plain;f=virtualbmc.service;hb=HEAD' > virtualbmc.service
     sed -i 's|/usr/bin/vbmcd|/usr/local/bin/vbmcd|' virtualbmc.service
     sudo mv virtualbmc.service /etc/systemd/system/.
@@ -114,7 +114,7 @@ if [ "${RHEL8}" = "True" ] ; then
     fi
     pushd openstackclient
     git pull -r
-    sudo pip3 install .
+    sudo pip3 install -U .
     popd ; popd
 else
     # We're reusing some tripleo pieces for this setup so clone them here
