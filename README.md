@@ -124,26 +124,36 @@ master-2   Ready     master    20m       v1.12.4+50c2f2340a
 
 ## Interacting with Ironic directly
 
-For manual debugging via openstackclient, you can use the following, noting that the IP address is that of the bootstrap VM which is ephemeral and won't be available once the masters have been deployed:
+The dev-scripts repository contains a `clouds.yaml` file with
+connection settings for both instances of Ironic. The copy of Ironic
+that runs on the bootstrap node during installation can be accessed by
+using the cloud name `metal3-bootstrap` and the copy running inside
+the cluster once deployment is finished can be accessed by using the
+cloud name `metal3`.
+
+The openstack command line tool will look for `clouds.yaml` in the
+current directory or you can copy it to
+`~/.config/openstack/clouds.yaml`.
+
+For manual debugging via the openstack client connecting to the bootstrap
+VM, which is ephemeral and won't be available once the masters have
+been deployed:
 
 ```
-export OS_AUTH_TYPE=none
-export OS_ENDPOINT=http://172.22.0.2:6385/
+export OS_CLOUD=metal3-bootstrap
 openstack baremetal node list
 ...
 ```
 
-Note that the OS_ENDPOINT above refers to the provisioning network IP of the bootstrap VM, configured by `openshift-install` on the provisioning host. After the initial bootstrapping has completed this VM is destroyed, and Ironic services are started on the deployed cluster inside the baremetal operator.
-
-To access this instance, update OS_ENDPOINT to the provisioning network IP on the master node that is running the baremetal-operator pod:
+To access the Ironic instance running in the baremetal-operator pod:
 
 ```
-export OS_AUTH_TYPE=none
-export OS_ENDPOINT=http://172.22.0.3:6385
+export OS_CLOUD=metal3
 openstack baremetal node list
 ```
 
-This references the provisioning network IP on the master node that is running the baremetal-operator pod.
+NOTE: If you use a provisioning network other than the default, you
+may need to modify the IP addresses used in
 
 ## Cleanup
 
