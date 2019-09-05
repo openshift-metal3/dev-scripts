@@ -3,7 +3,7 @@ clouds:
     auth_type: none
     baremetal_endpoint_override: http://172.22.0.2:6385
     baremetal_introspection_endpoint_override: http://172.22.0.2:5050
-  metal3-test:
+  metal3:
     auth_type: none
     baremetal_endpoint_override: http://172.22.0.3:6385
     baremetal_introspection_endpoint_override: http://172.22.0.3:5050
