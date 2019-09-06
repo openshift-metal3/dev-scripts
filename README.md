@@ -131,9 +131,16 @@ using the cloud name `metal3-bootstrap` and the copy running inside
 the cluster once deployment is finished can be accessed by using the
 cloud name `metal3`.
 
-The openstack command line tool will look for `clouds.yaml` in the
-current directory or you can copy it to
-`~/.config/openstack/clouds.yaml`.
+The dev-scripts will install the `openstack` command line tool on the
+provisioning host as part of setting up the cluster.  The `openstack`
+tool will look for `clouds.yaml` in the current directory or you can
+copy it to `~/.config/openstack/clouds.yaml`.  Version 3.19.0 or
+higher is needed to interact with ironic using `clouds.yaml`.
+
+```
+$ openstack --version
+openstack 3.19.0
+```
 
 For manual debugging via the openstack client connecting to the bootstrap
 VM, which is ephemeral and won't be available once the masters have
