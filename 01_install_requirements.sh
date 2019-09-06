@@ -89,6 +89,10 @@ if [ "${RHEL8}" = "True" ] ; then
       network-scripts \
       ipmitool
 
+    # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
+    sudo dnf groupinstall -y "Development Tools"
+    sudo dnf install -y python36-devel
+
     sudo pip3 install -U yq
 
     # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
@@ -105,9 +109,6 @@ if [ "${RHEL8}" = "True" ] ; then
     sudo systemctl daemon-reload
     popd ; popd
 
-    # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
-    sudo dnf groupinstall -y "Development Tools"
-    sudo dnf install -y python36-devel
     pushd ~
     if [ ! -d openstackclient ] ; then
         git clone https://git.openstack.org/openstack/openstackclient
