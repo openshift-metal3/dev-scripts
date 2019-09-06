@@ -67,7 +67,8 @@ sudo yum -y install \
   patch \
   psmisc \
   vim-enhanced \
-  wget
+  wget \
+  redhat-rpm-config
 
 if [ "${RHEL8}" = "True" ] ; then
     sudo subscription-manager repos --enable=ansible-2-for-rhel-8-x86_64-rpms
