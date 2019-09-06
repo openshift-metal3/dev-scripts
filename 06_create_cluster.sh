@@ -37,6 +37,9 @@ fi
 # configuration calls for it.
 IMAGE_OVERRIDES=""
 if [ -n "$COREDNS_IMAGE" ]; then
+    # TODO: Figure out how to include coredns-mdns changes in this build
+    # It requires modification of a coredns file, like:
+    # echo "replace github.com/openshift/coredns-mdns => $source_dir" >> "$GOPATH/src/github.com/coredns/coredns/go.mod"
     pushd "$COREDNS_IMAGE"
     coredns_id=$(sudo buildah bud -f Dockerfile.openshift . | tail -n 1)
     sudo podman tag $coredns_id quay.io/cybertron/coredns
@@ -57,11 +60,16 @@ fi
 # Build a new release, based on the configured release, that overrides the
 # appropriate images built above.
 if [ -n "$IMAGE_OVERRIDES" ]; then
-    # This is consistently failing for me for some reason. It seems to be
-    # completing anyway though...
+    # This is what I would like to do, but it doesn't work
+#     oc adm release new -n ocp \
+#         --server https://api.ci.openshift.org \
+#         --from-release "$OPENSHIFT_RELEASE_IMAGE" \
+#         --to-image quay.io/cybertron/origin-release:v4.2 \
+#         $IMAGE_OVERRIDES || :
+    # This works in isolation but not when run as part of this script. :-/
     oc adm release new -n ocp \
         --server https://api.ci.openshift.org \
-        --from-release "$OPENSHIFT_RELEASE_IMAGE" \
+        --from-image-stream "4.2-art-latest" \
         --to-image quay.io/cybertron/origin-release:v4.2 \
         $IMAGE_OVERRIDES || :
     OPENSHIFT_RELEASE_IMAGE="quay.io/cybertron/origin-release:v4.2"
