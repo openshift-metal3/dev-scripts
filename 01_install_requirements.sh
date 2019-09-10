@@ -5,6 +5,10 @@ source logging.sh
 source common.sh
 source utils.sh
 
+if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null ; then
+    RHEL8="True"
+fi
+
 sudo yum install -y libselinux-utils
 if selinuxenabled ; then
     # FIXME ocp-doit required this so leave permissive for now
@@ -13,10 +17,11 @@ if selinuxenabled ; then
 fi
 
 # Update to latest packages first
-sudo yum -y update
-
-if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null ; then
-    RHEL8="True"
+if [ "${RHEL8}" = "True" ] ; then
+    # workaround https://bugzilla.redhat.com/show_bug.cgi?id=1750866
+    sudo yum -y update --nobest
+else
+    sudo yum -y update
 fi
 
 # Install EPEL required by some packages
@@ -67,7 +72,9 @@ if [ "${RHEL8}" = "True" ] ; then
       redhat-lsb-core
 
     # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
-    sudo dnf groupinstall -y "Development Tools"
+    #sudo dnf groupinstall -y "Development Tools"
+    # workaround https://bugzilla.redhat.com/show_bug.cgi?id=1750866
+    sudo dnf groupinstall -y "Development Tools" --nobest
     sudo dnf install -y python36-devel
 
     # TODO(russellb) - Install an rpm for this once OSP for RHEL8 is out
