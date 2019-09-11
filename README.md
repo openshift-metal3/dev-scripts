@@ -4,20 +4,17 @@ Metal³ Installer Dev Scripts
 This set of scripts configures some libvirt VMs and associated
 [virtualbmc](https://docs.openstack.org/tripleo-docs/latest/install/environments/virtualbmc.html) processes to enable deploying to them as dummy baremetal nodes.
 
-This is very similar to how we do TripleO testing so we reuse some roles
-from tripleo-quickstart here.
-
-We are using this repository as a work space while we figure out what the
-installer needs to do for bare metal provisioning. As that logic is ironed out,
-we are moving it into the
-the [go-based openshift-installer](https://github.com/openshift/installer) or
-to other components of OpenShift.
+We are using this repository as a work space for development environment setup
+and convenience/test scripts, the main logic needed to enable 
+bare metal provisioning is now integrated into the 
+[go-based openshift-installer](https://github.com/openshift/installer) and 
+other components of OpenShift via support for a baremetal platform type.
 
 # Pre-requisites
 
-- CentOS 7.5 or greater (installed from 7.4 or newer)
+- CentOS 7.5 or greater (installed from 7.4 or newer) or RHEL8 host
 - file system that supports d_type (see Troubleshooting section for more information)
-- ideally on a bare metal host
+- ideally on a bare metal host with at least 64G or RAM
 - run as a user with passwordless sudo access
 - get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret
 - hostnames for masters and workers must be in the format XX-master-# (e.g. openshift-master-0), or XX-worker-# (e.g. openshift-worker-0)
@@ -186,8 +183,6 @@ You can use:
 ```
 virsh console domain_name
 ```
-
-To get to the bootstrap node. The username is `core` and the password is `notworking`
 
 ### Determining your filesystem type
 If you're not sure what filesystem you have, try `df - T` and the second
