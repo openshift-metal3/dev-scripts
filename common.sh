@@ -164,3 +164,6 @@ if [ ! -d "$IRONIC_DATA_DIR" ]; then
   sudo chown "${USER}:${USER}" "$IRONIC_DATA_DIR"
   chmod 755 "$IRONIC_DATA_DIR"
 fi
+
+# Defaults the variable to enable testing a custom machine-api-operator image
+export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}

@@ -200,3 +200,15 @@ If you see `ftype=1` then you have d_type support.
 The default cpu/memory/disk resources when using virtual machines are provided
 by the [vm_setup_vars.yml](vm_setup_vars.yml) file, which sets some dev-scripts
 variables that override the defaults in metal3-dev-env
+
+### Testing a custom machine-api-operator image with this deployment
+
+The script `run-custom-mao.sh` allows the machine-api-operator pod to be re-deployed with a custom image.
+
+For example:
+`./run-custom-mao.sh <path in quay.io for the custom MAO image with tag> <repo name> <branch name>`
+
+Custom MAO image name is a mandatory parameter but the others are optional with defaults.
+
+Alternatively, all input parameters can be set via `CUSTOM_MAO_IMAGE`, `REPO_NAME` and `MAO_BRANCH` variables respectively,
+and `run-custom-mao.sh` can be run automatically if you set `TEST_CUSTOM_MAO` to true.

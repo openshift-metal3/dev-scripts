@@ -53,3 +53,15 @@ set -x
 
 # External subnet
 #export EXTERNAL_SUBNET="11.0.0.0/24"
+
+# Enable testing of custom machine-api-operator-image
+#export TEST_CUSTOM_MAO=true
+
+# Custom machine-api-operator image with tag
+#export CUSTOM_MAO_IMAGE="quay.io/mao-user/machine-api-operator:mao-fix"
+
+# Git repository that is holding any custom machine-api-operator changes
+#export REPO_NAME="mao-user"
+
+# Name of branch in the above repo which contains the custom MAO changes
+#export MAO_BRANCH="mao-fix"
