@@ -89,14 +89,14 @@ compute:
   replicas: 0
 controlPlane:
   name: master
-  replicas: ${NUM_MASTERS}
+  replicas: 2
   platform:
     baremetal: {}
 platform:
   baremetal:
     dnsVIP: ${DNS_VIP}
     hosts:
-$(master_node_map_to_install_config $NUM_MASTERS)
+$(master_node_map_to_install_config 2)
 pullSecret: |
   $(echo $PULL_SECRET | jq -c .)
 sshKey: |

@@ -1,0 +1,26 @@
+apiVersion: machine.openshift.io/v1beta1
+kind: Machine
+metadata:
+  name: ostest-master-2
+  namespace: openshift-machine-api
+  labels:
+    machine.openshift.io/cluster-api-cluster: ostest
+    machine.openshift.io/cluster-api-machine-role: master
+    machine.openshift.io/cluster-api-machine-type: master
+spec:
+  providerSpec:
+    value:
+      hostSelector: {}
+      image:
+        checksum: http://172.22.0.3:6180/images/rhcos-42.80.20190827.1-openstack.qcow2/rhcos-42.80.20190827.1-compressed.qcow2.md5sum
+        url: http://172.22.0.3:6180/images/rhcos-42.80.20190827.1-openstack.qcow2/rhcos-42.80.20190827.1-compressed.qcow2
+      userData:
+        name: master-user-data
+status:
+  addresses:
+  - address: 192.168.111.22
+    type: InternalIP
+  - address: master-2
+    type: Hostname
+  - address: master-2
+    type: InternalDNS

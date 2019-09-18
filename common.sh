@@ -80,7 +80,7 @@ NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
-export NUM_WORKERS=${NUM_WORKERS:-"1"}
+export NUM_WORKERS=${NUM_WORKERS:-"0"}
 export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 
 # Ironic vars
