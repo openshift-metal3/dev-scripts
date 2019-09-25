@@ -5,7 +5,7 @@ source logging.sh
 source common.sh
 
 # Kill and remove the running ironic containers
-for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb; do
+for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb vbmc sushy-tools; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done

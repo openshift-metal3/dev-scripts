@@ -90,6 +90,10 @@ export IPA_DOWNLOADER_IMAGE=${IPA_DOWNLOADER_IMAGE:-"quay.io/metal3-io/ironic-ip
 export COREOS_DOWNLOADER_IMAGE=${COREOS_DOWNLOADER_IMAGE:-"quay.io/openshift-metal3/rhcos-downloader:master"}
 export IRONIC_DATA_DIR="$WORKING_DIR/ironic"
 
+# VBMC and Redfish images
+export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
+export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
+
 export KUBECONFIG="${SCRIPTDIR}/ocp/auth/kubeconfig"
 
 # Use a cloudy ssh that doesn't do Host Key checking
