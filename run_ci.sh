@@ -14,6 +14,10 @@ function getlogs(){
     sudo podman logs coreos-downloader > $LOGDIR/coreos-downloader.log
     sudo podman logs ipa-downloader > $LOGDIR/ipa-downloader.log
 
+    sudo cp /var/log/virtualbmc/virtualbmc.log $LOGDIR/bootstrap-host-virtualbmc.log
+    sudo journalctl -u virtualbmc.service > $LOGDIR/bootstrap-host-virtualbmc.journal
+    sudo virsh list --all > $LOGDIR/bootstrap-host-virsh-list.log
+
     # And the VM journals and staticpod container logs
     for HOST in $(sudo virsh net-dhcp-leases baremetal | grep -o '192.168.111.[0-9]\+') ; do
         sshpass -p notworking $SSH core@$HOST sudo journalctl > $LOGDIR/$HOST-system.journal || true
