@@ -9,7 +9,7 @@ source rhcos.sh
 # Either pull or build the ironic images
 # To build the IRONIC image set
 # IRONIC_IMAGE=https://github.com/metalkube/metalkube-ironic
-for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE IPA_DOWNLOADER_IMAGE COREOS_DOWNLOADER_IMAGE ; do
+for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE IPA_DOWNLOADER_IMAGE COREOS_DOWNLOADER_IMAGE VBMC_IMAGE SUSHY_TOOLS_IMAGE; do
     IMAGE=${!IMAGE_VAR}
     # Is it a git repo?
     if [[ "$IMAGE" =~ "://" ]] ; then
@@ -25,7 +25,7 @@ for IMAGE_VAR in IRONIC_IMAGE IRONIC_INSPECTOR_IMAGE IPA_DOWNLOADER_IMAGE COREOS
     fi
 done
 
-for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
+for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader vbmc sushy-tools; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -38,7 +38,7 @@ fi
 # Create pod
 sudo podman pod create -n ironic-pod 
 
-# We start only the httpd and *downloader containers so that we can provide
+# We start the httpd and *downloader containers so that we can provide
 # cached images to the bootstrap VM
 sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
@@ -48,6 +48,15 @@ sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-po
 
 sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
+
+sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
+     -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+     "${VBMC_IMAGE}"
+
+sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
+     -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+     "${SUSHY_TOOLS_IMAGE}"
+
 
 # Wait for the downloader containers to finish, if they are updating an existing cache
 # the checks below will pass because old data exists
