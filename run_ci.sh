@@ -49,6 +49,28 @@ sudo yum install -y moreutils
 sudo yum install -y jq golang
 sudo yum remove -y epel-release
 
+# Project-specific actions. If these directories exist in $HOME, move
+# them to the correct $GOPATH locations.
+for PROJ in installer ; do
+    [ ! -d /home/notstack/$PROJ ] && continue
+
+    if [ "$PROJ" == "installer" ]; then
+      export KNI_INSTALL_FROM_GIT=true
+      GITHUB_ORGANIZATION=openshift
+    else
+      GITHUB_ORGANIZATION=openshift-metal3
+    fi
+
+    # Set origin so that sync_repo_and_patch is rebasing against the correct source
+    cd /home/notstack/$PROJ
+    git branch -M master
+    git remote set-url origin https://github.com/$GITHUB_ORGANIZATION/$PROJ
+    cd -
+
+    mkdir -p $HOME/go/src/github.com/$GITHUB_ORGANIZATION
+    mv /home/notstack/$PROJ $HOME/go/src/github.com/$GITHUB_ORGANIZATION
+done
+
 source common.sh
 
 if [ -n "$PS1" ]; then
@@ -117,28 +139,6 @@ if [ -d "/home/notstack/ironic-inspector-image" ] ; then
     export IRONIC_INSPECTOR_IMAGE=https://github.com/metal3-io/ironic-inspector-image
 fi
 
-# Project-specific actions. If these directories exist in $HOME, move
-# them to the correct $GOPATH locations. If installer, run some of
-# their CI checks.
-for PROJ in installer ; do
-    [ ! -d /home/notstack/$PROJ ] && continue
-
-    if [ "$PROJ" == "installer" ]; then
-      export KNI_INSTALL_FROM_GIT=true
-      GITHUB_ORGANIZATION=openshift
-    else
-      GITHUB_ORGANIZATION=openshift-metal3
-    fi
-
-    # Set origin so that sync_repo_and_patch is rebasing against the correct source
-    cd /home/notstack/$PROJ
-    git branch -M master
-    git remote set-url origin https://github.com/$GITHUB_ORGANIZATION/$PROJ
-    cd -
-
-    mkdir -p $HOME/go/src/github.com/$GITHUB_ORGANIZATION
-    mv /home/notstack/$PROJ $HOME/go/src/github.com/$GITHUB_ORGANIZATION
-done
 
 # Run dev-scripts
 set -o pipefail
