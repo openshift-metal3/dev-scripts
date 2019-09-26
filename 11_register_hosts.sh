@@ -40,6 +40,12 @@ function make_bm_workers() {
     done
 }
 
+if [ "$TEST_CUSTOM_MAO" = true ]; then
+  # Now that the deployment is up, replace the machine-api-operator image with
+  # one that needs to be tested before we bring up the workers.
+  $SCRIPTDIR/run-custom-mao.sh
+fi
+
 list_workers | make_bm_workers | tee $SCRIPTDIR/ocp/worker_crs.yaml
 if test ${NUM_WORKERS} -gt 0 ; then
     # TODO - remove this once we set worker replicas to ${NUM_WORKERS} in
