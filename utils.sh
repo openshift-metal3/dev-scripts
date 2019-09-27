@@ -123,21 +123,16 @@ function master_node_map_to_install_config() {
           driver_prefix=drac
       fi
 
-      port=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_port // \"\"")
-      username=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_username")
-      password=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_password")
-      address=$(master_node_val ${master_idx} "driver_info.${driver_prefix}_address")
-
-      bmc_uri=${driver}://${address}
-      if [ -n "$port" ]; then
-        bmc_uri=$bmc_uri:${port}
-      fi
+      port=$(master_node_val ${master_idx} "driver_info.port // \"\"")
+      username=$(master_node_val ${master_idx} "driver_info.username")
+      password=$(master_node_val ${master_idx} "driver_info.password")
+      address=$(master_node_val ${master_idx} "driver_info.address")
 
       cat << EOF
       - name: ${name}
         role: master
         bmc:
-          address: ${bmc_uri}
+          address: ${address}
           username: ${username}
           password: ${password}
         bootMACAddress: ${mac}
