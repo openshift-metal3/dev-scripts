@@ -49,13 +49,15 @@ sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-po
 sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
 
-sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
-     -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
-     "${VBMC_IMAGE}"
-
-sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
-     -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
-     "${SUSHY_TOOLS_IMAGE}"
+if [ "$NODES_PLATFORM" = "libvirt" ]; then
+    sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
+         -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+         "${VBMC_IMAGE}"
+    
+    sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
+         -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+         "${SUSHY_TOOLS_IMAGE}"
+fi
 
 
 # Wait for the downloader containers to finish, if they are updating an existing cache
