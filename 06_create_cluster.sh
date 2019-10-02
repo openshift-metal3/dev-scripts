@@ -5,8 +5,8 @@ set -e
 source logging.sh
 source utils.sh
 source common.sh
-source ocp_install_env.sh
 source rhcos.sh
+source ocp_install_env.sh
 
 # Do some PULL_SECRET sanity checking
 if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then

@@ -95,6 +95,11 @@ controlPlane:
 platform:
   baremetal:
     dnsVIP: ${DNS_VIP}
+    provisioningInterface: "ens3"
+    provisioningNetworkCIDR: "172.22.0.0/24"
+    provisioningIP: "172.22.0.3/24"
+    provisioningDHCPRange: "172.22.0.10,172.22.0.100"
+    rhcosImageURL: "${RHCOS_IMAGE_URL}"
     hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)
 pullSecret: |

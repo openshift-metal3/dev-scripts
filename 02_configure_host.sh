@@ -4,7 +4,6 @@ set -xe
 source logging.sh
 source common.sh
 source utils.sh
-source ocp_install_env.sh
 
 # Generate user ssh key
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
