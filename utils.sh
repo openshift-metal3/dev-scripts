@@ -47,6 +47,16 @@ function create_cluster() {
     custom_ntp
     bmo_config_map
 
+    # We're generating a config to allow the master nodes to download
+    # from our local container cache, put the same change on the bootstrap node
+    if [ -e ./assets/generated/99_local-registry.yaml ] ; then
+        cp ${assets_dir}/install-config.yaml{.tmp,}
+        $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
+        yq .spec.config.storage.files[0] ./assets/generated/99_local-registry.yaml | \
+            jq -s '.[0]["storage"]["files"] = .[0]["storage"]["files"] + [.[1]] | .[0] ' ${assets_dir}/bootstrap.ign - > ./${assets_dir}/bootstrap.ign.tmp
+        mv ${assets_dir}/bootstrap.ign.tmp ${assets_dir}/bootstrap.ign
+    fi
+
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 

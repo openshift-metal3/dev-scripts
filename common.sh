@@ -39,11 +39,6 @@ source $CONFIG
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 
-if env | grep -q "_LOCAL_IMAGE=" ; then
-    # We need a custome installer (allows http image pulls for local images)
-    KNI_INSTALL_FROM_GIT=true
-fi
-
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-ocp/openshift-baremetal-install}
  else

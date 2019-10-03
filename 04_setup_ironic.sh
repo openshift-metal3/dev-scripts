@@ -13,7 +13,7 @@ source ocp_install_env.sh
 #export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector-image
 #export IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE=https://github.com/openshift-metal3/rhcos-downloader
 #export BAREMETAL_OPERATOR_LOCAL_IMAGE=192.168.111.1:5000/localimages/bmo:latest
-rm -f assets/templates/99_local-registry.yaml $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
+rm -f assets/templates/99_local-registry.yaml
 DOCKERFILE=$(mktemp "release-update--XXXXXXXXXX")
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
@@ -38,8 +38,6 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     fi
 
     # Update the bootstrap and master nodes to treat 192.168.111.1:5000 as insecure
-    mkdir -p $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers
-    echo -e "[registries.insecure]\nregistries = ['192.168.111.1:5000']" > $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
     cp assets/templates/99_local-registry.yaml.optional assets/templates/99_local-registry.yaml
 
     IMAGE_NAME=$(echo ${IMAGE_VAR/_LOCAL_IMAGE} | tr '[:upper:]_' '[:lower:]-')
@@ -48,7 +46,6 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
 done
 
 if [ -f assets/templates/99_local-registry.yaml ] ; then
-    build_installer
     sudo podman image build -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
     sudo podman push --tls-verify=false $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
 fi
