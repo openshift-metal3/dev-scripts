@@ -169,3 +169,14 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     sudo systemctl restart NetworkManager
   fi
 fi
+
+# Create openstack clouds.yaml
+if [[ ! -f "$OPENSTACK_CONFIG" ]]
+then
+  mkdir -p "$(dirname "$OPENSTACK_CONFIG")"
+  echo "clouds:" > "$OPENSTACK_CONFIG"
+fi
+
+# Merge dev-scripts clouds.yaml.template with user's existing clouds.yaml
+OPENSTACK_CONFIG_MERGED=$(yq -y -s '.[0] * .[1]' clouds.yaml.template "$OPENSTACK_CONFIG")
+echo "$OPENSTACK_CONFIG_MERGED" > "$OPENSTACK_CONFIG"
