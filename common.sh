@@ -34,9 +34,10 @@ fi
 source $CONFIG
 
 #
-# See https://origin-release.svc.ci.openshift.org/ for release details
+# See https://openshift-release.svc.ci.openshift.org for release details
 #
-export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
+LATEST_CI_IMAGE=$(curl https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/4.3.0-0.ci/latest | jq -r ".pullSpec")
+export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 
 # Switch Container Images to upstream, Installer defaults these to the openshift version
@@ -62,7 +63,7 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     # This is an URI so we can use curl for either the file on GitHub, or locally
     export OPENSHIFT_INSTALLER_RHCOS=${OPENSHIFT_INSTALLER_RHCOS:-file:///$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json}
 
-    # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.2
+    # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.3
     # Which currently don't work for us ref
     # https://github.com/openshift/ironic-inspector-image/pull/17
     # Until we can align OPENSHIFT_RELEASE_IMAGE with the installer default, we still need

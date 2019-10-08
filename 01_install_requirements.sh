@@ -31,7 +31,7 @@ popd
 sudo systemctl start docker-distribution
 
 # Install oc client
-oc_version=4.2
+oc_version=4.3
 oc_tools_dir=$HOME/oc-${oc_version}
 oc_tools_local_file=openshift-client-${oc_version}.tar.gz
 oc_date=0
