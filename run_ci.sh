@@ -133,10 +133,10 @@ fi
 
 # If directories for the containers exists then we build the images (as they are what triggered the job)
 if [ -d "/home/notstack/ironic-image" ] ; then
-    export IRONIC_IMAGE=https://github.com/metal3-io/ironic-image
+    export IRONIC_LOCAL_IMAGE=https://github.com/metal3-io/ironic-image
 fi
 if [ -d "/home/notstack/ironic-inspector-image" ] ; then
-    export IRONIC_INSPECTOR_IMAGE=https://github.com/metal3-io/ironic-inspector-image
+    export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector-image
 fi
 
 

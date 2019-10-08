@@ -6,9 +6,13 @@ set +x
 export PULL_SECRET=''
 set -x
 
-# Uncomment to build a copy of ironic or inspector locally
-#export IRONIC_INSPECTOR_IMAGE=https://github.com/metal3-io/ironic-inspector
-#export IRONIC_IMAGE=https://github.com/metal3-io/ironic
+# Use <NAME>_LOCAL_IMAGE to build or use copy of container images locally e.g.
+#export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector
+#export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
+#export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
+
+# Switch to upstream metal3-io ironic images instead of openshift ones.
+#export UPSTREAM_IRONIC=true
 
 # SSH key used to ssh into deployed hosts.  This must be the contents of the
 # variable, not the filename. The contents of ~/.ssh/id_rsa.pub are used by

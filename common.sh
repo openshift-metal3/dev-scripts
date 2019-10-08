@@ -39,6 +39,16 @@ source $CONFIG
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-registry.svc.ci.openshift.org/ocp/release:4.2}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 
+# Switch Container Images to upstream, Installer defaults these to the openshift version
+if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
+    export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:master"}
+    export IRONIC_INSPECTOR_LOCAL_IMAGE=${IRONIC_INSPECTOR_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
+    export IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-ipa-downloader:master"}
+    export IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE=${IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE:-"quay.io/openshift-metal3/rhcos-downloader:master"}
+    export IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE=${IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE:-"quay.io/metal3-io/static-ip-manager"}
+    export BAREMETAL_OPERATOR_LOCAL_IMAGE=${BAREMETAL_OPERATOR_LOCAL_IMAGE:-"quay.io/metal3-io/baremetal-operator"}
+fi
+
 if env | grep -q "_LOCAL_IMAGE=" ; then
     # We need a custome installer (allows http image pulls for local images)
     KNI_INSTALL_FROM_GIT=true
@@ -93,11 +103,10 @@ export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"1"}
 export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 
-# Ironic vars
-export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:master"}
-export IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
-export IPA_DOWNLOADER_IMAGE=${IPA_DOWNLOADER_IMAGE:-"quay.io/metal3-io/ironic-ipa-downloader:master"}
-export COREOS_DOWNLOADER_IMAGE=${COREOS_DOWNLOADER_IMAGE:-"quay.io/openshift-metal3/rhcos-downloader:master"}
+# Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
+export IRONIC_IMAGE="quay.io/metal3-io/ironic:master"
+export IRONIC_IPA_DOWNLOADER_IMAGE="quay.io/metal3-io/ironic-ipa-downloader:master"
+export IRONIC_RHCOS_DOWNLOADER_IMAGE="quay.io/openshift-metal3/rhcos-downloader:master"
 export IRONIC_DATA_DIR="$WORKING_DIR/ironic"
 
 # VBMC and Redfish images

@@ -67,14 +67,11 @@ fi
 # Create pod
 sudo podman pod create -n ironic-pod 
 
-# We start the httpd and *downloader containers so that we can provide
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
-IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IPA_DOWNLOADER_IMAGE}
-COREOS_DOWNLOADER_IMAGE=${IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE:-$COREOS_DOWNLOADER_IMAGE}
-VBMC_IMAGE=${VBMC_IMAGE_LOCAL_IMAGE:-$VBMC_IMAGE}
-SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE_LOCAL_IMAGE:-$SUSHY_TOOLS_IMAGE}
+IRONIC_IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_IPA_DOWNLOADER_IMAGE}
+IRONIC_RHCOS_DOWNLOADER_IMAGE=${IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_RHCOS_DOWNLOADER_IMAGE}
 
-for IMAGE in ${IRONIC_IMAGE} ${IPA_DOWNLOADER_IMAGE} ${COREOS_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
+for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${IRONIC_RHCOS_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
     sudo podman pull $([[ $IMAGE =~ 192.168.111.1:5000.* ]] && echo "--tls-verify=false" ) $IMAGE
 done
 
@@ -83,10 +80,10 @@ sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
 sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
-     -v $IRONIC_DATA_DIR:/shared ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
+     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
 sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
-     -v $IRONIC_DATA_DIR:/shared ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
+     -v $IRONIC_DATA_DIR:/shared ${IRONIC_RHCOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
 
 if [ "$NODES_PLATFORM" = "libvirt" ]; then
     sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
