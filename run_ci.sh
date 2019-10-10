@@ -114,7 +114,7 @@ sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-ins
 if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
     pushd ~
     if [ ! -d ${BASE_REPO#*/} ] ; then
-        git clone https://github.com/$BASE_REPO
+        git clone https://github.com/$BASE_REPO -b ${BASE_BRANCH:-master}
         cd ${BASE_REPO#*/}
         git pull --no-edit  https://github.com/$REPO $BRANCH
         git log --oneline -10 --graph
