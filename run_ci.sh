@@ -81,6 +81,18 @@ for PROJ in installer ; do
     mv /home/notstack/$PROJ $HOME/go/src/github.com/$BASE_REPO
 done
 
+# If directories for the containers exists then we build the images (as they are what triggered the job)
+if [ -d "/home/notstack/ironic-image" ] ; then
+    export IRONIC_LOCAL_IMAGE=https://github.com/metal3-io/ironic-image
+    export UPSTREAM_IRONIC=true
+fi
+if [ -d "/home/notstack/ironic-inspector-image" ] ; then
+    export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector-image
+    export UPSTREAM_IRONIC=true
+fi
+
+# Some of the setup done above needs to be done before we source common.sh
+# in order for correct defaults to be set
 source common.sh
 
 if [ -n "$PS1" ]; then
@@ -127,17 +139,6 @@ if [ ! -f /usr/local/bin/terraform ]; then
     sudo install terraform /usr/local/bin
     rm -f terraform_*.zip terraform
 fi
-
-# If directories for the containers exists then we build the images (as they are what triggered the job)
-if [ -d "/home/notstack/ironic-image" ] ; then
-    export IRONIC_LOCAL_IMAGE=https://github.com/metal3-io/ironic-image
-    export UPSTREAM_IRONIC=true
-fi
-if [ -d "/home/notstack/ironic-inspector-image" ] ; then
-    export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector-image
-    export UPSTREAM_IRONIC=true
-fi
-
 
 # Run dev-scripts
 set -o pipefail
