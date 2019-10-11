@@ -69,19 +69,16 @@ for PROJ in installer ; do
 
     if [ "$PROJ" == "installer" ]; then
       export KNI_INSTALL_FROM_GIT=true
-      GITHUB_ORGANIZATION=openshift
-    else
-      GITHUB_ORGANIZATION=openshift-metal3
     fi
 
     # Set origin so that sync_repo_and_patch is rebasing against the correct source
     cd /home/notstack/$PROJ
     git branch -M master
-    git remote set-url origin https://github.com/$GITHUB_ORGANIZATION/$PROJ
+    git remote set-url origin https://github.com/$BASE_REPO
     cd -
 
-    mkdir -p $HOME/go/src/github.com/$GITHUB_ORGANIZATION
-    mv /home/notstack/$PROJ $HOME/go/src/github.com/$GITHUB_ORGANIZATION
+    mkdir -p $HOME/go/src/github.com/${BASE_REPO/\/*}
+    mv /home/notstack/$PROJ $HOME/go/src/github.com/$BASE_REPO
 done
 
 source common.sh
