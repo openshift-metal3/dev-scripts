@@ -49,6 +49,19 @@ sudo yum install -y moreutils
 sudo yum install -y jq golang
 sudo yum remove -y epel-release
 
+# Clone the project being tested, "dev-scripts" will have been cloned in the jenkins
+# job definition, for all others we do it here
+if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
+    pushd ~
+    if [ ! -d ${BASE_REPO#*/} ] ; then
+        git clone https://github.com/$BASE_REPO -b ${BASE_BRANCH:-master}
+        cd ${BASE_REPO#*/}
+        git pull --no-edit  https://github.com/$REPO $BRANCH
+        git log --oneline -10 --graph
+    fi
+    popd
+fi
+
 # Project-specific actions. If these directories exist in $HOME, move
 # them to the correct $GOPATH locations.
 for PROJ in installer ; do
@@ -108,19 +121,6 @@ sudo mount -o bind /opt/data/yumcache /var/cache/yum
 
 # Mount the openshift-installer cache directory so we don't download a RHCOS image for each run
 sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
-
-# Clone the project being tested, "dev-scripts" will have been cloned in the jenkins
-# job definition, for all others we do it here
-if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
-    pushd ~
-    if [ ! -d ${BASE_REPO#*/} ] ; then
-        git clone https://github.com/$BASE_REPO -b ${BASE_BRANCH:-master}
-        cd ${BASE_REPO#*/}
-        git pull --no-edit  https://github.com/$REPO $BRANCH
-        git log --oneline -10 --graph
-    fi
-    popd
-fi
 
 # Install terraform
 if [ ! -f /usr/local/bin/terraform ]; then
