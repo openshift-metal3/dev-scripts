@@ -49,6 +49,19 @@ sudo yum install -y moreutils
 sudo yum install -y jq golang
 sudo yum remove -y epel-release
 
+# Clone the project being tested, "dev-scripts" will have been cloned in the jenkins
+# job definition, for all others we do it here
+if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
+    pushd ~
+    if [ ! -d ${BASE_REPO#*/} ] ; then
+        git clone https://github.com/$BASE_REPO -b ${BASE_BRANCH:-master}
+        cd ${BASE_REPO#*/}
+        git pull --no-edit  https://github.com/$REPO $BRANCH
+        git log --oneline -10 --graph
+    fi
+    popd
+fi
+
 # Project-specific actions. If these directories exist in $HOME, move
 # them to the correct $GOPATH locations.
 for PROJ in installer ; do
@@ -56,21 +69,30 @@ for PROJ in installer ; do
 
     if [ "$PROJ" == "installer" ]; then
       export KNI_INSTALL_FROM_GIT=true
-      GITHUB_ORGANIZATION=openshift
-    else
-      GITHUB_ORGANIZATION=openshift-metal3
     fi
 
     # Set origin so that sync_repo_and_patch is rebasing against the correct source
     cd /home/notstack/$PROJ
     git branch -M master
-    git remote set-url origin https://github.com/$GITHUB_ORGANIZATION/$PROJ
+    git remote set-url origin https://github.com/$BASE_REPO
     cd -
 
-    mkdir -p $HOME/go/src/github.com/$GITHUB_ORGANIZATION
-    mv /home/notstack/$PROJ $HOME/go/src/github.com/$GITHUB_ORGANIZATION
+    mkdir -p $HOME/go/src/github.com/${BASE_REPO/\/*}
+    mv /home/notstack/$PROJ $HOME/go/src/github.com/$BASE_REPO
 done
 
+# If directories for the containers exists then we build the images (as they are what triggered the job)
+if [ -d "/home/notstack/ironic-image" ] ; then
+    export IRONIC_LOCAL_IMAGE=https://github.com/metal3-io/ironic-image
+    export UPSTREAM_IRONIC=true
+fi
+if [ -d "/home/notstack/ironic-inspector-image" ] ; then
+    export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector-image
+    export UPSTREAM_IRONIC=true
+fi
+
+# Some of the setup done above needs to be done before we source common.sh
+# in order for correct defaults to be set
 source common.sh
 
 if [ -n "$PS1" ]; then
@@ -109,19 +131,6 @@ sudo mount -o bind /opt/data/yumcache /var/cache/yum
 # Mount the openshift-installer cache directory so we don't download a RHCOS image for each run
 sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
 
-# Clone the project being tested, "dev-scripts" will have been cloned in the jenkins
-# job definition, for all others we do it here
-if [ -n "$REPO" -a -n "$BRANCH" ]  ; then
-    pushd ~
-    if [ ! -d ${BASE_REPO#*/} ] ; then
-        git clone https://github.com/$BASE_REPO -b ${BASE_BRANCH:-master}
-        cd ${BASE_REPO#*/}
-        git pull --no-edit  https://github.com/$REPO $BRANCH
-        git log --oneline -10 --graph
-    fi
-    popd
-fi
-
 # Install terraform
 if [ ! -f /usr/local/bin/terraform ]; then
     sudo yum install -y unzip
@@ -130,17 +139,6 @@ if [ ! -f /usr/local/bin/terraform ]; then
     sudo install terraform /usr/local/bin
     rm -f terraform_*.zip terraform
 fi
-
-# If directories for the containers exists then we build the images (as they are what triggered the job)
-if [ -d "/home/notstack/ironic-image" ] ; then
-    export IRONIC_LOCAL_IMAGE=https://github.com/metal3-io/ironic-image
-    export UPSTREAM_IRONIC=true
-fi
-if [ -d "/home/notstack/ironic-inspector-image" ] ; then
-    export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector-image
-    export UPSTREAM_IRONIC=true
-fi
-
 
 # Run dev-scripts
 set -o pipefail
