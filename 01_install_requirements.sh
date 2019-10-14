@@ -9,7 +9,7 @@ if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null 
     RHEL8="True"
 fi
 
-sudo yum install -y libselinux-utils docker-distribution
+sudo yum install -y libselinux-utils
 if selinuxenabled ; then
     # FIXME ocp-doit required this so leave permissive for now
     sudo setenforce permissive
@@ -28,7 +28,16 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
 popd
 
 # needed if we are using locally built images
-sudo systemctl start docker-distribution
+# We stop any systemd service so we can run in a container, since
+# there's no RPM/systemd version available for RHEL8
+if sudo systemctl is-active docker-distribution.service; then
+  sudo systemctl disable --now docker-distribution.service
+fi
+reg_state=$(sudo podman inspect registry --format  "{{.State.Status}}" || echo "error")
+if [[ "$reg_state" != "running" ]]; then
+  sudo podman rm registry -f || true
+  sudo podman run -d -p 5000:5000 --name registry docker.io/registry:latest
+fi
 
 # Install oc client
 oc_version=4.3
