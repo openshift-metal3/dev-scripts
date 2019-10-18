@@ -8,11 +8,9 @@ function getlogs(){
     # Grab the host journal
     sudo journalctl > $LOGDIR/bootstrap-host-system.journal
 
-    # The logs shared by the ironic containers
-    sudo cp -r /opt/dev-scripts/ironic/log $LOGDIR/container-logs
-
-    sudo podman logs coreos-downloader > $LOGDIR/coreos-downloader.log
-    sudo podman logs ipa-downloader > $LOGDIR/ipa-downloader.log
+    for c in httpd coreos-downloader ipa-downloader ; do
+        sudo podman logs $c > $LOGDIR/$c.log || true
+    done
 
     # And the VM journals and staticpod container logs
     for HOST in $(sudo virsh net-dhcp-leases baremetal | grep -o '192.168.111.[0-9]\+') ; do
