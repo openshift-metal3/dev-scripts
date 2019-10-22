@@ -14,15 +14,17 @@ source ocp_install_env.sh
 #export IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE=https://github.com/openshift-metal3/rhcos-downloader
 #export BAREMETAL_OPERATOR_LOCAL_IMAGE=192.168.111.1:5000/localimages/bmo:latest
 rm -f assets/templates/99_local-registry.yaml $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
+
+# Various commands here need the Pull Secret in a file
+export REGISTRY_AUTH_FILE=$(mktemp "pullsecret--XXXXXXXXXX")
+{ echo "${PULL_SECRET}" ; } 2> /dev/null > $REGISTRY_AUTH_FILE
+
 DOCKERFILE=$(mktemp "release-update--XXXXXXXXXX")
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     IMAGE=${!IMAGE_VAR}
 
-    export REGISTRY_AUTH_FILE=$(mktemp "pullsecret--XXXXXXXXXX")
-    { echo "${PULL_SECRET}" ; } 2> /dev/null > $REGISTRY_AUTH_FILE
     sudo -E podman pull $OPENSHIFT_RELEASE_IMAGE
-    rm -rf $REGISTRY_AUTH_FILE
 
     # Is it a git repo?
     if [[ "$IMAGE" =~ "://" ]] ; then
@@ -67,13 +69,19 @@ fi
 # Create pod
 sudo podman pod create -n ironic-pod 
 
+# Pull the rhcos-downloder image to use from the release, this gets change
+# to use IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE if present
+IRONIC_RHCOS_DOWNLOADER_IMAGE=$(oc adm release info --registry-config $REGISTRY_AUTH_FILE $OPENSHIFT_RELEASE_IMAGE --image-for=ironic-rhcos-downloader)
+
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
 IRONIC_IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_IPA_DOWNLOADER_IMAGE}
 IRONIC_RHCOS_DOWNLOADER_IMAGE=${IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_RHCOS_DOWNLOADER_IMAGE}
 
 for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${IRONIC_RHCOS_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
-    sudo podman pull $([[ $IMAGE =~ 192.168.111.1:5000.* ]] && echo "--tls-verify=false" ) $IMAGE
+    sudo -E podman pull $([[ $IMAGE =~ 192.168.111.1:5000.* ]] && echo "--tls-verify=false" ) $IMAGE
 done
+
+rm -rf $REGISTRY_AUTH_FILE
 
 # cached images to the bootstrap VM
 sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \

@@ -45,7 +45,6 @@ if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
     export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:master"}
     export IRONIC_INSPECTOR_LOCAL_IMAGE=${IRONIC_INSPECTOR_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
     export IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-ipa-downloader:master"}
-    export IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE=${IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE:-"quay.io/openshift-metal3/rhcos-downloader:master"}
     export IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE=${IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE:-"quay.io/metal3-io/static-ip-manager"}
     export BAREMETAL_OPERATOR_LOCAL_IMAGE=${BAREMETAL_OPERATOR_LOCAL_IMAGE:-"quay.io/metal3-io/baremetal-operator"}
 fi
@@ -107,7 +106,6 @@ export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 # Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
 export IRONIC_IMAGE="quay.io/metal3-io/ironic:master"
 export IRONIC_IPA_DOWNLOADER_IMAGE="quay.io/metal3-io/ironic-ipa-downloader:master"
-export IRONIC_RHCOS_DOWNLOADER_IMAGE="quay.io/openshift-metal3/rhcos-downloader:master"
 export IRONIC_DATA_DIR="$WORKING_DIR/ironic"
 
 # VBMC and Redfish images
