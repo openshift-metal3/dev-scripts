@@ -39,6 +39,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$NUM_WORKERS" \
     -e "extradisks=$VM_EXTRADISKS" \
+    -e "libvirt_firmware=uefi" \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
@@ -77,7 +78,11 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
-        echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+        if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
+            echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nIPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+        else
+            echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+       fi
     fi
     sudo ifdown provisioning || true
     sudo ifup provisioning
@@ -132,17 +137,22 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     fi
 fi
 
+IPTABLES=iptables
+if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
+    IPTABLES=ip6tables
+fi
+
 # Add firewall rules to ensure the image caches can be reached on the host
 for PORT in 80 ${LOCAL_REGISTRY_PORT} ; do
     if [ "${RHEL8}" = "True" ] ; then
         sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp
         sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp --permanent
     else
-        if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
-            sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $PORT -j ACCEPT
+        if ! sudo $IPTABLES -C INPUT -i provisioning -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
+            sudo $IPTABLES -I INPUT -i provisioning -p tcp -m tcp --dport $PORT -j ACCEPT
         fi
-        if ! sudo iptables -C INPUT -i baremetal -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
-            sudo iptables -I INPUT -i baremetal -p tcp -m tcp --dport $PORT -j ACCEPT
+        if ! sudo $IPTABLES -C INPUT -i baremetal -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
+            sudo $IPTABLES -I INPUT -i baremetal -p tcp -m tcp --dport $PORT -j ACCEPT
         fi
     fi
 done
@@ -153,15 +163,15 @@ if [ "${RHEL8}" = "True" ] ; then
     sudo firewall-cmd --zone=libvirt --add-port=6230-${VBMC_MAX_PORT}/udp
     sudo firewall-cmd --zone=libvirt --add-port=6230-${VBMC_MAX_PORT}/udp --permanent
 else
-    if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:${VBMC_MAX_PORT} -j ACCEPT 2>/dev/null ; then
-        sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:${VBMC_MAX_PORT} -j ACCEPT
+    if ! sudo $IPTABLES -C INPUT -i baremetal -p udp -m udp --dport 6230:${VBMC_MAX_PORT} -j ACCEPT 2>/dev/null ; then
+        sudo $IPTABLES -I INPUT -i baremetal -p udp -m udp --dport 6230:${VBMC_MAX_PORT} -j ACCEPT
     fi
 fi
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
-  sudo iptables -t nat -A POSTROUTING --out-interface $EXT_IF -j MASQUERADE
-  sudo iptables -A FORWARD --in-interface baremetal -j ACCEPT
+  sudo $IPTABLES -t nat -A POSTROUTING --out-interface $EXT_IF -j MASQUERADE
+  sudo $IPTABLES -A FORWARD --in-interface baremetal -j ACCEPT
 fi
 
 # Switch NetworkManager to internal DNS

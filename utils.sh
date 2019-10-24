@@ -68,6 +68,22 @@ function create_cluster() {
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for install-complete
 }
 
+function ipversion(){
+    if [[ $1 =~ : ]] ; then
+        echo 6
+        exit
+    fi
+    echo 4
+}
+
+function wrap_if_ipv6(){
+    if [ $(ipversion $1) == 6 ] ; then
+        echo "[$1]"
+        exit
+    fi
+    echo "$1"
+}
+
 function wait_for_json() {
     local name
     local url
@@ -196,7 +212,7 @@ function sync_repo_and_patch {
 }
 
 function generate_templates {
-    MACHINE_OS_IMAGE_URL="http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
+    MACHINE_OS_IMAGE_URL="http:///$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
 
     # metal3-config.yaml
     mkdir -p ocp/deploy

@@ -64,6 +64,9 @@ set -x
 # Provisioning network
 #export PROVISIONING_NETWORK="172.23.0.0/16"
 
+# IPv6 Provisioning network
+#export PROVISIONING_NETWORK=fd00:1101::0/64
+
 # External subnet
 #export EXTERNAL_SUBNET="11.0.0.0/24"
 
