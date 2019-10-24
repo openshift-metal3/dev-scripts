@@ -76,18 +76,30 @@ For a new setup, run:
 The Makefile will run the scripts in this order:
 
 - `./01_install_requirements.sh`
+
+This installs any prerequisite packages, and also starts a local container registry to enable
+subsequent scripts to build/push images for testing.  Any other dependencies for development/test
+are also installed here.
+
 - `./02_configure_host.sh`
 
-This should result in some (stopped) VMs created by tripleo-quickstart on the
-local virthost and some other dependencies installed.
+This does necessary configuration on the host, e.g networking/firewall and
+also creates the libvirt resources necessary to deploy on VMs as emulated
+baremetal.
+
+This should result in some (stopped) VMs on the local virthost and some
+additional bridges/networks for the `baremetal` and `provisioning` networks.
 
 - `./04_setup_ironic.sh`
 
-This will setup containers for the Ironic infrastructure on the host
-server and download the resources it requires.
+This will setup containers related to the Ironic deployment services which
+run on the bootstrap VM and deployed cluster.  It will start a webserver which
+caches the necessary images, starts virtual BMC services to control the VMs
+via IPMI or Redfish.
 
-The Ironic container is stored at https://quay.io/repository/metalkube/metalkube-ironic, built from
-https://github.com/metalkube/metalkube-ironic.
+This script also can optionally build/push custom images for Ironic and other
+components see the [Testing custom container images](#Testing-custom-container-images) section below.
+
 
 - `./06_create_cluster.sh`
 
@@ -201,17 +213,19 @@ The default cpu/memory/disk resources when using virtual machines are provided
 by the [vm_setup_vars.yml](vm_setup_vars.yml) file, which sets some dev-scripts
 variables that override the defaults in metal3-dev-env
 
-### Testing a custom container images with dev-scripts
+### Testing custom container images
 dev-scripts uses an openshift release image that contains references to openshift
 containers, any of these containers can be overridden by setting environment
-variables of the form <NAME>_LOCAL_IMAGE to build or use copy of container
+variables of the form `<NAME>_LOCAL_IMAGE` to build or use copy of container
 images locally e.g. to use a custom ironic container image and build a container
 image from a git repository for the machine-config-operator you could set
 
+```
 export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
 export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
+```
 
-The value for <NAME> needs to match the name of the tags for images (found in the
+The value for `<NAME>` needs to match the name of the tags for images (found in the
 openshift release images in /release-manifests/image-references), converted to uppercase
 and with "-"'s converted to "_"'s.
 
