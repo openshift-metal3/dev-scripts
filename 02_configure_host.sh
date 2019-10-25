@@ -141,12 +141,13 @@ for PORT in 80 5000 ; do
 done
 
 # Allow ipmi to the virtual bmc processes that we just started
+VBMC_MAX_PORT=$((6230 + ${NUM_MASTERS} + ${NUM_WORKERS} - 1))
 if [ "${RHEL8}" = "True" ] ; then
-    sudo firewall-cmd --zone=libvirt --add-port=6230-6235/udp
-    sudo firewall-cmd --zone=libvirt --add-port=6230-6235/udp --permanent
+    sudo firewall-cmd --zone=libvirt --add-port=6230-${VBMC_MAX_PORT}/udp
+    sudo firewall-cmd --zone=libvirt --add-port=6230-${VBMC_MAX_PORT}/udp --permanent
 else
-    if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT 2>/dev/null ; then
-        sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:6235 -j ACCEPT
+    if ! sudo iptables -C INPUT -i baremetal -p udp -m udp --dport 6230:${VBMC_MAX_PORT} -j ACCEPT 2>/dev/null ; then
+        sudo iptables -I INPUT -i baremetal -p udp -m udp --dport 6230:${VBMC_MAX_PORT} -j ACCEPT
     fi
 fi
 
