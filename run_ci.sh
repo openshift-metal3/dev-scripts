@@ -104,6 +104,10 @@ fi
 # Display the "/" filesystem mounted incase we need artifacts from it after the job
 mount | grep root-
 
+# $WORKING_DIR is on a BTRFS filesystem, we need to disable COW so VM images
+# don't eat up all of the disk space
+sudo chattr +C "$WORKING_DIR"
+
 # The CI host has a "/" filesystem that reset for each job, the only partition
 # that persist is /opt (and /boot), we can use this to store data between jobs
 FILECACHEDIR=/opt/data/filecache
