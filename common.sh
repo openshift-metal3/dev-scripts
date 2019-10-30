@@ -2,6 +2,7 @@
 
 eval "$(go env)"
 
+export PATH="${GOPATH}/bin:/usr/local/go/bin:$PATH"
 
 # Ensure if a go program crashes we get a coredump
 #

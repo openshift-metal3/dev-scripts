@@ -20,6 +20,7 @@ export REPO_PATH=${WORKING_DIR}
 sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
 pushd ${REPO_PATH}/metal3-dev-env/
 ./centos_install_requirements.sh
+ansible-galaxy install -r vm-setup/requirements.yml
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
@@ -64,7 +65,6 @@ fi
 # Install Go dependency management tool
 # Using pre-compiled binaries instead of installing from source
 eval "$(go env)"
-export PATH="${GOPATH}/bin:$PATH"
 if ! which dep 2>&1 >/dev/null ; then
     mkdir -p $GOPATH/bin
     curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
