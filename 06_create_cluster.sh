@@ -42,6 +42,7 @@ if [ ! -f ocp/install-config.yaml ]; then
     fi
 
     # Create a master_nodes.json file
+    mkdir -p ocp/
     jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
 
     # Create install config for openshift-installer
