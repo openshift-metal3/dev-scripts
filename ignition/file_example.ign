@@ -1,0 +1,1 @@
+{"ignition": {"version": "2.3.0"}, "storage": {"files": [{"path": "/etc/test", "filesystem": "root", "mode": 436, "contents": {"source": "data:,test-foo%0A"}}]}}

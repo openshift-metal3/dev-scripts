@@ -65,6 +65,10 @@ CLUSTER_NAME=clustername
 DNS_VIP="1.1.1.1"
 # Set to the subnet in use on the external (baremetal) network
 EXTERNAL_SUBNET="192.168.111.0/24"
+# Provide additional master/worker ignition configuration, will be
+# merged with the installer provided config, can be used to modify
+# the default nic configuration etc
+export IGNITION_EXTRA=extra.ign
 ```
 
 ## Installation
@@ -240,3 +244,17 @@ Custom MAO image name is a mandatory parameter but the others are optional with 
 
 Alternatively, all input parameters can be set via `CUSTOM_MAO_IMAGE`, `REPO_NAME` and `MAO_BRANCH` variables respectively,
 and `run-custom-mao.sh` can be run automatically if you set `TEST_CUSTOM_MAO` to true.
+
+### Testing a customizations to the deployed OS
+
+It is possible to pass additional ignition configuration which will be merged with the installer generated files
+prior to deployment.  This can be useful for debug/testing during development, and potentially also for configuration
+of networking or storage on baremetal nodes needed before cluster configuration starts (most machine configuration
+should use the machine-config-operator, but for changes required before that starts, ignition may be an option).
+
+The following adds an additional file `/etc/test` as an example:
+
+```
+export IGNITION_EXTRA="ignition/file_example.ign"
+``` 
+
