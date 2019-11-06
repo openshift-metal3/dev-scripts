@@ -16,9 +16,13 @@ if selinuxenabled ; then
     sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
 fi
 
-export REPO_PATH=${WORKING_DIR}
-sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
-pushd ${REPO_PATH}/metal3-dev-env/
+
+if [ -z "${METAL3_DEV_ENV}" ]; then
+  export REPO_PATH=${WORKING_DIR}
+  sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
+  METAL3_DEV_ENV="${REPO_PATH}/metal3-dev-env/"
+fi
+pushd ${METAL3_DEV_ENV}
 ./centos_install_requirements.sh
 ansible-galaxy install -r vm-setup/requirements.yml
 ANSIBLE_FORCE_COLOR=true ansible-playbook \

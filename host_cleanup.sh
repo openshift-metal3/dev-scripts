@@ -5,9 +5,10 @@ source logging.sh
 source common.sh
 source utils.sh
 
-export REPO_PATH=${WORKING_DIR}
-sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
-VM_SETUP_PATH="${REPO_PATH}/metal3-dev-env/vm-setup"
+if [ -z "${METAL3_DEV_ENV}" ]; then
+  export REPO_PATH=${WORKING_DIR}
+  sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
+fi
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \

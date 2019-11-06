@@ -100,6 +100,15 @@ NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
 
+# Optionally set this to a path to use a local dev copy of
+# metal3-dev-env, otherwise it's cloned to $WORKING_DIR
+export METAL3_DEV_ENV=${METAL3_DEV_ENV:-}
+if [ -z "${METAL3_DEV_ENV}" ]; then
+  export VM_SETUP_PATH="${WORKING_DIR}/metal3-dev-env/vm-setup"
+else
+  export VM_SETUP_PATH="${METAL3_DEV_ENV}/vm-setup"
+fi
+
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"1"}
 export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}

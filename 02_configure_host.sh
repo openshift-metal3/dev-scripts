@@ -33,8 +33,6 @@ if [ ! -z "${VM_NODES_FILE}" ]; then
   exit 1
 fi
 
-VM_SETUP_PATH="${WORKING_DIR}/metal3-dev-env/vm-setup"
-
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \
     -e "working_dir=$WORKING_DIR" \
