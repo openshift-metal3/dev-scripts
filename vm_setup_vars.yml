@@ -7,8 +7,20 @@ ironic_prefix: "openshift_"
 
 # We enable more memory and masters in dev-scripts compared to the minimal setup
 # in metal3-dev-env
-default_memory: 16384
 num_masters: 3
+num_workers: 1
+flavors:
+  master:
+    memory: 16384
+    disk: 20
+    vcpu: 4
+    extradisks: false
+
+  worker:
+    memory: 8192
+    disk: 20
+    vcpu: 4
+    extradisks: false
 
 # For OpenShift we create some additional DNS records for the API/DNS VIPs
 baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.111.0/24', true) }}"
