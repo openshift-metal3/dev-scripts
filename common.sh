@@ -2,6 +2,9 @@
 
 eval "$(go env)"
 
+# Make dev-scripts work again temporarily
+export KNI_INSTALL_FROM_GIT=true
+
 export PATH="${GOPATH}/bin:/usr/local/go/bin:$PATH"
 
 # Ensure if a go program crashes we get a coredump
