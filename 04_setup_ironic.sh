@@ -49,6 +49,14 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> $DOCKERFILE
 done
 
+if [ ! -z "${MIRROR_IMAGES}" ]; then
+    oc adm release mirror \
+       --insecure=true \
+        -a $REGISTRY_AUTH_FILE  \
+        --from $OPENSHIFT_RELEASE_IMAGE \
+        --to $LOCAL_REGISTRY_ADDRESS/localimages/local-release-image
+fi
+
 if [ -f assets/templates/99_local-registry.yaml ] ; then
     build_installer
     sudo podman image build -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE

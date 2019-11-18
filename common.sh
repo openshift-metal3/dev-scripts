@@ -37,6 +37,7 @@ fi
 source $CONFIG
 
 export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1:5000"}
+export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
 #
 # See https://openshift-release.svc.ci.openshift.org for release details
