@@ -2,7 +2,7 @@ Metal³ Installer Dev Scripts
 ===============================
 
 This set of scripts configures some libvirt VMs and associated
-[virtualbmc](https://docs.openstack.org/tripleo-docs/latest/install/environments/virtualbmc.html) processes to enable deploying to them as dummy baremetal nodes.
+[virtualbmc](https://opendev.org/openstack/virtualbmc) processes to enable deploying to them as dummy baremetal nodes.
 
 We are using this repository as a work space for development environment setup
 and convenience/test scripts, the main logic needed to enable 
