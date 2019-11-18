@@ -131,6 +131,30 @@ master-1   Ready     master    20m       v1.12.4+50c2f2340a
 master-2   Ready     master    20m       v1.12.4+50c2f2340a
 ```
 
+Alternatively it is possible to manage the cluster using OpenShift Console web UI.
+The URL can be retrieved using
+```
+oc get routes --all-namespaces | grep console
+```
+By default, the URL is https://console-openshift-console.apps.ostest.test.metalkube.org
+
+Accessing Console running on virtualized cluster from local web browser requires additional
+setup on local machine:
+
+Add entry to ```/etc/hosts```:
+```
+# /etc/hosts
+192.168.111.4   console-openshift-console.apps.ostest.test.metalkube.org console openshift-authentication-openshift-authentication.apps.ostest.test.metalkube.org api.ostest.test.metalkube.org prometheus-k8s-openshift-monitoring.apps.ostest.test.metalkube.org alertmanager-main-openshift-monitoring.apps.ostest.test.metalkube.org kubevirt-web-ui.apps.ostest.test.metalkube.org oauth-openshift.apps.ostest.test.metalkube.org grafana-openshift-monitoring.apps.ostest.test.metalkube.org
+```
+Run sshuttle:
+
+```
+sshuttle -r <user>@<virthost> 192.168.111.0/24
+```
+
+
+
+
 ## Interacting with Ironic directly
 
 The dev-scripts repository contains a `clouds.yaml` file with
