@@ -97,6 +97,7 @@ platform:
     dnsVIP: ${DNS_VIP}
     hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)
+$(image_mirror_config)
 pullSecret: |
   $(echo $PULL_SECRET | jq -c .)
 sshKey: |

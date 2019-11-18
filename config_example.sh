@@ -11,6 +11,9 @@ set -x
 #export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
 #export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
 
+# Mirror latest ci images to local registry
+#export MIRROR_IMAGES=true
+
 # Switch to upstream metal3-io ironic images instead of openshift ones.
 #export UPSTREAM_IRONIC=true
 

@@ -185,3 +185,19 @@ function bmo_config_map {
     
     cp ocp/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
 }
+
+function image_mirror_config {
+    if [ ! -z "${MIRROR_IMAGES}" ]; then
+        TAGGED=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/release://')
+        RELEASE=$(echo $OPENSHIFT_RELEASE_IMAGE | grep -o 'registry.svc.ci.openshift.org[^":]\+')
+        cat << EOF
+imageContentSources:
+- mirrors:
+    - ${LOCAL_REGISTRY_ADDRESS}/localimages/local-release-image
+  source: ${RELEASE}
+- mirrors:
+    - ${LOCAL_REGISTRY_ADDRESS}/localimages/local-release-image
+  source: ${TAGGED}
+EOF
+    fi
+}
