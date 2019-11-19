@@ -69,3 +69,5 @@ set -x
 
 # Name of branch in the above repo which contains the custom MAO changes
 #export MAO_BRANCH="mao-fix"
+
+#export LOCAL_REGISTRY_ADDRESS="192.168.111.1:5000"
