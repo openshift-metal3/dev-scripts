@@ -33,15 +33,15 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         [ -e "$REPOPATH" ] || git clone $IMAGE $REPOPATH
         cd $REPOPATH
         export $IMAGE_VAR=${IMAGE##*/}:latest
-        export $IMAGE_VAR=192.168.111.1:5000/localimages/${!IMAGE_VAR}
+        export $IMAGE_VAR=$LOCAL_REGISTRY_ADDRESS/localimages/${!IMAGE_VAR}
         sudo podman build -t ${!IMAGE_VAR} .
         cd -
         sudo podman push --tls-verify=false ${!IMAGE_VAR} ${!IMAGE_VAR}
     fi
 
-    # Update the bootstrap and master nodes to treat 192.168.111.1:5000 as insecure
+    # Update the bootstrap and master nodes to treat LOCAL_REGISTRY_ADDRESS as insecure
     mkdir -p $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers
-    echo -e "[registries.insecure]\nregistries = ['192.168.111.1:5000']" > $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
+    echo -e "[registries.insecure]\nregistries = ['${LOCAL_REGISTRY_ADDRESS}']" > $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
     cp assets/templates/99_local-registry.yaml.optional assets/templates/99_local-registry.yaml
 
     IMAGE_NAME=$(echo ${IMAGE_VAR/_LOCAL_IMAGE} | tr '[:upper:]_' '[:lower:]-')
@@ -78,7 +78,7 @@ IRONIC_IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_IPA_DOW
 IRONIC_RHCOS_DOWNLOADER_IMAGE=${IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_RHCOS_DOWNLOADER_IMAGE}
 
 for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${IRONIC_RHCOS_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
-    sudo -E podman pull $([[ $IMAGE =~ 192.168.111.1:5000.* ]] && echo "--tls-verify=false" ) $IMAGE
+    sudo -E podman pull $([[ $IMAGE =~ $LOCAL_REGISTRY_ADDRESS.* ]] && echo "--tls-verify=false" ) $IMAGE
 done
 
 rm -rf $REGISTRY_AUTH_FILE

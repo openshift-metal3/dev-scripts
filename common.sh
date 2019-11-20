@@ -39,6 +39,8 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 
+export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1:5000"}
+
 #
 # See https://openshift-release.svc.ci.openshift.org for release details
 #
@@ -78,7 +80,7 @@ fi
 
 if env | grep -q "_LOCAL_IMAGE=" ; then
     # We're going to be using a locally modified release image
-    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="192.168.111.1:5000/localimages/local-release-image:latest" 
+    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_ADDRESS}/localimages/local-release-image:latest"
 fi
 
 # Set variables
