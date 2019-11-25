@@ -30,11 +30,6 @@ popd
 if sudo systemctl is-active docker-distribution.service; then
   sudo systemctl disable --now docker-distribution.service
 fi
-reg_state=$(sudo podman inspect registry --format  "{{.State.Status}}" || echo "error")
-if [[ "$reg_state" != "running" ]]; then
-  sudo podman rm registry -f || true
-  sudo podman run -d -p 5000:5000 --name registry docker.io/registry:latest
-fi
 
 # Install oc client
 oc_version=4.4
@@ -65,4 +60,8 @@ eval "$(go env)"
 if ! which dep 2>&1 >/dev/null ; then
     mkdir -p $GOPATH/bin
     curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+fi
+
+if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
+    setup_local_registry
 fi

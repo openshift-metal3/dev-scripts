@@ -36,9 +36,6 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 
-export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1:5000"}
-export MIRROR_IMAGES=${MIRROR_IMAGES:-}
-
 #
 # See https://openshift-release.svc.ci.openshift.org for release details
 #
@@ -81,7 +78,7 @@ fi
 
 if env | grep -q "_LOCAL_IMAGE=" ; then
     # We're going to be using a locally modified release image
-    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_ADDRESS}/localimages/local-release-image:latest"
+    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
 fi
 
 # Set variables
@@ -216,3 +213,14 @@ fi
 
 # Defaults the variable to enable testing a custom machine-api-operator image
 export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
+
+# mirror images for installation in restricted network
+export MIRROR_IMAGES=${MIRROR_IMAGES:-}
+
+# variables for local registry configuration
+export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1"}
+export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
+export REGISTRY_USER=${REGISTRY_USER:-ocp-user}
+export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
+export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
+export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror.json}

@@ -124,7 +124,7 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
 fi
 
 # Add firewall rules to ensure the image caches can be reached on the host
-for PORT in 80 5000 ; do
+for PORT in 80 ${LOCAL_REGISTRY_PORT} ; do
     if [ "${RHEL8}" = "True" ] ; then
         sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp
         sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp --permanent
@@ -167,4 +167,11 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
   else
     sudo systemctl restart NetworkManager
   fi
+fi
+
+if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
+    # create authfile for local registry
+    sudo podman login --authfile ${REGISTRY_CREDS} \
+        -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
+        ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}
 fi
