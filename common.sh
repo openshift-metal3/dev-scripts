@@ -41,7 +41,7 @@ export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1:5000"}
 #
 # See https://openshift-release.svc.ci.openshift.org for release details
 #
-LATEST_CI_IMAGE=$(curl https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/4.3.0-0.ci/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
+LATEST_CI_IMAGE=$(curl https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/4.4.0-0.ci/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 
@@ -67,7 +67,7 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     # This is an URI so we can use curl for either the file on GitHub, or locally
     export OPENSHIFT_INSTALLER_RHCOS=${OPENSHIFT_INSTALLER_RHCOS:-file:///$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json}
 
-    # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.3
+    # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.4
     # Which currently don't work for us ref
     # https://github.com/openshift/ironic-inspector-image/pull/17
     # Until we can align OPENSHIFT_RELEASE_IMAGE with the installer default, we still need

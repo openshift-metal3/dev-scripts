@@ -45,7 +45,7 @@ if [[ "$reg_state" != "running" ]]; then
 fi
 
 # Install oc client
-oc_version=4.3
+oc_version=4.4
 oc_tools_dir=$HOME/oc-${oc_version}
 oc_tools_local_file=openshift-client-${oc_version}.tar.gz
 oc_date=0
