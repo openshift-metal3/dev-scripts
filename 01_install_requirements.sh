@@ -9,14 +9,6 @@ if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null 
     RHEL8="True"
 fi
 
-sudo yum install -y libselinux-utils
-if selinuxenabled ; then
-    # FIXME ocp-doit required this so leave permissive for now
-    sudo setenforce permissive
-    sudo sed -i "s/=enforcing/=permissive/g" /etc/selinux/config
-fi
-
-
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
   sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
