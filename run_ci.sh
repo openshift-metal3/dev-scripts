@@ -144,7 +144,7 @@ fi
 
 # Run dev-scripts
 set -o pipefail
-timeout -s 9 85m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
+timeout -s 9 105m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Deployment is complete, but now wait to ensure the worker node comes up.
 export KUBECONFIG=ocp/auth/kubeconfig
