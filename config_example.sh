@@ -55,6 +55,9 @@ set -x
 # DNS_VIP
 #export DNS_VIP="11.0.0.2"
 
+# Network type
+#export NETWORK_TYPE="OpenShiftSDN"
+
 # External subnet
 #export EXTERNAL_SUBNET="11.0.0.0/24"
 
