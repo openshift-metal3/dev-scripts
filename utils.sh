@@ -51,6 +51,17 @@ function create_cluster() {
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
     cp ${assets_dir}/install-config.yaml{.tmp,}
+    if [ ! -z "${IGNITION_EXTRA:-}" ]; then
+      $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
+      if ! jq . ${IGNITION_EXTRA}; then
+        echo "Error ${IGNITION_EXTRA} not valid json"
+	exit 1
+      fi
+      mv ${assets_dir}/master.ign ${assets_dir}/master.ign.orig
+      jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/master.ign.orig | tee ${assets_dir}/master.ign
+      mv ${assets_dir}/worker.ign ${assets_dir}/worker.ign.orig
+      jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/worker.ign.orig | tee ${assets_dir}/worker.ign
+    fi
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
 }
 
