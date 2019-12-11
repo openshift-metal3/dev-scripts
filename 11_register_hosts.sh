@@ -62,3 +62,19 @@ fi
 [ -s "$SCRIPTDIR/ocp/worker_crs.yaml" ] || exit 0
 
 oc --config ocp/auth/kubeconfig apply -f $SCRIPTDIR/ocp/worker_crs.yaml --namespace=openshift-machine-api
+
+# Wait for workers to provision and join the cluster
+RUNNING_WORKERS=$(oc get nodes | grep "^worker" | wc -l)
+while [[ ${RUNNING_WORKERS} < ${NUM_WORKERS} ]]; do
+  echo "Waiting for ${NUM_WORKERS} workers, found ${RUNNING_WORKERS}"
+  sleep 10
+  RUNNING_WORKERS=$(oc get nodes | grep "^worker" | wc -l)
+done
+
+# Scale down the MAO and metal3 deployment to avoid provisioning subnet conflicts
+oc get deployment -n openshift-machine-api
+oc scale deployment --replicas 0 cluster-version-operator -n openshift-cluster-version
+oc scale deployment --replicas 0 machine-api-operator -n openshift-machine-api
+oc scale deployment --replicas 0 metal3 -n openshift-machine-api
+oc get deployment -n openshift-machine-api
+

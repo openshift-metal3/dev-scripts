@@ -14,6 +14,12 @@ if [ -d ocp ]; then
     rm -rf ocp
 fi
 
+if [ -d ocp2 ]; then
+    ocp2/openshift-install --dir ocp2 --log-level=debug destroy bootstrap
+    ocp2/openshift-install --dir ocp2 --log-level=debug destroy cluster
+    rm -rf ocp2
+fi
+
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf
 
 # Cleanup ssh keys for baremetal network
