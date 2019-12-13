@@ -40,11 +40,12 @@ fi
 oc_version=4.4
 oc_tools_dir=$HOME/oc-${oc_version}
 oc_tools_local_file=openshift-client-${oc_version}.tar.gz
-oc_date=0
 if which oc 2>&1 >/dev/null ; then
-    oc_date=$(date -d $(oc version -o json  | jq -r '.clientVersion.buildDate') +%s)
+  oc_git_version=$(oc version -o json | jq -r '.clientVersion.gitVersion')
+  oc_actual_version=${oc_git_version#v*}
+  oc_major_minor="${oc_actual_version%\.[0-9]*}"
 fi
-if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ] || [ $oc_date -lt 1566755586 ]; then
+if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ] || [ "$oc_major_minor" != "$oc_version" ]; then
   mkdir -p ${oc_tools_dir}
   cd ${oc_tools_dir}
   wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
