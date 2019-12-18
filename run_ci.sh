@@ -1,6 +1,9 @@
 #!/bin/bash
 set -ex
 
+# temporary
+export KNI_INSTALL_FROM_GIT=true
+
 # grabs files and puts them into $LOGDIR to be saved as jenkins artifacts
 function getlogs(){
     LOGDIR=/home/notstack/dev-scripts/logs
