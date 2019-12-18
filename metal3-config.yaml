@@ -13,4 +13,4 @@ data:
   ironic_endpoint: "http://172.22.0.3:6385/v1/"
   ironic_inspector_endpoint: "http://172.22.0.3:5050/v1/"
   cache_url: "http://192.168.111.1/images"
-  rhcos_image_url: "__RHCOS_IMAGE_URL__"
+  rhcos_image_url: "__MACHINE_OS_IMAGE_URL__"

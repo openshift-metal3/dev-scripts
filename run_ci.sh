@@ -130,7 +130,7 @@ sudo chown -R notstack /opt/dev-scripts/ironic /opt/data/installer-cache /home/n
 sudo sed -i -e '/keepcache=0/d' /etc/yum.conf
 sudo mount -o bind /opt/data/yumcache /var/cache/yum
 
-# Mount the openshift-installer cache directory so we don't download a RHCOS image for each run
+# Mount the openshift-installer cache directory so we don't download a Machine OS image for each run
 sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
 
 # Install terraform

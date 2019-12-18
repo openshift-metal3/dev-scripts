@@ -11,7 +11,7 @@ source ocp_install_env.sh
 # <ENTRYNAME>_LOCAL_IMAGE - where ENTRYNAME matches an uppercase version of the name in the release image
 # with "-" converted to "_" e.g. to use a custom ironic-inspector
 #export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector-image
-#export IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE=https://github.com/openshift-metal3/rhcos-downloader
+#export IRONIC_MACHINE_OS_DOWNLOADER_LOCAL_IMAGE=https://github.com/openshift-metal3/ironic-rhcos-downloader
 #export BAREMETAL_OPERATOR_LOCAL_IMAGE=192.168.111.1:5000/localimages/bmo:latest
 rm -f assets/templates/99_local-registry.yaml $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
 
@@ -70,14 +70,14 @@ fi
 sudo podman pod create -n ironic-pod 
 
 # Pull the rhcos-downloder image to use from the release, this gets change
-# to use IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE if present
-IRONIC_RHCOS_DOWNLOADER_IMAGE=$(oc adm release info --registry-config $REGISTRY_AUTH_FILE $OPENSHIFT_RELEASE_IMAGE --image-for=ironic-rhcos-downloader)
+# to use IRONIC_MACHINE_OS_DOWNLOADER_LOCAL_IMAGE if present
+IRONIC_MACHINE_OS_DOWNLOADER_IMAGE=$(oc adm release info --registry-config $REGISTRY_AUTH_FILE $OPENSHIFT_RELEASE_IMAGE --image-for=ironic-machine-os-downloader)
 
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
 IRONIC_IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_IPA_DOWNLOADER_IMAGE}
-IRONIC_RHCOS_DOWNLOADER_IMAGE=${IRONIC_RHCOS_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_RHCOS_DOWNLOADER_IMAGE}
+IRONIC_MACHINE_OS_DOWNLOADER_IMAGE=${IRONIC_MACHINE_OS_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_MACHINE_OS_DOWNLOADER_IMAGE}
 
-for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${IRONIC_RHCOS_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
+for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${IRONIC_MACHINE_OS_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
     sudo -E podman pull $([[ $IMAGE =~ $LOCAL_REGISTRY_ADDRESS.* ]] && echo "--tls-verify=false" ) $IMAGE
 done
 
@@ -91,7 +91,7 @@ sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-po
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
 sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
-     -v $IRONIC_DATA_DIR:/shared ${IRONIC_RHCOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
+     -v $IRONIC_DATA_DIR:/shared ${IRONIC_MACHINE_OS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $MACHINE_OS_IMAGE_URL
 
 if [ "$NODES_PLATFORM" = "libvirt" ]; then
     sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
