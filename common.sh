@@ -123,7 +123,8 @@ export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 # Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
 export IRONIC_IMAGE="quay.io/metal3-io/ironic:master"
 export IRONIC_IPA_DOWNLOADER_IMAGE="quay.io/metal3-io/ironic-ipa-downloader:master"
-export IRONIC_DATA_DIR="$WORKING_DIR/ironic"
+export IRONIC_DATA_DIR="${WORKING_DIR}/ironic"
+export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 
 # VBMC and Redfish images
 export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
@@ -197,11 +198,12 @@ if [ ! -d "$WORKING_DIR" ]; then
   chmod 755 "$WORKING_DIR"
 fi
 
-if [ ! -d "$IRONIC_DATA_DIR" ]; then
-  echo "Creating Ironic Data Dir"
-  sudo mkdir "$IRONIC_DATA_DIR"
-  sudo chown "${USER}:${USER}" "$IRONIC_DATA_DIR"
-  chmod 755 "$IRONIC_DATA_DIR"
+if [ ! -d "$IRONIC_IMAGES_DIR" ]; then
+  echo "Creating Ironic Images Dir"
+  sudo mkdir -p "$IRONIC_IMAGES_DIR"
+  sudo chown -R "${USER}:${USER}" "$IRONIC_DATA_DIR"
+  sudo find $IRONIC_DATA_DIR -type d -print0 | xargs -0 chmod 755
+  sudo chmod -R +r $IRONIC_DATA_DIR
 fi
 
 # Defaults the variable to enable testing a custom machine-api-operator image

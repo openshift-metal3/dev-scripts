@@ -56,7 +56,7 @@ if [ -f assets/templates/99_local-registry.yaml ] ; then
 fi
 rm -f $DOCKERFILE
 
-for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader machine-os-downloader vbmc sushy-tools; do
+for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader vbmc sushy-tools; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -69,19 +69,27 @@ fi
 # Create pod
 sudo podman pod create -n ironic-pod 
 
-# Pull the rhcos-downloder image to use from the release, this gets change
-# to use IRONIC_MACHINE_OS_DOWNLOADER_LOCAL_IMAGE if present
-IRONIC_MACHINE_OS_DOWNLOADER_IMAGE=$(oc adm release info --registry-config $REGISTRY_AUTH_FILE $OPENSHIFT_RELEASE_IMAGE --image-for=ironic-machine-os-downloader)
-
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
 IRONIC_IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_IPA_DOWNLOADER_IMAGE}
-IRONIC_MACHINE_OS_DOWNLOADER_IMAGE=${IRONIC_MACHINE_OS_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_MACHINE_OS_DOWNLOADER_IMAGE}
 
-for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${IRONIC_MACHINE_OS_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
+for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
     sudo -E podman pull $([[ $IMAGE =~ $LOCAL_REGISTRY_ADDRESS.* ]] && echo "--tls-verify=false" ) $IMAGE
 done
 
 rm -rf $REGISTRY_AUTH_FILE
+
+CACHED_MACHINE_OS_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_IMAGE_NAME}"
+if [ ! -f "${CACHED_MACHINE_OS_IMAGE}" ]; then
+  curl -g --insecure -L -o "${CACHED_MACHINE_OS_IMAGE}" "${MACHINE_OS_IMAGE_URL}"
+  echo "${MACHINE_OS_IMAGE_SHA256} ${CACHED_MACHINE_OS_IMAGE}" | tee ${CACHED_MACHINE_OS_IMAGE}.sha256sum
+  sha256sum --strict --check ${CACHED_MACHINE_OS_IMAGE}.sha256sum
+fi
+CACHED_MACHINE_OS_BOOTSTRAP_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}"
+if [ ! -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ]; then
+  curl -g --insecure -L -o "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" "${MACHINE_OS_BOOTSTRAP_IMAGE_URL}"
+  echo "${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256} ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" | tee ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum
+  sha256sum --strict --check ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum
+fi
 
 # cached images to the bootstrap VM
 sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
@@ -89,9 +97,6 @@ sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
 
 sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
-
-sudo podman run -d --net host --privileged --name machine-os-downloader --pod ironic-pod \
-     -v $IRONIC_DATA_DIR:/shared ${IRONIC_MACHINE_OS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $MACHINE_OS_IMAGE_URL
 
 if [ "$NODES_PLATFORM" = "libvirt" ]; then
     sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
@@ -106,10 +111,11 @@ fi
 
 # Wait for the downloader containers to finish, if they are updating an existing cache
 # the checks below will pass because old data exists
-sudo podman wait -i 1000 ipa-downloader machine-os-downloader
+sudo podman wait -i 1000 ipa-downloader
 
 # Wait for images to be downloaded/ready
-while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1 ; done
+while ! curl --fail http://localhost/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
+while ! curl --fail http://localhost/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.tar.headers ; do sleep 1; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
