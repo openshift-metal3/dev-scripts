@@ -56,7 +56,7 @@ if [ -f assets/templates/99_local-registry.yaml ] ; then
 fi
 rm -f $DOCKERFILE
 
-for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader vbmc sushy-tools; do
+for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader machine-os-downloader vbmc sushy-tools; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -90,7 +90,7 @@ sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
 sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
-sudo podman run -d --net host --privileged --name coreos-downloader --pod ironic-pod \
+sudo podman run -d --net host --privileged --name machine-os-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_MACHINE_OS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $MACHINE_OS_IMAGE_URL
 
 if [ "$NODES_PLATFORM" = "libvirt" ]; then
@@ -106,7 +106,7 @@ fi
 
 # Wait for the downloader containers to finish, if they are updating an existing cache
 # the checks below will pass because old data exists
-sudo podman wait -i 1000 ipa-downloader coreos-downloader
+sudo podman wait -i 1000 ipa-downloader machine-os-downloader
 
 # Wait for images to be downloaded/ready
 while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1 ; done
