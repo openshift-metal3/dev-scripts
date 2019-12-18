@@ -1,6 +1,9 @@
 #!/bin/bash
 set -ex
 
+# temporary
+export KNI_INSTALL_FROM_GIT=true
+
 # grabs files and puts them into $LOGDIR to be saved as jenkins artifacts
 function getlogs(){
     LOGDIR=/home/notstack/dev-scripts/logs
@@ -8,7 +11,7 @@ function getlogs(){
     # Grab the host journal
     sudo journalctl > $LOGDIR/bootstrap-host-system.journal
 
-    for c in httpd coreos-downloader ipa-downloader ; do
+    for c in httpd machine-os-downloader ipa-downloader ; do
         sudo podman logs $c > $LOGDIR/$c.log || true
     done
 
@@ -130,7 +133,7 @@ sudo chown -R notstack /opt/dev-scripts/ironic /opt/data/installer-cache /home/n
 sudo sed -i -e '/keepcache=0/d' /etc/yum.conf
 sudo mount -o bind /opt/data/yumcache /var/cache/yum
 
-# Mount the openshift-installer cache directory so we don't download a RHCOS image for each run
+# Mount the openshift-installer cache directory so we don't download a Machine OS image for each run
 sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
 
 # Install terraform

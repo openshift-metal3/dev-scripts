@@ -68,7 +68,7 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-$OPENSHIFT_INSTALL_PATH/bin/openshift-install}
 
     # This is an URI so we can use curl for either the file on GitHub, or locally
-    export OPENSHIFT_INSTALLER_RHCOS=${OPENSHIFT_INSTALLER_RHCOS:-file:///$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json}
+    export OPENSHIFT_INSTALLER_MACHINE_OS=${OPENSHIFT_INSTALLER_MACHINE_OS:-file:///$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json}
 
     # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.4
     # Which currently don't work for us ref
