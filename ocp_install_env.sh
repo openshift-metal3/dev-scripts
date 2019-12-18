@@ -50,7 +50,7 @@ function extract_installer() {
 function clone_installer() {
   # Clone repo, if not already present
   if [[ ! -d $OPENSHIFT_INSTALL_PATH ]]; then
-    sync_repo_and_patch go/src/github.com/openshift/installer https://github.com/openshift/installer.git https://patch-diff.githubusercontent.com/raw/openshift/installer/pull/2821.patch
+    sync_repo_and_patch go/src/github.com/openshift/installer https://github.com/openshift/installer.git
   fi
 }
 
