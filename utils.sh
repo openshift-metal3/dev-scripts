@@ -190,9 +190,8 @@ function bmo_config_map {
     
     mkdir -p ocp/deploy
     cp $SCRIPTDIR/metal3-config.yaml ocp/deploy
-    sed -i "s#__MACHINE_OS_IMAGE_URL__#${MACHINE_OS_IMAGE_URL}#" ocp/deploy/metal3-config.yaml
+    sed -i "s#__MACHINE_OS_IMAGE_URL__#http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}#" ocp/deploy/metal3-config.yaml
     sed -i "s#provisioning_interface: \"ens3\"#provisioning_interface: \"${CLUSTER_PRO_IF}\"#" ocp/deploy/metal3-config.yaml
-    sed -i "s#cache_url: \"http://192.168.111.1/images\"#cache_url: \"http://${BAREMETAL_IP}/images\"#" ocp/deploy/metal3-config.yaml
     
     cp ocp/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
 }
