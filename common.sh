@@ -201,9 +201,16 @@ fi
 if [ ! -d "$IRONIC_IMAGES_DIR" ]; then
   echo "Creating Ironic Images Dir"
   sudo mkdir -p "$IRONIC_IMAGES_DIR"
+fi
+
+# Previously the directory was owned by root, we need to alter
+# permissions to be owned by the user running dev-scripts.
+if [ ! -f "$IRONIC_IMAGES_DIR/.permissions" ]; then
+  echo "Resetting permissions on Ironic Images Dir..."
   sudo chown -R "${USER}:${USER}" "$IRONIC_DATA_DIR"
-  sudo find $IRONIC_DATA_DIR -type d -print0 | xargs -0 chmod 755
-  sudo chmod -R +r $IRONIC_DATA_DIR
+  sudo find "$IRONIC_DATA_DIR" -type d -print0 | xargs -0 chmod 755
+  sudo chmod -R +r "$IRONIC_DATA_DIR"
+  touch "$IRONIC_IMAGES_DIR/.permissions"
 fi
 
 # Defaults the variable to enable testing a custom machine-api-operator image
