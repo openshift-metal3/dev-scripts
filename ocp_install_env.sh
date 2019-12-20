@@ -53,6 +53,11 @@ function clone_installer() {
   if [[ ! -d $OPENSHIFT_INSTALL_PATH ]]; then
     sync_repo_and_patch go/src/github.com/openshift/installer https://github.com/openshift/installer.git
   fi
+  pushd $OPENSHIFT_INSTALL_PATH
+  git remote add kni https://github.com/openshift-kni/installer.git || true
+  git fetch -v kni
+  git checkout -b kni/4.3-ipv6-$$ kni/4.3-ipv6
+  popd
 }
 
 function build_installer() {
