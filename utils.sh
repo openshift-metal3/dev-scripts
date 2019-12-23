@@ -304,7 +304,7 @@ EOF
     if [[ "$reg_state" != "running" || "$SSL_CERT_MD5_HASH" != "$MD5_HASH_RUNNING" ]]; then
         sudo podman rm registry -f || true
 
-        sudo podman run -d --name registry -p ${LOCAL_REGISTRY_PORT}:5000 \
+        sudo podman run -d --name registry --net=host --privileged \
             -v ${REGISTRY_DIR}/data:/var/lib/registry:z \
             -v ${REGISTRY_DIR}/auth:/auth:z \
             -e "REGISTRY_AUTH=htpasswd" \
