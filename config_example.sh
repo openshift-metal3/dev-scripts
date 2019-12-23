@@ -11,6 +11,9 @@ set -x
 #export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
 #export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
 
+# Mirror latest ci images to local registry
+#export MIRROR_IMAGES=true
+
 # Switch to upstream metal3-io ironic images instead of openshift ones.
 #export UPSTREAM_IRONIC=true
 
@@ -73,4 +76,17 @@ set -x
 # Name of branch in the above repo which contains the custom MAO changes
 #export MAO_BRANCH="mao-fix"
 
-#export LOCAL_REGISTRY_ADDRESS="192.168.111.1:5000"
+#export LOCAL_REGISTRY_ADDRESS="192.168.111.1"
+#export LOCAL_REGISTRY_PORT="5000"
+
+# configure username for registry
+#export REGISTRY_USER=some-user
+
+# congiugre password for registry user
+#export REGISTRY_PASS=some-pass
+
+# configure base directory for registry
+#export REGISTRY_DIR=/opt/registry
+
+# configure location of mirror's creds
+#export REGISTRY_CREDS=${REGISTRY_CREDS:-$USER/private-mirror.json}

@@ -78,6 +78,12 @@ function generate_ocp_install_config() {
     # TODO - Change worker replicas to ${NUM_WORKERS} once the machine-api-operator
     # deploys the baremetal-operator
 
+    # when using local mirror set pull secret to this mirror
+    # also this should ensure we don't accidentally pull from upstream
+    if [ ! -z "${MIRROR_IMAGES}" ]; then
+        export PULL_SECRET=$(cat ${REGISTRY_CREDS})
+    fi
+
     mkdir -p "${outdir}"
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
@@ -102,6 +108,7 @@ platform:
     dnsVIP: ${DNS_VIP}
     hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)
+$(image_mirror_config)
 pullSecret: |
   $(echo $PULL_SECRET | jq -c .)
 sshKey: |

@@ -195,3 +195,125 @@ function bmo_config_map {
     
     cp ocp/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
 }
+
+function image_mirror_config {
+    if [ ! -z "${MIRROR_IMAGES}" ]; then
+        TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.]*release://' )
+        TAGGED=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/release://')
+        RELEASE=$(echo $OPENSHIFT_RELEASE_IMAGE | grep -o 'registry.svc.ci.openshift.org[^":]\+')
+        INDENTED_CERT=$( cat $REGISTRY_DIR/certs/registry.crt | awk '{ print " ", $0 }' )
+        MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${TAG}.log
+        if [ ! -s ${MIRROR_LOG_FILE} ]; then
+            cat << EOF
+imageContentSources:
+- mirrors:
+    - ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
+  source: ${RELEASE}
+- mirrors:
+    - ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
+  source: ${TAGGED}
+additionalTrustBundle: |
+${INDENTED_CERT}
+EOF
+        else
+            cat ${MIRROR_LOG_FILE} | sed -n '/To use the new mirrored repository to install/,/To use the new mirrored repository for upgrades/p' |\
+                sed -e '/^$/d' -e '/To use the new mirrored repository/d'
+            cat << EOF
+additionalTrustBundle: |
+${INDENTED_CERT}
+EOF
+        fi
+    fi
+}
+
+function setup_local_registry() {
+
+    # httpd-tools provides htpasswd utility
+    sudo yum install -y httpd-tools
+
+    sudo mkdir -pv ${REGISTRY_DIR}/{auth,certs,data}
+    sudo chown -R $USER:$USER ${REGISTRY_DIR}
+
+    pushd $REGISTRY_DIR/certs
+    SSL_HOST_NAME="${LOCAL_REGISTRY_ADDRESS}"
+
+    if [[ $( echo $SSL_HOST_NAME | grep -Eo '^[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}$') ]];then
+        SSL_EXT_8="subjectAltName = IP:${SSL_HOST_NAME}"
+        SSL_EXT_7="subjectAltName = IP:${SSL_HOST_NAME}"
+    else
+        SSL_EXT_8="subjectAltName = otherName:${SSL_HOST_NAME}"
+        SSL_EXT_7="subjectAltName = DNS:${SSL_HOST_NAME}"
+    fi
+
+    #
+    # registry key and cert are generated if they don't exist
+    #
+    if [[ ! -s ${REGISTRY_DIR}/certs/registry.key ]]; then
+        openssl genrsa -out ${REGISTRY_DIR}/certs/registry.key 2048
+    fi
+
+    if [[ ! -s ${REGISTRY_DIR}/certs/registry.crt ]]; then
+
+        if [ "${RHEL8}" = "True" ] ; then
+            openssl req -x509 \
+                -key ${REGISTRY_DIR}/certs/registry.key \
+                -out ${REGISTRY_DIR}/certs/registry.crt \
+                -days 365 \
+                -addext "${SSL_EXT_8}" \
+                -subj "/C=US/ST=NC/L=Raleigh/O=Test Company/OU=Testing/CN=${SSL_HOST_NAME}"
+        else
+            SSL_TMP_CONF=$(mktemp 'my-ssl-conf.XXXXXX')
+            cat > ${SSL_TMP_CONF} <<EOF
+[req]
+distinguished_name = req_distinguished_name
+
+[req_distinguished_name]
+CN = ${SSL_HOST_NAME}
+
+[SAN]
+basicConstraints=CA:TRUE,pathlen:0
+${SSL_EXT_7}
+EOF
+
+            openssl req -x509 \
+                -key ${REGISTRY_DIR}/certs/registry.key \
+                -out  ${REGISTRY_DIR}/certs/registry.crt \
+                -days 365 \
+                -config ${SSL_TMP_CONF} \
+                -extensions SAN \
+                -subj "/C=US/ST=NC/L=Raleigh/O=Test Company/OU=Testing/CN=${SSL_HOST_NAME}"
+        fi
+    fi
+
+    # get MD5 hashes for SSL cert on a disk and one used in running registry
+    SSL_CERT_MD5_HASH=$( md5sum ${REGISTRY_DIR}/certs/registry.crt | awk '{print $1}' )
+    MD5_HASH_RUNNING=$( sudo podman exec registry /bin/sh -c "md5sum /certs/registry.crt || echo not_exist" | awk '{print $1}' || echo "error" )
+
+    popd
+
+    htpasswd -bBc ${REGISTRY_DIR}/auth/htpasswd ${REGISTRY_USER} ${REGISTRY_PASS}
+
+    sudo cp ${REGISTRY_DIR}/certs/registry.crt /etc/pki/ca-trust/source/anchors/
+    sudo update-ca-trust
+
+    reg_state=$(sudo podman inspect registry --format  "{{.State.Status}}" || echo "error")
+
+    # if container doesn't run or has different SSL cert that preent in ${REGISTRY_DIR}/certs/
+    #   restart it
+
+    if [[ "$reg_state" != "running" || "$SSL_CERT_MD5_HASH" != "$MD5_HASH_RUNNING" ]]; then
+        sudo podman rm registry -f || true
+
+        sudo podman run -d --name registry -p ${LOCAL_REGISTRY_PORT}:5000 \
+            -v ${REGISTRY_DIR}/data:/var/lib/registry:z \
+            -v ${REGISTRY_DIR}/auth:/auth:z \
+            -e "REGISTRY_AUTH=htpasswd" \
+            -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+            -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
+            -v ${REGISTRY_DIR}/certs:/certs:z \
+            -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry.crt \
+            -e REGISTRY_HTTP_TLS_KEY=/certs/registry.key \
+            docker.io/registry:latest
+    fi
+
+}
