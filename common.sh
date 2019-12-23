@@ -36,6 +36,17 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 
+# mirror images for installation in restricted network
+export MIRROR_IMAGES=${MIRROR_IMAGES:-}
+
+# variables for local registry configuration
+export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1"}
+export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
+export REGISTRY_USER=${REGISTRY_USER:-ocp-user}
+export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
+export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
+export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror.json}
+
 #
 # See https://openshift-release.svc.ci.openshift.org for release details
 #
@@ -53,11 +64,6 @@ if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
     export IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-ipa-downloader:master"}
     export IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE=${IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE:-"quay.io/metal3-io/static-ip-manager"}
     export BAREMETAL_OPERATOR_LOCAL_IMAGE=${BAREMETAL_OPERATOR_LOCAL_IMAGE:-"quay.io/metal3-io/baremetal-operator"}
-fi
-
-if env | grep -q "_LOCAL_IMAGE=" ; then
-    # We need a custome installer (allows http image pulls for local images)
-    KNI_INSTALL_FROM_GIT=true
 fi
 
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
@@ -79,6 +85,7 @@ fi
 if env | grep -q "_LOCAL_IMAGE=" ; then
     # We're going to be using a locally modified release image
     export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
+    export MIRROR_IMAGES=true
 fi
 
 # Set variables
@@ -213,14 +220,3 @@ fi
 
 # Defaults the variable to enable testing a custom machine-api-operator image
 export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
-
-# mirror images for installation in restricted network
-export MIRROR_IMAGES=${MIRROR_IMAGES:-}
-
-# variables for local registry configuration
-export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1"}
-export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
-export REGISTRY_USER=${REGISTRY_USER:-ocp-user}
-export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
-export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
-export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror.json}

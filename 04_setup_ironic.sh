@@ -23,9 +23,11 @@ export REGISTRY_AUTH_FILE=$(mktemp "pullsecret--XXXXXXXXXX")
 COMBINED_AUTH_FILE=$(mktemp "combined-pullsecret--XXXXXXXXXX")
 jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} | tee ${COMBINED_AUTH_FILE}
 
+_local_images=
 DOCKERFILE=$(mktemp "release-update--XXXXXXXXXX")
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
+    _local_images=1
     IMAGE=${!IMAGE_VAR}
 
     sudo -E podman pull --authfile $COMBINED_AUTH_FILE $OPENSHIFT_RELEASE_IMAGE
@@ -42,11 +44,6 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         cd -
         sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
     fi
-
-    # Update the bootstrap and master nodes to treat LOCAL_REGISTRY_ADDRESS as insecure
-    mkdir -p $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers
-    echo -e "[registries.insecure]\nregistries = ['${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}']" > $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
-    cp assets/templates/99_local-registry.yaml.optional assets/templates/99_local-registry.yaml
 
     IMAGE_NAME=$(echo ${IMAGE_VAR/_LOCAL_IMAGE} | tr '[:upper:]_' '[:lower:]-')
     OLDIMAGE=$(sudo podman run --rm $OPENSHIFT_RELEASE_IMAGE image $IMAGE_NAME)
@@ -83,8 +80,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     rm -rf "${EXTRACT_DIR}"
 fi
 
-if [ -f assets/templates/99_local-registry.yaml ] ; then
-    build_installer
+if [ "${_local_images}" == "1" ]; then
     sudo podman image build --authfile $COMBINED_AUTH_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
     sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
 fi
@@ -107,7 +103,7 @@ IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
 IRONIC_IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_IPA_DOWNLOADER_IMAGE}
 
 for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
-    sudo -E podman pull $([[ $IMAGE =~ $LOCAL_REGISTRY_ADDRESS.* ]] && echo "--tls-verify=false" ) $IMAGE
+    sudo -E podman pull --authfile $COMBINED_AUTH_FILE $IMAGE
 done
 
 rm -rf ${REGISTRY_AUTH_FILE}
