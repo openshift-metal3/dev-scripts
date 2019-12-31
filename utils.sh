@@ -237,7 +237,7 @@ function setup_local_registry() {
     pushd $REGISTRY_DIR/certs
     SSL_HOST_NAME="${LOCAL_REGISTRY_ADDRESS}"
 
-    if [[ $( echo $SSL_HOST_NAME | grep -Eo '^[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}$') ]];then
+    if ipcalc -c $SSL_HOST_NAME; then
         SSL_EXT_8="subjectAltName = IP:${SSL_HOST_NAME}"
         SSL_EXT_7="subjectAltName = IP:${SSL_HOST_NAME}"
     else
