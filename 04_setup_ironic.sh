@@ -70,12 +70,13 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
     #you must extract the installation program from the mirrored content:
-
-    oc adm release extract --registry-config "${COMBINED_AUTH_FILE}" \
+    if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
+      oc adm release extract --registry-config "${COMBINED_AUTH_FILE}" \
         --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
         "${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
 
-    mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ocp/
+      mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ocp/
+    fi
 
     rm -rf "${EXTRACT_DIR}"
 fi
