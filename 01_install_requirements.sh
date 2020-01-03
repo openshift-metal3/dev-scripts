@@ -4,6 +4,7 @@ set -ex
 source logging.sh
 source common.sh
 source utils.sh
+source ocp_install_env.sh
 
 if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null ; then
     RHEL8="True"

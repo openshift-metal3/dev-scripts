@@ -31,3 +31,6 @@ dns_extrahosts:
   - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
     hostnames:
       - "ns1"
+  - ip: "{{ baremetal_network_cidr | nthhost(1) }}"
+    hostnames:
+      - "virthost"

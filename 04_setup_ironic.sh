@@ -37,7 +37,7 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         [ -e "$REPOPATH" ] || git clone $IMAGE $REPOPATH
         cd $REPOPATH
         export $IMAGE_VAR=${IMAGE##*/}:latest
-        export $IMAGE_VAR=$LOCAL_REGISTRY_ADDRESS:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
+        export $IMAGE_VAR=$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
         sudo podman build --authfile $COMBINED_AUTH_FILE -t ${!IMAGE_VAR} .
         cd -
         sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
@@ -63,15 +63,15 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
        --insecure=true \
         -a ${COMBINED_AUTH_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
-        --to-release-image ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG} \
-        --to ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
+        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG} \
+        --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
     #you must extract the installation program from the mirrored content:
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       oc adm release extract --registry-config "${COMBINED_AUTH_FILE}" \
         --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
-        "${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
+        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
 
       mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ocp/
     fi
