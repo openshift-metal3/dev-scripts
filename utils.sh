@@ -207,10 +207,10 @@ function image_mirror_config {
             cat << EOF
 imageContentSources:
 - mirrors:
-    - ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
+    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
   source: ${RELEASE}
 - mirrors:
-    - ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
+    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
   source: ${TAGGED}
 additionalTrustBundle: |
 ${INDENTED_CERT}
@@ -235,13 +235,13 @@ function setup_local_registry() {
     sudo chown -R $USER:$USER ${REGISTRY_DIR}
 
     pushd $REGISTRY_DIR/certs
-    SSL_HOST_NAME="${LOCAL_REGISTRY_ADDRESS}"
+    SSL_HOST_NAME="${LOCAL_REGISTRY_DNS_NAME}"
 
     if ipcalc -c $SSL_HOST_NAME; then
         SSL_EXT_8="subjectAltName = IP:${SSL_HOST_NAME}"
         SSL_EXT_7="subjectAltName = IP:${SSL_HOST_NAME}"
     else
-        SSL_EXT_8="subjectAltName = otherName:${SSL_HOST_NAME}"
+        SSL_EXT_8="subjectAltName = DNS:${SSL_HOST_NAME}"
         SSL_EXT_7="subjectAltName = DNS:${SSL_HOST_NAME}"
     fi
 

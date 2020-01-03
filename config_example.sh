@@ -76,7 +76,7 @@ set -x
 # Name of branch in the above repo which contains the custom MAO changes
 #export MAO_BRANCH="mao-fix"
 
-#export LOCAL_REGISTRY_ADDRESS="192.168.111.1"
+#export LOCAL_REGISTRY_DNS_NAME="virthost.ostest.test.metalkube.org"
 #export LOCAL_REGISTRY_PORT="5000"
 
 # configure username for registry

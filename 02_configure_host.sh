@@ -176,7 +176,7 @@ if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
     # create authfile for local registry
     sudo podman login --authfile ${REGISTRY_CREDS} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
-        ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}
+        ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
 else
     # Create a blank authfile in order to have something valid when we read it in 04_setup_ironic.sh
     echo '{}' | sudo dd of=${REGISTRY_CREDS}
