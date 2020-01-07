@@ -67,7 +67,7 @@ EOF
     virsh pool-autostart default
 fi
 
-if [ "${RHEL8}" = "True" ] ; then
+if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
     ZONE="\nZONE=libvirt"
 fi
 
@@ -125,7 +125,7 @@ fi
 
 # Add firewall rules to ensure the image caches can be reached on the host
 for PORT in 80 ${LOCAL_REGISTRY_PORT} ; do
-    if [ "${RHEL8}" = "True" ] ; then
+    if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
         sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp
         sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp --permanent
     else
@@ -140,7 +140,7 @@ done
 
 # Allow ipmi to the virtual bmc processes that we just started
 VBMC_MAX_PORT=$((6230 + ${NUM_MASTERS} + ${NUM_WORKERS} - 1))
-if [ "${RHEL8}" = "True" ] ; then
+if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
     sudo firewall-cmd --zone=libvirt --add-port=6230-${VBMC_MAX_PORT}/udp
     sudo firewall-cmd --zone=libvirt --add-port=6230-${VBMC_MAX_PORT}/udp --permanent
 else

@@ -5,10 +5,6 @@ source logging.sh
 source common.sh
 source utils.sh
 
-if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null ; then
-    RHEL8="True"
-fi
-
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
   sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git

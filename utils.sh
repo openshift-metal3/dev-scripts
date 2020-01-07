@@ -254,7 +254,7 @@ function setup_local_registry() {
 
     if [[ ! -s ${REGISTRY_DIR}/certs/registry.crt ]]; then
 
-        if [ "${RHEL8}" = "True" ] ; then
+        if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ]; then
             openssl req -x509 \
                 -key ${REGISTRY_DIR}/certs/registry.key \
                 -out ${REGISTRY_DIR}/certs/registry.crt \

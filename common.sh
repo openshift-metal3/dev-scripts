@@ -171,6 +171,10 @@ if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null 
     export RHEL8="True"
 fi
 
+if grep -q "CentOS Linux release 8" /etc/redhat-release 2>/dev/null; then
+    export CENTOS8="True"
+fi
+
 # Check d_type support
 FSTYPE=$(df ${FILESYSTEM} --output=fstype | grep -v Type)
 
