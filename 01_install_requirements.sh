@@ -32,7 +32,7 @@ if sudo systemctl is-active docker-distribution.service; then
 fi
 
 # Install oc client
-oc_version=4.4
+oc_version=${OPENSHIFT_VERSION}
 oc_tools_dir=$HOME/oc-${oc_version}
 oc_tools_local_file=openshift-client-${oc_version}.tar.gz
 if which oc 2>&1 >/dev/null ; then

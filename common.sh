@@ -55,6 +55,7 @@ if [ -z "${OPENSHIFT_RELEASE_IMAGE}" ]; then
   LATEST_CI_IMAGE=$(curl https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/4.4.0-0.ci/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
+export OPENSHIFT_VERSION=$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]].[[:digit:]]\).*/\1/")
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 
 # Switch Container Images to upstream, Installer defaults these to the openshift version
