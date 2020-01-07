@@ -169,6 +169,9 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
   fi
 fi
 
+# Remove any previous file, or podman login panics when reading the
+# blank authfile with a "assignment to entry in nil map" error
+rm -f ${REGISTRY_CREDS}
 if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
     # create authfile for local registry
     sudo podman login --authfile ${REGISTRY_CREDS} \
