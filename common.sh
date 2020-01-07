@@ -83,9 +83,12 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
 fi
 
 if env | grep -q "_LOCAL_IMAGE=" ; then
+    export MIRROR_IMAGES=true
+fi
+
+if [ -n "$MIRROR_IMAGES" ]; then
     # We're going to be using a locally modified release image
     export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
-    export MIRROR_IMAGES=true
 fi
 
 # Set variables
