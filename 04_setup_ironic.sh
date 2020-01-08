@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -euxo pipefail
 
 source logging.sh
 source common.sh
