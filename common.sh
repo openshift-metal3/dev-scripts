@@ -47,6 +47,9 @@ export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
 export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
 export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror.json}
 
+# Set this variable to build the installer from source
+export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
+
 #
 # See https://openshift-release.svc.ci.openshift.org for release details
 #
