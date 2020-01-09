@@ -39,6 +39,8 @@ source $CONFIG
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
+WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
+
 # variables for local registry configuration
 export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1"}
 export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
@@ -54,7 +56,7 @@ export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 # See https://openshift-release.svc.ci.openshift.org for release details
 #
 # if we provide OPENSHIFT_RELEASE_IMAGE, do not curl. This is needed for offline installs
-if [ -z "${OPENSHIFT_RELEASE_IMAGE}" ]; then
+if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
   LATEST_CI_IMAGE=$(curl https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/4.4.0-0.ci/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
@@ -114,7 +116,6 @@ ROOT_DISK_NAME=${ROOT_DISK_NAME-"/dev/sda"}
 
 FILESYSTEM=${FILESYSTEM:="/"}
 
-WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
 NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
