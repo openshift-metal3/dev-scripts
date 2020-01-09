@@ -65,7 +65,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
        --insecure=true \
         -a ${COMBINED_AUTH_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
-        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG} \
+        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest \
         --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
@@ -73,7 +73,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       oc adm release extract --registry-config "${COMBINED_AUTH_FILE}" \
         --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
-        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
+        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
 
       mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ocp/
     fi
