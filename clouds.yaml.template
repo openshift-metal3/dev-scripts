@@ -1,0 +1,9 @@
+clouds:
+  metal3-bootstrap:
+    auth_type: none
+    baremetal_endpoint_override: {{.BootstrapIronicURL}}
+    baremetal_introspection_endpoint_override: {{.BootstrapInspectorURL}}
+  metal3:
+    auth_type: none
+    baremetal_endpoint_override: {{.ClusterIronicURL}}
+    baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}

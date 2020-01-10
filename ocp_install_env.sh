@@ -6,7 +6,7 @@ export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
 export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
-export MIRROR_IP=${MIRROR_IP:-"172.22.0.1"}
+export MIRROR_IP=${MIRROR_IP:-$PROVISIONING_HOST_IP}
 export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 
 function extract_command() {
@@ -105,6 +105,7 @@ platform:
   baremetal:
     bootstrapOSImage: http://${MIRROR_IP}/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
     clusterOSImage: http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
+    provisioningNetworkCIDR: $PROVISIONING_NETWORK
     dnsVIP: ${DNS_VIP}
     hosts:
 $(master_node_map_to_install_config $NUM_MASTERS)

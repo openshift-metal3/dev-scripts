@@ -45,7 +45,7 @@ function create_cluster() {
 
     generate_assets
     custom_ntp
-    bmo_config_map
+    generate_templates
 
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
@@ -181,19 +181,18 @@ function sync_repo_and_patch {
     popd
 }
 
-function bmo_config_map {
-    # Set default value for provisioning interface
+function generate_templates {
     CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
-    
-    # Get Baremetal ip
-    BAREMETAL_IP=$(ip -o -f inet addr show baremetal | awk '{print $4}' | tail -1 | cut -d/ -f1)
-    
+    MACHINE_OS_IMAGE_URL="http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
+
+    # metal3-config.yaml
     mkdir -p ocp/deploy
-    cp $SCRIPTDIR/metal3-config.yaml ocp/deploy
-    sed -i "s#__MACHINE_OS_IMAGE_URL__#http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}#" ocp/deploy/metal3-config.yaml
-    sed -i "s#provisioning_interface: \"ens3\"#provisioning_interface: \"${CLUSTER_PRO_IF}\"#" ocp/deploy/metal3-config.yaml
-    
+	  go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
+    go run metal3-templater.go metal3-config.yaml.template $CLUSTER_PRO_IF $PROVISIONING_NETWORK $MACHINE_OS_IMAGE_URL > ocp/deploy/metal3-config.yaml
     cp ocp/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
+
+    # clouds.yaml
+    go run metal3-templater.go clouds.yaml.template $CLUSTER_PRO_IF $PROVISIONING_NETWORK $MACHINE_OS_IMAGE_URL > clouds.yaml
 }
 
 function image_mirror_config {

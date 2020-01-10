@@ -42,6 +42,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
+    -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 
@@ -76,7 +77,7 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
-        echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+        echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
     fi
     sudo ifdown provisioning || true
     sudo ifup provisioning
