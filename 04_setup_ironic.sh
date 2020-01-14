@@ -23,11 +23,9 @@ export REGISTRY_AUTH_FILE=$(mktemp "pullsecret--XXXXXXXXXX")
 COMBINED_AUTH_FILE=$(mktemp "combined-pullsecret--XXXXXXXXXX")
 jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} | tee ${COMBINED_AUTH_FILE}
 
-_local_images=
 DOCKERFILE=$(mktemp "release-update--XXXXXXXXXX")
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
-    _local_images=1
     IMAGE=${!IMAGE_VAR}
 
     sudo -E podman pull --authfile $COMBINED_AUTH_FILE $OPENSHIFT_RELEASE_IMAGE
@@ -79,9 +77,8 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     fi
 
     rm -rf "${EXTRACT_DIR}"
-fi
 
-if [ "${_local_images}" == "1" ]; then
+    # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
     sudo podman image build --authfile $COMBINED_AUTH_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
     sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
 fi
