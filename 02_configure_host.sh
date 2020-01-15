@@ -86,6 +86,9 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
         echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=provisioning" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
         sudo ifdown $PRO_IF || true
         sudo ifup $PRO_IF
+        # Need to ifup the provisioning bridge again because ifdown $PRO_IF
+        # will bring down the bridge as well.
+        sudo ifup provisioning
     fi
 fi
 
