@@ -49,7 +49,7 @@ networks:
     dns:
       # http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
       # [fd00::] is replaced with the Unique Local Address
-      options: 'dhcp-option=option6:dns-server,[fd00::]'
+      #options: 'dhcp-option=option6:dns-server,[fd00::]'
       hosts: "{{dns_extrahosts | default([])}}"
       forwarders:
         - domain: "apps.{{ cluster_domain }}"
