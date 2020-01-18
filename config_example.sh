@@ -67,6 +67,15 @@ set -x
 # External subnet
 #export EXTERNAL_SUBNET="11.0.0.0/24"
 
+# Cluster Subnet
+# export CLUSTER_SUBNET="10.128.0.0/14"
+
+# Cluster Host Prefix
+#export CLUSTER_HOST_PREFIX="23"
+
+# Service Subnet
+#export SERVICE_SUBNET="172.30.0.0/16"
+
 # Enable testing of custom machine-api-operator-image
 #export TEST_CUSTOM_MAO=true
 
