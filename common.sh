@@ -180,14 +180,14 @@ if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null 
 fi
 
 # Check d_type support
-FSTYPE=$(df ${FILESYSTEM} --output=fstype | grep -v Type)
+FSTYPE=$(df "${FILESYSTEM}" --output=fstype | tail -n 1)
 
 case ${FSTYPE} in
   'ext4'|'btrfs')
   ;;
   'xfs')
     if [[ $(xfs_info ${FILESYSTEM} | grep -q "ftype=1") ]]; then
-      echo "Filesystem not supported"
+      echo "XFS filesystem must have ftype set to 1"
       exit 1
     fi
   ;;
