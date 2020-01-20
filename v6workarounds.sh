@@ -31,6 +31,10 @@ for MASTER in ${MASTER_IPS} ; do
 
     # kubelet needs to be restarted to pick up the correct hotsname
     fssh core@${MASTER} sudo systemctl restart kubelet
+
+    # haproxy not configured to listen on IPv6
+    fssh core@${MASTER} sudo sed -i \"s/bind :7443/bind :::7443 v4v6/\" /etc/haproxy/haproxy.cfg
+    fssh core@${MASTER} sudo sed -i \"s/bind :50936/bind :::50936 v4v6/\" /etc/haproxy/haproxy.cfg
 done
 
 fssh core@${BOOTSTRAP_IP} sudo sed -i \"1s/^/nameserver ${DNS_VIP}\\n/\" /etc/resolv.conf
