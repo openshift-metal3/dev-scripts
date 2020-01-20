@@ -81,30 +81,25 @@ function generate_ocp_install_config() {
     fi
 
     mkdir -p "${outdir}"
+
+    # IPv6 network config validation
+    if [[ "${EXTERNAL_SUBNET}" =~ .*:.* ]]; then
+      if [[ "${NETWORK_TYPE}" != "OVNKubernetes" ]]; then
+        echo "NETWORK_TYPE must be OVNKubernetes when using IPv6"
+        exit 1
+      fi
+    fi
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
 networking:
   networkType: ${NETWORK_TYPE}
   machineCIDR: ${EXTERNAL_SUBNET}
-EOF
-
-    # IPv6 network config
-    if [[ "${EXTERNAL_SUBNET}" == *":"* ]]; then
-        if [[ "${NETWORK_TYPE}" != "OVNKubernetes" ]]; then
-            echo "NETWORK_TYPE must be OVNKubernetes when using IPv6"
-            exit 1
-        fi
-        cat >> "${outdir}/install-config.yaml" << EOF
   clusterNetwork:
-  - cidr: fd01::/48
-    hostPrefix: 64
+  - cidr: ${CLUSTER_SUBNET}
+    hostPrefix: ${CLUSTER_HOST_PREFIX}
   serviceNetwork:
-  - fd02::/112
-EOF
-    fi
-
-    cat >> "${outdir}/install-config.yaml" << EOF
+  - ${SERVICE_SUBNET}
 metadata:
   name: ${CLUSTER_NAME}
 compute:
