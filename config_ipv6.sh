@@ -4,7 +4,6 @@
 # You can get this secret from https://cloud.openshift.com/clusters/install#pull-secret
 export PULL_SECRET=$(cat ~/pull-secret.json)
 
-export WORKING_DIR="$HOME"
 # Local checkout with https://github.com/metal3-io/metal3-dev-env/pull/160 applied
 export METAL3_DEV_ENV="$WORKING_DIR/metal3-dev-env"
 export MIRROR_IMAGES=true
