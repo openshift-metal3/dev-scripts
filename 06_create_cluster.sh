@@ -41,9 +41,9 @@ if [ ! -f ocp/install-config.yaml ]; then
         exit 1
     fi
 
-    # Create a master_nodes.json file
+    # Create a nodes.json file
     mkdir -p ocp/
-    jq '.nodes[0:3] | {nodes: .}' "${NODES_FILE}" | tee "${MASTER_NODES_FILE}"
+    jq '{nodes: .}' "${NODES_FILE}" | tee "${BAREMETALHOSTS_FILE}"
 
     # Create install config for openshift-installer
     generate_ocp_install_config ocp

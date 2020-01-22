@@ -68,15 +68,8 @@ function generate_ocp_install_config() {
 
     outdir="$1"
 
-    deploy_kernel=$(master_node_val 0 "driver_info.deploy_kernel")
-    deploy_ramdisk=$(master_node_val 0 "driver_info.deploy_ramdisk")
-
-    # Always deploy with 0 workers by default.  We do not yet support
-    # automatically deploying workers at install time anyway.  We can scale up
-    # the worker MachineSet after deploying the baremetal-operator
-    #
-    # TODO - Change worker replicas to ${NUM_WORKERS} once the machine-api-operator
-    # deploys the baremetal-operator
+    deploy_kernel=$(node_val 0 "driver_info.deploy_kernel")
+    deploy_ramdisk=$(node_val 0 "driver_info.deploy_ramdisk")
 
     # when using local mirror set pull secret to this mirror
     # also this should ensure we don't accidentally pull from upstream
@@ -95,7 +88,7 @@ metadata:
   name: ${CLUSTER_NAME}
 compute:
 - name: worker
-  replicas: 0
+  replicas: $NUM_WORKERS
 controlPlane:
   name: master
   replicas: ${NUM_MASTERS}
@@ -103,12 +96,14 @@ controlPlane:
     baremetal: {}
 platform:
   baremetal:
+    provisioningNetworkInterface: $CLUSTER_PRO_IF
     bootstrapOSImage: http://${MIRROR_IP}/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
     clusterOSImage: http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
     provisioningNetworkCIDR: $PROVISIONING_NETWORK
     dnsVIP: ${DNS_VIP}
     hosts:
-$(master_node_map_to_install_config $NUM_MASTERS)
+$(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
+$(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
 $(image_mirror_config)
 pullSecret: |
   $(echo $PULL_SECRET | jq -c .)

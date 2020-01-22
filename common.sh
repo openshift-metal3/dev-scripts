@@ -118,6 +118,8 @@ ROOT_DISK_NAME=${ROOT_DISK_NAME-"/dev/sda"}
 export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
 export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
 
+export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
+
 # ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
 # instead to get the first address in the network:
 export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}
@@ -126,7 +128,7 @@ FILESYSTEM=${FILESYSTEM:="/"}
 
 NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
-MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
+BAREMETALHOSTS_FILE=${BAREMETALHOSTS_FILE:-"ocp/baremetalhosts.json"}
 
 # Optionally set this to a path to use a local dev copy of
 # metal3-dev-env, otherwise it's cloned to $WORKING_DIR
