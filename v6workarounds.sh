@@ -16,22 +16,6 @@ fssh() {
 }
 
 for MASTER in ${MASTER_IPS} ; do
-    # Restart NetworkManager to get the correct hostname
-    fssh core@${MASTER} sudo systemctl restart NetworkManager
-    sleep 5
-    fssh core@${MASTER} hostname
-
-    # Kill the mdns-publisher pod so that it runs its config init container again,
-    # and configures mdns-publisher with the correct hostname
-    MDNS_POD=$(fssh core@${MASTER} sudo crictl pods | grep mdns | awk '{print $1}')
-    fssh core@${MASTER} sudo crictl stopp ${MDNS_POD}
-    fssh core@${MASTER} sudo crictl rmp ${MDNS_POD}
-    sleep 5
-    fssh core@${MASTER} cat /etc/mdns/config.hcl | grep host
-
-    # kubelet needs to be restarted to pick up the correct hotsname
-    fssh core@${MASTER} sudo systemctl restart kubelet
-
     # haproxy not configured to listen on IPv6
     fssh core@${MASTER} sudo sed -i \"s/bind :7443/bind :::7443 v4v6/\" /etc/haproxy/haproxy.cfg
     fssh core@${MASTER} sudo sed -i \"s/bind :50936/bind :::50936 v4v6/\" /etc/haproxy/haproxy.cfg
