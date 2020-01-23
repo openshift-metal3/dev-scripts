@@ -61,6 +61,9 @@ set -x
 # Network type
 #export NETWORK_TYPE="OpenShiftSDN"
 
+# Provisioning network
+#export PROVISIONING_NETWORK="172.23.0.0/16"
+
 # External subnet
 #export EXTERNAL_SUBNET="11.0.0.0/24"
 
