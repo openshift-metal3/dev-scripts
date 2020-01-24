@@ -121,6 +121,8 @@ ROOT_DISK_NAME=${ROOT_DISK_NAME-"/dev/sda"}
 export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
 export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
 
+export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
+
 # ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
 # instead to get the first address in the network:
 export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}

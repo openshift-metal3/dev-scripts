@@ -103,6 +103,7 @@ controlPlane:
     baremetal: {}
 platform:
   baremetal:
+    provisioningNetworkInterface: $CLUSTER_PRO_IF
     bootstrapOSImage: http://${MIRROR_IP}/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
     clusterOSImage: http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
     provisioningNetworkCIDR: $PROVISIONING_NETWORK
