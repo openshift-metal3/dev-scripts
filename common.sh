@@ -6,6 +6,9 @@ eval "$(go env)"
 
 export PATH="${GOPATH}/bin:$PATH"
 
+# Workaround for https://github.com/containers/libpod/issues/3463
+unset XDG_RUNTIME_DIR
+
 # Ensure if a go program crashes we get a coredump
 #
 # To get the dump, use coredumpctl:
