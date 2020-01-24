@@ -173,6 +173,10 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
   fi
 fi
 
+# Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME
+sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
+echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
+
 # Remove any previous file, or podman login panics when reading the
 # blank authfile with a "assignment to entry in nil map" error
 rm -f ${REGISTRY_CREDS}
