@@ -158,7 +158,7 @@ Run sshuttle:
 sshuttle -r <user>@<virthost> 192.168.111.0/24
 ```
 
-
+To access the web Console use the `kubeadmin` user, and password generated in the `ocp/auth/kubeadmin-password` file.
 
 
 ## Interacting with Ironic directly
