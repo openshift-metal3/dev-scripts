@@ -1,14 +1,5 @@
 eval "$(go env)"
 
-export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
-export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
-export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
-export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
-export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
-export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
-export MIRROR_IP=${MIRROR_IP:-$PROVISIONING_HOST_IP}
-export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
-
 function extract_command() {
     local release_image
     local cmd
@@ -78,12 +69,25 @@ function generate_ocp_install_config() {
     fi
 
     mkdir -p "${outdir}"
+
+    # IPv6 network config validation
+    if [[ "${EXTERNAL_SUBNET}" =~ .*:.* ]]; then
+      if [[ "${NETWORK_TYPE}" != "OVNKubernetes" ]]; then
+        echo "NETWORK_TYPE must be OVNKubernetes when using IPv6"
+        exit 1
+      fi
+    fi
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
 networking:
   networkType: ${NETWORK_TYPE}
   machineCIDR: ${EXTERNAL_SUBNET}
+  clusterNetwork:
+  - cidr: ${CLUSTER_SUBNET}
+    hostPrefix: ${CLUSTER_HOST_PREFIX}
+  serviceNetwork:
+  - ${SERVICE_SUBNET}
 metadata:
   name: ${CLUSTER_NAME}
 compute:

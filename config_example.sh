@@ -67,6 +67,15 @@ set -x
 # External subnet
 #export EXTERNAL_SUBNET="11.0.0.0/24"
 
+# Cluster Subnet
+# export CLUSTER_SUBNET="10.128.0.0/14"
+
+# Cluster Host Prefix
+#export CLUSTER_HOST_PREFIX="23"
+
+# Service Subnet
+#export SERVICE_SUBNET="172.30.0.0/16"
+
 # Enable testing of custom machine-api-operator-image
 #export TEST_CUSTOM_MAO=true
 
@@ -79,7 +88,7 @@ set -x
 # Name of branch in the above repo which contains the custom MAO changes
 #export MAO_BRANCH="mao-fix"
 
-#export LOCAL_REGISTRY_ADDRESS="192.168.111.1"
+#export LOCAL_REGISTRY_DNS_NAME="virthost.ostest.test.metalkube.org"
 #export LOCAL_REGISTRY_PORT="5000"
 
 # configure username for registry

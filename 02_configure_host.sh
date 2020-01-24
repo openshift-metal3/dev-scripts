@@ -173,6 +173,10 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
   fi
 fi
 
+# Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME
+sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
+echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
+
 # Remove any previous file, or podman login panics when reading the
 # blank authfile with a "assignment to entry in nil map" error
 rm -f ${REGISTRY_CREDS}
@@ -180,7 +184,7 @@ if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
     # create authfile for local registry
     sudo podman login --authfile ${REGISTRY_CREDS} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
-        ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}
+        ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
 else
     # Create a blank authfile in order to have something valid when we read it in 04_setup_ironic.sh
     echo '{}' | sudo dd of=${REGISTRY_CREDS}

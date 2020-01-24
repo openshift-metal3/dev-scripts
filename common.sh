@@ -39,13 +39,35 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 
+# Provisioning network information
+export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
+export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
+export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
+
+export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
+export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
+export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
+export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
+export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
+export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
+export CLUSTER_SUBNET=${CLUSTER_SUBNET:-"10.128.0.0/14"}
+export CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX:-"23"}
+export SERVICE_SUBNET=${SERVICE_SUBNET:-"172.30.0.0/16"}
+export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
+export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${CLUSTER_NAME}.${BASE_DOMAIN}"}
+
+# ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
+# instead to get the first address in the network:
+export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}
+export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$EXTERNAL_SUBNET\").hosts()))")}
+export MIRROR_IP=${MIRROR_IP:-$PROVISIONING_HOST_IP}
+
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
 WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
 
 # variables for local registry configuration
-export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1"}
 export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
 export REGISTRY_USER=${REGISTRY_USER:-ocp-user}
 export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
@@ -97,7 +119,7 @@ fi
 
 if [ -n "$MIRROR_IMAGES" ]; then
     # We're going to be using a locally modified release image
-    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
+    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
 fi
 
 # Set variables
@@ -116,16 +138,6 @@ MANAGE_INT_BRIDGE=${MANAGE_INT_BRIDGE:-y}
 INT_IF=${INT_IF:-}
 #Root disk to deploy coreOS - use /dev/sda on BM
 ROOT_DISK_NAME=${ROOT_DISK_NAME-"/dev/sda"}
-
-# Provisioning network information
-export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
-export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
-
-export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
-
-# ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
-# instead to get the first address in the network:
-export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}
 
 FILESYSTEM=${FILESYSTEM:="/"}
 
