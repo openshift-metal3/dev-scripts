@@ -105,9 +105,14 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
         echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
-        if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-            grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-baremetal || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal)
-        fi
+        if [[ $EXTERNAL_SUBNET =~ .*:.* ]]; then
+             sudo firewall-cmd --zone=libvirt --add-service=dhcpv6-client
+             grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-baremetal || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal)
+        else
+           if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
+               grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-baremetal || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal)
+           fi
+       fi
         sudo systemctl restart network
     fi
 fi
