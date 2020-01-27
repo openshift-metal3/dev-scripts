@@ -12,7 +12,7 @@ fi
 
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
-  sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
+  sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git https://patch-diff.githubusercontent.com/raw/metal3-io/metal3-dev-env/pull/203.patch
   METAL3_DEV_ENV="${REPO_PATH}/metal3-dev-env/"
 fi
 pushd ${METAL3_DEV_ENV}
