@@ -62,12 +62,7 @@ function create_cluster() {
       mv ${assets_dir}/worker.ign ${assets_dir}/worker.ign.orig
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/worker.ign.orig | tee ${assets_dir}/worker.ign
     fi
-    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster || true
-    # FIXME(stbenjam): Deploying workers as part of the install now
-    # seems to reliably exceed the 30 minute limit. We're going to have
-    # to implement a 60-minute timeout for install-complete on baremetal
-    # I think.
-    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for install-complete
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
 }
 
 function wait_for_json() {
@@ -114,56 +109,47 @@ function network_ip() {
     echo "$ip"
 }
 
-function node_val() {
+function master_node_val() {
     local n
     local val
 
     n="$1"
     val="$2"
 
-    jq -r ".nodes[${n}].${val}" $NODES_FILE
+    jq -r ".nodes[${n}].${val}" $MASTER_NODES_FILE
 }
 
-function node_map_to_install_config_hosts() {
-    local num_hosts
-    num_hosts="$1"
-    start_idx="$2"
-    role="$3"
+function master_node_map_to_install_config() {
+    local num_masters
+    num_masters="$1"
 
-    for ((idx=$start_idx;idx<$(($1 + $start_idx));idx++)); do
-      name=$(node_val ${idx} "name")
-      mac=$(node_val ${idx} "ports[0].address")
+    for ((master_idx=0;master_idx<$1;master_idx++)); do
+      name=$(master_node_val ${master_idx} "name")
+      mac=$(master_node_val ${master_idx} "ports[0].address")
 
-      driver=$(node_val ${idx} "driver")
+      driver=$(master_node_val ${master_idx} "driver")
       if [ $driver == "ipmi" ] ; then
           driver_prefix=ipmi
       elif [ $driver == "idrac" ] ; then
           driver_prefix=drac
       fi
 
-      port=$(node_val ${idx} "driver_info.port // \"\"")
-      username=$(node_val ${idx} "driver_info.username")
-      password=$(node_val ${idx} "driver_info.password")
-      address=$(node_val ${idx} "driver_info.address")
+      port=$(master_node_val ${master_idx} "driver_info.port // \"\"")
+      username=$(master_node_val ${master_idx} "driver_info.username")
+      password=$(master_node_val ${master_idx} "driver_info.password")
+      address=$(master_node_val ${master_idx} "driver_info.address")
 
       cat << EOF
       - name: ${name}
-        role: ${role}
+        role: master
         bmc:
           address: ${address}
           username: ${username}
           password: ${password}
         bootMACAddress: ${mac}
+        hardwareProfile: ${MASTER_HARDWARE_PROFILE:-default}
 EOF
 
-        # FIXME(stbenjam) Worker code in installer should accept
-        # "default" as well -- currently the mapping doesn't work,
-        # so we use the raw value for BMO's default which is "unknown"
-        if [[ "$role" == "master" ]]; then
-          echo "        hardwareProfile: ${MASTER_HARDWARE_PROFILE:-default}"
-        else
-          echo "        hardwareProfile: ${WORKER_HARDWARE_PROFILE:-unknown}"
-        fi
     done
 }
 
@@ -196,16 +182,17 @@ function sync_repo_and_patch {
 }
 
 function generate_templates {
+    CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
     MACHINE_OS_IMAGE_URL="http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
 
     # metal3-config.yaml
     mkdir -p ocp/deploy
 	  go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
-    go run metal3-templater.go metal3-config.yaml.template $PROVISIONING_NETWORK $MACHINE_OS_IMAGE_URL > ocp/deploy/metal3-config.yaml
+    go run metal3-templater.go metal3-config.yaml.template $CLUSTER_PRO_IF $PROVISIONING_NETWORK $MACHINE_OS_IMAGE_URL > ocp/deploy/metal3-config.yaml
     cp ocp/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
 
     # clouds.yaml
-    go run metal3-templater.go clouds.yaml.template $PROVISIONING_NETWORK $MACHINE_OS_IMAGE_URL > clouds.yaml
+    go run metal3-templater.go clouds.yaml.template $CLUSTER_PRO_IF $PROVISIONING_NETWORK $MACHINE_OS_IMAGE_URL > clouds.yaml
 }
 
 function image_mirror_config {
