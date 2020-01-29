@@ -31,5 +31,8 @@ ironic_cleanup:
 host_cleanup:
 	./host_cleanup.sh
 
+podman_cleanup:
+	./podman_cleanup.sh
+
 bell:
 	@echo "Done!" $$'\a'
