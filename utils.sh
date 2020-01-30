@@ -210,7 +210,7 @@ function generate_templates {
 
 function image_mirror_config {
     if [ ! -z "${MIRROR_IMAGES}" ]; then
-        TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.]*release://' )
+        TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.-]*release://' )
         TAGGED=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/release://')
         RELEASE=$(echo $OPENSHIFT_RELEASE_IMAGE | grep -o 'registry.svc.ci.openshift.org[^":]\+')
         INDENTED_CERT=$( cat $REGISTRY_DIR/certs/registry.crt | awk '{ print " ", $0 }' )

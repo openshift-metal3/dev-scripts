@@ -56,7 +56,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 
     EXTRACT_DIR=$(mktemp -d "mirror-installer--XXXXXXXXXX")
 
-    TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.]*release://' )
+    TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.-]*release://' )
     MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${TAG}.log
 
     oc adm release mirror \
