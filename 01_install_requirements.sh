@@ -34,7 +34,7 @@ fi
 
 # Install oc client - unless we're in openshift CI
 if [[ -z "$OPENSHIFT_CI" ]]; then
-  oc_version=${OPENSHIFT_VERSION:-$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]]\.[[:digit:]]\).*/\1/")}
+  oc_version=${OPENSHIFT_VERSION}
   oc_tools_dir=$HOME/oc-${oc_version}
   oc_tools_local_file=openshift-client-${oc_version}.tar.gz
   if which oc 2>&1 >/dev/null ; then

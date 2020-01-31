@@ -55,7 +55,7 @@ function build_installer() {
 }
 
 # FIXME(stbenjam): This is not available in 4.3 (yet)
-function networking_configuration() {
+function network_configuration() {
   if [[ "$OPENSHIFT_VERSION" != "4.3" ]]; then
 cat <<EOF
     provisioningNetworkCIDR: $PROVISIONING_NETWORK
