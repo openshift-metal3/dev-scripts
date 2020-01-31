@@ -201,6 +201,7 @@ export IRONIC_IMAGE="quay.io/metal3-io/ironic:master"
 export IRONIC_IPA_DOWNLOADER_IMAGE="quay.io/metal3-io/ironic-ipa-downloader:master"
 export IRONIC_DATA_DIR="${WORKING_DIR}/ironic"
 export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
+export IRONIC_INSPECTOR_IMAGE="quay.io/metal3-io/ironic-inspector:master"
 
 # VBMC and Redfish images
 export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
