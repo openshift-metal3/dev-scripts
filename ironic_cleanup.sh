@@ -10,6 +10,9 @@ for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
 
+# Remove stale virtualbmc PID
+sudo rm -f $WORKING_DIR/virtualbmc/vbmc/master.pid
+
 # Remove existing pod
 if  sudo podman pod exists ironic-pod ; then
     sudo podman pod rm ironic-pod -f
