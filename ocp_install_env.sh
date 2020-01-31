@@ -54,6 +54,16 @@ function build_installer() {
   popd
 }
 
+# FIXME(stbenjam): This is not available in 4.3 (yet)
+function networking_configuration() {
+  if [[ "$OPENSHIFT_VERSION" != "4.3" ]]; then
+cat <<EOF
+    provisioningNetworkCIDR: $PROVISIONING_NETWORK
+    provisioningNetworkInterface: $CLUSTER_PRO_IF
+EOF
+  fi
+}
+
 function generate_ocp_install_config() {
     local outdir
 
@@ -97,10 +107,9 @@ controlPlane:
     baremetal: {}
 platform:
   baremetal:
-    provisioningNetworkInterface: $CLUSTER_PRO_IF
+$(network_configuration)
     bootstrapOSImage: http://${MIRROR_IP}/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
     clusterOSImage: http://${MIRROR_IP}/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
-    provisioningNetworkCIDR: $PROVISIONING_NETWORK
     dnsVIP: ${DNS_VIP}
     hosts:
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
