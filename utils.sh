@@ -40,7 +40,6 @@ function create_cluster() {
     # Enable terraform debug logging
     export TF_LOG=DEBUG
 
-    cp ${assets_dir}/install-config.yaml{,.tmp}
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create manifests
 
     generate_assets
@@ -50,7 +49,6 @@ function create_cluster() {
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
-    cp ${assets_dir}/install-config.yaml{.tmp,}
     if [ ! -z "${IGNITION_EXTRA:-}" ]; then
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
       if ! jq . ${IGNITION_EXTRA}; then
