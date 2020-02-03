@@ -59,9 +59,6 @@ function generate_ocp_install_config() {
 
     outdir="$1"
 
-    deploy_kernel=$(node_val 0 "driver_info.deploy_kernel")
-    deploy_ramdisk=$(node_val 0 "driver_info.deploy_ramdisk")
-
     # when using local mirror set pull secret to this mirror
     # also this should ensure we don't accidentally pull from upstream
     if [ ! -z "${MIRROR_IMAGES}" ]; then
