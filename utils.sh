@@ -211,7 +211,7 @@ function image_mirror_config {
         TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.-]*release://' )
         TAGGED=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/release://')
         RELEASE=$(echo $OPENSHIFT_RELEASE_IMAGE | grep -o 'registry.svc.ci.openshift.org[^":]\+')
-        INDENTED_CERT=$( cat $REGISTRY_DIR/certs/registry.crt | awk '{ print " ", $0 }' )
+        INDENTED_CERT=$( cat $REGISTRY_DIR/certs/$REGISTRY_CRT | awk '{ print " ", $0 }' )
         MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${TAG}.log
         if [ ! -s ${MIRROR_LOG_FILE} ]; then
             cat << EOF
@@ -258,16 +258,21 @@ function setup_local_registry() {
     #
     # registry key and cert are generated if they don't exist
     #
-    if [[ ! -s ${REGISTRY_DIR}/certs/registry.key ]]; then
-        openssl genrsa -out ${REGISTRY_DIR}/certs/registry.key 2048
+    # NOTE(bnemec): When making changes to the certificate configuration,
+    # increment the number in this filename and the REGISTRY_CRT value in common.sh
+    REGISTRY_KEY=registry.1.key
+    restart_registry=0
+    if [[ ! -s ${REGISTRY_DIR}/certs/${REGISTRY_KEY} ]]; then
+        restart_registry=1
+        openssl genrsa -out ${REGISTRY_DIR}/certs/${REGISTRY_KEY} 2048
     fi
 
-    if [[ ! -s ${REGISTRY_DIR}/certs/registry.crt ]]; then
-
+    if [[ ! -s ${REGISTRY_DIR}/certs/${REGISTRY_CRT} ]]; then
+        restart_registry=1
         if [ "${RHEL8}" = "True" ] ; then
             openssl req -x509 \
-                -key ${REGISTRY_DIR}/certs/registry.key \
-                -out ${REGISTRY_DIR}/certs/registry.crt \
+                -key ${REGISTRY_DIR}/certs/${REGISTRY_KEY} \
+                -out ${REGISTRY_DIR}/certs/${REGISTRY_CRT} \
                 -days 365 \
                 -addext "${SSL_EXT_8}" \
                 -subj "/C=US/ST=NC/L=Raleigh/O=Test Company/OU=Testing/CN=${SSL_HOST_NAME}"
@@ -286,8 +291,8 @@ ${SSL_EXT_7}
 EOF
 
             openssl req -x509 \
-                -key ${REGISTRY_DIR}/certs/registry.key \
-                -out  ${REGISTRY_DIR}/certs/registry.crt \
+                -key ${REGISTRY_DIR}/certs/${REGISTRY_KEY} \
+                -out  ${REGISTRY_DIR}/certs/${REGISTRY_CRT} \
                 -days 365 \
                 -config ${SSL_TMP_CONF} \
                 -extensions SAN \
@@ -295,15 +300,11 @@ EOF
         fi
     fi
 
-    # get MD5 hashes for SSL cert on a disk and one used in running registry
-    SSL_CERT_MD5_HASH=$( md5sum ${REGISTRY_DIR}/certs/registry.crt | awk '{print $1}' )
-    MD5_HASH_RUNNING=$( sudo podman exec registry /bin/sh -c "md5sum /certs/registry.crt || echo not_exist" | awk '{print $1}' || echo "error" )
-
     popd
 
     htpasswd -bBc ${REGISTRY_DIR}/auth/htpasswd ${REGISTRY_USER} ${REGISTRY_PASS}
 
-    sudo cp ${REGISTRY_DIR}/certs/registry.crt /etc/pki/ca-trust/source/anchors/
+    sudo cp ${REGISTRY_DIR}/certs/${REGISTRY_CRT} /etc/pki/ca-trust/source/anchors/
     sudo update-ca-trust
 
     reg_state=$(sudo podman inspect registry --format  "{{.State.Status}}" || echo "error")
@@ -311,7 +312,7 @@ EOF
     # if container doesn't run or has different SSL cert that preent in ${REGISTRY_DIR}/certs/
     #   restart it
 
-    if [[ "$reg_state" != "running" || "$SSL_CERT_MD5_HASH" != "$MD5_HASH_RUNNING" ]]; then
+    if [[ "$reg_state" != "running" || $restart_registry -eq 1 ]]; then
         sudo podman rm registry -f || true
 
         sudo podman run -d --name registry --net=host --privileged \
@@ -321,8 +322,8 @@ EOF
             -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
             -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
             -v ${REGISTRY_DIR}/certs:/certs:z \
-            -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry.crt \
-            -e REGISTRY_HTTP_TLS_KEY=/certs/registry.key \
+            -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/${REGISTRY_CRT} \
+            -e REGISTRY_HTTP_TLS_KEY=/certs/${REGISTRY_KEY} \
             docker.io/registry:latest
     fi
 
