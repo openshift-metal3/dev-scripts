@@ -68,9 +68,6 @@ export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 # The dev-scripts working directory
 WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
 
-# The minimum amount of space required for a default installation, expressed in GB
-MIN_SPACE_REQUIRED=${MIN_SPACE_REQUIRED:=80}
-
 # variables for local registry configuration
 export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
 export REGISTRY_USER=${REGISTRY_USER:-ocp-user}
