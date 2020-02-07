@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -ex
 
+
 source logging.sh
 source common.sh
+source sanitychecks.sh
 source utils.sh
 source ocp_install_env.sh
 
