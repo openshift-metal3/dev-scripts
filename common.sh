@@ -73,6 +73,7 @@ export REGISTRY_USER=${REGISTRY_USER:-ocp-user}
 export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
 export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
 export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror.json}
+export REGISTRY_CRT=registry.1.crt
 
 # Set this variable to build the installer from source
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
