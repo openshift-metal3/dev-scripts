@@ -4,4 +4,13 @@ metadata:
   name: metal3-config
   namespace: openshift-machine-api
 data:
+  http_port: "6180"
+  provisioning_interface: {{.ProvisioningInterface}}
+  provisioning_ip: {{.ProvisioningIP}}
+  dhcp_range: {{.ProvisioningDHCPRange}}
+  deploy_kernel_url: "http://{{.ClusterProvisioningURLHost}}:6180/images/ironic-python-agent.kernel"
+  deploy_ramdisk_url: "http://{{.ClusterProvisioningURLHost}}:6180/images/ironic-python-agent.initramfs"
+  ironic_endpoint: "http://{{.ClusterProvisioningURLHost}}:6385/v1/"
+  ironic_inspector_endpoint: "http://{{.ClusterProvisioningURLHost}}:5050/v1/"
+  cache_url: "http://192.168.111.1/images"
   rhcos_image_url: "{{.MachineOSImageURL}}"
