@@ -1,5 +1,10 @@
 #!/bin/bash -xe
 
+if ! which operator-sdk 2>&1 >/dev/null ; then
+    echo "Did not find operator-sdk, set INSTALL_OPERATOR_SDK=1 in config_$USER.sh"
+    exit 1
+fi
+
 bmo_path=$GOPATH/src/github.com/metal3-io/baremetal-operator
 if [ ! -d $bmo_path ]; then
     echo "Did not find $bmo_path"

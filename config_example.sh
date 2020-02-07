@@ -102,3 +102,6 @@ set -x
 
 # configure location of mirror's creds
 #export REGISTRY_CREDS=${REGISTRY_CREDS:-$USER/private-mirror.json}
+
+# Install operator-sdk for local testing of baremetal-operator
+#export INSTALL_OPERATOR_SDK=1
