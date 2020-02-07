@@ -50,10 +50,12 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
   fi
 fi
 
-# Install operator-sdk
-if ! which operator-sdk 2>&1 >/dev/null ; then
-    sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
-    sudo chmod 755 /usr/local/bin/operator-sdk
+if [ ! -z "${INSTALL_OPERATOR_SDK:-}" ]; then
+    # Install operator-sdk
+    if ! which operator-sdk 2>&1 >/dev/null ; then
+        sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+        sudo chmod 755 /usr/local/bin/operator-sdk
+    fi
 fi
 
 # Install Go dependency management tool
