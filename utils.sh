@@ -143,6 +143,7 @@ function node_map_to_install_config_hosts() {
       username=$(node_val ${idx} "driver_info.username")
       password=$(node_val ${idx} "driver_info.password")
       address=$(node_val ${idx} "driver_info.address")
+      disable_certificate_verification=$(node_val ${idx} "driver_info.disable_certificate_verification")
 
       cat << EOF
       - name: ${name}
@@ -151,6 +152,7 @@ function node_map_to_install_config_hosts() {
           address: ${address}
           username: ${username}
           password: ${password}
+          disableCertificateVerification: ${disable_certificate_verification}
         bootMACAddress: ${mac}
 EOF
 
