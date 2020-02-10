@@ -207,6 +207,7 @@ if [[ ${VER} -ne 7 ]] && [[ ${VER} -ne 8 ]]; then
   exit 1
 fi
 
+export RHEL8=""
 if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null ; then
     export RHEL8="True"
 fi
