@@ -34,7 +34,7 @@ Later versions of this guide may address passthrough virtualization which allows
 Ensure that the username you are developing with, has passwordless sudo access.  This can be any username.  This example uses the username ‘rhhi’:
 ```
 # useradd rhhi
-# echo "rhhi ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/rhhi
+# echo "rhhi ALL=(ALL) NOPASSWD:ALL" | tee -a /etc/sudoers.d/rhhi
 # chmod 0440 /etc/sudoers.d/rhhi
 ```
 
