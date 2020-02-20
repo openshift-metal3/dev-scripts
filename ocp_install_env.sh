@@ -64,6 +64,16 @@ EOF
   fi
 }
 
+# These variables are only set by hive_setup.sh
+function show_vips() {
+    if [[ "$API_VIP" != "" ]]; then
+        echo "    apiVIP: ${API_VIP}"
+    fi
+    if [[ "$INGRESS_VIP" != "" ]]; then
+        echo "    ingressVIP: ${INGRESS_VIP}"
+    fi
+}
+
 function generate_ocp_install_config() {
     local outdir
 
@@ -107,9 +117,11 @@ controlPlane:
     baremetal: {}
 platform:
   baremetal:
+    libvirtURI: qemu+ssh://${PROVISIONING_HOST_USER}@${PROVISIONING_HOST_IP}/system
 $(network_configuration)
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
     clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
+$(show_vips)
     dnsVIP: ${DNS_VIP}
     hosts:
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)

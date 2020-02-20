@@ -204,6 +204,16 @@ openstack baremetal node list
 NOTE: If you use a provisioning network other than the default, you
 may need to modify the IP addresses used in
 
+## Hive dev/test environments
+
+Use `hive_setup.sh` to build two additional sets of VMs and networks
+for clusters that can be deployed with hive. Installing and using Hive
+is left up to the caller, but the inputs to deploy each cluster are
+generated in the `ocp/hive1` and `ocp/hive2` directories.
+
+Use `hive_cleanup.sh` to delete the resources created for the extra
+clusters.
+
 ## Cleanup
 
 - To clean up the ocp deployment run `./ocp_cleanup.sh`
