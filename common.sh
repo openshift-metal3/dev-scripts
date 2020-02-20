@@ -87,7 +87,7 @@ export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 #
 # if we provide OPENSHIFT_RELEASE_IMAGE, do not curl. This is needed for offline installs
 if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
-  LATEST_CI_IMAGE=$(curl https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/4.4.0-0.ci/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
+  LATEST_CI_IMAGE=$(curl https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/4.5.0-0.ci/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
@@ -115,7 +115,7 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     # This is an URI so we can use curl for either the file on GitHub, or locally
     export OPENSHIFT_INSTALLER_MACHINE_OS=${OPENSHIFT_INSTALLER_MACHINE_OS:-file:///$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json}
 
-    # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.4
+    # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.5
     # Which currently don't work for us ref
     # https://github.com/openshift/ironic-inspector-image/pull/17
     # Until we can align OPENSHIFT_RELEASE_IMAGE with the installer default, we still need
