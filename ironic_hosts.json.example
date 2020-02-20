@@ -9,7 +9,8 @@
         "password": "passw0rd",
         "address": "ipmi://1.1.1.1:1234",
         "deploy_kernel": "http://172.22.0.2/images/ironic-python-agent.kernel",
-        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs"
+        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs",
+        "disable_certificate_verification": false
       },
       "ports": [{
         "address": "09:e1:e4:56:44:e5",
@@ -49,7 +50,8 @@
         "password": "passw0rd",
         "address": "ipmi://1.1.1.3:1234",
         "deploy_kernel": "http://172.22.0.2/images/ironic-python-agent.kernel",
-        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs"
+        "deploy_ramdisk": "http://172.22.0.2/images/ironic-python-agent.initramfs",
+        "disable_certificate_verification": true
       },
       "ports": [{
         "address": "8e:af:c4:d0:a3:b4",

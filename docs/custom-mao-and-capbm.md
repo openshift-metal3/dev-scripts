@@ -41,7 +41,7 @@ the baremetal-operator.
 ### 1) Stop the cluster-api controllers
 
 ```sh
-oc delete deployment -n openshift-machine-api clusterapi-manager-controllers
+oc delete deployment -n openshift-machine-api machine-api-controllers
 ```
 
 ### 2) Prepare the MAO to run locally

@@ -88,6 +88,12 @@ if [ -d "/home/notstack/ironic-inspector-image" ] ; then
     export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector-image
     export UPSTREAM_IRONIC=true
 fi
+if [ -d "/home/notstack/baremetal-runtimecfg" ] ; then
+    export BAREMETAL_RUNTIMECFG_LOCAL_IMAGE=https://github.com/openshift/baremetal-runtimecfg
+fi
+if [ -d "/home/notstack/mdns-publisher" ] ; then
+    export MDNS_PUBLISHER_LOCAL_IMAGE=https://github.com/openshift/mdns-publisher
+fi
 
 # Some of the setup done above needs to be done before we source common.sh
 # in order for correct defaults to be set
@@ -144,7 +150,7 @@ fi
 
 # Run dev-scripts
 set -o pipefail
-timeout -s 9 105m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
+timeout -s 9 120m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Deployment is complete, but now wait to ensure the worker node comes up.
 export KUBECONFIG=ocp/auth/kubeconfig

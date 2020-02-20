@@ -4,6 +4,7 @@ openshift-install.log
 logs/
 config_*.sh
 !config_example.sh
+clouds.yaml
 
 release/release_config_*.sh
 !release/release_config_example.sh

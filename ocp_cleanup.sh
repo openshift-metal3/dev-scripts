@@ -6,7 +6,6 @@ source common.sh
 source ocp_install_env.sh
 
 sudo systemctl stop fix_certs.timer
-systemctl is-failed fix_certs.service >/dev/null && sudo systemctl reset-failed fix_certs.service
 
 if [ -d ocp ]; then
     ocp/openshift-install --dir ocp --log-level=debug destroy bootstrap
@@ -34,6 +33,10 @@ fi
 for vm in $(sudo virsh list --all --name | grep "^${CLUSTER_NAME}.*bootstrap"); do
   sudo virsh destroy $vm
   sudo virsh undefine $vm --remove-all-storage
+done
+# The .ign volume isn't deleted via --remove-all-storage
+for v in $(sudo virsh vol-list --pool default | grep "^${CLUSTER_NAME}.*bootstrap" | awk '{print $1}'); do
+  sudo virsh vol-delete $v --pool default
 done
 
 if [ -d assets/generated ]; then

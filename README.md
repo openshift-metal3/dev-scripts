@@ -96,6 +96,10 @@ baremetal.
 This should result in some (stopped) VMs on the local virthost and some
 additional bridges/networks for the `baremetal` and `provisioning` networks.
 
+- `./03_build_installer.sh`
+
+This will extract openshift-install from the OCP release payload.
+
 - `./04_setup_ironic.sh`
 
 This will setup containers related to the Ironic deployment services which
@@ -109,8 +113,7 @@ components see the [Testing custom container images](#Testing-custom-container-i
 
 - `./06_create_cluster.sh`
 
-This will extract openshift-install from the OCP release payload and
-run `openshift-install` to generate ignition configs for the
+This will run `openshift-install` to generate ignition configs for the
 bootstrap node and the masters.  The installer then launches both the
 bootstrap VM and master nodes using the Terraform providers for libvirt
 and Ironic.  Once bootstrap is complete, the installer removes the
@@ -158,7 +161,7 @@ Run sshuttle:
 sshuttle -r <user>@<virthost> 192.168.111.0/24
 ```
 
-
+To access the web Console use the `kubeadmin` user, and password generated in the `ocp/auth/kubeadmin-password` file.
 
 
 ## Interacting with Ironic directly

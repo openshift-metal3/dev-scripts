@@ -42,6 +42,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
+    -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 
@@ -76,7 +77,7 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
-        echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=172.22.0.1\nNETMASK=255.255.255.0${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+        echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
     fi
     sudo ifdown provisioning || true
     sudo ifup provisioning
@@ -86,6 +87,9 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
         echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=provisioning" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
         sudo ifdown $PRO_IF || true
         sudo ifup $PRO_IF
+        # Need to ifup the provisioning bridge again because ifdown $PRO_IF
+        # will bring down the bridge as well.
+        sudo ifup provisioning
     fi
 fi
 
@@ -101,9 +105,14 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
         echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
-        if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-            grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-baremetal || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal)
-        fi
+        if [[ $EXTERNAL_SUBNET =~ .*:.* ]]; then
+             sudo firewall-cmd --zone=libvirt --add-service=dhcpv6-client
+             grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-baremetal || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal)
+        else
+           if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
+               grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-baremetal || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal)
+           fi
+       fi
         sudo systemctl restart network
     fi
 fi
@@ -158,7 +167,7 @@ fi
 # Switch NetworkManager to internal DNS
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
   sudo mkdir -p /etc/NetworkManager/conf.d/
-  sudo $(which crudini) --set /etc/NetworkManager/conf.d/dnsmasq.conf main dns dnsmasq
+  ansible localhost -b -m ini_file -a "path=/etc/NetworkManager/conf.d/dnsmasq.conf section=main option=dns value=dnsmasq"
   if [ "$ADDN_DNS" ] ; then
     echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
   fi
@@ -169,11 +178,18 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
   fi
 fi
 
+# Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME
+sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
+echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
+
+# Remove any previous file, or podman login panics when reading the
+# blank authfile with a "assignment to entry in nil map" error
+rm -f ${REGISTRY_CREDS}
 if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
     # create authfile for local registry
     sudo podman login --authfile ${REGISTRY_CREDS} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
-        ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}
+        ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
 else
     # Create a blank authfile in order to have something valid when we read it in 04_setup_ironic.sh
     echo '{}' | sudo dd of=${REGISTRY_CREDS}

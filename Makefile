@@ -1,9 +1,9 @@
-.PHONY: default all requirements configure ironic ocp_run register_hosts clean ocp_cleanup ironic_cleanup host_cleanup bell csr_hack
-default: requirements configure build_installer ironic ocp_run register_hosts csr_hack bell
+.PHONY: default all requirements configure ironic ocp_run clean ocp_cleanup ironic_cleanup host_cleanup bell
+default: requirements configure build_installer ironic ocp_run bell
 
 all: default
 
-redeploy: ocp_cleanup ironic_cleanup build_installer ironic ocp_run register_hosts csr_hack bell
+redeploy: ocp_cleanup ironic_cleanup build_installer ironic ocp_run bell
 
 requirements:
 	./01_install_requirements.sh
@@ -19,12 +19,6 @@ ironic:
 
 ocp_run:
 	./06_create_cluster.sh
-
-register_hosts:
-	./11_register_hosts.sh
-
-csr_hack:
-	./12_csr_hack.sh
 
 clean: ocp_cleanup ironic_cleanup host_cleanup
 

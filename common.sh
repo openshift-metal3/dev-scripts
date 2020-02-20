@@ -2,9 +2,15 @@
 
 export PATH="/usr/local/go/bin:$PATH"
 
+# Set a PS4 value which logs the script name and line #.
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+
 eval "$(go env)"
 
 export PATH="${GOPATH}/bin:$PATH"
+
+# Workaround for https://github.com/containers/libpod/issues/3463
+unset XDG_RUNTIME_DIR
 
 # Ensure if a go program crashes we get a coredump
 #
@@ -36,26 +42,61 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 
+# Provisioning network information
+export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
+export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
+export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
+
+export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
+export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
+export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
+export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
+export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
+export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
+export CLUSTER_SUBNET=${CLUSTER_SUBNET:-"10.128.0.0/14"}
+export CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX:-"23"}
+export SERVICE_SUBNET=${SERVICE_SUBNET:-"172.30.0.0/16"}
+export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
+export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${CLUSTER_NAME}.${BASE_DOMAIN}"}
+
+# ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
+# instead to get the first address in the network:
+export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}
+export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$EXTERNAL_SUBNET\").hosts()))")}
+export MIRROR_IP=${MIRROR_IP:-$PROVISIONING_HOST_IP}
+
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
+# The dev-scripts working directory
+WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
+
 # variables for local registry configuration
-export LOCAL_REGISTRY_ADDRESS=${LOCAL_REGISTRY_ADDRESS:-"192.168.111.1"}
 export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
 export REGISTRY_USER=${REGISTRY_USER:-ocp-user}
 export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
 export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
 export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror.json}
+export REGISTRY_CRT=registry.1.crt
+
+# Set this variable to build the installer from source
+export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 
 #
 # See https://openshift-release.svc.ci.openshift.org for release details
 #
 # if we provide OPENSHIFT_RELEASE_IMAGE, do not curl. This is needed for offline installs
-if [ -z "${OPENSHIFT_RELEASE_IMAGE}" ]; then
+if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
   LATEST_CI_IMAGE=$(curl https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/4.4.0-0.ci/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
+
+# CI images don't have version numbers
+export OPENSHIFT_CI=${OPENSHIFT_CI:-""}
+if [[ -z "$OPENSHIFT_CI" ]]; then
+  export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]]\.[[:digit:]]\).*/\1/")}
+fi
 
 # Switch Container Images to upstream, Installer defaults these to the openshift version
 if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
@@ -83,9 +124,12 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
 fi
 
 if env | grep -q "_LOCAL_IMAGE=" ; then
-    # We're going to be using a locally modified release image
-    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
     export MIRROR_IMAGES=true
+fi
+
+if [ -n "$MIRROR_IMAGES" ]; then
+    # We're going to be using a locally modified release image
+    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
 fi
 
 # Set variables
@@ -107,10 +151,9 @@ ROOT_DISK_NAME=${ROOT_DISK_NAME-"/dev/sda"}
 
 FILESYSTEM=${FILESYSTEM:="/"}
 
-WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
 NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
-MASTER_NODES_FILE=${MASTER_NODES_FILE:-"ocp/master_nodes.json"}
+BAREMETALHOSTS_FILE=${BAREMETALHOSTS_FILE:-"ocp/baremetalhosts.json"}
 
 # Optionally set this to a path to use a local dev copy of
 # metal3-dev-env, otherwise it's cloned to $WORKING_DIR
@@ -167,6 +210,7 @@ if [[ ${VER} -ne 7 ]] && [[ ${VER} -ne 8 ]]; then
   exit 1
 fi
 
+export RHEL8=""
 if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null ; then
     export RHEL8="True"
 fi
@@ -176,14 +220,14 @@ if grep -q "CentOS Linux release 8" /etc/redhat-release 2>/dev/null; then
 fi
 
 # Check d_type support
-FSTYPE=$(df ${FILESYSTEM} --output=fstype | grep -v Type)
+FSTYPE=$(df "${FILESYSTEM}" --output=fstype | tail -n 1)
 
 case ${FSTYPE} in
   'ext4'|'btrfs')
   ;;
   'xfs')
     if [[ $(xfs_info ${FILESYSTEM} | grep -q "ftype=1") ]]; then
-      echo "Filesystem not supported"
+      echo "XFS filesystem must have ftype set to 1"
       exit 1
     fi
   ;;

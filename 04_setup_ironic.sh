@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -euxo pipefail
 
 source logging.sh
 source common.sh
@@ -23,11 +23,9 @@ export REGISTRY_AUTH_FILE=$(mktemp "pullsecret--XXXXXXXXXX")
 COMBINED_AUTH_FILE=$(mktemp "combined-pullsecret--XXXXXXXXXX")
 jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} | tee ${COMBINED_AUTH_FILE}
 
-_local_images=
 DOCKERFILE=$(mktemp "release-update--XXXXXXXXXX")
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
-    _local_images=1
     IMAGE=${!IMAGE_VAR}
 
     sudo -E podman pull --authfile $COMBINED_AUTH_FILE $OPENSHIFT_RELEASE_IMAGE
@@ -39,7 +37,7 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         [ -e "$REPOPATH" ] || git clone $IMAGE $REPOPATH
         cd $REPOPATH
         export $IMAGE_VAR=${IMAGE##*/}:latest
-        export $IMAGE_VAR=$LOCAL_REGISTRY_ADDRESS:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
+        export $IMAGE_VAR=$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
         sudo podman build --authfile $COMBINED_AUTH_FILE -t ${!IMAGE_VAR} .
         cd -
         sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
@@ -58,29 +56,29 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 
     EXTRACT_DIR=$(mktemp -d "mirror-installer--XXXXXXXXXX")
 
-    TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.]*release://' )
+    TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.-]*release://' )
     MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${TAG}.log
 
     oc adm release mirror \
        --insecure=true \
         -a ${COMBINED_AUTH_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
-        --to-release-image ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG} \
-        --to ${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
+        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG} \
+        --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
     #you must extract the installation program from the mirrored content:
-
-    oc adm release extract --registry-config "${COMBINED_AUTH_FILE}" \
+    if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
+      oc adm release extract --registry-config "${COMBINED_AUTH_FILE}" \
         --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
-        "${LOCAL_REGISTRY_ADDRESS}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
+        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
 
-    mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ocp/
+      mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ocp/
+    fi
 
     rm -rf "${EXTRACT_DIR}"
-fi
 
-if [ "${_local_images}" == "1" ]; then
+    # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
     sudo podman image build --authfile $COMBINED_AUTH_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
     sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
 fi
@@ -113,13 +111,14 @@ CACHED_MACHINE_OS_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_IMAGE_NAME}
 if [ ! -f "${CACHED_MACHINE_OS_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_IMAGE}" "${MACHINE_OS_IMAGE_URL}"
   echo "${MACHINE_OS_IMAGE_SHA256} ${CACHED_MACHINE_OS_IMAGE}" | tee ${CACHED_MACHINE_OS_IMAGE}.sha256sum
-  sha256sum --strict --check ${CACHED_MACHINE_OS_IMAGE}.sha256sum
+  sha256sum --strict --check ${CACHED_MACHINE_OS_IMAGE}.sha256sum || ( rm -f "${CACHED_MACHINE_OS_IMAGE}" ; exit 1 )
+
 fi
 CACHED_MACHINE_OS_BOOTSTRAP_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}"
 if [ ! -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" "${MACHINE_OS_BOOTSTRAP_IMAGE_URL}"
   echo "${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256} ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" | tee ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum
-  sha256sum --strict --check ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum
+  sha256sum --strict --check ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum || ( rm -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ; exit 1 )
 fi
 
 # cached images to the bootstrap VM

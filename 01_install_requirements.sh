@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -ex
 
+
 source logging.sh
 source common.sh
+source sanitychecks.sh
 source utils.sh
+source ocp_install_env.sh
 
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
@@ -16,6 +19,7 @@ ansible-galaxy install -r vm-setup/requirements.yml
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
+  -e "go_version=1.13.8" \
   -i vm-setup/inventory.ini \
   -b -vvv vm-setup/install-package-playbook.yml
 popd
@@ -27,27 +31,30 @@ if sudo systemctl is-active docker-distribution.service; then
   sudo systemctl disable --now docker-distribution.service
 fi
 
-# Install oc client
-oc_version=4.4
-oc_tools_dir=$HOME/oc-${oc_version}
-oc_tools_local_file=openshift-client-${oc_version}.tar.gz
-if which oc 2>&1 >/dev/null ; then
-  oc_git_version=$(oc version -o json | jq -r '.clientVersion.gitVersion')
-  oc_actual_version=${oc_git_version#v*}
-  oc_major_minor="${oc_actual_version%\.[0-9]*}"
-fi
-if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ] || [ "$oc_major_minor" != "$oc_version" ]; then
-  mkdir -p ${oc_tools_dir}
-  cd ${oc_tools_dir}
-  wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
-  tar xvzf ${oc_tools_local_file}
-  sudo cp oc /usr/local/bin/
+# Install oc client - unless we're in openshift CI
+if [[ -z "$OPENSHIFT_CI" ]]; then
+  oc_version=${OPENSHIFT_VERSION}
+  oc_tools_dir=$HOME/oc-${oc_version}
+  oc_tools_local_file=openshift-client-${oc_version}.tar.gz
+  if which oc 2>&1 >/dev/null ; then
+    oc_git_version=$(oc version -o json | jq -r '.clientVersion.gitVersion')
+    oc_actual_version=$(echo "${oc_git_version}" | sed "s/.*-\([[:digit:]]\.[[:digit:]]\)\.[[:digit:]]-.*/\1/")
+  fi
+  if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ] || [ "$oc_actual_version" != "$oc_version" ]; then
+    mkdir -p ${oc_tools_dir}
+    cd ${oc_tools_dir}
+    wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
+    tar xvzf ${oc_tools_local_file}
+    sudo cp oc /usr/local/bin/
+  fi
 fi
 
-# Install operator-sdk
-if ! which operator-sdk 2>&1 >/dev/null ; then
-    sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
-    sudo chmod 755 /usr/local/bin/operator-sdk
+if [ ! -z "${INSTALL_OPERATOR_SDK:-}" ]; then
+    # Install operator-sdk
+    if ! which operator-sdk 2>&1 >/dev/null ; then
+        sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+        sudo chmod 755 /usr/local/bin/operator-sdk
+    fi
 fi
 
 # Install Go dependency management tool
