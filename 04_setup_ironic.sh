@@ -18,13 +18,16 @@ rm -f assets/templates/99_local-registry.yaml $OPENSHIFT_INSTALL_PATH/data/data/
 
 # Various commands here need the Pull Secret in a file
 export REGISTRY_AUTH_FILE=$(mktemp "pullsecret--XXXXXXXXXX")
+_tmpfiles=$REGISTRY_AUTH_FILE
 { echo "${PULL_SECRET}" ; } 2> /dev/null > $REGISTRY_AUTH_FILE
 
 # Combine pull-secret with registry's password
 COMBINED_AUTH_FILE=$(mktemp "combined-pullsecret--XXXXXXXXXX")
+_tmpfiles="$_tmpfiles $COMBINED_AUTH_FILE"
 jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} > ${COMBINED_AUTH_FILE}
 
 DOCKERFILE=$(mktemp "release-update--XXXXXXXXXX")
+_tmpfiles="$_tmpfiles $DOCKERFILE"
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     IMAGE=${!IMAGE_VAR}
@@ -59,6 +62,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     # hence credentials are different
 
     EXTRACT_DIR=$(mktemp -d "mirror-installer--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $EXTRACT_DIR"
     MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${OPENSHIFT_RELEASE_TAG}.log
 
     oc adm release mirror \
@@ -78,13 +82,10 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
       mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ${OCP_DIR}
     fi
 
-    rm -rf "${EXTRACT_DIR}"
-
     # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
     sudo podman image build --authfile $COMBINED_AUTH_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
     sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
 fi
-rm -f $DOCKERFILE
 
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
@@ -105,9 +106,6 @@ IRONIC_IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_IPA_DOW
 for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
     sudo -E podman pull --authfile $COMBINED_AUTH_FILE $IMAGE
 done
-
-rm -rf ${REGISTRY_AUTH_FILE}
-rm -rf ${COMBINED_AUTH_FILE}
 
 CACHED_MACHINE_OS_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_IMAGE_NAME}"
 if [ ! -f "${CACHED_MACHINE_OS_IMAGE}" ]; then
