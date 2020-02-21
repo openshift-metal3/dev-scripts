@@ -94,6 +94,18 @@ fi
 if [ -d "/home/notstack/mdns-publisher" ] ; then
     export MDNS_PUBLISHER_LOCAL_IMAGE=https://github.com/openshift/mdns-publisher
 fi
+# coredns-mdns is unique because it is vendored into the openshift/coredns project
+# and that is where the image gets built.
+if [ -d "/home/notstack/coredns-mdns" ] ; then
+    pushd /home/notstack
+    git clone https://github.com/openshift/coredns
+    # Update the vendoring with our local changes
+    GO111MODULE=on go mod edit -replace github.com/openshift/coredns-mdns=/home/notstack/coredns-mdns
+    GO111MODULE=on go mod vendor
+    popd
+    export COREDNS_LOCAL_IMAGE=https://github.com/openshift/coredns
+    export COREDNS_DOCKERFILE=Dockerfile.openshift
+fi
 
 # Some of the setup done above needs to be done before we source common.sh
 # in order for correct defaults to be set

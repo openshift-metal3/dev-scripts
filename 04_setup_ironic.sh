@@ -38,7 +38,10 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         cd $REPOPATH
         export $IMAGE_VAR=${IMAGE##*/}:latest
         export $IMAGE_VAR=$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
-        sudo podman build --authfile $COMBINED_AUTH_FILE -t ${!IMAGE_VAR} .
+        # Some repos need to build with a non-default Dockerfile name
+        IMAGE_DOCKERFILE_NAME=${IMAGE_VAR/_LOCAL_IMAGE}_DOCKERFILE
+        IMAGE_DOCKERFILE=${!IMAGE_DOCKERFILE_NAME:-Dockerfile}
+        sudo podman build --authfile $COMBINED_AUTH_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
         cd -
         sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
     fi
