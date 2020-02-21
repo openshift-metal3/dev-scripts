@@ -161,6 +161,12 @@ Run sshuttle:
 sshuttle -r <user>@<virthost> 192.168.111.0/24
 ```
 
+*Tip:* to specify a different ssh key for `<virthost>`, use the following command:
+
+```
+sshuttle -e "ssh -i ~/.ssh/mycustomkey_rsa" -r <user>@<virthost> 192.168.111.0/24
+```
+
 To access the web Console use the `kubeadmin` user, and password generated in the `ocp/auth/kubeadmin-password` file.
 
 
