@@ -5,7 +5,7 @@ set -euxo pipefail
 # The minimum amount of space required for a default installation, expressed in GB
 MIN_SPACE_REQUIRED=${MIN_SPACE_REQUIRED:=80}
 
-function verifyWorkingDirIsWorldReadable {
+function verifyWorkingDir {
   if [ ! -d $WORKING_DIR ]; then
     echo "WORKING_DIR ${WORKING_DIR} is not a directory"
     exit 1
@@ -20,6 +20,11 @@ function verifyWorkingDirIsWorldReadable {
     echo "The WORKING_DIR ${WORKING_DIR} is not world-readable!"
     exit 1 
   fi
+
+  if ! sudo -u nobody test -w ${WORKING_DIR}; then
+    echo "The WORKING_DIR ${WORKING_DIR} is not world-writable!"
+    exit 1
+  fi
 }
 
 function verifyFreeSpace {
@@ -31,7 +36,7 @@ function verifyFreeSpace {
   fi
 }
 
-verifyWorkingDirIsWorldReadable
+verifyWorkingDir
 verifyFreeSpace
 
 echo "Sanity checks passed"
