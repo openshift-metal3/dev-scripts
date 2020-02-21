@@ -130,11 +130,16 @@ export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.svc.ci.openshift.org/ope
 
 # CI images don't have version numbers
 export OPENSHIFT_CI=${OPENSHIFT_CI:-""}
+export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-""}
 if [[ -z "$OPENSHIFT_CI" ]]; then
   export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]]\.[[:digit:]]\).*/\1/")}
 fi
 
 export OPENSHIFT_RELEASE_TAG=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -E 's/[[:alnum:]\/.-]*release.*://')
+
+if [[ "$OPENSHIFT_VERSION" != "4.3" ]]; then
+  export BMC_DRIVER=${BMC_DRIVER:-redfish}
+fi
 
 # Switch Container Images to upstream, Installer defaults these to the openshift version
 if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
