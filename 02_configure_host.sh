@@ -44,6 +44,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
+    -e "nodes_file=$NODES_FILE" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 
