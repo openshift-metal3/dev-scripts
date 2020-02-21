@@ -21,7 +21,7 @@ export REGISTRY_AUTH_FILE=$(mktemp "pullsecret--XXXXXXXXXX")
 
 # Combine pull-secret with registry's password
 COMBINED_AUTH_FILE=$(mktemp "combined-pullsecret--XXXXXXXXXX")
-jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} | tee ${COMBINED_AUTH_FILE}
+jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} > ${COMBINED_AUTH_FILE}
 
 DOCKERFILE=$(mktemp "release-update--XXXXXXXXXX")
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
