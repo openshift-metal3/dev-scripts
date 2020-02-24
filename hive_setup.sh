@@ -6,6 +6,7 @@ source common.sh
 source utils.sh
 source rhcos.sh
 source ocp_install_env.sh
+source hive_common.sh
 
 function generate_hive_manifest() {
     cat > "ocp/${CLUSTER_NAME}/manifests.yaml" <<EOF
@@ -89,7 +90,7 @@ EOF
 
 override_vars_for_hive 1
 
-VBMC_BASE_PORT=$((6230 + ${NUM_MASTERS} + ${NUM_WORKERS}))
+export VBMC_BASE_PORT=$((6230 + ${NUM_MASTERS} + ${NUM_WORKERS}))
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \

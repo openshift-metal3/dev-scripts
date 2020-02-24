@@ -5,6 +5,7 @@ source logging.sh
 source common.sh
 source utils.sh
 source ocp_install_env.sh
+source hive_common.sh
 
 # Delete the hive1 cluster resources.
 
