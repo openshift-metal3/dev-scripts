@@ -11,7 +11,7 @@ function verifyWorkingDir {
     exit 1
   fi
 
-  if [ ! -r $WORKING_DIR ]; then
+  if [ ! -r $WORKING_DIR -o ! -w $WORKING_DIR ]; then
     echo "Unable to access WORKING_DIR ${WORKING_DIR}"
     exit 1
   fi
@@ -19,11 +19,6 @@ function verifyWorkingDir {
   if ! sudo -u nobody test -r ${WORKING_DIR}; then
     echo "The WORKING_DIR ${WORKING_DIR} is not world-readable!"
     exit 1 
-  fi
-
-  if ! sudo -u nobody test -w ${WORKING_DIR}; then
-    echo "The WORKING_DIR ${WORKING_DIR} is not world-writable!"
-    exit 1
   fi
 }
 
