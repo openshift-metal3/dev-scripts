@@ -94,8 +94,8 @@ VBMC_BASE_PORT=$((6230 + ${NUM_MASTERS} + ${NUM_WORKERS}))
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \
     -e @hive_vars.yml \
-    -e "provisioning_network_name=hive1prov" \
-    -e "baremetal_network_name=hive1bm" \
+    -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
+    -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
     -e "working_dir=$WORKING_DIR" \
     -e "num_masters=$HIVE1_NUM_MASTERS" \
     -e "num_workers=$HIVE1_NUM_WORKERS" \
@@ -189,8 +189,8 @@ VBMC_BASE_PORT=$((${VBMC_BASE_PORT} + ${HIVE1_NUM_MASTERS} + ${HIVE1_NUM_WORKERS
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \
     -e @hive_vars.yml \
-    -e "provisioning_network_name=hive2prov" \
-    -e "baremetal_network_name=hive2bm" \
+    -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
+    -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
     -e "working_dir=$WORKING_DIR" \
     -e "num_masters=$HIVE2_NUM_MASTERS" \
     -e "num_workers=$HIVE2_NUM_WORKERS" \

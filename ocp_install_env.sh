@@ -119,6 +119,8 @@ platform:
   baremetal:
     libvirtURI: qemu+ssh://${PROVISIONING_HOST_USER}@${PROVISIONING_HOST_IP}/system
 $(network_configuration)
+    externalBridge: ${BAREMETAL_NETWORK_NAME}
+    provisioningBridge: ${PROVISIONING_NETWORK_NAME}
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
     clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
 $(show_vips)
