@@ -160,6 +160,10 @@ function node_map_to_install_config_hosts() {
       password=$(node_val ${idx} "driver_info.password")
       address=$(node_val ${idx} "driver_info.address")
       disable_certificate_verification=$(node_val ${idx} "driver_info.disable_certificate_verification")
+      boot_mode=$(node_val ${idx} "properties.boot_mode")
+      if [[ "$boot_mode" == "null" ]]; then
+             boot_mode="UEFI"
+      fi
 
       cat << EOF
       - name: ${name}
@@ -170,6 +174,7 @@ function node_map_to_install_config_hosts() {
           password: ${password}
           disableCertificateVerification: ${disable_certificate_verification}
         bootMACAddress: ${mac}
+        bootMode: ${boot_mode}
 EOF
 
         # FIXME(stbenjam) Worker code in installer should accept
