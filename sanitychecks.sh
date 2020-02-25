@@ -5,13 +5,13 @@ set -euxo pipefail
 # The minimum amount of space required for a default installation, expressed in GB
 MIN_SPACE_REQUIRED=${MIN_SPACE_REQUIRED:=80}
 
-function verifyWorkingDirIsWorldReadable {
+function verifyWorkingDir {
   if [ ! -d $WORKING_DIR ]; then
     echo "WORKING_DIR ${WORKING_DIR} is not a directory"
     exit 1
   fi
 
-  if [ ! -r $WORKING_DIR ]; then
+  if [ ! -r $WORKING_DIR -o ! -w $WORKING_DIR ]; then
     echo "Unable to access WORKING_DIR ${WORKING_DIR}"
     exit 1
   fi
@@ -31,7 +31,7 @@ function verifyFreeSpace {
   fi
 }
 
-verifyWorkingDirIsWorldReadable
+verifyWorkingDir
 verifyFreeSpace
 
 echo "Sanity checks passed"
