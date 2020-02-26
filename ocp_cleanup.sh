@@ -7,13 +7,13 @@ source ocp_install_env.sh
 
 sudo systemctl stop fix_certs.timer
 
-if [ -d ocp ]; then
-    ocp/openshift-install --dir ocp --log-level=debug destroy bootstrap
-    ocp/openshift-install --dir ocp --log-level=debug destroy cluster
-    rm -rf ocp
+if [ -d ${OCP_DIR} ]; then
+    ${OCP_DIR}/openshift-install --dir ${OCP_DIR} --log-level=debug destroy bootstrap
+    ${OCP_DIR}/openshift-install --dir ${OCP_DIR} --log-level=debug destroy cluster
+    rm -rf ${OCP_DIR}
 fi
 
-sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift.conf
+sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
 
 # Cleanup ssh keys for baremetal network
 if [ -f $HOME/.ssh/known_hosts ]; then

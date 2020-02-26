@@ -215,12 +215,12 @@ function generate_templates {
     MACHINE_OS_IMAGE_URL="http:///$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
 
     # metal3-config.yaml
-    mkdir -p ocp/deploy
+    mkdir -p ${OCP_DIR}/deploy
 	  go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
 
     if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
-      go run metal3-templater.go metal3-config.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" > ocp/deploy/metal3-config.yaml
-      cp ocp/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
+      go run metal3-templater.go metal3-config.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" > ${OCP_DIR}/deploy/metal3-config.yaml
+      cp ${OCP_DIR}/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
     else
       echo "OpenShift Version is > 4.3; skipping config map"
     fi

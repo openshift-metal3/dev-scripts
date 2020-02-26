@@ -47,6 +47,10 @@ export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
 export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
 export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
 
+export PROVISIONING_NETWORK_NAME=${PROVISIONING_NETWORK_NAME:-provisioning}
+
+export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-baremetal}
+
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
@@ -70,6 +74,7 @@ export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
 # The dev-scripts working directory
 WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
+OCP_DIR=${OCP_DIR:-ocp/${CLUSTER_NAME}}
 
 # variables for local registry configuration
 export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
@@ -108,7 +113,7 @@ if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
 fi
 
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-    export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-ocp/openshift-baremetal-install}
+    export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-${OCP_DIR}/openshift-baremetal-install}
  else
     export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-$OPENSHIFT_INSTALL_PATH/bin/openshift-install}
 
@@ -151,9 +156,9 @@ ROOT_DISK_NAME=${ROOT_DISK_NAME-"/dev/sda"}
 
 FILESYSTEM=${FILESYSTEM:="/"}
 
-NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/ironic_nodes.json"}
+export NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/${CLUSTER_NAME}/ironic_nodes.json"}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
-BAREMETALHOSTS_FILE=${BAREMETALHOSTS_FILE:-"ocp/baremetalhosts.json"}
+BAREMETALHOSTS_FILE=${BAREMETALHOSTS_FILE:-"${OCP_DIR}/baremetalhosts.json"}
 
 # Optionally set this to a path to use a local dev copy of
 # metal3-dev-env, otherwise it's cloned to $WORKING_DIR
@@ -177,6 +182,8 @@ export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 # VBMC and Redfish images
 export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
 export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
+export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
+export VBMC_MAX_PORT=$((${VBMC_BASE_PORT} + ${NUM_MASTERS} + ${NUM_WORKERS} - 1))
 
 export KUBECONFIG="${SCRIPTDIR}/ocp/auth/kubeconfig"
 
@@ -246,6 +253,8 @@ if [ ! -d "$WORKING_DIR" ]; then
   sudo chown "${USER}:${USER}" "$WORKING_DIR"
   chmod 755 "$WORKING_DIR"
 fi
+
+mkdir -p "$WORKING_DIR/$CLUSTER_NAME"
 
 if [ ! -d "$IRONIC_IMAGES_DIR" ]; then
   echo "Creating Ironic Images Dir"

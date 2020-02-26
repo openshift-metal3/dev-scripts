@@ -73,7 +73,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
         --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
         "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
 
-      mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ocp/
+      mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ${OCP_DIR}
     fi
 
     rm -rf "${EXTRACT_DIR}"
