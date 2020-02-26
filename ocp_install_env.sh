@@ -117,7 +117,7 @@ $(network_configuration)
     dnsVIP: ${DNS_VIP}
     hosts:
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
-$(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
+$(node_map_to_install_config_hosts $NUM_VM_WORKERS $NUM_MASTERS worker)
 $(image_mirror_config)
 pullSecret: |
   $(echo $PULL_SECRET | jq -c .)

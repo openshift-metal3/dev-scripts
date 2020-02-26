@@ -28,6 +28,10 @@ set -x
 # Indicate number of workers to deploy
 #export NUM_WORKERS=0
 
+# Indicate number of VMs to be created (as possible workers). Must be greater
+# than NUM_WORKERS
+#export NUM_VM_WORKERS=0
+
 # Provisioning interface on the helper ndoe
 #export PRO_IF="eno1"
 
@@ -37,7 +41,7 @@ set -x
 # Provisioning interface within the cluster
 #export CLUSTER_PRO_IF="eno1"
 
-# Which disk to deploy 
+# Which disk to deploy
 #export ROOT_DISK="/dev/sda"
 
 # Cluster name

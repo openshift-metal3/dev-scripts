@@ -174,6 +174,7 @@ fi
 
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"1"}
+export NUM_VM_WORKERS=${NUM_VM_WORKERS:-NUM_WORKERS}
 export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 export MASTER_HOSTNAME_FORMAT=${MASTER_HOSTNAME_FORMAT:-"master-%d"}
 export WORKER_HOSTNAME_FORMAT=${WORKER_HOSTNAME_FORMAT:-"worker-%d"}
@@ -188,7 +189,7 @@ export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
 export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
 export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
-export VBMC_MAX_PORT=$((${VBMC_BASE_PORT} + ${NUM_MASTERS} + ${NUM_WORKERS} - 1))
+export VBMC_MAX_PORT=$((${VBMC_BASE_PORT} + ${NUM_MASTERS} + ${NUM_VM_WORKERS} - 1))
 
 export KUBECONFIG="${SCRIPTDIR}/ocp/auth/kubeconfig"
 
