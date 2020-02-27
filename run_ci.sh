@@ -22,7 +22,7 @@ function getlogs(){
     done
 
     # openshift info
-    export KUBECONFIG=ocp/auth/kubeconfig
+    export KUBECONFIG=ocp/$CLUSTER_NAME/auth/kubeconfig
     oc --request-timeout=5s get clusterversion/version > $LOGDIR/cluster_version.log || true
     oc --request-timeout=5s get clusteroperators > $LOGDIR/cluster_operators.log || true
     oc --request-timeout=5s get pods --all-namespaces | grep -v Running | grep -v Completed  > $LOGDIR/failing_pods.log || true
@@ -153,7 +153,7 @@ set -o pipefail
 timeout -s 9 120m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Deployment is complete, but now wait to ensure the worker node comes up.
-export KUBECONFIG=ocp/auth/kubeconfig
+export KUBECONFIG=ocp/$CLUSTER_NAME/auth/kubeconfig
 
 wait_for_worker() {
     worker=$1
