@@ -123,6 +123,7 @@ fi
 
 # cached images to the bootstrap VM
 sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
+     --env PROVISIONING_INTERFACE=${PROVISIONING_NETWORK_NAME} \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
 sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
