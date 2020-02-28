@@ -99,6 +99,7 @@ fi
 if [ -d "/home/notstack/coredns-mdns" ] ; then
     pushd /home/notstack
     git clone https://github.com/openshift/coredns
+    cd coredns
     # Update the vendoring with our local changes
     GO111MODULE=on go mod edit -replace github.com/openshift/coredns-mdns=/home/notstack/coredns-mdns
     GO111MODULE=on go mod vendor
