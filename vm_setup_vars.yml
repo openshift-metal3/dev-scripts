@@ -3,7 +3,7 @@
 
 # Currently this is required because of hard-coded node-name expectations in the
 # openshift-installer terraform templates
-ironic_prefix: "openshift_"
+ironic_prefix: "{{ cluster_name }}_"
 
 # We enable more memory and masters in dev-scripts compared to the minimal setup
 # in metal3-dev-env
