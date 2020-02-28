@@ -47,12 +47,15 @@ export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
 export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
 export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
 
-export PROVISIONING_NETWORK_NAME=${PROVISIONING_NETWORK_NAME:-provisioning}
+export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 
-export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-baremetal}
+# Network interface names can only be 15 characters long, so
+# abbreviate provisioning and baremetal and add them as suffixes to
+# the cluster name.
+export PROVISIONING_NETWORK_NAME=${PROVISIONING_NETWORK_NAME:-${CLUSTER_NAME}pr}
+export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-${CLUSTER_NAME}bm}
 
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
-export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
