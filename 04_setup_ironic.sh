@@ -84,7 +84,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 fi
 rm -f $DOCKERFILE
 
-for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader vbmc sushy-tools; do
+for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader vbmc sushy-tools; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -122,7 +122,7 @@ if [ ! -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ]; then
 fi
 
 # cached images to the bootstrap VM
-sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
+sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_NAME} --pod ironic-pod \
      --env PROVISIONING_INTERFACE=${PROVISIONING_NETWORK_NAME} \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 

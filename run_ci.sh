@@ -8,7 +8,7 @@ function getlogs(){
     # Grab the host journal
     sudo journalctl > $LOGDIR/bootstrap-host-system.journal
 
-    for c in httpd machine-os-downloader ipa-downloader ; do
+    for c in httpd-${PROVISIONING_NETWORK_NAME} machine-os-downloader ipa-downloader ; do
         sudo podman logs $c > $LOGDIR/$c.log || true
     done
 
