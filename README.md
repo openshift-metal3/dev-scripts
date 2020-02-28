@@ -300,4 +300,27 @@ The following adds an additional file `/etc/test` as an example:
 
 ```
 export IGNITION_EXTRA="ignition/file_example.ign"
-``` 
+```
+
+### Building multiple clusters
+
+The script `multicluster.sh` takes as argument several configuration
+scripts and builds the clusters described by them.
+
+```
+./multicluster.sh build config_kni.sh config_hive1.sh
+```
+
+It can also be used to clean up multiple clusters.
+
+```
+./multicluster.sh clean config_kni.sh config_hive1.sh
+```
+
+To ensure the clusters can operate in parallel, each configuration
+file must have unique values for:
+
+* `CLUSTER_NAME`
+* `PROVISIONING_NETWORK`
+* `EXTERNAL_SUBNET`
+* `VBMC_BASE_PORT`

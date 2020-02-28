@@ -179,6 +179,7 @@ export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIO
 # Hypervisor details
 export REMOTE_LIBVIRT=${REMOTE_LIBVIRT:-0}
 export PROVISIONING_HOST_USER=${PROVISIONING_HOST_USER:-$USER}
+export SSH_PRIVATE_KEY_NAME=${SSH_PRIVATE_KEY_NAME:-$HOME/.ssh/id_rsa}
 
 # ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
 # instead to get the first address in the network:

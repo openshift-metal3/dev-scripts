@@ -85,10 +85,18 @@ EOF
   fi
 }
 
+function build_libvirturi() {
+    wrapped_provisioning_host_ip=$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})
+    # LIBVIRT_URI is overridden by multicluster.sh but wrap_if_ipv6 is
+    # not defined in common.sh so we can't set a default there and the
+    # variable is only used here in this function.
+    echo ${LIBVIRT_URI:-qemu+ssh://${PROVISIONING_HOST_USER}@${wrapped_provisioning_host_ip}/system}
+}
+
 function libvirturi() {
     if [[ "$REMOTE_LIBVIRT" -ne 0 ]]; then
 cat <<EOF
-    libvirtURI: qemu+ssh://${PROVISIONING_HOST_USER}@$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/system
+    libvirtURI: $(build_libvirturi)
 EOF
     fi
 }

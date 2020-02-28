@@ -26,6 +26,10 @@ install_config:
 ocp_run:
 	./06_create_cluster.sh
 
+.PHONY: hive_assets
+hive_assets: configure build_installer ironic install_config
+	./hive_generate_assets.sh
+
 gather:
 	./must_gather.sh
 
