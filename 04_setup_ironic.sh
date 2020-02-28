@@ -145,8 +145,8 @@ fi
 sudo podman wait -i 1000 ipa-downloader
 
 # Wait for images to be downloaded/ready
-while ! curl --fail http://localhost/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
-while ! curl --fail http://localhost/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.tar.headers ; do sleep 1; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
+while ! curl --fail http://${PROVISIONING_HOST_IP}/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
+while ! curl --fail http://${PROVISIONING_HOST_IP}/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
+while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.initramfs ; do sleep 1; done
+while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.tar.headers ; do sleep 1; done
+while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.kernel ; do sleep 1; done
