@@ -86,7 +86,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 fi
 rm -f $DOCKERFILE
 
-for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader vbmc sushy-tools; do
+for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -131,14 +131,33 @@ sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_N
 sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
-if [ "$NODES_PLATFORM" = "libvirt" ]; then
-    sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
-         -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
-         "${VBMC_IMAGE}"
+function is_running() {
+    local podname="$1"
+    local ids
 
-    sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
-         -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
-         "${SUSHY_TOOLS_IMAGE}"
+    ids=$(sudo podman ps -a --filter "name=${podname}" --filter status=running -q)
+    if [[ -z "$ids" ]]; then
+        return 1
+    fi
+    return 0
+}
+
+if [ "$NODES_PLATFORM" = "libvirt" ]; then
+    if ! is_running vbmc; then
+        # Force remove the pid file before restarting because podman
+        # has told us the process isn't there but sometimes when it
+        # dies it leaves the file.
+        sudo rm -f $WORKING_DIR/virtualbmc/vbmc/master.pid
+        sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
+             -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+             "${VBMC_IMAGE}"
+    fi
+
+    if ! is_running sushy-tools; then
+        sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
+             -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+             "${SUSHY_TOOLS_IMAGE}"
+    fi
 fi
 
 
