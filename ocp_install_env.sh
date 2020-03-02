@@ -85,6 +85,14 @@ EOF
   fi
 }
 
+function libvirturi() {
+    if [[ "$REMOTE_LIBVIRT" -ne 0 ]]; then
+cat <<EOF
+    libvirtURI: qemu+ssh://${PROVISIONING_HOST_USER}@$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/system
+EOF
+    fi
+}
+
 function generate_ocp_install_config() {
     local outdir
 
@@ -128,6 +136,7 @@ controlPlane:
     baremetal: {}
 platform:
   baremetal:
+$(libvirturi)
 $(network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
     provisioningBridge: ${PROVISIONING_NETWORK_NAME}
