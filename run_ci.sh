@@ -108,6 +108,13 @@ if [ -d "/home/notstack/coredns-mdns" ] ; then
     export COREDNS_DOCKERFILE=Dockerfile.openshift
 fi
 
+git clone https://github.com/openshift/cluster-autoscaler-operator.git /home/notstack/cluster-autoscaler-operator
+cd /home/notstack/cluster-autoscaler-operator
+git fetch  https://github.com/enxebre/cluster-autoscaler-operator fix-1806438
+git reset --hard FETCH_HEAD
+cd -
+export CLUSTER_AUTOSCALER_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/cluster-autoscaler-operator
+
 # Some of the setup done above needs to be done before we source common.sh
 # in order for correct defaults to be set
 source common.sh
