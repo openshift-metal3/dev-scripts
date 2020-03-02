@@ -42,10 +42,6 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 
-# Provisioning network information
-export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
-export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
-export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
 
 export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 
@@ -58,14 +54,31 @@ export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-${CLUSTER_NAME}bm}
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
-export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
-export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
-export CLUSTER_SUBNET=${CLUSTER_SUBNET:-"10.128.0.0/14"}
-export CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX:-"23"}
-export SERVICE_SUBNET=${SERVICE_SUBNET:-"172.30.0.0/16"}
-export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
+
+if [[ -n "$USE_IPV4" ]]
+then
+  export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"172.22.0.0/24"}
+  export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"192.168.111.0/24"}
+  export CLUSTER_SUBNET=${CLUSTER_SUBNET:-"10.128.0.0/14"}
+  export CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX:-"23"}
+  export SERVICE_SUBNET=${SERVICE_SUBNET:-"172.30.0.0/16"}
+  export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
+  export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
+else
+  export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"fd00:1101:00/64"}
+  export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"fd2e:6f44:5dd8:c956::/120"}
+  export CLUSTER_SUBNET=${CLUSTER_SUBNET:-"fd01::/48"}
+  export CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX:-"64"}
+  export SERVICE_SUBNET=${SERVICE_SUBNET:-"fd02::/112"}
+  export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
+  export DNS_VIP=${DNS_VIP:-"fd2e:6f44:5dd8:c956:0:0:0:2"}
+fi
 export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${CLUSTER_NAME}.${BASE_DOMAIN}"}
 
+# Provisioning network information
+export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
+
+export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
 # ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
 # instead to get the first address in the network:
 export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}
