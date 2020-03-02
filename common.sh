@@ -42,8 +42,14 @@ if [ -z "${CONFIG:-}" ]; then
 fi
 source $CONFIG
 
-# Provisioning network information
-export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
+# Provisioning network information - default to IPv6
+if [[ -n "$USE_IPV4" ]]
+then
+  export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-172.22.0.0/24}
+else
+  export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-fd00:1101::0/64}
+fi
+
 export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
 export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
 
