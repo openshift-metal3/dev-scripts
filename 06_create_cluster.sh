@@ -24,14 +24,14 @@ fi
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     if [[ $EXTERNAL_SUBNET =~ .*:.* ]]; then
-        API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
+        API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
     else
-        API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip baremetal) | awk '{print $NF}')
+        API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
     fi
     INGRESS_VIP=$(python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$EXTERNAL_SUBNET"', 4))")
-    echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
-    echo "address=/.apps.${CLUSTER_DOMAIN}/${INGRESS_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
-    echo "listen-address=::1" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
+    echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
+    echo "address=/.apps.${CLUSTER_DOMAIN}/${INGRESS_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
+    echo "listen-address=::1" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
     sudo systemctl reload NetworkManager
 else
     if [[ $EXTERNAL_SUBNET =~ .*:.* ]]; then
@@ -42,7 +42,7 @@ else
     INGRESS_VIP=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
 fi
 
-if [ ! -f ocp/install-config.yaml ]; then
+if [ ! -f ${OCP_DIR}/install-config.yaml ]; then
     # Validate there are enough nodes to avoid confusing errors later..
     NODES_LEN=$(jq '.nodes | length' ${NODES_FILE})
     if (( $NODES_LEN < ( $NUM_MASTERS + $NUM_WORKERS ) )); then
@@ -51,15 +51,15 @@ if [ ! -f ocp/install-config.yaml ]; then
     fi
 
     # Create a nodes.json file
-    mkdir -p ocp/
+    mkdir -p ${OCP_DIR}
     jq '{nodes: .}' "${NODES_FILE}" | tee "${BAREMETALHOSTS_FILE}"
 
     # Create install config for openshift-installer
-    generate_ocp_install_config ocp
+    generate_ocp_install_config ${OCP_DIR}
 fi
 
 # Call openshift-installer to deploy the bootstrap node and masters
-create_cluster ocp
+create_cluster ${OCP_DIR}
 
 # Kill the dnsmasq container on the host since it is performing DHCP and doesn't
 # allow our pod in openshift to take over.  We don't want to take down all of ironic

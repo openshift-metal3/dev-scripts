@@ -35,6 +35,8 @@ fi
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \
+    -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
+    -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
     -e "working_dir=$WORKING_DIR" \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$NUM_WORKERS" \
@@ -45,6 +47,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
     -e "nodes_file=$NODES_FILE" \
+    -e "virtualbmc_base_port=$VBMC_BASE_PORT" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 
@@ -78,45 +81,45 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Adding an IP address in the libvirt definition for this network results in
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
-    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-provisioning ] ; then
+    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME} ] ; then
         if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
-            echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nIPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nIPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
         else
-            echo -e "DEVICE=provisioning\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-provisioning
+            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
        fi
     fi
-    sudo ifdown provisioning || true
-    sudo ifup provisioning
+    sudo ifdown ${PROVISIONING_NETWORK_NAME} || true
+    sudo ifup ${PROVISIONING_NETWORK_NAME}
 
     # Need to pass the provision interface for bare metal
     if [ "$PRO_IF" ]; then
-        echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=provisioning" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
+        echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${PROVISIONING_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
         sudo ifdown $PRO_IF || true
         sudo ifup $PRO_IF
         # Need to ifup the provisioning bridge again because ifdown $PRO_IF
         # will bring down the bridge as well.
-        sudo ifup provisioning
+        sudo ifup ${PROVISIONING_NETWORK_NAME}
     fi
 fi
 
 if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Create the baremetal bridge
-    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-baremetal ] ; then
-        echo -e "DEVICE=baremetal\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-baremetal
+    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} ] ; then
+        echo -e "DEVICE=${BAREMETAL_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
     fi
-    sudo ifdown baremetal || true
-    sudo ifup baremetal
+    sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
+    sudo ifup ${BAREMETAL_NETWORK_NAME}
 
     # Add the internal interface to it if requests, this may also be the interface providing
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
-        echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=baremetal" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+        echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
         if [[ $EXTERNAL_SUBNET =~ .*:.* ]]; then
              sudo firewall-cmd --zone=libvirt --add-service=dhcpv6-client
-             grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-baremetal || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal)
+             grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
         else
            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-               grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-baremetal || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-baremetal)
+               grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
            fi
        fi
         sudo systemctl restart network
@@ -131,8 +134,8 @@ fi
 
 # restart the libvirt network so it applies an ip to the bridge
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
-    sudo virsh net-destroy baremetal
-    sudo virsh net-start baremetal
+    sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
     if [ "$INT_IF" ]; then #Need to bring UP the NIC after destroying the libvirt network
         sudo ifup $INT_IF
     fi
@@ -149,30 +152,29 @@ for PORT in 80 ${LOCAL_REGISTRY_PORT} ; do
         sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp
         sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp --permanent
     else
-        if ! sudo $IPTABLES -C INPUT -i provisioning -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
-            sudo $IPTABLES -I INPUT -i provisioning -p tcp -m tcp --dport $PORT -j ACCEPT
+        if ! sudo $IPTABLES -C INPUT -i ${PROVISIONING_NETWORK_NAME} -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
+            sudo $IPTABLES -I INPUT -i ${PROVISIONING_NETWORK_NAME} -p tcp -m tcp --dport $PORT -j ACCEPT
         fi
-        if ! sudo $IPTABLES -C INPUT -i baremetal -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
-            sudo $IPTABLES -I INPUT -i baremetal -p tcp -m tcp --dport $PORT -j ACCEPT
+        if ! sudo $IPTABLES -C INPUT -i ${BAREMETAL_NETWORK_NAME} -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
+            sudo $IPTABLES -I INPUT -i ${BAREMETAL_NETWORK_NAME} -p tcp -m tcp --dport $PORT -j ACCEPT
         fi
     fi
 done
 
 # Allow ipmi to the virtual bmc processes that we just started
-VBMC_MAX_PORT=$((6230 + ${NUM_MASTERS} + ${NUM_WORKERS} - 1))
 if [ "${RHEL8}" = "True" ] ; then
-    sudo firewall-cmd --zone=libvirt --add-port=6230-${VBMC_MAX_PORT}/udp
-    sudo firewall-cmd --zone=libvirt --add-port=6230-${VBMC_MAX_PORT}/udp --permanent
+    sudo firewall-cmd --zone=libvirt --add-port=${VBMC_BASE_PORT}-${VBMC_MAX_PORT}/udp
+    sudo firewall-cmd --zone=libvirt --add-port=${VBMC_BASE_PORT}-${VBMC_MAX_PORT}/udp --permanent
 else
-    if ! sudo $IPTABLES -C INPUT -i baremetal -p udp -m udp --dport 6230:${VBMC_MAX_PORT} -j ACCEPT 2>/dev/null ; then
-        sudo $IPTABLES -I INPUT -i baremetal -p udp -m udp --dport 6230:${VBMC_MAX_PORT} -j ACCEPT
+    if ! sudo $IPTABLES -C INPUT -i ${BAREMETAL_NETWORK_NAME} -p udp -m udp --dport ${VBMC_BASE_PORT}:${VBMC_MAX_PORT} -j ACCEPT 2>/dev/null ; then
+        sudo $IPTABLES -I INPUT -i ${BAREMETAL_NETWORK_NAME} -p udp -m udp --dport ${VBMC_BASE_PORT}:${VBMC_MAX_PORT} -j ACCEPT
     fi
 fi
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
   sudo $IPTABLES -t nat -A POSTROUTING --out-interface $EXT_IF -j MASQUERADE
-  sudo $IPTABLES -A FORWARD --in-interface baremetal -j ACCEPT
+  sudo $IPTABLES -A FORWARD --in-interface ${BAREMETAL_NETWORK_NAME} -j ACCEPT
 fi
 
 # Switch NetworkManager to internal DNS

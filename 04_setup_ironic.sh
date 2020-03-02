@@ -76,7 +76,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
         --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
         "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
 
-      mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ocp/
+      mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ${OCP_DIR}
     fi
 
     rm -rf "${EXTRACT_DIR}"
@@ -87,7 +87,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 fi
 rm -f $DOCKERFILE
 
-for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader vbmc sushy-tools; do
+for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader vbmc sushy-tools; do
     sudo podman ps | grep -w "$name$" && sudo podman kill $name
     sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
 done
@@ -125,7 +125,8 @@ if [ ! -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ]; then
 fi
 
 # cached images to the bootstrap VM
-sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
+sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_NAME} --pod ironic-pod \
+     --env PROVISIONING_INTERFACE=${PROVISIONING_NETWORK_NAME} \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
 sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
@@ -147,8 +148,8 @@ fi
 sudo podman wait -i 1000 ipa-downloader
 
 # Wait for images to be downloaded/ready
-while ! curl --fail http://localhost/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
-while ! curl --fail http://localhost/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.tar.headers ; do sleep 1; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
+while ! curl --fail http://${PROVISIONING_HOST_IP}/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
+while ! curl --fail http://${PROVISIONING_HOST_IP}/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
+while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.initramfs ; do sleep 1; done
+while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.tar.headers ; do sleep 1; done
+while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.kernel ; do sleep 1; done

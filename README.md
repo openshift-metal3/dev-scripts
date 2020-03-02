@@ -133,7 +133,7 @@ You can also see the status of the bootkube.sh script which is running via
 When the master nodes are up and the cluster is active, you can interact with the API:
 
 ```
-$ oc --config ocp/auth/kubeconfig get nodes
+$ oc --config ocp/${CLUSTER_NAME}/auth/kubeconfig get nodes
 NAME       STATUS    ROLES     AGE       VERSION
 master-0   Ready     master    20m       v1.12.4+50c2f2340a
 master-1   Ready     master    20m       v1.12.4+50c2f2340a
@@ -161,7 +161,7 @@ Run sshuttle:
 sshuttle -r <user>@<virthost> 192.168.111.0/24
 ```
 
-To access the web Console use the `kubeadmin` user, and password generated in the `ocp/auth/kubeadmin-password` file.
+To access the web Console use the `kubeadmin` user, and password generated in the `ocp/${CLUSTER_NAME}/auth/kubeadmin-password` file.
 
 
 ## Interacting with Ironic directly

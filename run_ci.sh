@@ -8,7 +8,7 @@ function getlogs(){
     # Grab the host journal
     sudo journalctl > $LOGDIR/bootstrap-host-system.journal
 
-    for c in httpd machine-os-downloader ipa-downloader ; do
+    for c in httpd-${PROVISIONING_NETWORK_NAME} machine-os-downloader ipa-downloader ; do
         sudo podman logs $c > $LOGDIR/$c.log || true
     done
 
@@ -22,7 +22,7 @@ function getlogs(){
     done
 
     # openshift info
-    export KUBECONFIG=ocp/auth/kubeconfig
+    export KUBECONFIG=ocp/$CLUSTER_NAME/auth/kubeconfig
     oc --request-timeout=5s get clusterversion/version > $LOGDIR/cluster_version.log || true
     oc --request-timeout=5s get clusteroperators > $LOGDIR/cluster_operators.log || true
     oc --request-timeout=5s get pods --all-namespaces | grep -v Running | grep -v Completed  > $LOGDIR/failing_pods.log || true
@@ -166,7 +166,7 @@ set -o pipefail
 timeout -s 9 120m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Deployment is complete, but now wait to ensure the worker node comes up.
-export KUBECONFIG=ocp/auth/kubeconfig
+export KUBECONFIG=ocp/$CLUSTER_NAME/auth/kubeconfig
 
 wait_for_worker() {
     worker=$1

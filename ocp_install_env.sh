@@ -108,8 +108,12 @@ controlPlane:
 platform:
   baremetal:
 $(network_configuration)
+    externalBridge: ${BAREMETAL_NETWORK_NAME}
+    provisioningBridge: ${PROVISIONING_NETWORK_NAME}
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
     clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
+    apiVIP: ${API_VIP}
+    ingressVIP: ${INGRESS_VIP}
     dnsVIP: ${DNS_VIP}
     hosts:
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
