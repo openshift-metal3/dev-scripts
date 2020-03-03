@@ -6,6 +6,7 @@ source logging.sh
 source common.sh
 source rhcos.sh
 source ocp_install_env.sh
+source utils.sh
 
 # To replace an image entry in the openshift releae image, set
 # <ENTRYNAME>_LOCAL_IMAGE - where ENTRYNAME matches an uppercase version of the name in the release image
@@ -148,8 +149,8 @@ fi
 sudo podman wait -i 1000 ipa-downloader
 
 # Wait for images to be downloaded/ready
-while ! curl --fail http://${PROVISIONING_HOST_IP}/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
-while ! curl --fail http://${PROVISIONING_HOST_IP}/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
-while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.initramfs ; do sleep 1; done
-while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.tar.headers ; do sleep 1; done
-while ! curl --fail --head http://${PROVISIONING_HOST_IP}/images/ironic-python-agent.kernel ; do sleep 1; done
+while ! curl --fail http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
+while ! curl --fail http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
+while ! curl --fail --head http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/ironic-python-agent.initramfs ; do sleep 1; done
+while ! curl --fail --head http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/ironic-python-agent.tar.headers ; do sleep 1; done
+while ! curl --fail --head http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/ironic-python-agent.kernel ; do sleep 1; done
