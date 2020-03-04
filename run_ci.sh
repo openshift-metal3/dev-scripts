@@ -13,7 +13,7 @@ function getlogs(){
     done
 
     # And the VM journals and staticpod container logs
-    for HOST in $(sudo virsh net-dhcp-leases baremetal | grep -o '192.168.111.[0-9]\+') ; do
+    for HOST in $(sudo virsh net-dhcp-leases ${BAREMETAL_NETWORK_NAME} | grep -o '192.168.111.[0-9]\+') ; do
         sshpass -p notworking $SSH core@$HOST sudo journalctl > $LOGDIR/$HOST-system.journal || true
         sshpass -p notworking $SSH core@$HOST sudo journalctl -u ironic.service > $LOGDIR/$HOST-ironic.journal || true
 	for c in $(sshpass -p notworking $SSH core@$HOST sudo podman ps -a | grep -e ironic -e downloader -e httpd -e dnsmasq -e mariadb | awk '{print $NF}'); do
