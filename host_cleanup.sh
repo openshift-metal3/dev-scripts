@@ -23,7 +23,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/teardown-playbook.yml
 
-sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
+sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf /etc/yum.repos.d/delorean*
 # There was a bug in this file, it may need to be recreated.
 # delete the interface as it can cause issues when not rebooting
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
