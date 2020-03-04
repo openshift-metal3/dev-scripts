@@ -40,12 +40,7 @@ trap getlogs EXIT
 # Point at our CI custom config file (contains the PULL_SECRET)
 export CONFIG=/opt/data/config_notstack.sh
 
-# Install moreutils for ts
-sudo yum install -y epel-release
-sudo yum install -y moreutils
-# Install jq and golang for common.sh
-sudo yum install -y jq golang
-sudo yum remove -y epel-release
+sudo yum install -y jq golang make unzip
 
 # Clone the project being tested, "dev-scripts" will have been cloned in the jenkins
 # job definition, for all others we do it here
@@ -121,40 +116,26 @@ fi
 # Display the "/" filesystem mounted incase we need artifacts from it after the job
 mount | grep root-
 
-# $WORKING_DIR is on a BTRFS filesystem, we need to disable COW so VM images
-# don't eat up all of the disk space
-sudo chattr +C "$WORKING_DIR"
-
-# The CI host has a "/" filesystem that reset for each job, the only partition
-# that persist is /opt (and /boot), we can use this to store data between jobs
-FILECACHEDIR=/opt/data/filecache
-FILESTOCACHE="/opt/dev-scripts/ironic/html/images/ironic-python-agent.initramfs /opt/dev-scripts/ironic/html/images/ironic-python-agent.kernel"
+sudo mkdir -p /opt/libvirt-images /opt/dev-scripts
+sudo chown notstack /opt/libvirt-images /opt/dev-scripts
 
 # Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
 # to prevent each snapshot taking up too much space we keep some of the larger files
 # on /opt we need to delete these before the job starts
 sudo find /opt/libvirt-images /opt/dev-scripts -mindepth 1 -maxdepth 1 -exec rm -rf {} \;
 
-# Populate some file from the cache so we don't need to download them
-sudo mkdir -p $FILECACHEDIR
-for FILE in $FILESTOCACHE ; do
-    sudo mkdir -p $(dirname $FILE)
-    [ -f $FILECACHEDIR/$(basename $FILE) ] && sudo cp -p $FILECACHEDIR/$(basename $FILE) $FILE
-done
-
-sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
+sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt /opt/dev-scripts/ironic
 sudo chown -R notstack /opt/dev-scripts/ironic /opt/data/installer-cache /home/notstack/.cache
 
 # Make yum store its cache on /opt so packages don't need to be downloaded for each job
 sudo sed -i -e '/keepcache=0/d' /etc/yum.conf
-sudo mount -o bind /opt/data/yumcache /var/cache/yum
+sudo mount -o bind /opt/data/yumcache /var/cache/dnf
 
 # Mount the openshift-installer cache directory so we don't download a Machine OS image for each run
 sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
 
 # Install terraform
 if [ ! -f /usr/local/bin/terraform ]; then
-    sudo yum install -y unzip
     curl -O https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip
     unzip terraform_*.zip
     sudo install terraform /usr/local/bin
@@ -163,7 +144,7 @@ fi
 
 # Run dev-scripts
 set -o pipefail
-timeout -s 9 120m make |& ts "%b %d %H:%M:%S | " |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
+timeout -s 9 120m make |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 
 # Deployment is complete, but now wait to ensure the worker node comes up.
 export KUBECONFIG=ocp/$CLUSTER_NAME/auth/kubeconfig
@@ -178,15 +159,3 @@ wait_for_worker() {
 }
 wait_for_worker worker-0
 
-# Populate cache for files it doesn't have, or that have changed
-for FILE in $FILESTOCACHE ; do
-    cached=$FILECACHEDIR/$(basename $FILE)
-    current_hash=$(md5sum $FILE | cut -f1 -d' ')
-    if [ -f $cached ]; then
-      cached_hash=$(md5sum $cached | cut -f1 -d' ')
-    fi
-
-    if [ ! -f $cached ] || [ x"$current_hash" != x"$cached_hash" ] ; then
-        sudo cp -p $FILE $cached
-    fi
-done
