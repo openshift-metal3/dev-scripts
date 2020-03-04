@@ -38,10 +38,11 @@ fi
 # Install oc client - unless we're in openshift CI
 if [[ -z "$OPENSHIFT_CI" ]]; then
   oc_version=${OPENSHIFT_VERSION}
+  oc_actual_version=''
   oc_tools_dir=$HOME/oc-${oc_version}
   oc_tools_local_file=openshift-client-${oc_version}.tar.gz
   if which oc 2>&1 >/dev/null ; then
-    oc_git_version=$(oc version -o json | jq -r '.clientVersion.gitVersion')
+    oc_git_version=$(oc version --client -o json | jq -r '.clientVersion.gitVersion')
     oc_actual_version=$(echo "${oc_git_version}" | sed "s/.*-\([[:digit:]]\.[[:digit:]]\)\.[[:digit:]]-.*/\1/")
   fi
   if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ] || [ "$oc_actual_version" != "$oc_version" ]; then
