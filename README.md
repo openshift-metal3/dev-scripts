@@ -120,7 +120,7 @@ and Ironic.  Once bootstrap is complete, the installer removes the
 bootstrap node and the cluster will be online.
 
 You can view the IP for the bootstrap node by running `virsh
-net-dhcp-leases baremetal`.  You can SSH to it using ssh core@IP.
+net-dhcp-leases ostestbm`.  You can SSH to it using ssh core@IP.
 
 Then you can interact with the k8s API on the bootstrap VM e.g
 `sudo oc status --verbose --config /etc/kubernetes/kubeconfig`.
