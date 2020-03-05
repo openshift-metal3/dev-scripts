@@ -38,6 +38,22 @@ function getlogs(){
 }
 trap getlogs EXIT
 
+# This is CI, no need to be cautious about data
+sudo dnf install -y /opt/data/nosync-1.0-2.el7.x86_64.rpm
+echo /usr/lib64/nosync/nosync.so | sudo tee -a /etc/ld.so.preload
+
+# Use /opt for data we want to keep between runs
+# TODO: /opt has 1.1T but we'll eventually need something to clean up old data
+sudo mkdir -p /opt/data/dnfcache /opt/data/imagecache /home/dev-scripts/ironic/html/images
+
+# Make dnf store its cache on /opt so packages don't need to be downloaded for each job
+echo keepcache=True | sudo tee -a /etc/dnf/dnf.conf
+sudo mount -o bind /opt/data/dnfcache /var/cache/dnf
+
+# Save the images directory between jobs
+sudo mount -o bind /opt/data/imagecache /home/dev-scripts/ironic/html/images
+sudo chown -R notstack /home/dev-scripts
+
 # Point at our CI custom config file (contains the PULL_SECRET)
 export CONFIG=/opt/data/config_notstack.sh
 
@@ -116,24 +132,6 @@ fi
 
 # Display the "/" filesystem mounted incase we need artifacts from it after the job
 mount | grep root-
-
-sudo mkdir -p /opt/libvirt-images /opt/dev-scripts
-sudo chown notstack /opt/libvirt-images /opt/dev-scripts
-
-# Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
-# to prevent each snapshot taking up too much space we keep some of the larger files
-# on /opt we need to delete these before the job starts
-sudo find /opt/libvirt-images /opt/dev-scripts -mindepth 1 -maxdepth 1 -exec rm -rf {} \;
-
-sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt /opt/dev-scripts/ironic
-sudo chown -R notstack /opt/dev-scripts/ironic /opt/data/installer-cache /home/notstack/.cache
-
-# Make yum store its cache on /opt so packages don't need to be downloaded for each job
-sudo sed -i -e '/keepcache=0/d' /etc/yum.conf
-sudo mount -o bind /opt/data/yumcache /var/cache/dnf
-
-# Mount the openshift-installer cache directory so we don't download a Machine OS image for each run
-sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
 
 # Install terraform
 if [ ! -f /usr/local/bin/terraform ]; then
