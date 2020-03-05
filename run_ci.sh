@@ -38,6 +38,22 @@ function getlogs(){
 }
 trap getlogs EXIT
 
+# This is CI, no need to be cautious about data
+sudo dnf install -y /opt/data/nosync-1.0-2.el7.x86_64.rpm
+echo /usr/lib64/nosync/nosync.so | sudo tee -a /etc/ld.so.preload
+
+# Use /opt for data we want to keep between runs
+# TODO: /opt has 1.1T but we'll eventually need something to clean up old data
+sudo mkdir -p /opt/data/dnfcache /opt/data/imagecache /home/dev-scripts/ironic/html/images
+
+# Make dnf store its cache on /opt so packages don't need to be downloaded for each job
+echo keepcache=True | sudo tee -a /etc/dnf/dnf.conf
+sudo mount -o bind /opt/data/dnfcache /var/cache/dnf
+
+# Save the images directory between jobs
+sudo mount -o bind /opt/data/imagecache /home/dev-scripts/ironic/html/images
+sudo chown -R notstack /home/dev-scripts
+
 # Point at our CI custom config file (contains the PULL_SECRET)
 export CONFIG=/opt/data/config_notstack.sh
 
@@ -116,16 +132,6 @@ fi
 
 # Display the "/" filesystem mounted incase we need artifacts from it after the job
 mount | grep root-
-
-sudo mkdir -p /opt/data/dnfcache /opt/data/imagecache /home/dev-scripts/ironic/html/images
-
-# Make dnf store its cache on /opt so packages don't need to be downloaded for each job
-echo keepcache=True | sudo tee -a /etc/dnf/dnf.conf
-sudo mount -o bind /opt/data/dnfcache /var/cache/dnf
-
-# Save the images directory between jobs
-sudo mount -o bind /opt/data/imagecache /home/dev-scripts/ironic/html/images
-sudo chown -R notstack /home/dev-scripts/ironic/html/images
 
 # Install terraform
 if [ ! -f /usr/local/bin/terraform ]; then
