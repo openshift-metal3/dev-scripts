@@ -48,6 +48,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
     -e "nodes_file=$NODES_FILE" \
     -e "virtualbmc_base_port=$VBMC_BASE_PORT" \
+    -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
+    -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 

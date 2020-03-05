@@ -108,3 +108,11 @@ set -x
 
 # Install operator-sdk for local testing of baremetal-operator
 #export INSTALL_OPERATOR_SDK=1
+
+# Set a custom hostname format for masters. This is a format string that should
+# include one %d field, which will be replaced with the number of the node.
+#export MASTER_HOSTNAME_FORMAT=master-%d
+
+# Set a custom hostname format for workers. This is a format string that should
+# include one %d field, which will be replaced with the number of the node.
+#export WORKER_HOSTNAME_FORMAT=worker-%d
