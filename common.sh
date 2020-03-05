@@ -225,6 +225,7 @@ if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null 
     export RHEL8="True"
 fi
 
+export CENTOS8=""
 if grep -q "CentOS Linux release 8" /etc/redhat-release 2>/dev/null; then
     export CENTOS8="True"
 fi
