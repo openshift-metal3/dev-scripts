@@ -117,10 +117,15 @@ fi
 # Display the "/" filesystem mounted incase we need artifacts from it after the job
 mount | grep root-
 
+sudo mkdir -p /opt/data/dnfcache /opt/data/imagecache /home/dev-scripts/ironic/html/images
+
 # Make dnf store its cache on /opt so packages don't need to be downloaded for each job
-sudo mkdir -p /opt/data/dnfcache
 echo keepcache=True | sudo tee -a /etc/dnf/dnf.conf
 sudo mount -o bind /opt/data/dnfcache /var/cache/dnf
+
+# Save the images directory between jobs
+sudo mount -o bind /opt/data/imagecache /home/dev-scripts/ironic/html/images
+sudo chown -R notstack /home/dev-scripts/ironic/html/images
 
 # Install terraform
 if [ ! -f /usr/local/bin/terraform ]; then
