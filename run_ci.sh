@@ -117,23 +117,10 @@ fi
 # Display the "/" filesystem mounted incase we need artifacts from it after the job
 mount | grep root-
 
-sudo mkdir -p /opt/libvirt-images /opt/dev-scripts
-sudo chown notstack /opt/libvirt-images /opt/dev-scripts
-
-# Because "/" is a btrfs subvolume snapshot and a new one is created for each CI job
-# to prevent each snapshot taking up too much space we keep some of the larger files
-# on /opt we need to delete these before the job starts
-sudo find /opt/libvirt-images /opt/dev-scripts -mindepth 1 -maxdepth 1 -exec rm -rf {} \;
-
-sudo mkdir -p /opt/data/yumcache /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt /opt/dev-scripts/ironic
-sudo chown -R notstack /opt/dev-scripts/ironic /opt/data/installer-cache /home/notstack/.cache
-
-# Make yum store its cache on /opt so packages don't need to be downloaded for each job
-sudo sed -i -e '/keepcache=0/d' /etc/yum.conf
-sudo mount -o bind /opt/data/yumcache /var/cache/dnf
-
-# Mount the openshift-installer cache directory so we don't download a Machine OS image for each run
-sudo mount -o bind /opt/data/installer-cache /home/notstack/.cache/openshift-install/libvirt
+# Make dnf store its cache on /opt so packages don't need to be downloaded for each job
+sudo mkdir -p /opt/data/dnfcache
+echo keepcache=True | sudo tee -a /etc/dnf/dnf.conf
+sudo mount -o bind /opt/data/dnfcache /var/cache/dnf
 
 # Install terraform
 if [ ! -f /usr/local/bin/terraform ]; then
