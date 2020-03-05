@@ -33,21 +33,18 @@ fi
 
 # Install oc client - unless we're in openshift CI
 if [[ -z "$OPENSHIFT_CI" ]]; then
-  oc_version=${OPENSHIFT_VERSION}
-  oc_actual_version=''
-  oc_tools_dir=$HOME/oc-${oc_version}
-  oc_tools_local_file=openshift-client-${oc_version}.tar.gz
-  if which oc 2>&1 >/dev/null ; then
-    oc_git_version=$(oc version --client -o json | jq -r '.clientVersion.gitVersion')
-    oc_actual_version=$(echo "${oc_git_version}" | sed "s/.*-\([[:digit:]]\.[[:digit:]]\)\.[[:digit:]]-.*/\1/")
-  fi
-  if [ ! -f ${oc_tools_dir}/${oc_tools_local_file} ] || [ "$oc_actual_version" != "$oc_version" ]; then
-    mkdir -p ${oc_tools_dir}
-    cd ${oc_tools_dir}
-    wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz -O ${oc_tools_local_file}
+  oc_tools_dir="${WORKING_DIR}/oc/${OPENSHIFT_VERSION}"
+  oc_tools_local_file=openshift-client-${OPENSHIFT_VERSION}.tar.gz
+  oc_download_url="https://mirror.openshift.com/pub/openshift-v4/clients/oc/${OPENSHIFT_VERSION}/linux/oc.tar.gz"
+  mkdir -p ${oc_tools_dir}
+  pushd ${oc_tools_dir}
+  if [ ! -f "${oc_tools_local_file}" ]; then
+    curl -L -o ${oc_tools_local_file} ${oc_download_url}
     tar xvzf ${oc_tools_local_file}
-    sudo cp oc /usr/local/bin/
   fi
+  sudo cp oc /usr/local/bin/
+  oc version --client -o json
+  popd
 fi
 
 if [ ! -z "${INSTALL_OPERATOR_SDK:-}" ]; then
