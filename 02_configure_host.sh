@@ -173,6 +173,16 @@ else
     fi
 fi
 
+# Allow connections to the sushy-tools process that we just started
+if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
+    sudo firewall-cmd --zone=libvirt --add-port=8000/tcp
+    sudo firewall-cmd --zone=libvirt --add-port=8000/tcp --permanent
+else
+    if ! sudo $IPTABLES -C INPUT -i ${BAREMETAL_NETWORK_NAME} -p tcp -m tcp --dport 8000 -j ACCEPT 2>/dev/null ; then
+        sudo $IPTABLES -I INPUT -i ${BAREMETAL_NETWORK_NAME} -p tcp -m tcp --dport 8000 -j ACCEPT
+    fi
+fi
+
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
   sudo $IPTABLES -t nat -A POSTROUTING --out-interface $EXT_IF -j MASQUERADE
