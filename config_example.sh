@@ -142,3 +142,15 @@ set -x
 
 # Image reference for installing hive. See hive_install.sh.
 #export HIVE_DEPLOY_IMAGE="registry.svc.ci.openshift.org/openshift/hive-v4.0:hive"
+
+# If building multiple clusters, each needs its own VBMC port range.
+#export VBMC_BASE_PORT=6230
+
+# Generate a URL to refer to libvirt via ssh. See SSH_PRIVATE_KEY.
+#export REMOTE_LIBVIRT=1
+
+# SSH key used to set up hive ClusterDeployment for multi-cluster
+# configurations. Does not need to match SSH_PUB_KEY. Must not use a
+# passphrase. The matching public key must be added to authorized_keys
+# on the hypervisor.
+#export SSH_PRIVATE_KEY_NAME="$HOME/.ssh/id_rsa"
