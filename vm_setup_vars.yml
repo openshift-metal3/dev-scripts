@@ -11,15 +11,15 @@ num_masters: 3
 num_workers: 1
 flavors:
   master:
-    memory: 16384
-    disk: 20
-    vcpu: 8
+    memory: "{{ lookup('env', 'MASTER_MEMORY') | default('16384', true) }}"
+    disk: "{{ lookup('env', 'MASTER_DISK') | default('20', true) }}"
+    vcpu: "{{ lookup('env', 'MASTER_VCPU') | default('8', true) }}"
     extradisks: false
 
   worker:
-    memory: 8192
-    disk: 20
-    vcpu: 4
+    memory: "{{ lookup('env', 'WORKER_MEMORY') | default('8192', true) }}"
+    disk: "{{ lookup('env', 'WORKER_DISK') | default('20', true) }}"
+    vcpu: "{{ lookup('env', 'WORKER_VCPU') | default('4', true) }}"
     extradisks: false
 
 # For OpenShift we create some additional DNS records for the API/DNS VIPs
