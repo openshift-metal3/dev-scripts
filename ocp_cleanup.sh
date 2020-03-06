@@ -38,7 +38,8 @@ for vm in $(sudo virsh list --all --name | grep "^${CLUSTER_NAME}.*bootstrap"); 
   sudo virsh undefine $vm --remove-all-storage
 done
 # The .ign volume isn't deleted via --remove-all-storage
-for v in $(sudo virsh vol-list --pool default | grep "^${CLUSTER_NAME}.*bootstrap" | awk '{print $1}'); do
+VOLS="$(sudo virsh vol-list --pool default | awk '{print $1}' | grep "^${CLUSTER_NAME}.*bootstrap")"
+for v in $VOLS; do
   sudo virsh vol-delete $v --pool default
 done
 
