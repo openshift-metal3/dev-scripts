@@ -122,6 +122,9 @@ fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 
+# Override the image to use for installing hive
+export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.svc.ci.openshift.org/openshift/hive-v4.0:hive}"
+
 # CI images don't have version numbers
 export OPENSHIFT_CI=${OPENSHIFT_CI:-""}
 if [[ -z "$OPENSHIFT_CI" ]]; then
