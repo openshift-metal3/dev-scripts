@@ -55,6 +55,9 @@ export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 
+# mirror images for installation in restricted network
+export MIRROR_IMAGES=${MIRROR_IMAGES:-}
+
 if [[ -n "$USE_IPV4" ]]
 then
   export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"172.22.0.0/24"}
@@ -72,6 +75,7 @@ else
   export SERVICE_SUBNET=${SERVICE_SUBNET:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
   export DNS_VIP=${DNS_VIP:-"fd2e:6f44:5dd8:c956:0:0:0:2"}
+  export MIRROR_IMAGES=true
 fi
 export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${CLUSTER_NAME}.${BASE_DOMAIN}"}
 
@@ -84,9 +88,6 @@ export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIO
 export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}
 export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$EXTERNAL_SUBNET\").hosts()))")}
 export MIRROR_IP=${MIRROR_IP:-$PROVISIONING_HOST_IP}
-
-# mirror images for installation in restricted network
-export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
 # The dev-scripts working directory
 WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
