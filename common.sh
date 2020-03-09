@@ -70,7 +70,8 @@ then
   export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
   export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 else
-  export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"fd00:1101:00/64"}
+  # Continue using IPv4 for the provisioning network for now
+  export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"172.22.0.0/24"}
   export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"fd2e:6f44:5dd8:c956::/120"}
   export CLUSTER_SUBNET=${CLUSTER_SUBNET:-"fd01::/48"}
   export CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX:-"64"}
