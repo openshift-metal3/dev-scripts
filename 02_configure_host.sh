@@ -33,6 +33,18 @@ if [ ! -z "${VM_NODES_FILE}" ]; then
   exit 1
 fi
 
+if [[ ! -n "${USE_IPV4}" ]]; then
+  # TODO - move this to metal3-dev-env.
+  # This is to address the following error:
+  #   "msg": "internal error: Check the host setup: enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss. Interfaces to look at: eno2"
+  # This comes from libvirt when trying to create the ostestbm network.
+  for n in /proc/sys/net/ipv6/conf/* ; do
+    if [ -f $n/accept_ra ]; then
+      sudo sysctl -w net.ipv6.conf.$(basename $n).accept_ra=2
+    fi
+  done
+fi
+
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e @vm_setup_vars.yml \
     -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
