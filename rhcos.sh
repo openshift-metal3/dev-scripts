@@ -46,6 +46,10 @@ hack_rhcos_bootstrap_image() {
         # Don't hack the image if using IPv4
         return
     fi
+    if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"4.5"* ]]; then
+        # Not needed in 4.5 as of https://github.com/openshift/installer/pull/3257
+        return
+    fi
 
     IMAGE_FILE="$1"
     IMAGE_SHA256_FILE="${IMAGE_FILE}.sha256sum"
