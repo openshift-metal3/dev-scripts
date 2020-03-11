@@ -42,7 +42,7 @@ temporary_sha256_hack() {
 temporary_sha256_hack
 
 hack_rhcos_bootstrap_image() {
-    if [[ "${USE_IPV4}" = "true" ]]; then
+    if [[ "${IP_STACK}" = "v4" ]]; then
         # Don't hack the image if using IPv4
         return
     fi
