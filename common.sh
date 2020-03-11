@@ -58,7 +58,7 @@ export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
-export USE_IPV4=${USE_IPV4:-true}
+export USE_IPV4=${USE_IPV4:-false}
 
 if [[ "$USE_IPV4" = "true" ]]
 then
