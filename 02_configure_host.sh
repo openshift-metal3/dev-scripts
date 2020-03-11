@@ -129,7 +129,6 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     if [ "$INT_IF" ]; then
         echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
         if [[ $EXTERNAL_SUBNET =~ .*:.* ]]; then
-             sudo firewall-cmd --zone=libvirt --add-service=dhcpv6-client
              grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
         else
            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
@@ -160,39 +159,19 @@ if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
     IPTABLES=ip6tables
 fi
 
-# Add firewall rules to ensure the image caches can be reached on the host
-for PORT in 80 ${LOCAL_REGISTRY_PORT} ; do
-    if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
-        sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp
-        sudo firewall-cmd --zone=libvirt --add-port=$PORT/tcp --permanent
-    else
-        if ! sudo $IPTABLES -C INPUT -i ${PROVISIONING_NETWORK_NAME} -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
-            sudo $IPTABLES -I INPUT -i ${PROVISIONING_NETWORK_NAME} -p tcp -m tcp --dport $PORT -j ACCEPT
-        fi
-        if ! sudo $IPTABLES -C INPUT -i ${BAREMETAL_NETWORK_NAME} -p tcp -m tcp --dport $PORT -j ACCEPT > /dev/null 2>&1; then
-            sudo $IPTABLES -I INPUT -i ${BAREMETAL_NETWORK_NAME} -p tcp -m tcp --dport $PORT -j ACCEPT
-        fi
-    fi
-done
+ANSIBLE_FORCE_COLOR=true ansible-playbook \
+    -e "{use_firewalld: $USE_FIREWALLD}" \
+    -e "provisioning_interface=$PROVISIONING_NETWORK_NAME" \
+    -e "baremetal_interface=$BAREMETAL_NETWORK_NAME" \
+    -e "{provisioning_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000]}" \
+    -e "vbmc_port_range=$VBMC_BASE_PORT:$VBMC_MAX_PORT" \
+    -i ${VM_SETUP_PATH}/inventory.ini \
+    -b -vvv ${VM_SETUP_PATH}/firewall.yml
 
-# Allow ipmi to the virtual bmc processes that we just started
-if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
-    sudo firewall-cmd --zone=libvirt --add-port=${VBMC_BASE_PORT}-${VBMC_MAX_PORT}/udp
-    sudo firewall-cmd --zone=libvirt --add-port=${VBMC_BASE_PORT}-${VBMC_MAX_PORT}/udp --permanent
-else
-    if ! sudo $IPTABLES -C INPUT -i ${BAREMETAL_NETWORK_NAME} -p udp -m udp --dport ${VBMC_BASE_PORT}:${VBMC_MAX_PORT} -j ACCEPT 2>/dev/null ; then
-        sudo $IPTABLES -I INPUT -i ${BAREMETAL_NETWORK_NAME} -p udp -m udp --dport ${VBMC_BASE_PORT}:${VBMC_MAX_PORT} -j ACCEPT
-    fi
-fi
-
-# Allow connections to the sushy-tools process that we just started
-if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
-    sudo firewall-cmd --zone=libvirt --add-port=8000/tcp
-    sudo firewall-cmd --zone=libvirt --add-port=8000/tcp --permanent
-else
-    if ! sudo $IPTABLES -C INPUT -i ${BAREMETAL_NETWORK_NAME} -p tcp -m tcp --dport 8000 -j ACCEPT 2>/dev/null ; then
-        sudo $IPTABLES -I INPUT -i ${BAREMETAL_NETWORK_NAME} -p tcp -m tcp --dport 8000 -j ACCEPT
-    fi
+# FIXME(stbenjam): ansbile firewalld module doesn't seem to be doing the right thing
+if [ "$USE_FIREWALLD" == "True" ]; then
+  sudo firewall-cmd --zone=libvirt --change-interface=provisioning
+  sudo firewall-cmd --zone=libvirt --change-interface=baremetal
 fi
 
 # Need to route traffic from the provisioning host.
