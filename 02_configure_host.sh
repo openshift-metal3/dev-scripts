@@ -89,6 +89,8 @@ fi
 
 if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
     ZONE="\nZONE=libvirt"
+
+    sudo systemctl enable --now firewalld
 fi
 
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
