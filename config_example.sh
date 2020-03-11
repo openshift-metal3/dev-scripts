@@ -11,7 +11,11 @@ set -x
 #export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
 #export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
 
-# Mirror latest ci images to local registry
+# Use IPv4. "true" is the default. "false" switches to IPv6.
+#export USE_IPV4=false
+
+# Mirror latest ci images to local registry. This is always true for IPv6, but can be turned off
+# for an IPv4 install.
 #export MIRROR_IMAGES=true
 
 # Switch to upstream metal3-io ironic images instead of openshift ones.
