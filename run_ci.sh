@@ -149,9 +149,10 @@ timeout -s 9 120m make |& sed -e 's/.*auths.*/*** PULL_SECRET ***/g'
 export KUBECONFIG=ocp/$CLUSTER_NAME/auth/kubeconfig
 
 wait_for_worker() {
-    worker=$1
+    worker_prefix=$1
     echo "Waiting for worker $worker to appear ..."
-    while [ "$(oc get nodes | grep $worker)" = "" ]; do sleep 5; done
+    while [ "$(oc get nodes | grep $worker_prefix)" = "" ]; do sleep 5; done
+    worker=$(oc get nodes | grep $worker_prefix | awk '{print $1}')
     TIMEOUT_MINUTES=15
     echo "$worker registered, waiting $TIMEOUT_MINUTES minutes for Ready condition ..."
     oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
