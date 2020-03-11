@@ -13,7 +13,7 @@ flavors:
   master:
     memory: 16384
     disk: 20
-    vcpu: 4
+    vcpu: 8
     extradisks: false
 
   worker:
