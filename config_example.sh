@@ -11,8 +11,9 @@ set -x
 #export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
 #export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
 
-# Use IPv4. "true" is the default. "false" switches to IPv6.
-#export USE_IPV4=false
+# IP stack version.  The default is "v6".  You may also set "v4".
+# Dual stack is not yet supported.
+#export IP_STACK=v4
 
 # Mirror latest ci images to local registry. This is always true for IPv6, but can be turned off
 # for an IPv4 install.
