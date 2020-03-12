@@ -41,7 +41,7 @@ networks:
     forward_mode: bridge
   - name: "{{ baremetal_network_name }}"
     bridge: "{{ baremetal_network_name }}"
-    forward_mode: nat
+    forward_mode: "{{ 'bridge' if lookup('env', 'MANAGE_BR_BRIDGE') == 'n' else 'nat' }}"
     address: "{{ baremetal_network_cidr|nthhost(1) }}"
     netmask: "{{ baremetal_network_cidr|ipaddr('netmask') }}"
     dhcp_range:
