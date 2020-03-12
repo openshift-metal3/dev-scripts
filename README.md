@@ -244,7 +244,22 @@ If you see `ftype=1` then you have d_type support.
 ### Modifying cpu/memory/disk resources
 The default cpu/memory/disk resources when using virtual machines are provided
 by the [vm_setup_vars.yml](vm_setup_vars.yml) file, which sets some dev-scripts
-variables that override the defaults in metal3-dev-env
+variables that override the defaults in metal3-dev-env.
+
+The VM resources can be overridden by setting the follwing environment variables
+in `config_$USER.sh`:
+
+```
+# Change VM resources for masters
+#export MASTER_MEMORY=16384
+#export MASTER_DISK=20
+#export MASTER_VCPU=8
+
+# Change VM resources for workers
+#export WORKER_MEMORY=8192
+#export WORKER_DISK=20
+#export WORKER_VCPU=4
+```
 
 ### Testing custom container images
 dev-scripts uses an openshift release image that contains references to openshift

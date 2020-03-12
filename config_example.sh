@@ -121,3 +121,13 @@ set -x
 # Set a custom hostname format for workers. This is a format string that should
 # include one %d field, which will be replaced with the number of the node.
 #export WORKER_HOSTNAME_FORMAT=worker-%d
+
+# Change VM resources for masters
+#export MASTER_MEMORY=16384
+#export MASTER_DISK=20
+#export MASTER_VCPU=8
+
+# Change VM resources for workers
+#export WORKER_MEMORY=8192
+#export WORKER_DISK=20
+#export WORKER_VCPU=4
