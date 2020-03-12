@@ -79,7 +79,7 @@ else
   export DNS_VIP=${DNS_VIP:-"fd2e:6f44:5dd8:c956:0:0:0:2"}
   export MIRROR_IMAGES=true
 fi
-export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${CLUSTER_NAME}.${BASE_DOMAIN}"}
+export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${BASE_DOMAIN}"}
 
 # Provisioning network information
 export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
