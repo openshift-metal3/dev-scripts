@@ -15,9 +15,10 @@ fi
 
 REPO_NAME=${REPO_NAME:-${2:-openshift}}
 MAO_BRANCH=${MAO_BRANCH:-${3:-master}}
+CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export KUBECONFIG="${SCRIPTDIR}/ocp/auth/kubeconfig"
+export KUBECONFIG="${SCRIPTDIR}/ocp/${CLUSTER_NAME}/auth/kubeconfig"
 
 REPLACEMENT_TEXT="image: ${CUSTOM_MAO_IMAGE}"
 MAO_REPO="raw.githubusercontent.com/${REPO_NAME}/machine-api-operator"
