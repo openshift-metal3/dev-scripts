@@ -59,15 +59,13 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     # hence credentials are different
 
     EXTRACT_DIR=$(mktemp -d "mirror-installer--XXXXXXXXXX")
-
-    TAG=$( echo $OPENSHIFT_RELEASE_IMAGE | sed -e 's/[[:alnum:]/.-]*release://' )
-    MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${TAG}.log
+    MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${OPENSHIFT_RELEASE_TAG}.log
 
     oc adm release mirror \
        --insecure=true \
         -a ${COMBINED_AUTH_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
-        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG} \
+        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
         --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
@@ -75,7 +73,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       oc adm release extract --registry-config "${COMBINED_AUTH_FILE}" \
         --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
-        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${TAG}"
+        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
 
       mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ${OCP_DIR}
     fi
