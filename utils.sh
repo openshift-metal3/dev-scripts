@@ -216,7 +216,7 @@ function generate_templates {
 
     # metal3-config.yaml
     mkdir -p ${OCP_DIR}/deploy
-	  go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
+    go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
 
     if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
       go run metal3-templater.go metal3-config.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" > ${OCP_DIR}/deploy/metal3-config.yaml
@@ -227,6 +227,10 @@ function generate_templates {
 
     # clouds.yaml
     go run metal3-templater.go clouds.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" > clouds.yaml
+    # For compatibility with metal3-dev-env openstackclient.sh
+    # which mounts a config dir into the ironic-client container
+    mkdir -p _clouds_yaml
+    cp clouds.yaml _clouds_yaml
 }
 
 function image_mirror_config {
