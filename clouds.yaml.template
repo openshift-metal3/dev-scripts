@@ -7,3 +7,8 @@ clouds:
     auth_type: none
     baremetal_endpoint_override: {{.ClusterIronicURL}}
     baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}
+  # Only used with metal3-dev/start_local_ironic.sh
+  localhost:
+    auth_type: none
+    baremetal_endpoint_override: http://127.0.0.1:6385
+    baremetal_introspection_endpoint_override: http://127.0.0.1:5050

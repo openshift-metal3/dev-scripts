@@ -74,15 +74,6 @@ if [ $(sudo podman ps | grep -w -e "ironic-api$" -e "ironic-conductor$" -e "iron
     exit 1
 fi
 
-mkdir -p ~/.config/openstack
-cat > ~/.config/openstack/clouds.yaml <<EOF
-clouds:
-  ironic:
-    auth_type: none
-    baremetal_endpoint_override: http://127.0.0.1:6385
-    baremetal_introspection_endpoint_override: http://127.0.0.1:5050
-EOF
-
 sudo cp -f "$WORKING_DIR/ironic_nodes.json" ~/local_nodes.json
 sudo chown $USER ~/local_nodes.json
 
