@@ -34,14 +34,20 @@ for port in 67 69 ; do
     fi
 done
 
-mariadb_password=$(echo $(date;hostname)|sha256sum |cut -c-20)
+# Remove existing pod
+if  sudo podman pod exists ironic-pod ; then
+    sudo podman pod rm ironic-pod -f
+fi
+
+# Create pod
+sudo podman pod create -n ironic-pod
 
 # Start dnsmasq, http, mariadb, and ironic containers using same image
-
 sudo podman run -d --net host --privileged --name dnsmasq  --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/rundnsmasq \
      --env DHCP_RANGE="$DHCP_RANGE" ${IRONIC_IMAGE}
 
+mariadb_password=$(echo $(date;hostname)|sha256sum |cut -c-20)
 sudo podman run -d --net host --privileged --name mariadb --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runmariadb \
      --env MARIADB_PASSWORD=$mariadb_password ${IRONIC_IMAGE}
