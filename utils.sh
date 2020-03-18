@@ -45,6 +45,7 @@ function create_cluster() {
     generate_assets
     custom_ntp
     generate_templates
+    generate_clouds_yaml
 
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
@@ -53,7 +54,7 @@ function create_cluster() {
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
       if ! jq . ${IGNITION_EXTRA}; then
         echo "Error ${IGNITION_EXTRA} not valid json"
-	exit 1
+        exit 1
       fi
       mv ${assets_dir}/master.ign ${assets_dir}/master.ign.orig
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/master.ign.orig | tee ${assets_dir}/master.ign
@@ -224,9 +225,11 @@ function generate_templates {
     else
       echo "OpenShift Version is > 4.3; skipping config map"
     fi
+}
 
+function generate_clouds_yaml {
     # clouds.yaml
-    go run metal3-templater.go clouds.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" > clouds.yaml
+    go run metal3-templater.go clouds.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "${MACHINE_OS_IMAGE_URL:-}" > clouds.yaml
     # For compatibility with metal3-dev-env openstackclient.sh
     # which mounts a config dir into the ironic-client container
     mkdir -p _clouds_yaml

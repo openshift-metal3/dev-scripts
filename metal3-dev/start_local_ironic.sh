@@ -56,6 +56,8 @@ sudo podman run -d --net host --privileged --name mariadb --pod ironic-pod \
 sudo podman run -d --net host --privileged --name ironic-inspector \
      --pod ironic-pod -v $IRONIC_DATA_DIR:/shared "${IRONIC_INSPECTOR_IMAGE}"
 
+generate_clouds_yaml
+
 [ ${IRONIC_INSPECTOR_ONLY:-0} -eq 0 ] || exit 0
 
 sudo podman run -d --net host --privileged --name ironic-conductor --pod ironic-pod \
