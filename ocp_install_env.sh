@@ -124,4 +124,6 @@ pullSecret: |
 sshKey: |
   ${SSH_PUB_KEY}
 EOF
+
+    cp "${outdir}/install-config.yaml" "${outdir}/install-config.yaml.save"
 }
