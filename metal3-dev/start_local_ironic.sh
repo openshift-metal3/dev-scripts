@@ -13,7 +13,7 @@ DHCP_RANGE=${DHCP_RANGE:-"${DHCP_RANGE_START}","${DHCP_RANGE_END}"}
 # Add firewall rules to ensure the IPA ramdisk can reach Ironic and the Inspector API on the host
 
 for port in 5050 6385 ; do
-    if [ "${RHEL8}" = "True" ] ; then
+    if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ]; then
         sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp
         sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp --permanent
     else
@@ -25,7 +25,7 @@ done
 
 # Allow access to dhcp and tftp server for pxeboot
 for port in 67 69 546 547; do
-    if [ "${RHEL8}" = "True" ] ; then
+    if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ]; then
         sudo firewall-cmd --zone=libvirt --add-port=${port}/udp
         sudo firewall-cmd --zone=libvirt --add-port=${port}/udp --permanent
     else
