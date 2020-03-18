@@ -72,8 +72,9 @@ while ! curl --fail --head http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images
 
 # Start dnsmasq, mariadb, and ironic containers using same image
 sudo podman run -d --net host --privileged --name dnsmasq  --pod ironic-pod \
-     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/rundnsmasq \
-     --env DHCP_RANGE="$DHCP_RANGE" ${IRONIC_IMAGE}
+     --env DHCP_RANGE="$DHCP_RANGE" \
+     --env PROVISIONING_INTERFACE="${PROVISIONING_NETWORK_NAME}" \
+     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
 
 mariadb_password=$(echo $(date;hostname)|sha256sum |cut -c-20)
 sudo podman run -d --net host --privileged --name mariadb --pod ironic-pod \
