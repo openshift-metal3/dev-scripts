@@ -6,7 +6,9 @@ source $(dirname $(dirname $0))/logging.sh
 source $(dirname $(dirname $0))/common.sh
 source $(dirname $(dirname $0))/utils.sh
 
-DHCP_RANGE=${DHCP_RANGE:-172.22.0.10,172.22.0.100}
+DHCP_RANGE_START=$(python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$PROVISIONING_NETWORK"', 10))")
+DHCP_RANGE_END=$(python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$PROVISIONING_NETWORK"', 100))")
+DHCP_RANGE=${DHCP_RANGE:-"${DHCP_RANGE_START}","${DHCP_RANGE_END}"}
 
 # Add firewall rules to ensure the IPA ramdisk can reach Ironic and the Inspector API on the host
 
