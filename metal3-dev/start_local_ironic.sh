@@ -15,8 +15,8 @@ for port in 5050 6385 ; do
         sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp
         sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp --permanent
     else
-        if ! sudo iptables -C INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
-            sudo iptables -I INPUT -i provisioning -p tcp -m tcp --dport $port -j ACCEPT
+        if ! sudo iptables -C INPUT -i "${PROVISIONING_NETWORK_NAME}" -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
+            sudo iptables -I INPUT -i "${PROVISIONING_NETWORK_NAME}" -p tcp -m tcp --dport $port -j ACCEPT
         fi
     fi
 done
@@ -28,8 +28,8 @@ for port in 67 69 ; do
         sudo firewall-cmd --zone=libvirt --add-port=${port}/udp
         sudo firewall-cmd --zone=libvirt --add-port=${port}/udp --permanent
     else
-        if ! sudo iptables -C INPUT -i provisioning -p udp --dport $port -j ACCEPT 2>/dev/null ; then
-            sudo iptables -I INPUT -i provisioning -p udp --dport $port -j ACCEPT
+        if ! sudo iptables -C INPUT -i "${PROVISIONING_NETWORK_NAME}" -p udp --dport $port -j ACCEPT 2>/dev/null ; then
+            sudo iptables -I INPUT -i "${PROVISIONING_NETWORK_NAME}" -p udp --dport $port -j ACCEPT
         fi
     fi
 done
@@ -54,6 +54,7 @@ sudo podman run -d --net host --privileged --name mariadb --pod ironic-pod \
 
 # Start Ironic Inspector
 sudo podman run -d --net host --privileged --name ironic-inspector \
+     --env PROVISIONING_INTERFACE="${PROVISIONING_NETWORK_NAME}" \
      --pod ironic-pod -v $IRONIC_DATA_DIR:/shared "${IRONIC_INSPECTOR_IMAGE}"
 
 generate_clouds_yaml
@@ -63,12 +64,14 @@ generate_clouds_yaml
 sudo podman run -d --net host --privileged --name ironic-conductor --pod ironic-pod \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
+     --env PROVISIONING_INTERFACE="${PROVISIONING_NETWORK_NAME}" \
      --entrypoint /bin/runironic-conductor \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE}
 
 sudo podman run -d --net host --privileged --name ironic-api --pod ironic-pod \
      --env MARIADB_PASSWORD=$mariadb_password \
      --entrypoint /bin/runironic-api \
+     --env PROVISIONING_INTERFACE="${PROVISIONING_NETWORK_NAME}" \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IMAGE}
 
 # Make sure Ironic is up
