@@ -24,8 +24,7 @@ for port in 5050 6385 ; do
 done
 
 # Allow access to dhcp and tftp server for pxeboot
-
-for port in 67 69 ; do
+for port in 67 69 546 547; do
     if [ "${RHEL8}" = "True" ] ; then
         sudo firewall-cmd --zone=libvirt --add-port=${port}/udp
         sudo firewall-cmd --zone=libvirt --add-port=${port}/udp --permanent
