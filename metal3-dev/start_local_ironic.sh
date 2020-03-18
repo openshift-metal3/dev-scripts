@@ -12,7 +12,7 @@ DHCP_RANGE=${DHCP_RANGE:-"${DHCP_RANGE_START}","${DHCP_RANGE_END}"}
 
 # Add firewall rules to ensure the IPA ramdisk can reach Ironic and the Inspector API on the host
 
-for port in 5050 6385 ; do
+for port in 80 5050 6385 ; do
     if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ]; then
         sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp
         sudo firewall-cmd --zone=libvirt --add-port=${port}/tcp --permanent
@@ -43,7 +43,34 @@ fi
 # Create pod
 sudo podman pod create -n ironic-pod
 
-# Start dnsmasq, http, mariadb, and ironic containers using same image
+# Download IPA images
+sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_NAME} --pod ironic-pod \
+     --env PROVISIONING_INTERFACE=${PROVISIONING_NETWORK_NAME} \
+     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
+
+sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
+     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
+
+# Start BMC emulators
+if [ "$NODES_PLATFORM" = "libvirt" ]; then
+    sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
+         -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+         "${VBMC_IMAGE}"
+
+    sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
+         -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+         "${SUSHY_TOOLS_IMAGE}"
+fi
+
+# Wait for the downloader container to finish
+sudo podman wait -i 1000 ipa-downloader
+
+# Wait for images to be downloaded/ready
+while ! curl --fail --head http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/ironic-python-agent.initramfs ; do sleep 1; done
+while ! curl --fail --head http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/ironic-python-agent.tar.headers ; do sleep 1; done
+while ! curl --fail --head http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/ironic-python-agent.kernel ; do sleep 1; done
+
+# Start dnsmasq, mariadb, and ironic containers using same image
 sudo podman run -d --net host --privileged --name dnsmasq  --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/rundnsmasq \
      --env DHCP_RANGE="$DHCP_RANGE" ${IRONIC_IMAGE}
