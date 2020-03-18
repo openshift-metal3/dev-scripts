@@ -44,7 +44,7 @@ echo /usr/lib64/nosync/nosync.so | sudo tee -a /etc/ld.so.preload
 
 # Use /opt for data we want to keep between runs
 # TODO: /opt has 1.1T but we'll eventually need something to clean up old data
-sudo mkdir -p /opt/data/dnfcache /opt/data/imagecache /home/dev-scripts/ironic/html/images
+sudo mkdir -p /opt/data/dnfcache /opt/data/imagecache /home/dev-scripts/ironic/html/images /opt/data/occache /home/dev-scripts/oc
 
 # Make dnf store its cache on /opt so packages don't need to be downloaded for each job
 echo keepcache=True | sudo tee -a /etc/dnf/dnf.conf
@@ -52,6 +52,9 @@ sudo mount -o bind /opt/data/dnfcache /var/cache/dnf
 
 # Save the images directory between jobs
 sudo mount -o bind /opt/data/imagecache /home/dev-scripts/ironic/html/images
+# Save the images directory between jobs
+sudo mount -o bind /opt/data/occache /home/dev-scripts/oc
+
 sudo chown -R notstack /home/dev-scripts
 
 # Point at our CI custom config file (contains the PULL_SECRET)
