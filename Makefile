@@ -20,6 +20,9 @@ ironic:
 ocp_run:
 	./06_create_cluster.sh
 
+gather:
+	./must_gather.sh
+
 clean: ocp_cleanup ironic_cleanup host_cleanup
 
 ocp_cleanup:

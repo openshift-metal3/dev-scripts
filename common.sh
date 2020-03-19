@@ -208,7 +208,7 @@ export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
 export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
 export VBMC_MAX_PORT=$((${VBMC_BASE_PORT} + ${NUM_MASTERS} + ${NUM_WORKERS} - 1))
 
-export KUBECONFIG="${SCRIPTDIR}/ocp/auth/kubeconfig"
+export KUBECONFIG="${SCRIPTDIR}/ocp/$CLUSTER_NAME/auth/kubeconfig"
 
 # Use a cloudy ssh that doesn't do Host Key checking
 export SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
