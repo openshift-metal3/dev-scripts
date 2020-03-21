@@ -3,8 +3,8 @@
 # Run the baremetal operator locally in "demo" mode.
 #
 # This script assumes that you have ~/.kube/config set up, which may
-# mean copying ocp/auth/kubeconfig after running the scripts to build
-# a dev environment.
+# mean copying ocp/$CLUSTER_NAME/auth/kubeconfig after running the
+# scripts to build a dev environment.
 
 set -xe
 

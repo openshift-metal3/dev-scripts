@@ -104,7 +104,7 @@ didn’t build a custom CAPBM.
 Update the `kubeconfig` path to reflect your own environment.
 
 ```sh
-bin/machine-api-operator start --images-json=custom-images.json --kubeconfig=/home/${USER}/dev-scripts/ocp/auth/kubeconfig -v 4
+bin/machine-api-operator start --images-json=custom-images.json --kubeconfig=/home/${USER}/dev-scripts/ocp/$CLUSTER_NAME/auth/kubeconfig -v 4
 ```
 
 ## Run a custom baremetal-operator
