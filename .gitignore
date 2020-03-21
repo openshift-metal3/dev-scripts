@@ -7,11 +7,6 @@ config_*.sh
 clouds.yaml
 _clouds_yaml
 
-release/release_config_*.sh
-!release/release_config_example.sh
-release/release-kubeconfig
-release/release-pullsecret
-
 assets/generated
 
 # Conditionally created for appropriate environments
