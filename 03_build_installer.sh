@@ -15,6 +15,7 @@ mkdir -p $OCP_DIR
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
   # Extract openshift-install from the release image
   extract_installer "${OPENSHIFT_RELEASE_IMAGE}" $OCP_DIR
+  extract_rhcos_json "${OPENSHIFT_RELEASE_IMAGE}" $OCP_DIR
 else
   # Clone and build the installer from source
   clone_installer
