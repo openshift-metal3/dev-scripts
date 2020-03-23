@@ -39,6 +39,27 @@ function extract_installer() {
     extract_command openshift-baremetal-install "$1" "$2"
 }
 
+function extract_rhcos_json() {
+    local release_image
+    local outdir
+
+    release_image="$1"
+    outdir="$2"
+    pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
+
+    echo "${PULL_SECRET}" > "${pullsecret_file}"
+
+    baremetal_image=$(oc adm release info --image-for=baremetal-installer --registry-config "$pullsecret_file" "$release_image")
+    baremetal_container=$(podman create --authfile "$pullsecret_file" "$baremetal_image")
+
+    # This is OK to fail as rhcos.json isn't available in every release,
+    # we'll download it from github if it's not available
+    podman cp "$baremetal_container":/var/cache/rhcos.json "$outdir" || true
+
+    podman rm -f "$baremetal_container"
+    rm -rf "${pullsecret_file}"
+}
+
 function clone_installer() {
   # Clone repo, if not already present
   if [[ ! -d $OPENSHIFT_INSTALL_PATH ]]; then
@@ -52,6 +73,7 @@ function build_installer() {
   cd $OPENSHIFT_INSTALL_PATH
   TAGS="libvirt baremetal" hack/build.sh
   popd
+  cp "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" "$OCP_DIR"
 }
 
 # FIXME(stbenjam): This is not available in 4.3 (yet)
