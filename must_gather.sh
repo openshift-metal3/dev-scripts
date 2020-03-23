@@ -16,7 +16,7 @@ if [ -n "${MIRROR_IMAGES}" ]; then
   pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
   echo "${PULL_SECRET}" > "${pullsecret_file}"
 
-  OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$pullsecret_file" "$OPENSHIFT_RELEASE_IMAGE" | jq -r ".config.config.Labels.\"io.openshift.release\"")
+  OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$pullsecret_file" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".config.config.Labels.\"io.openshift.release\"")
   MUST_GATHER_IMAGE="--image=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_VERSION}-must-gather"
 else
   MUST_GATHER_IMAGE=""
