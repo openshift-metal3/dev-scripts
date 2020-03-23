@@ -2,7 +2,7 @@ if [[ -f "$OCP_DIR/rhcos.json" ]]; then
   MACHINE_OS_IMAGE_JSON=$(cat "$OCP_DIR/rhcos.json")
 else
 
-	if [[ "$JOB_NAME" =~ "openshift-installer" ]]; then
+	if [[ -v JOB_NAME ]] && [[ "$JOB_NAME" =~ "openshift-installer" ]]; then
 		# Get the SHA from the PR if we're in CI
   	OPENSHIFT_INSTALL_COMMIT=${PULL_PULL_SHA:-$(echo "$JOB_SPEC" | jq -r '.refs.pulls[0].sha')}
 	else
