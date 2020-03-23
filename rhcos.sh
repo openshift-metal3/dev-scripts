@@ -2,13 +2,13 @@ if [[ -f "$OCP_DIR/rhcos.json" ]]; then
   MACHINE_OS_IMAGE_JSON=$(cat "$OCP_DIR/rhcos.json")
 else
 
-	if [[ -v JOB_NAME ]] && [[ "$JOB_NAME" =~ "openshift-installer" ]]; then
-		# Get the SHA from the PR if we're in CI
-  	OPENSHIFT_INSTALL_COMMIT=${PULL_PULL_SHA:-$(echo "$JOB_SPEC" | jq -r '.refs.pulls[0].sha')}
-	else
-  	# Get the git commit that the openshift installer was built from
-	  OPENSHIFT_INSTALL_COMMIT=$($OPENSHIFT_INSTALLER version | grep commit | cut -d' ' -f4)
-	fi
+  if [[ -v JOB_NAME ]] && [[ "$JOB_NAME" =~ "openshift-installer" ]]; then
+    # Get the SHA from the PR if we're in CI
+    OPENSHIFT_INSTALL_COMMIT=${PULL_PULL_SHA:-$(echo "$JOB_SPEC" | jq -r '.refs.pulls[0].sha')}
+  else
+    # Get the git commit that the openshift installer was built from
+    OPENSHIFT_INSTALL_COMMIT=$($OPENSHIFT_INSTALLER version | grep commit | cut -d' ' -f4)
+  fi
 
   # Get the git commit that the openshift installer was built from
   OPENSHIFT_INSTALL_COMMIT=$($OPENSHIFT_INSTALLER version | grep commit | cut -d' ' -f4)
