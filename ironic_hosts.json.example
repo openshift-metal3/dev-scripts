@@ -18,7 +18,8 @@
       }],
       "properties": {
         "local_gb": "50",
-        "cpu_arch": "x86_64"
+        "cpu_arch": "x86_64",
+        "boot_mode": "UEFI"
       }
     },
      {
@@ -38,7 +39,8 @@
       }],
       "properties": {
         "local_gb": "50",
-        "cpu_arch": "x86_64"
+        "cpu_arch": "x86_64",
+        "boot_mode": "legacy"
       }
     },
      {
