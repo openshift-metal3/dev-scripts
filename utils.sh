@@ -355,7 +355,7 @@ EOF
             -v ${REGISTRY_DIR}/certs:/certs:z \
             -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/${REGISTRY_CRT} \
             -e REGISTRY_HTTP_TLS_KEY=/certs/${REGISTRY_KEY} \
-            docker.io/registry:latest
+            ${DOCKER_REGISTRY_IMAGE}
     fi
 
 }

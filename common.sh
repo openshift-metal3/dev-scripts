@@ -208,6 +208,9 @@ export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
 export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
 export VBMC_MAX_PORT=$((${VBMC_BASE_PORT} + ${NUM_MASTERS} + ${NUM_WORKERS} - 1))
 
+# Which docker registry image should we use?
+export DOCKER_REGISTRY_IMAGE=${DOCKER_REGISTRY_IMAGE:-"docker.io/registry:latest"}
+
 export KUBECONFIG="${SCRIPTDIR}/ocp/$CLUSTER_NAME/auth/kubeconfig"
 
 # Use a cloudy ssh that doesn't do Host Key checking
