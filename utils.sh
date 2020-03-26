@@ -49,6 +49,10 @@ function create_cluster() {
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
+    if [ ! -z "${ASSETS_EXTRA_FOLDER:-}" ]; then
+      cp -rf ${ASSETS_EXTRA_FOLDER}/* ${assets_dir}/openshift
+    fi
+
     if [ ! -z "${IGNITION_EXTRA:-}" ]; then
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
       if ! jq . ${IGNITION_EXTRA}; then

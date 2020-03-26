@@ -71,6 +71,8 @@ EXTERNAL_SUBNET="192.168.111.0/24"
 # merged with the installer provided config, can be used to modify
 # the default nic configuration etc
 export IGNITION_EXTRA=extra.ign
+# Folder where to copy extra manifests for the cluster deployment
+export ASSETS_EXTRA_FOLDER=local_file_path
 ```
 
 ## Installation
