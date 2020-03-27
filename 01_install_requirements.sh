@@ -11,8 +11,7 @@ source ocp_install_env.sh
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
   sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
-  METAL3_DEV_ENV="${REPO_PATH}/metal3-dev-env/"
-  pushd ${METAL3_DEV_ENV}
+  pushd ${METAL3_DEV_ENV_PATH}
   # Pin to a specific metal3-dev-env commit to ensure we catch breaking
   # changes before they're used by everyone and CI.
   # TODO -- come up with a plan for continuously updating this
@@ -22,7 +21,7 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   popd
 fi
 
-pushd ${METAL3_DEV_ENV}
+pushd ${METAL3_DEV_ENV_PATH}
 ./centos_install_requirements.sh
 ansible-galaxy install -r vm-setup/requirements.yml
 ANSIBLE_FORCE_COLOR=true ansible-playbook \

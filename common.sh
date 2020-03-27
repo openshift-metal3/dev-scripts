@@ -292,10 +292,11 @@ BAREMETALHOSTS_FILE=${BAREMETALHOSTS_FILE:-"${OCP_DIR}/baremetalhosts.json"}
 # metal3-dev-env, otherwise it's cloned to $WORKING_DIR
 export METAL3_DEV_ENV=${METAL3_DEV_ENV:-}
 if [ -z "${METAL3_DEV_ENV}" ]; then
-  export VM_SETUP_PATH="${WORKING_DIR}/metal3-dev-env/vm-setup"
+  export METAL3_DEV_ENV_PATH="${WORKING_DIR}/metal3-dev-env"
 else
-  export VM_SETUP_PATH="${METAL3_DEV_ENV}/vm-setup"
+  export METAL3_DEV_ENV_PATH="${METAL3_DEV_ENV}"
 fi
+export VM_SETUP_PATH="${METAL3_DEV_ENV_PATH}/vm-setup"
 
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"1"}
