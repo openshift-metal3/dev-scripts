@@ -16,7 +16,7 @@ other components of OpenShift via support for a baremetal platform type.
 - file system that supports d_type (see Troubleshooting section for more information)
 - ideally on a bare metal host with at least 64G of RAM
 - run as a user with passwordless sudo access
-- get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret
+- get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret
 - hostnames for masters and workers must be in the format XX-master-# (e.g. openshift-master-0), or XX-worker-# (e.g. openshift-worker-0)
 
 # Instructions

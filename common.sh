@@ -278,7 +278,7 @@ esac
 # avoid "-z $PULL_SECRET" to ensure the secret is not logged
 if [ ${#PULL_SECRET} = 0 ]; then
   echo "No valid PULL_SECRET set in ${CONFIG}"
-  echo "Get a valid pull secret (json string) from https://cloud.openshift.com/clusters/install#pull-secret"
+  echo "Get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret"
   exit 1
 fi
 
