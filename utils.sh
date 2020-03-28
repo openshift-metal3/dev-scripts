@@ -276,22 +276,13 @@ function setup_local_registry() {
     sudo chown -R $USER:$USER ${REGISTRY_DIR}
 
     pushd $REGISTRY_DIR/certs
-    SSL_HOST_NAME="${LOCAL_REGISTRY_DNS_NAME}"
-
-    if ipcalc -c $SSL_HOST_NAME; then
-        SSL_EXT_8="subjectAltName = IP:${SSL_HOST_NAME}"
-        SSL_EXT_7="subjectAltName = IP:${SSL_HOST_NAME}"
-    else
-        SSL_EXT_8="subjectAltName = DNS:${SSL_HOST_NAME}"
-        SSL_EXT_7="subjectAltName = DNS:${SSL_HOST_NAME}"
-    fi
 
     #
     # registry key and cert are generated if they don't exist
     #
     # NOTE(bnemec): When making changes to the certificate configuration,
     # increment the number in this filename and the REGISTRY_CRT value in common.sh
-    REGISTRY_KEY=registry.1.key
+    REGISTRY_KEY=registry.2.key
     restart_registry=0
     if [[ ! -s ${REGISTRY_DIR}/certs/${REGISTRY_KEY} ]]; then
         restart_registry=1
@@ -300,35 +291,38 @@ function setup_local_registry() {
 
     if [[ ! -s ${REGISTRY_DIR}/certs/${REGISTRY_CRT} ]]; then
         restart_registry=1
-        if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ]; then
-            openssl req -x509 \
-                -key ${REGISTRY_DIR}/certs/${REGISTRY_KEY} \
-                -out ${REGISTRY_DIR}/certs/${REGISTRY_CRT} \
-                -days 365 \
-                -addext "${SSL_EXT_8}" \
-                -subj "/C=US/ST=NC/L=Raleigh/O=Test Company/OU=Testing/CN=${SSL_HOST_NAME}"
-        else
-            SSL_TMP_CONF=$(mktemp 'my-ssl-conf.XXXXXX')
-            cat > ${SSL_TMP_CONF} <<EOF
+
+        # Format names as DNS:name1,DNS:name2
+        SUBJECT_ALT_NAME="DNS:$(echo $ALL_REGISTRY_DNS_NAMES | sed 's/ /,DNS:/g')"
+
+        SSL_CONF=${REGISTRY_DIR}/certs/openssl.cnf
+        cat > ${SSL_CONF} <<EOF
 [req]
 distinguished_name = req_distinguished_name
+prompt = no
 
 [req_distinguished_name]
-CN = ${SSL_HOST_NAME}
+C = US
+ST = NC
+L = Raleigh
+O = Test Company
+OU = Testing
+CN = ${BASE_DOMAIN}
 
 [SAN]
 basicConstraints=CA:TRUE,pathlen:0
-${SSL_EXT_7}
+subjectAltName = ${SUBJECT_ALT_NAME}
 EOF
 
-            openssl req -x509 \
+        openssl req -x509 \
                 -key ${REGISTRY_DIR}/certs/${REGISTRY_KEY} \
                 -out  ${REGISTRY_DIR}/certs/${REGISTRY_CRT} \
                 -days 365 \
-                -config ${SSL_TMP_CONF} \
-                -extensions SAN \
-                -subj "/C=US/ST=NC/L=Raleigh/O=Test Company/OU=Testing/CN=${SSL_HOST_NAME}"
-        fi
+                -config ${SSL_CONF} \
+                -extensions SAN
+
+        # Dump the certificate details to the log
+        openssl x509 -in ${REGISTRY_DIR}/certs/${REGISTRY_CRT} -text
     fi
 
     popd
