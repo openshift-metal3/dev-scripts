@@ -10,8 +10,8 @@ function extract_command() {
     release_image="$2"
     outdir="$3"
 
-    extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
-    pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
+    extract_dir=$(mktemp --tmpdir -d "installer--XXXXXXXXXX")
+    pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $extract_dir $pullsecret_file"
 
     echo "${PULL_SECRET}" > "${pullsecret_file}"
@@ -22,7 +22,7 @@ function extract_command() {
 
 # Let's always grab the `oc` from the release we're using.
 function extract_oc() {
-    extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
+    extract_dir=$(mktemp --tmpdir -d "installer--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $extract_dir"
     extract_command oc "$1" "${extract_dir}"
     sudo mv "${extract_dir}/oc" /usr/local/bin
@@ -44,7 +44,7 @@ function extract_rhcos_json() {
 
     release_image="$1"
     outdir="$2"
-    pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
+    pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $pullsecret_file"
 
     echo "${PULL_SECRET}" > "${pullsecret_file}"

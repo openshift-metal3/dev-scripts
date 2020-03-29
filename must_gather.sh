@@ -13,7 +13,7 @@ fi
 # must-gather doesn't correctly work in disconnected environment, so we
 # have to calculcate the pullspec for the image and pass it to oc
 if [ -n "${MIRROR_IMAGES}" ]; then
-  pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
+  pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
   echo "${PULL_SECRET}" > "${pullsecret_file}"
 
   OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$pullsecret_file" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".config.config.Labels.\"io.openshift.release\"")
