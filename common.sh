@@ -28,6 +28,10 @@ export MOBY_DISABLE_PIGZ=true
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=`whoami`
 
+function error () {
+    echo $@ 1>&2
+}
+
 # Get variables from the config file
 if [ -z "${CONFIG:-}" ]; then
     # See if there's a config_$USER.sh in the SCRIPTDIR
@@ -35,13 +39,12 @@ if [ -z "${CONFIG:-}" ]; then
         echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh"
         CONFIG="${SCRIPTDIR}/config_${USER}.sh"
     else
-        echo "Please run with a configuration environment set."
-        echo "eg CONFIG=config_example.sh ./01_all_in_one.sh"
+        error "Please run with a configuration environment set."
+        error "eg CONFIG=config_example.sh ./01_all_in_one.sh"
         exit 1
     fi
 fi
 source $CONFIG
-
 
 export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 
@@ -217,19 +220,19 @@ export SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o C
 # Connect to system libvirt
 export LIBVIRT_DEFAULT_URI=qemu:///system
 if [ "$USER" != "root" -a "${XDG_RUNTIME_DIR:-}" == "/run/user/0" ] ; then
-    echo "Please use a non-root user, WITH a login shell (e.g. su - USER)"
+    error "Please use a non-root user, WITH a login shell (e.g. su - USER)"
     exit 1
 fi
 
 # Check if sudo privileges without password
 if ! sudo -n uptime &> /dev/null ; then
-  echo "sudo without password is required"
+  error "sudo without password is required"
   exit 1
 fi
 
 # Check OS
 if [[ ! $(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"') =~ ^(centos|rhel)$ ]]; then
-  echo "Unsupported OS"
+  error "Unsupported OS"
   exit 1
 fi
 
@@ -237,26 +240,26 @@ fi
 VER=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
 if [[ ${VER} -eq 7 ]]; then
   if [[ "${ALLOW_CENTOS7}" -ne "yes" ]]; then
-    echo "*****************************************************"
-    echo "*****************************************************"
-    echo "*****************************************************"
-    echo "***                                               ***"
-    echo "*** CentOS 7 Support has been deprecated and will ***"
-    echo "*** be removed in the near future.                ***"
-    echo "***                                               ***"
-    echo "*** Please upgrade your dev-scripts system to     ***"
-    echo "*** CentOS 8 or RHEL 8.                           ***"
-    echo "***                                               ***"
-    echo "*** To temporarily continue allowing CentOS 7,    ***"
-    echo "*** set ALLOW_CENTOS7=yes in your config file.    ***"
-    echo "***                                               ***"
-    echo "*****************************************************"
-    echo "*****************************************************"
-    echo "*****************************************************"
+    error "*****************************************************"
+    error "*****************************************************"
+    error "*****************************************************"
+    error "***                                               ***"
+    error "*** CentOS 7 Support has been deprecated and will ***"
+    error "*** be removed in the near future.                ***"
+    error "***                                               ***"
+    error "*** Please upgrade your dev-scripts system to     ***"
+    error "*** CentOS 8 or RHEL 8.                           ***"
+    error "***                                               ***"
+    error "*** To temporarily continue allowing CentOS 7,    ***"
+    error "*** set ALLOW_CENTOS7=yes in your config file.    ***"
+    error "***                                               ***"
+    error "*****************************************************"
+    error "*****************************************************"
+    error "*****************************************************"
     exit 1
   fi
 elif [[ ${VER} -ne 8 ]]; then
-  echo "Required CentOS 8 / RHEL 8"
+  error "Required CentOS 8 / RHEL 8"
   exit 1
 fi
 
@@ -285,25 +288,25 @@ case ${FSTYPE} in
   ;;
   'xfs')
     if [[ $(xfs_info ${FILESYSTEM} | grep -q "ftype=1") ]]; then
-      echo "XFS filesystem must have ftype set to 1"
+      error "XFS filesystem must have ftype set to 1"
       exit 1
     fi
   ;;
   *)
-    echo "Filesystem not supported"
+    error "Filesystem not supported"
     exit 1
   ;;
 esac
 
 # avoid "-z $PULL_SECRET" to ensure the secret is not logged
 if [ ${#PULL_SECRET} = 0 ]; then
-  echo "No valid PULL_SECRET set in ${CONFIG}"
-  echo "Get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret"
+  error "No valid PULL_SECRET set in ${CONFIG}"
+  error "Get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret"
   exit 1
 fi
 
 if [ ! -d "$WORKING_DIR" ]; then
-  echo "Creating Working Dir"
+  error "Creating Working Dir"
   sudo mkdir -p "$WORKING_DIR"
   sudo chown "${USER}:${USER}" "$WORKING_DIR"
   chmod 755 "$WORKING_DIR"
@@ -312,14 +315,14 @@ fi
 mkdir -p "$WORKING_DIR/$CLUSTER_NAME"
 
 if [ ! -d "$IRONIC_IMAGES_DIR" ]; then
-  echo "Creating Ironic Images Dir"
+  error "Creating Ironic Images Dir"
   sudo mkdir -p "$IRONIC_IMAGES_DIR"
 fi
 
 # Previously the directory was owned by root, we need to alter
 # permissions to be owned by the user running dev-scripts.
 if [ ! -f "$IRONIC_IMAGES_DIR/.permissions" ]; then
-  echo "Resetting permissions on Ironic Images Dir..."
+  error "Resetting permissions on Ironic Images Dir..."
   sudo chown -R "${USER}:${USER}" "$IRONIC_DATA_DIR"
   sudo find "$IRONIC_DATA_DIR" -type d -print0 | xargs -0 chmod 755
   sudo chmod -R +r "$IRONIC_DATA_DIR"
