@@ -231,6 +231,10 @@ if [[ "$OPENSHIFT_VERSION" != "4.3" ]]; then
   export BMC_DRIVER=${BMC_DRIVER:-redfish}
 fi
 
+# Both utils.sh and 04_setup_ironic.sh use this log file, so set the
+# name one time. Users should not override this.
+export MIRROR_LOG_FILE=${REGISTRY_DIR}/${CLUSTER_NAME}-image_mirror-${OPENSHIFT_RELEASE_TAG}.log
+
 # Switch Container Images to upstream, Installer defaults these to the openshift version
 if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
     export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:master"}

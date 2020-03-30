@@ -61,9 +61,8 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     # pull from one registry and push to local one
     # hence credentials are different
 
-    EXTRACT_DIR=$(mktemp -d "mirror-installer--XXXXXXXXXX")
+    EXTRACT_DIR=$(mktemp --tmpdir -d "mirror-installer--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $EXTRACT_DIR"
-    MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${OPENSHIFT_RELEASE_TAG}.log
 
     oc adm release mirror \
        --insecure=true \
