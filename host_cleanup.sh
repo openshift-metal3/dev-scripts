@@ -20,6 +20,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
+    -e "nodes_file=$NODES_FILE" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/teardown-playbook.yml
 
