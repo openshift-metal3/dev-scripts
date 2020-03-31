@@ -359,3 +359,9 @@ EOF
     fi
 
 }
+
+_tmpfiles=
+function removetmp(){
+    [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
+}
+trap removetmp EXIT

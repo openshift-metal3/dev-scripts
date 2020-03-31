@@ -12,21 +12,20 @@ function extract_command() {
 
     extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
     pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $extract_dir $pullsecret_file"
 
     echo "${PULL_SECRET}" > "${pullsecret_file}"
     oc adm release extract --registry-config "${pullsecret_file}" --command=$cmd --to "${extract_dir}" ${release_image}
 
     mv "${extract_dir}/${cmd}" "${outdir}"
-    rm -rf "${extract_dir}"
-    rm -rf "${pullsecret_file}"
 }
 
 # Let's always grab the `oc` from the release we're using.
 function extract_oc() {
     extract_dir=$(mktemp -d "installer--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $extract_dir"
     extract_command oc "$1" "${extract_dir}"
     sudo mv "${extract_dir}/oc" /usr/local/bin
-    rm -rf "${extract_dir}"
 }
 
 function extract_installer() {
@@ -46,6 +45,7 @@ function extract_rhcos_json() {
     release_image="$1"
     outdir="$2"
     pullsecret_file=$(mktemp "pullsecret--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $pullsecret_file"
 
     echo "${PULL_SECRET}" > "${pullsecret_file}"
 
@@ -57,7 +57,6 @@ function extract_rhcos_json() {
     podman cp "$baremetal_container":/var/cache/rhcos.json "$outdir" || true
 
     podman rm -f "$baremetal_container"
-    rm -rf "${pullsecret_file}"
 }
 
 function clone_installer() {
