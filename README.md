@@ -12,7 +12,7 @@ other components of OpenShift via support for a baremetal platform type.
 
 # Pre-requisites
 
-- CentOS 7.5 or greater (installed from 7.4 or newer) or RHEL8 host
+- CentOS 8 or RHEL 8 host
 - file system that supports d_type (see Troubleshooting section for more information)
 - ideally on a bare metal host with at least 64G of RAM
 - run as a user with passwordless sudo access
