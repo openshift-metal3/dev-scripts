@@ -86,8 +86,12 @@ export ALL_REGISTRY_DNS_NAMES=${ALL_REGISTRY_DNS_NAMES:-${LOCAL_REGISTRY_DNS_NAM
 
 # Provisioning network information
 export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
-
 export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
+
+# Hypervisor details
+export REMOTE_LIBVIRT=${REMOTE_LIBVIRT:-0}
+export PROVISIONING_HOST_USER=${PROVISIONING_HOST_USER:-$USER}
+
 # ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
 # instead to get the first address in the network:
 export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}
