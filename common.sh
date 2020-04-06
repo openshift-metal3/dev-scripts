@@ -32,7 +32,7 @@ USER=`whoami`
 if [ -z "${CONFIG:-}" ]; then
     # See if there's a config_$USER.sh in the SCRIPTDIR
     if [ -f ${SCRIPTDIR}/config_${USER}.sh ]; then
-        echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh"
+        echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh" 1>&2
         CONFIG="${SCRIPTDIR}/config_${USER}.sh"
     else
         echo "Please run with a configuration environment set."
@@ -79,7 +79,10 @@ else
   export DNS_VIP=${DNS_VIP:-"fd2e:6f44:5dd8:c956:0:0:0:2"}
   export MIRROR_IMAGES=true
 fi
+# The DNS name for the registry that this cluster should use.
 export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${CLUSTER_NAME}.${BASE_DOMAIN}"}
+# All DNS names for the registry, to be included in the certificate.
+export ALL_REGISTRY_DNS_NAMES=${ALL_REGISTRY_DNS_NAMES:-${LOCAL_REGISTRY_DNS_NAME}}
 
 # Provisioning network information
 export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
@@ -100,8 +103,8 @@ export LOCAL_REGISTRY_PORT=${LOCAL_REGISTRY_PORT:-"5000"}
 export REGISTRY_USER=${REGISTRY_USER:-ocp-user}
 export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
 export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
-export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror.json}
-export REGISTRY_CRT=registry.1.crt
+export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror-${CLUSTER_NAME}.json}
+export REGISTRY_CRT=registry.2.crt
 
 # Set this variable to build the installer from source
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
