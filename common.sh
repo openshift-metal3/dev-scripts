@@ -68,7 +68,6 @@ then
   export CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX:-"23"}
   export SERVICE_SUBNET=${SERVICE_SUBNET:-"172.30.0.0/16"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
-  export DNS_VIP=${DNS_VIP:-"192.168.111.2"}
 else
   export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"fd00:1101::0/64"}
   export EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-"fd2e:6f44:5dd8:c956::/120"}
@@ -76,9 +75,9 @@ else
   export CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX:-"64"}
   export SERVICE_SUBNET=${SERVICE_SUBNET:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
-  export DNS_VIP=${DNS_VIP:-"fd2e:6f44:5dd8:c956:0:0:0:2"}
   export MIRROR_IMAGES=true
 fi
+export DNS_VIP=${DNS_VIP:-$(python -c "import ipaddress; print(ipaddress.ip_network(u\"$EXTERNAL_SUBNET\")[2])")}
 # The DNS name for the registry that this cluster should use.
 export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${CLUSTER_NAME}.${BASE_DOMAIN}"}
 # All DNS names for the registry, to be included in the certificate.
