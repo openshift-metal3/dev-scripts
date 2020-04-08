@@ -301,4 +301,3 @@ The following adds an additional file `/etc/test` as an example:
 ```
 export IGNITION_EXTRA="ignition/file_example.ign"
 ``` 
-

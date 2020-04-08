@@ -130,3 +130,10 @@ set -x
 #export WORKER_MEMORY=8192
 #export WORKER_DISK=20
 #export WORKER_VCPU=4
+
+##
+## Multi-cluster/Hive variables
+##
+
+# Image reference for installing hive. See hive_install.sh.
+#export HIVE_DEPLOY_IMAGE="registry.svc.ci.openshift.org/openshift/hive-v4.0:hive"
