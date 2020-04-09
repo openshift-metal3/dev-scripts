@@ -24,8 +24,6 @@ flavors:
 
 # For OpenShift we create some additional DNS records for the API/DNS VIPs
 baremetal_network_cidr: "{{ lookup('env', 'EXTERNAL_SUBNET') | default('192.168.111.0/24', true) }}"
-baremetal_network_cidr_v4: "{{ baremetal_network_cidr|ipv4 }}"
-baremetal_network_cidr_v6: "{{ baremetal_network_cidr|ipv6 }}"
 dns_extrahosts:
   - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
     hostnames:
