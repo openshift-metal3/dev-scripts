@@ -13,7 +13,10 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
   METAL3_DEV_ENV="${REPO_PATH}/metal3-dev-env/"
 fi
+
 pushd ${METAL3_DEV_ENV}
+# FIXME: Pin to aafbb89df8df88bc3ecbfe59592149c929432515
+git reset aafbb89df8df88bc3ecbfe59592149c929432515 --hard
 ./centos_install_requirements.sh
 ansible-galaxy install -r vm-setup/requirements.yml
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
