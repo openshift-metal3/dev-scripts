@@ -17,8 +17,10 @@ sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
 
 # Cleanup ssh keys for baremetal network
 if [ -f $HOME/.ssh/known_hosts ]; then
-    EXT_SUB=$(echo "${EXTERNAL_SUBNET}" | cut -d"/" -f1 | sed "s/0$//")
-    sed -i "/^${EXT_SUB}/d" $HOME/.ssh/known_hosts
+    EXT_SUB_V4=$(echo "${EXTERNAL_SUBNET_V4}" | cut -d"/" -f1 | sed "s/0$//")
+    sed -i "/^${EXT_SUB_V4}/d" $HOME/.ssh/known_hosts
+    EXT_SUB_V6=$(echo "${EXTERNAL_SUBNET_V6}" | cut -d"/" -f1 | sed "s/0$//")
+    sed -i "/^${EXT_SUB_V^}/d" $HOME/.ssh/known_hosts
     PRO_SUB=$(echo "${PROVISIONING_NETWORK}" | cut -d"/" -f1 | sed "s/0$//")
     sed -i "/^${PRO_SUB}/d" $HOME/.ssh/known_hosts
     sed -i "/^api.${CLUSTER_DOMAIN}/d" $HOME/.ssh/known_hosts

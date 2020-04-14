@@ -76,7 +76,7 @@ function build_installer() {
 }
 
 # FIXME(stbenjam): This is not available in 4.3 (yet)
-function network_configuration() {
+function baremetal_network_configuration() {
   if [[ "$OPENSHIFT_VERSION" != "4.3" ]]; then
 cat <<EOF
     provisioningNetworkCIDR: $PROVISIONING_NETWORK
@@ -93,6 +93,40 @@ EOF
     fi
 }
 
+function cluster_network() {
+  if [[ "${IP_STACK}" == "v4" ]]; then
+cat <<EOF
+  clusterNetwork:
+  - cidr: ${CLUSTER_SUBNET_V4}
+    hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
+  serviceNetwork:
+  - ${SERVICE_SUBNET_V4}
+EOF
+  elif [[ "${IP_STACK}" == "v6" ]]; then
+cat <<EOF
+  clusterNetwork:
+  - cidr: ${CLUSTER_SUBNET_V6}
+    hostPrefix: ${CLUSTER_HOST_PREFIX_V6}
+  serviceNetwork:
+  - ${SERVICE_SUBNET_V6}
+EOF
+  elif [[ "${IP_STACK}" == "v4v6" ]]; then
+cat <<EOF
+  clusterNetwork:
+  - cidr: ${CLUSTER_SUBNET_V4}
+    hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
+  - cidr: ${CLUSTER_SUBNET_V6}
+    hostPrefix: ${CLUSTER_HOST_PREFIX_V6}
+  serviceNetwork:
+  - ${SERVICE_SUBNET_V4}
+  - ${SERVICE_SUBNET_V6}
+EOF
+  else
+    echo "Unexpected IP_STACK value: '${IP_STACK}'"
+    exit 1
+  fi
+}
+
 function generate_ocp_install_config() {
     local outdir
 
@@ -107,23 +141,22 @@ function generate_ocp_install_config() {
     mkdir -p "${outdir}"
 
     # IPv6 network config validation
-    if [[ "${EXTERNAL_SUBNET}" =~ .*:.* ]]; then
+    if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
       if [[ "${NETWORK_TYPE}" != "OVNKubernetes" ]]; then
         echo "NETWORK_TYPE must be OVNKubernetes when using IPv6"
         exit 1
       fi
+      MACHINE_CIDR="${EXTERNAL_SUBNET_V6}"
+    else
+      MACHINE_CIDR="${EXTERNAL_SUBNET_V4}"
     fi
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
 networking:
   networkType: ${NETWORK_TYPE}
-  machineCIDR: ${EXTERNAL_SUBNET}
-  clusterNetwork:
-  - cidr: ${CLUSTER_SUBNET}
-    hostPrefix: ${CLUSTER_HOST_PREFIX}
-  serviceNetwork:
-  - ${SERVICE_SUBNET}
+  machineCIDR: ${MACHINE_CIDR}
+$(cluster_network)
 metadata:
   name: ${CLUSTER_NAME}
 compute:
@@ -137,7 +170,7 @@ controlPlane:
 platform:
   baremetal:
 $(libvirturi)
-$(network_configuration)
+$(baremetal_network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
     provisioningBridge: ${PROVISIONING_NETWORK_NAME}
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}

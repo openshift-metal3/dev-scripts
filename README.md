@@ -66,7 +66,7 @@ DNS_VIP="1.1.1.1"
 # Set your default network type, `OpenShiftSDN` or `OVNKubernetes`, defaults to `OpenShiftSDN`
 NETWORK_TYPE="OpenShiftSDN"
 # Set to the subnet in use on the external (baremetal) network
-EXTERNAL_SUBNET="192.168.111.0/24"
+EXTERNAL_SUBNET_V4="192.168.111.0/24"
 # Provide additional master/worker ignition configuration, will be
 # merged with the installer provided config, can be used to modify
 # the default nic configuration etc
