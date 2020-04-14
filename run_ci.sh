@@ -122,6 +122,10 @@ if [ -d "/home/notstack/coredns-mdns" ] ; then
     export COREDNS_LOCAL_IMAGE=https://github.com/openshift/coredns
     export COREDNS_DOCKERFILE=Dockerfile.openshift
 fi
+if [ -d "/home/notstack/coredns" ] ; then
+    export COREDNS_LOCAL_IMAGE=https://github.com/openshift/coredns
+    export COREDNS_DOCKERFILE=Dockerfile.openshift
+fi
 
 # Some of the setup done above needs to be done before we source common.sh
 # in order for correct defaults to be set
