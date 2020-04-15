@@ -101,7 +101,7 @@ export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(python -
 export MIRROR_IP=${MIRROR_IP:-$PROVISIONING_HOST_IP}
 
 # The dev-scripts working directory
-WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
+export WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
 OCP_DIR=${OCP_DIR:-ocp/${CLUSTER_NAME}}
 
 # variables for local registry configuration
