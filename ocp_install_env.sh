@@ -96,6 +96,8 @@ EOF
 function cluster_network() {
   if [[ "${IP_STACK}" == "v4" ]]; then
 cat <<EOF
+  machineNetwork:
+  - cidr: ${EXTERNAL_SUBNET_V4}
   clusterNetwork:
   - cidr: ${CLUSTER_SUBNET_V4}
     hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
@@ -104,6 +106,8 @@ cat <<EOF
 EOF
   elif [[ "${IP_STACK}" == "v6" ]]; then
 cat <<EOF
+  machineNetwork:
+  - cidr: ${EXTERNAL_SUBNET_V6}
   clusterNetwork:
   - cidr: ${CLUSTER_SUBNET_V6}
     hostPrefix: ${CLUSTER_HOST_PREFIX_V6}
@@ -112,6 +116,9 @@ cat <<EOF
 EOF
   elif [[ "${IP_STACK}" == "v4v6" ]]; then
 cat <<EOF
+  machineNetwork:
+  - cidr: ${EXTERNAL_SUBNET_V4}
+  - cidr: ${EXTERNAL_SUBNET_V6}
   clusterNetwork:
   - cidr: ${CLUSTER_SUBNET_V4}
     hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
@@ -146,16 +153,13 @@ function generate_ocp_install_config() {
         echo "NETWORK_TYPE must be OVNKubernetes when using IPv6"
         exit 1
       fi
-      MACHINE_CIDR="${EXTERNAL_SUBNET_V6}"
-    else
-      MACHINE_CIDR="${EXTERNAL_SUBNET_V4}"
     fi
+
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
 networking:
   networkType: ${NETWORK_TYPE}
-  machineCIDR: ${MACHINE_CIDR}
 $(cluster_network)
 metadata:
   name: ${CLUSTER_NAME}
