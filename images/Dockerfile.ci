@@ -2,9 +2,8 @@
 # For more details about the test see https://steps.svc.ci.openshift.org/job/openshift-baremetal-operator-master-e2e-metal-ipi
 
 FROM openshift/ubi:8
-RUN yum -y update && \
-    yum -y install python3 && \
-    yum clean all && \
-    pip3 install ansible && \
+RUN dnf -y install python3 && \
+    dnf clean all
+RUN pip3 install ansible && \
     pip3 install packet-python
 
