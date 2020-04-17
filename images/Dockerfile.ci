@@ -1,0 +1,7 @@
+# This Dockerfile builds the image used by the e2e-metal-ipi test steps in the OpenShift CI.
+# For more details about the test see https://steps.svc.ci.openshift.org/job/openshift-baremetal-operator-master-e2e-metal-ipi
+
+FROM centos:8
+RUN dnf install epel-release -y epel-release && \
+    dnf install -y ansible
+RUN pip3 install packet-python
