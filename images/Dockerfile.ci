@@ -3,7 +3,7 @@
 
 FROM openshift/ubi:8
 RUN dnf -y install python3 && \
-    dnf clean all
-RUN pip3 install ansible && \
+    dnf clean all && \
+    pip3 install ansible && \
     pip3 install packet-python
 
