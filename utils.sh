@@ -49,11 +49,16 @@ function create_cluster() {
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
+    # Ensure release image signature config map is applied to cluster
+    if [ -d "$OCP_DIR/release-image-signature" ]; then
+      cp "$OCP_DIR/release-image-signature/*.yaml" "${assets_dir}/openshift" || true
+    fi
+
     if [ ! -z "${IGNITION_EXTRA:-}" ]; then
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
       if ! jq . ${IGNITION_EXTRA}; then
         echo "Error ${IGNITION_EXTRA} not valid json"
-	exit 1
+	      exit 1
       fi
       mv ${assets_dir}/master.ign ${assets_dir}/master.ign.orig
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/master.ign.orig | tee ${assets_dir}/master.ign
@@ -357,6 +362,7 @@ EOF
 
 _tmpfiles=
 function removetmp(){
-    [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
+  true
+#    [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
 }
 trap removetmp EXIT

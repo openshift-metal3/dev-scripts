@@ -65,11 +65,14 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     _tmpfiles="$_tmpfiles $EXTRACT_DIR"
     MIRROR_LOG_FILE=/tmp/tmp_image_mirror-${OPENSHIFT_RELEASE_TAG}.log
 
+    mkdir -p "$OCP_DIR/release-image-signature"
+
     oc adm release mirror \
        --insecure=true \
         -a ${COMBINED_AUTH_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
         --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
+        --release-image-signature-to-dir "$OCP_DIR/release-image-signature" \
         --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
     echo "export MIRRORED_RELEASE_IMAGE=$OPENSHIFT_RELEASE_IMAGE" > /tmp/mirrored_release_image
 
