@@ -1,7 +1,7 @@
 # This Dockerfile builds the image used by the e2e-metal-ipi test steps in the OpenShift CI.
 # For more details about the test see https://steps.svc.ci.openshift.org/job/openshift-baremetal-operator-master-e2e-metal-ipi
 
-FROM openshift/ubi:8
+FROM registry.access.redhat.com/ubi8/ubi
 RUN dnf -y install python3 && \
     dnf clean all && \
     pip3 install ansible && \
