@@ -4,6 +4,11 @@ set -euxo pipefail
 
 source logging.sh
 source common.sh
+
+if [ "$NODES_PLATFORM" = "assisted" ]; then
+  exit 0
+fi
+
 source rhcos.sh
 source ocp_install_env.sh
 source utils.sh

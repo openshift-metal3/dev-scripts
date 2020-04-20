@@ -443,3 +443,9 @@ fi
 
 # Defaults the variable to enable testing a custom machine-api-operator image
 export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
+
+# Asisted deployment specific params
+export TEST_INFRA_BRANCH=${TEST_INFRA_BRANCH:-master}
+export ASSISTED_NETWORK=${ASSISTED_NETWORK:-"test-infra-net"}
+export TEST_INFRA_BRANCH=${TEST_INFRA_BRANCH:-master}
+export INSTALL=${INSTALL:-"y"}

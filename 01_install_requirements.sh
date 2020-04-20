@@ -74,3 +74,8 @@ fi
 if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
     setup_local_registry
 fi
+
+if [ "$NODES_PLATFORM" = "assisted" ]; then
+  source assisted_deployment.sh
+  install_assisted_env
+fi
