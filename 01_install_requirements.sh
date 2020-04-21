@@ -12,13 +12,17 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
   sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
   METAL3_DEV_ENV="${REPO_PATH}/metal3-dev-env/"
+  pushd ${METAL3_DEV_ENV}
+  # Pin to a specific metal3-dev-env commit to ensure we catch breaking
+  # changes before they're used by everyone and CI.
+  # TODO -- come up with a plan for continuously updating this
+  # Note we only do this in the case where METAL3_DEV_ENV is
+  # unset, to enable developer testing of local checkouts
+  git reset 23eab39fe9977994aeac7ab6af603beb52059b32 --hard
+  popd
 fi
 
 pushd ${METAL3_DEV_ENV}
-# Pin to a specific metal3-dev-env commit to ensure we catch breaking
-# changes before they're used by everyone and CI.
-# TODO -- come up with a plan for continuously updating this
-git reset b19da74e06062d0c21ade7dea1c6e8d09f7f4e48 --hard
 ./centos_install_requirements.sh
 ansible-galaxy install -r vm-setup/requirements.yml
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
