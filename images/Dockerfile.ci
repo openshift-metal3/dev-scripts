@@ -4,7 +4,7 @@
 FROM centos:7
 RUN yum -y install python3 git && \
     yum clean all && \
-    pip3 install ansible packet-python 
-RUN mkdir /root/src
+    pip3 install ansible packet-python && \
+    mkdir /root/src
 WORKDIR /root/src
 
