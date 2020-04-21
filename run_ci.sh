@@ -13,7 +13,12 @@ function getlogs(){
     done
 
     # And the VM journals and staticpod container logs
-    BM_SUB=$(echo "${EXTERNAL_SUBNET}" | cut -d"/" -f1 | sed "s/0$//")
+    BM_SUB=""
+    if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+        BM_SUB=$(echo "${EXTERNAL_SUBNET_V6}" | cut -d"/" -f1 | sed "s/0$//")
+    else
+        BM_SUB=$(echo "${EXTERNAL_SUBNET_V4}" | cut -d"/" -f1 | sed "s/0$//")
+    fi
     for HOST in $(sudo virsh net-dhcp-leases ${BAREMETAL_NETWORK_NAME} | grep -o "${BM_SUB}.*/" | cut -d"/" -f1) ; do
         sshpass -p notworking $SSH core@$HOST sudo journalctl > $LOGDIR/$HOST-system.journal || true
         sshpass -p notworking $SSH core@$HOST sudo journalctl -u ironic.service > $LOGDIR/$HOST-ironic.journal || true

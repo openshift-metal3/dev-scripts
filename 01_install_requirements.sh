@@ -15,8 +15,10 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
 fi
 
 pushd ${METAL3_DEV_ENV}
-# FIXME: Pin to aafbb89df8df88bc3ecbfe59592149c929432515
-git reset aafbb89df8df88bc3ecbfe59592149c929432515 --hard
+# Pin to a specific metal3-dev-env commit to ensure we catch breaking
+# changes before they're used by everyone and CI.
+# TODO -- come up with a plan for continuously updating this
+git reset b19da74e06062d0c21ade7dea1c6e8d09f7f4e48 --hard
 ./centos_install_requirements.sh
 ansible-galaxy install -r vm-setup/requirements.yml
 ANSIBLE_FORCE_COLOR=true ansible-playbook \

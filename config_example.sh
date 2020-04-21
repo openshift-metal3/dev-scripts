@@ -11,7 +11,8 @@ set -x
 #export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
 
 # IP stack version.  The default is "v6".  You may also set "v4".
-# Dual stack is not yet supported.
+# For dual stack (IPv4 + IPv6), use "v4v6".
+# NOTE: dual stack is not expected to fully work yet.
 #export IP_STACK=v4
 
 # Mirror latest ci images to local registry. This is always true for IPv6, but can be turned off
@@ -72,16 +73,20 @@ set -x
 #export PROVISIONING_NETWORK=fd00:1101::0/64
 
 # External subnet
-#export EXTERNAL_SUBNET="11.0.0.0/24"
+#export EXTERNAL_SUBNET_V4="11.0.0.0/24"
+#export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/120"
 
 # Cluster Subnet
-# export CLUSTER_SUBNET="10.128.0.0/14"
+#export CLUSTER_SUBNET_V4="10.128.0.0/14"
+#export CLUSTER_HOST_PREFIX_V4="23"
+#export CLUSTER_SUBNET_V6="fd01::/48
+#export CLUSTER_HOST_PREFIX_V6="64"
 
 # Cluster Host Prefix
-#export CLUSTER_HOST_PREFIX="23"
 
 # Service Subnet
-#export SERVICE_SUBNET="172.30.0.0/16"
+#export SERVICE_SUBNET_V4="172.30.0.0/16"
+#export SERVICE_SUBNET_V6="fd02::/112"
 
 # Enable testing of custom machine-api-operator-image
 #export TEST_CUSTOM_MAO=true
