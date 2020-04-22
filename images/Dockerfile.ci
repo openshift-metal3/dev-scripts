@@ -2,9 +2,4 @@
 # For more details about the test see https://steps.svc.ci.openshift.org/job/openshift-baremetal-operator-master-e2e-metal-ipi
 
 FROM centos:7
-RUN yum -y install python3 git && \
-    yum clean all && \
-    pip3 install ansible packet-python && \
-    mkdir /root/src
-WORKDIR /root/src
-
+RUN echo "noop"
