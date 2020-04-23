@@ -33,4 +33,6 @@ function run_assisted_flow() {
 
 function run_assisted_flow_with_install() {
   run_flow "run_full_flow_with_install"
+  mkdir -p ocp/${CLUSTER_NAME}/auth
+  cp $TEST_INFRA_DIR/build/kubeconfig ocp/${CLUSTER_NAME}/auth/kubeconfig
 }
