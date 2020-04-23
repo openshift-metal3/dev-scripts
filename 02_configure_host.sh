@@ -213,3 +213,11 @@ else
     # Create a blank authfile in order to have something valid when we read it in 04_setup_ironic.sh
     echo '{}' | sudo dd of=${REGISTRY_CREDS}
 fi
+
+# metal3-dev-env contains a script to run the openstack client in a
+# container, place a link to it in $PATH if we don't already have the
+# openstack command installed
+OPENSTACKCLIENT_PATH="${OPENSTACKCLIENT_PATH:-/usr/local/bin/openstack}"
+if ! command -v openstack | grep -v "${OPENSTACKCLIENT_PATH}"; then
+	  sudo ln -sf "${METAL3_DEV_ENV_PATH}/openstackclient.sh" "${OPENSTACKCLIENT_PATH}"
+fi
