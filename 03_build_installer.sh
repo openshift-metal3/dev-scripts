@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
-
 set -x
 set -e
 
 source logging.sh
 source utils.sh
 source common.sh
-if [ "$NODES_PLATFORM" = "assisted" ]; then
-  exit 0
-fi
-
-
 source ocp_install_env.sh
 
 # Extract an updated client tools from the release image

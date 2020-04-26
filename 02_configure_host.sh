@@ -184,17 +184,8 @@ if [ "$EXT_IF" ]; then
 fi
 
 # Switch NetworkManager to internal DNS
-if [ "$MANAGE_BR_BRIDGE" == "y" ] ||  [ "$NODES_PLATFORM" = "assisted" ]; then
-  sudo mkdir -p /etc/NetworkManager/conf.d/
-  ansible localhost -b -m ini_file -a "path=/etc/NetworkManager/conf.d/dnsmasq.conf section=main option=dns value=dnsmasq"
-  if [ "$ADDN_DNS" ] ; then
-    echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
-  fi
-  if systemctl is-active --quiet NetworkManager; then
-    sudo systemctl reload NetworkManager
-  else
-    sudo systemctl restart NetworkManager
-  fi
+if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
+  swtich_to_internal_dns
 fi
 
 # Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME

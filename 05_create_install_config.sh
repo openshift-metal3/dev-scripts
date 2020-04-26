@@ -8,18 +8,7 @@ source common.sh
 source ocp_install_env.sh
 source rhcos.sh
 
-# Do some PULL_SECRET sanity checking
-if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then
-    if [[ "${PULL_SECRET}" != *"registry.svc.ci.openshift.org"* ]]; then
-        echo "Please get a valid pull secret for registry.svc.ci.openshift.org."
-        exit 1
-    fi
-fi
-
-if [[ "${PULL_SECRET}" != *"cloud.openshift.com"* ]]; then
-    echo "Please get a valid pull secret for cloud.openshift.com."
-    exit 1
-fi
+verify_pull_secret
 
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then

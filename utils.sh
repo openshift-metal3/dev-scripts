@@ -354,6 +354,35 @@ EOF
 
 }
 
+function verify_pull_secret() {
+  # Do some PULL_SECRET sanity checking
+  if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then
+      if [[ "${PULL_SECRET}" != *"registry.svc.ci.openshift.org"* ]]; then
+          echo "Please get a valid pull secret for registry.svc.ci.openshift.org."
+          exit 1
+      fi
+  fi
+
+  if [[ "${PULL_SECRET}" != *"cloud.openshift.com"* ]]; then
+      echo "Please get a valid pull secret for cloud.openshift.com."
+      exit 1
+  fi
+}
+
+function swtich_to_internal_dns() {
+  sudo mkdir -p /etc/NetworkManager/conf.d/
+  ansible localhost -b -m ini_file -a "path=/etc/NetworkManager/conf.d/dnsmasq.conf section=main option=dns value=dnsmasq"
+  if [ "$ADDN_DNS" ] ; then
+    echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
+  fi
+  if systemctl is-active --quiet NetworkManager; then
+    sudo systemctl reload NetworkManager
+  else
+    sudo systemctl restart NetworkManager
+  fi
+}
+
+
 _tmpfiles=
 function removetmp(){
     [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
