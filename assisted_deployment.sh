@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o pipefail
 
 source logging.sh
 source utils.sh
@@ -9,6 +10,7 @@ TEST_INFRA_DIR=$WORKING_DIR/test-infra
 export TEST_INFRA_BRANCH=${TEST_INFRA_BRANCH:-master}
 export ASSISTED_NETWORK=${ASSISTED_NETWORK:-"test-infra-net"}
 export INSTALL=${INSTALL:-"y"}
+export WAIT_FOR_CLUSTER=${WAIT_FOR_CLUSTER:-"y"}
 export INSTALLER_IMAGE=${INSTALLER_IMAGE:-}
 export SERVICE=${SERVICE:-}
 
@@ -59,6 +61,10 @@ function create_assisted_cluster() {
   API_VIP=$(network_ip ${ASSISTED_NETWORK:-"test-infra-net"})
   echo "server=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
   sudo systemctl reload NetworkManager
+  if [ "$INSTALL" == "y" ] $$ [ "$WAIT_FOR_CLUSTER" == "y"]; then
+    wait_for_cluster
+  fi
+
 }
 
 install_assisted_env
