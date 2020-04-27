@@ -9,6 +9,8 @@ TEST_INFRA_DIR=$WORKING_DIR/test-infra
 export TEST_INFRA_BRANCH=${TEST_INFRA_BRANCH:-master}
 export ASSISTED_NETWORK=${ASSISTED_NETWORK:-"test-infra-net"}
 export INSTALL=${INSTALL:-"y"}
+export INSTALLER_IMAGE=${INSTALLER_IMAGE:-}
+export SERVICE=${SERVICE:-}
 
 
 function install_assisted_env() {
