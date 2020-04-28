@@ -1,9 +1,9 @@
-.PHONY: default all requirements configure ironic ocp_run clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup workingdir_cleanup podman_cleanup bell
-default: requirements configure build_installer ironic ocp_run bell
+.PHONY: default all requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup workingdir_cleanup podman_cleanup bell
+default: requirements configure build_installer ironic install_config ocp_run bell
 
 all: default
 
-redeploy: ocp_cleanup ironic_cleanup build_installer ironic ocp_run bell
+redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
 requirements:
 	./01_install_requirements.sh
@@ -16,6 +16,9 @@ build_installer:
 
 ironic:
 	./04_setup_ironic.sh
+
+install_config:
+	./05_create_install_config.sh
 
 ocp_run:
 	./06_create_cluster.sh
