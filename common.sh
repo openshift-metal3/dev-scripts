@@ -350,28 +350,8 @@ fi
 
 # Check CentOS version
 VER=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
-if [[ ${VER} -eq 7 ]]; then
-  if [[ "${ALLOW_CENTOS7}" -ne "yes" ]]; then
-    error "*****************************************************"
-    error "*****************************************************"
-    error "*****************************************************"
-    error "***                                               ***"
-    error "*** CentOS 7 Support has been deprecated and will ***"
-    error "*** be removed in the near future.                ***"
-    error "***                                               ***"
-    error "*** Please upgrade your dev-scripts system to     ***"
-    error "*** CentOS 8 or RHEL 8.                           ***"
-    error "***                                               ***"
-    error "*** To temporarily continue allowing CentOS 7,    ***"
-    error "*** set ALLOW_CENTOS7=yes in your config file.    ***"
-    error "***                                               ***"
-    error "*****************************************************"
-    error "*****************************************************"
-    error "*****************************************************"
-    exit 1
-  fi
-elif [[ ${VER} -ne 8 ]]; then
-  error "Required CentOS 8 / RHEL 8"
+if [[ ${VER} -ne 8 ]]; then
+  error "CentOS 8 or RHEL 8 are required."
   exit 1
 fi
 
