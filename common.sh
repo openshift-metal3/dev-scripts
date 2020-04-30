@@ -355,23 +355,6 @@ if [[ ${VER} -ne 8 ]]; then
   exit 1
 fi
 
-export RHEL8=""
-if grep -q "Red Hat Enterprise Linux release 8" /etc/redhat-release 2>/dev/null ; then
-    export RHEL8="True"
-fi
-
-export CENTOS8=""
-if grep -q "CentOS Linux release 8" /etc/redhat-release 2>/dev/null; then
-    export CENTOS8="True"
-fi
-
-if [ "${RHEL8}" = "True"  ] || [ "${CENTOS8}" = "True"  ]; then
-  export USE_FIREWALLD=${USE_FIREWALLD:-True}
-else
-  export USE_FIREWALLD=${USE_FIREWALLD:-False}
-fi
-
-
 # Check d_type support
 FSTYPE=$(df "${FILESYSTEM}" --output=fstype | tail -n 1)
 

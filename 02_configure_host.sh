@@ -88,11 +88,8 @@ EOF
     virsh pool-autostart default
 fi
 
-if [ "${RHEL8}" = "True" ] || [ "${CENTOS8}" = "True" ] ; then
-    ZONE="\nZONE=libvirt"
-
-    sudo systemctl enable --now firewalld
-fi
+ZONE="\nZONE=libvirt"
+sudo systemctl enable --now firewalld
 
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Adding an IP address in the libvirt definition for this network results in
@@ -163,7 +160,7 @@ if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
 fi
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
-    -e "{use_firewalld: $USE_FIREWALLD}" \
+    -e "{use_firewalld: True}" \
     -e "provisioning_interface=$PROVISIONING_NETWORK_NAME" \
     -e "baremetal_interface=$BAREMETAL_NETWORK_NAME" \
     -e "{provisioning_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000]}" \
@@ -172,10 +169,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -b -vvv ${VM_SETUP_PATH}/firewall.yml
 
 # FIXME(stbenjam): ansbile firewalld module doesn't seem to be doing the right thing
-if [ "$USE_FIREWALLD" == "True" ]; then
-  sudo firewall-cmd --zone=libvirt --change-interface=provisioning
-  sudo firewall-cmd --zone=libvirt --change-interface=baremetal
-fi
+sudo firewall-cmd --zone=libvirt --change-interface=provisioning
+sudo firewall-cmd --zone=libvirt --change-interface=baremetal
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
