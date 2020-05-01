@@ -17,16 +17,16 @@ source utils.sh
 rm -f assets/templates/99_local-registry.yaml $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
 
 # Various commands here need the Pull Secret in a file
-export REGISTRY_AUTH_FILE=$(mktemp "pullsecret--XXXXXXXXXX")
+export REGISTRY_AUTH_FILE=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
 _tmpfiles=$REGISTRY_AUTH_FILE
 { echo "${PULL_SECRET}" ; } 2> /dev/null > $REGISTRY_AUTH_FILE
 
 # Combine pull-secret with registry's password
-COMBINED_AUTH_FILE=$(mktemp "combined-pullsecret--XXXXXXXXXX")
+COMBINED_AUTH_FILE=$(mktemp --tmpdir "combined-pullsecret--XXXXXXXXXX")
 _tmpfiles="$_tmpfiles $COMBINED_AUTH_FILE"
 jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} > ${COMBINED_AUTH_FILE}
 
-DOCKERFILE=$(mktemp "release-update--XXXXXXXXXX")
+DOCKERFILE=$(mktemp --tmpdir "release-update--XXXXXXXXXX")
 _tmpfiles="$_tmpfiles $DOCKERFILE"
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
