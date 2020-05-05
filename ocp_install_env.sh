@@ -194,3 +194,45 @@ EOF
 
     cp "${outdir}/install-config.yaml" "${outdir}/install-config.yaml.save"
 }
+
+function generate_ocp_host_manifest() {
+    local outdir
+
+    outdir="$1"
+    host_input="$2"
+
+    mkdir -p "${outdir}"
+    rm -f "${outdir}/extra_hosts.yaml"
+
+    jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address' $host_input \
+       | while read name mac username password address ; do
+
+        encoded_username=$(echo -n "$username" | base64)
+        encoded_password=$(echo -n "$password" | base64)
+
+    cat >> "${outdir}/extra_host_manifests.yaml" << EOF
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${name}-bmc-secret
+type: Opaque
+data:
+  username: $encoded_username
+  password: $encoded_password
+
+---
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: $name
+spec:
+  online: true
+  bootMACAddress: $mac
+  bmc:
+    address: $address
+    credentialsName: ${name}-bmc-secret
+EOF
+
+    done
+}

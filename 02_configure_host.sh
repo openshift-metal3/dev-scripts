@@ -45,8 +45,11 @@ if [[ "${IP_STACK}" == "v6" ]]; then
   done
 fi
 
-ANSIBLE_FORCE_COLOR=true ansible-playbook \
+export ANSIBLE_FORCE_COLOR=true
+
+ansible-playbook \
     -e @vm_setup_vars.yml \
+    -e "ironic_prefix=${CLUSTER_NAME}_" \
     -e "cluster_name=${CLUSTER_NAME}" \
     -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
     -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
@@ -65,6 +68,31 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
+
+# Invoke the playbook a second time to generate any extra workers.
+if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
+    ansible-playbook \
+        -e @vm_setup_vars.yml \
+        -e "ironic_prefix=${CLUSTER_NAME}_extra_" \
+        -e "cluster_name=${CLUSTER_NAME}" \
+        -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
+        -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
+        -e "working_dir=$WORKING_DIR" \
+        -e "num_masters=0" \
+        -e "num_workers=$NUM_EXTRA_WORKERS" \
+        -e "extradisks=$VM_EXTRADISKS" \
+        -e "libvirt_firmware=uefi" \
+        -e "virthost=$HOSTNAME" \
+        -e "vm_platform=$NODES_PLATFORM" \
+        -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
+        -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
+        -e "nodes_file=$EXTRA_NODES_FILE" \
+        -e "virtualbmc_base_port=$(( $VBMC_BASE_PORT + $NUM_MASTERS + $NUM_WORKERS + 1 ))" \
+        -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
+        -e "worker_hostname_format=extra-$WORKER_HOSTNAME_FORMAT" \
+        -i ${VM_SETUP_PATH}/inventory.ini \
+        -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
+fi
 
 # Allow local non-root-user access to libvirt
 # Restart libvirtd service to get the new group membership loaded

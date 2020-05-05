@@ -47,3 +47,9 @@ if [ ! -f ${OCP_DIR}/install-config.yaml ]; then
     # Create install config for openshift-installer
     generate_ocp_install_config ${OCP_DIR}
 fi
+
+# Generate the assets for extra worker VMs
+if [ -f "${EXTRA_NODES_FILE}" ]; then
+    jq '.nodes' "${EXTRA_NODES_FILE}" | tee "${EXTRA_BAREMETALHOSTS_FILE}"
+    generate_ocp_host_manifest ${OCP_DIR} ${EXTRA_BAREMETALHOSTS_FILE}
+fi
