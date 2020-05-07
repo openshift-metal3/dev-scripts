@@ -3,6 +3,9 @@ default: requirements configure build_installer ironic install_config ocp_run be
 
 all: default
 
+# Deploy cluster with assisted deployment flow
+assisted: requirements configure assisted_deployment bell
+
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
 requirements:
@@ -26,7 +29,10 @@ ocp_run:
 gather:
 	./must_gather.sh
 
-clean: ocp_cleanup ironic_cleanup host_cleanup
+clean: ocp_cleanup ironic_cleanup host_cleanup assisted_deployment_cleanup
+
+assisted_deployment_cleanup:
+	./assisted_deployment_cleanup.sh
 
 ocp_cleanup:
 	./ocp_cleanup.sh
@@ -53,3 +59,18 @@ podman_cleanup:
 
 bell:
 	@echo "Done!" $$'\a'
+
+assisted_deployment: requirements configure
+	./assisted_deployment.sh
+
+# delete vms that where used for assisted deployment flow but don't delete assisted services
+assisted_deployment_destroy_nodes:
+	./assisted_deployment_utils.sh  destroy_assisted_nodes
+
+# start running assisted deployment without starting assisted services
+assisted_deployment_deploy_nodes:
+	./assisted_deployment_utils.sh  deploy_assisted_nodes
+
+# run action from assisted deployment infra
+assisted_deployment_action:
+	./assisted_deployment_utils.sh run_assisted_action $(ACTION)
