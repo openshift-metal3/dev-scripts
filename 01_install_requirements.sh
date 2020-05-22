@@ -55,22 +55,6 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
   popd
 fi
 
-if [ ! -z "${INSTALL_OPERATOR_SDK:-}" ]; then
-    # Install operator-sdk
-    if ! which operator-sdk 2>&1 >/dev/null ; then
-        sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
-        sudo chmod 755 /usr/local/bin/operator-sdk
-    fi
-fi
-
-# Install Go dependency management tool
-# Using pre-compiled binaries instead of installing from source
-eval "$(go env)"
-if ! which dep 2>&1 >/dev/null ; then
-    mkdir -p $GOPATH/bin
-    curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-fi
-
 if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
     setup_local_registry
 fi
