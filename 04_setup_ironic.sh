@@ -85,6 +85,10 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
     sudo podman image build --authfile $COMBINED_AUTH_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
     sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
+
+    # If we're mirroring images, let's use the local Ironic image instead
+    OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$REGISTRY_AUTH_FILE" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".config.config.Labels.\"io.openshift.release\"")
+    IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_VERSION}-ironic"}
 fi
 
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader; do
@@ -101,10 +105,9 @@ fi
 sudo podman pod create -n ironic-pod
 
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
-IRONIC_IPA_DOWNLOADER_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-$IRONIC_IPA_DOWNLOADER_IMAGE}
 
-for IMAGE in ${IRONIC_IMAGE} ${IRONIC_IPA_DOWNLOADER_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
-    sudo -E podman pull --authfile $COMBINED_AUTH_FILE $IMAGE
+for IMAGE in ${IRONIC_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
+    sudo -E podman pull --authfile $COMBINED_AUTH_FILE $IMAGE || echo "WARNING: Could not pull latest $IMAGE; will try to use cached images instead"
 done
 
 CACHED_MACHINE_OS_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_IMAGE_NAME}"
@@ -126,8 +129,14 @@ sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_N
      --env PROVISIONING_INTERFACE=${PROVISIONING_NETWORK_NAME} \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
-sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
-     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
+# IPA Downloader - for testing
+if [ -n "${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE}" ];
+then
+  sudo -E podman pull --authfile $COMBINED_AUTH_FILE $IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE
+
+  sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
+     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE} /usr/local/bin/get-resource.sh
+fi
 
 function is_running() {
     local podname="$1"
