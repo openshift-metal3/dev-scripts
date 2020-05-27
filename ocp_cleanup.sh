@@ -26,11 +26,11 @@ if [ -f $HOME/.ssh/known_hosts ]; then
     sed -i "/^api.${CLUSTER_DOMAIN}/d" $HOME/.ssh/known_hosts
 fi
 
-if test -f assets/templates/99_master-chronyd-redhat.yaml ; then
-    rm -f assets/templates/99_master-chronyd-redhat.yaml
+if test -f assets/templates/98_master-chronyd-redhat.yaml ; then
+    rm -f assets/templates/98_master-chronyd-redhat.yaml
 fi
-if test -f assets/templates/99_worker-chronyd-redhat.yaml ; then
-    rm -f assets/templates/99_worker-chronyd-redhat.yaml
+if test -f assets/templates/98_worker-chronyd-redhat.yaml ; then
+    rm -f assets/templates/98_worker-chronyd-redhat.yaml
 fi
 
 # If the installer fails before terraform completes the destroy bootstrap
