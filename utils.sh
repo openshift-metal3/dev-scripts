@@ -21,8 +21,8 @@ function custom_ntp(){
   fi
 
   if [ "$NTP_SERVERS" ]; then
-    cp assets/templates/99_worker-chronyd-custom.yaml.optional assets/generated/99_worker-chronyd-custom.yaml
-    cp assets/templates/99_master-chronyd-custom.yaml.optional assets/generated/99_master-chronyd-custom.yaml
+    cp assets/templates/98_worker-chronyd-custom.yaml.optional assets/generated/98_worker-chronyd-custom.yaml
+    cp assets/templates/98_master-chronyd-custom.yaml.optional assets/generated/98_master-chronyd-custom.yaml
     NTPFILECONTENT=$(cat assets/files/etc/chrony.conf)
     for ntp in $(echo $NTP_SERVERS | tr ";" "\n"); do
       NTPFILECONTENT="${NTPFILECONTENT}"$'\n'"pool ${ntp} iburst"
@@ -225,7 +225,7 @@ function generate_templates {
 
     if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
       go run metal3-templater.go metal3-config.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" > ${OCP_DIR}/deploy/metal3-config.yaml
-      cp ${OCP_DIR}/deploy/metal3-config.yaml assets/generated/99_metal3-config.yaml
+      cp ${OCP_DIR}/deploy/metal3-config.yaml assets/generated/98_metal3-config.yaml
     else
       echo "OpenShift Version is > 4.3; skipping config map"
     fi
