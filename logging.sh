@@ -1,5 +1,6 @@
 # Log output automatically
-LOGDIR="$(dirname $0)/logs"
+DEFAULT_LOGDIR="$(dirname $0)/logs"
+LOGDIR=${LOGDIR:-$DEFAULT_LOGDIR}
 if [[ -z "${LOGPREFIX:-}" ]]; then
     LOGFILE="$LOGDIR/$(basename $0 .sh)-$(date +%F-%H%M%S).log"
 else
