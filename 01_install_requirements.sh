@@ -32,6 +32,10 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -b -vvv vm-setup/install-package-playbook.yml
 popd
 
+# We use yq in a few places for processing YAML but it isn't packaged
+# for CentOS/RHEL so we have to install from pip.
+pip3 install --user 'yq>=2.10.0'
+
 # needed if we are using locally built images
 # We stop any systemd service so we can run in a container, since
 # there's no RPM/systemd version available for RHEL8
