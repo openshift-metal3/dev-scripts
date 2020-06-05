@@ -68,7 +68,10 @@ export IRONIC_ENDPOINT=http://172.22.0.3:6385/v1/
 export IRONIC_INSPECTOR_ENDPOINT=http://172.22.0.3:5050/v1/
 
 # Wait for the ironic service to be available
-wait_for_json ironic "$IRONIC_ENDPOINT" 300 \
+export MASTER0=master-0.$CLUSTER_DOMAIN
+export IRONIC_ENDPOINT_PUBLIC=$(oc get nodes -o json | yq -r '.items[] | select(.metadata.name == env.MASTER0) | .status.addresses[] | select(.type == "InternalIP") | .address')
+
+wait_for_json ironic "$IRONIC_ENDPOINT_PUBLIC" 300 \
               -H "Accept: application/json" -H "Content-Type: application/json"
 
 # Run the operator
