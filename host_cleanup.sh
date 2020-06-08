@@ -62,5 +62,9 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
     sudo ip link delete ${BAREMETAL_NETWORK_NAME} || true
     sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
 fi
+
+# Drop all ebtables rules
+sudo ebtables --flush
+
 # Kill any lingering proxy
 sudo pkill -f oc.*proxy

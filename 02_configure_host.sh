@@ -235,3 +235,19 @@ OPENSTACKCLIENT_PATH="${OPENSTACKCLIENT_PATH:-/usr/local/bin/openstack}"
 if ! command -v openstack | grep -v "${OPENSTACKCLIENT_PATH}"; then
 	  sudo ln -sf "${METAL3_DEV_ENV_PATH}/openstackclient.sh" "${OPENSTACKCLIENT_PATH}"
 fi
+
+# Block Multicast with ebtables
+if [ "$DISABLE_MULTICAST" == "true" ]; then
+    for dst in 224.0.0.251 224.0.0.18; do
+        sudo ebtables -A INPUT --pkttype-type multicast -p ip4 --ip-dst ${dst} -j DROP
+        sudo ebtables -A FORWARD --pkttype-type multicast -p ip4 --ip-dst ${dst} -j DROP
+        sudo ebtables -A OUTPUT --pkttype-type multicast -p ip4 --ip-dst ${dst} -j DROP
+    done
+
+    for dst in ff02::fb ff02::12; do
+        sudo ebtables -A INPUT --pkttype-type multicast -p ip6 --ip6-dst ${dst} -j DROP
+        sudo ebtables -A FORWARD --pkttype-type multicast -p ip6 --ip6-dst ${dst} -j DROP
+        sudo ebtables -A OUTPUT --pkttype-type multicast -p ip6 --ip6-dst ${dst} -j DROP
+    done
+fi
+
