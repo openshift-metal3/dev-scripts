@@ -60,7 +60,7 @@ podman_cleanup:
 bell:
 	@echo "Done!" $$'\a'
 
-assisted_deployment: requirements configure
+assisted_deployment:
 	./assisted_deployment.sh
 
 # delete vms that where used for assisted deployment flow but don't delete assisted services
