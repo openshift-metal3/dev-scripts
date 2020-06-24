@@ -49,6 +49,14 @@ function create_cluster() {
     mkdir -p ${assets_dir}/openshift
     cp -rf assets/generated/*.yaml ${assets_dir}/openshift
 
+    if [[ "${IP_STACK}" == "v4v6" ]]; then
+        # The IPv6DualStack feature is not on by default, because it doesn't
+        # fully work yet.  If we're running a dual-stack test environment,
+        # we will turn on the IPv6DualStackNoUpgrade feature set for testing
+        # purposes.
+        cp assets/ipv6-dual-stack-no-upgrade.yaml ${assets_dir}/openshift/.
+    fi
+
     if [ ! -z "${IGNITION_EXTRA:-}" ]; then
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
       if ! jq . ${IGNITION_EXTRA}; then
