@@ -10,8 +10,11 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
 fi
 
-ANSIBLE_FORCE_COLOR=true ansible-playbook \
+export ANSIBLE_FORCE_COLOR=true
+
+ansible-playbook \
     -e @vm_setup_vars.yml \
+    -e "ironic_prefix=${CLUSTER_NAME}_" \
     -e "cluster_name=${CLUSTER_NAME}" \
     -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
     -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
@@ -24,6 +27,25 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "nodes_file=$NODES_FILE" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/teardown-playbook.yml
+
+# Invoke the playbook a second time to remove any extra workers.
+if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
+    ansible-playbook \
+        -e @vm_setup_vars.yml \
+        -e "ironic_prefix=${CLUSTER_NAME}_extra_" \
+        -e "cluster_name=${CLUSTER_NAME}" \
+        -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
+        -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
+        -e "working_dir=$WORKING_DIR" \
+        -e "num_masters=$NUM_MASTERS" \
+        -e "num_workers=$NUM_EXTRA_WORKERS" \
+        -e "extradisks=$VM_EXTRADISKS" \
+        -e "virthost=$HOSTNAME" \
+        -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
+        -e "nodes_file=$EXTRA_NODES_FILE" \
+        -i ${VM_SETUP_PATH}/inventory.ini \
+        -b -vvv ${VM_SETUP_PATH}/teardown-playbook.yml
+fi
 
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf /etc/yum.repos.d/delorean*
 # There was a bug in this file, it may need to be recreated.

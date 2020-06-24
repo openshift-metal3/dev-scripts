@@ -33,6 +33,9 @@ set -x
 # Indicate number of workers to deploy
 #export NUM_WORKERS=0
 
+# Indicate number of extra VMs to create but not deploy
+#export NUM_EXTRA_WORKERS=0
+
 # Provisioning interface on the helper ndoe
 #export PRO_IF="eno1"
 
