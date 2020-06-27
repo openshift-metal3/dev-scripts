@@ -13,7 +13,7 @@ function install_assisted_env() {
   if cd $TEST_INFRA_DIR;then
     git fetch --all && git reset --hard origin/$TEST_INFRA_BRANCH;
   else
-    git clone --branch $TEST_INFRA_BRANCH https://github.com/tsorya/test-infra.git;
+    git clone --branch $TEST_INFRA_BRANCH https://github.com/openshift/assisted-test-infra.git;
   fi
   popd
   pushd $TEST_INFRA_DIR
