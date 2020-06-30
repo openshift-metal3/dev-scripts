@@ -5,6 +5,10 @@ set +x
 export PULL_SECRET=''
 set -x
 
+# Select a different release stream from which to pull the latest image, if the
+# image name is not specified
+#export OPENSHIFT_RELEASE_STREAM=4.6
+
 # Use <NAME>_LOCAL_IMAGE to build or use copy of container images locally e.g.
 #export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector
 #export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
