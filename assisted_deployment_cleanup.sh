@@ -3,7 +3,7 @@
 source logging.sh
 source common.sh
 
-TEST_INFRA_DIR=$WORKING_DIR/test-infra
+TEST_INFRA_DIR=$WORKING_DIR/assisted-test-infra
 if ! [ "$NODES_PLATFORM" = "assisted" ]; then
   exit 0
 fi
