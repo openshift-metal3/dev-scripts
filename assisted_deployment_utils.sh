@@ -3,7 +3,7 @@ set -o pipefail
 source common.sh
 source logging.sh
 
-TEST_INFRA_DIR=$WORKING_DIR/test-infra
+TEST_INFRA_DIR=$WORKING_DIR/assisted-test-infra
 export TEST_INFRA_BRANCH=${TEST_INFRA_BRANCH:-master}
 export ASSISTED_NETWORK=${ASSISTED_NETWORK:-"test-infra-net"}
 export INSTALL=${INSTALL:-"y"}
