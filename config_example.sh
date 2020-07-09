@@ -19,6 +19,9 @@ set -x
 # NOTE: dual stack is not expected to fully work yet.
 #export IP_STACK=v4
 
+# BMC type. Valid values are redfish, redfish-virtualmedia, or ipmi.
+#export BMC_DRIVER=redfish-virtualmedia
+
 # Mirror latest ci images to local registry. This is always true for IPv6, but can be turned off
 # for an IPv4 install.
 #export MIRROR_IMAGES=true
@@ -49,7 +52,7 @@ set -x
 # Provisioning interface within the cluster
 #export CLUSTER_PRO_IF="eno1"
 
-# Which disk to deploy 
+# Which disk to deploy
 #export ROOT_DISK="/dev/sda"
 
 # Cluster name
