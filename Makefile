@@ -3,6 +3,8 @@ default: requirements configure build_installer ironic install_config ocp_run be
 
 all: default
 
+### Foo change
+
 # Deploy cluster with assisted deployment flow
 assisted: requirements configure assisted_deployment bell
 
