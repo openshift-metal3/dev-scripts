@@ -33,7 +33,7 @@ if [ ! -z "${VM_NODES_FILE}" ]; then
   exit 1
 fi
 
-if [[ "${IP_STACK}" == "v6" ]]; then
+if [[ "${IP_STACK}" != "v4" ]]; then
   # TODO - move this to metal3-dev-env.
   # This is to address the following error:
   #   "msg": "internal error: Check the host setup: enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss. Interfaces to look at: eno2"

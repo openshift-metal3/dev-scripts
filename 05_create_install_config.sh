@@ -12,7 +12,7 @@ verify_pull_secret
 
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
-    if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+    if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
         API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
         INGRESS_VIP=$(python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$EXTERNAL_SUBNET_V6"', 4))")
     else
@@ -24,7 +24,7 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     echo "listen-address=::1" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
     sudo systemctl reload NetworkManager
 else
-    if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+    if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
         API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
     else
         API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
