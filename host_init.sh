@@ -11,8 +11,6 @@
 # 7. Create world-readable dev-scripts directory under /home (as by default it's the largest volume)
 
 # --- Config, please edit according to personal preferences:
-shell="zsh"       # Enter the name of the package, as it will be directly piped into yum
-text_editor="vim" # Enter the name of the package, as it will be directly piped into yum
 subs_username=""  # RH Subscription username
 subs_password=""  # RH Subscription password
 # --- End config
@@ -30,7 +28,7 @@ home_dir=$(eval echo ~$user)
 error=false
 sudo -v
 if [ $? -ne 0 ]; then
-    echo "${bold}${warning}Please run the script as a sudo user${normal}"
+    echo "${bold}${warning}Please run the script as root${normal}"
     error=true
 fi
 if [ ! -f "pull-secret" ]; then
@@ -43,10 +41,8 @@ if [ "$error" = true ]; then
 fi
 
 # Passwordless sudo (if not set up yet)
-if ! grep -xq "$user\s*ALL=(ALL)\s*NOPASSWD:\s*ALL" /etc/sudoers; then
-    echo "${bold}Enabling passwordless sudo for $user${normal}"
-    echo "$user  ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers
-fi
+echo "${bold}Enabling passwordless sudo for $user${normal}"
+echo "$user  ALL=(ALL) NOPASSWD: ALL" >/etc/sudoers.d/${user}
 
 # Subscription manager (in case of RHEL)
 if [ -f "/etc/redhat-release" ] && grep -q "Red Hat Enterprise Linux" /etc/redhat-release; then
@@ -64,10 +60,10 @@ fi
 
 # Packages
 echo "${bold}Updating existing packages${normal}"
-yum update -y
+dnf update -y
 echo "${bold}Installing new packages${normal}"
-pkgs=("git" "make" "wget" "tmux" "jq" $shell $text_editor)
-install_cmd="yum install -y ${pkgs[@]}"
+pkgs=("git" "make" "wget" "tmux" "jq")
+install_cmd="dnf install -y ${pkgs[@]}"
 eval $install_cmd
 [ $? -eq 0 ] || (echo "${bold}${warning}Failed:${normal} ${install_cmd}" && exit 1)
 
