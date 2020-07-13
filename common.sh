@@ -161,10 +161,10 @@ else
   exit 1
 fi
 
-if [[ "${IP_STACK}" = "v4" ]]; then
-  export DNS_VIP=${DNS_VIP:-$(python -c "import ipaddress; print(ipaddress.ip_network(u\"$EXTERNAL_SUBNET_V4\")[2])")}
-else
+if [[ "${IP_STACK}" = "v6" ]]; then
   export DNS_VIP=${DNS_VIP:-$(python -c "import ipaddress; print(ipaddress.ip_network(u\"$EXTERNAL_SUBNET_V6\")[2])")}
+else
+  export DNS_VIP=${DNS_VIP:-$(python -c "import ipaddress; print(ipaddress.ip_network(u\"$EXTERNAL_SUBNET_V4\")[2])")}
 fi
 
 # The DNS name for the registry that this cluster should use.
@@ -183,10 +183,10 @@ export PROVISIONING_HOST_USER=${PROVISIONING_HOST_USER:-$USER}
 # ipcalc on CentOS 7 doesn't support the 'minaddr' option, so use python
 # instead to get the first address in the network:
 export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$PROVISIONING_NETWORK\").hosts()))")}
-if [[ "${IP_STACK}" = "v4" ]]; then
-  export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$EXTERNAL_SUBNET_V4\").hosts()))")}
-else
+if [[ "${IP_STACK}" = "v6" ]]; then
   export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$EXTERNAL_SUBNET_V6\").hosts()))")}
+else
+  export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(python -c "import ipaddress; print(next(ipaddress.ip_network(u\"$EXTERNAL_SUBNET_V4\").hosts()))")}
 fi
 export MIRROR_IP=${MIRROR_IP:-$PROVISIONING_HOST_IP}
 

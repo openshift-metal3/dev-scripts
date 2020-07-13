@@ -14,7 +14,7 @@ function getlogs(){
 
     # And the VM journals and staticpod container logs
     BM_SUB=""
-    if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+    if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
         BM_SUB=$(echo "${EXTERNAL_SUBNET_V6}" | cut -d"/" -f1 | sed "s/0$//")
     else
         BM_SUB=$(echo "${EXTERNAL_SUBNET_V4}" | cut -d"/" -f1 | sed "s/0$//")
