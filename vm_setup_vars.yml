@@ -37,10 +37,12 @@ dns_extrahosts:
     hostnames:
       - "virthost"
 
-networks:
-  - name: "{{ provisioning_network_name }}"
-    bridge: "{{ provisioning_network_name }}"
+provisioning_network:
+  - name: "{{ provisioning_network_name  }}"
+    bridge: "{{ provisioning_network_name  }}"
     forward_mode: bridge
+
+external_network:
   - name: "{{ baremetal_network_name }}"
     bridge: "{{ baremetal_network_name }}"
     forward_mode: "{{ 'bridge' if lookup('env', 'MANAGE_BR_BRIDGE') == 'n' else 'nat' }}"
@@ -63,3 +65,5 @@ networks:
       forwarders:
         - domain: "apps.{{ cluster_domain }}"
           addr: "127.0.0.1"
+
+networks: "{{ (provisioning_network if lookup('env', 'PROVISIONING_NETWORK_PROFILE') != 'Disabled' else []) + external_network }}"

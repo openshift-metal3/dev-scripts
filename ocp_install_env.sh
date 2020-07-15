@@ -75,10 +75,20 @@ function build_installer() {
   cp "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" "$OCP_DIR"
 }
 
-# FIXME(stbenjam): This is not available in 4.3 (yet)
 function baremetal_network_configuration() {
-  if [[ "$OPENSHIFT_VERSION" != "4.3" ]]; then
+  if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
+    return
+  fi
+
+  if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
 cat <<EOF
+    provisioningNetwork: "${PROVISIONING_NETWORK_PROFILE}"
+    provisioningHostIP: "${CLUSTER_PROVISIONING_IP}"
+    bootstrapProvisioningIP: "${BOOTSTRAP_PROVISIONING_IP}"
+EOF
+  else
+cat <<EOF
+    provisioningBridge: ${PROVISIONING_NETWORK_NAME}
     provisioningNetworkCIDR: $PROVISIONING_NETWORK
     provisioningNetworkInterface: $CLUSTER_PRO_IF
 EOF
@@ -176,7 +186,6 @@ platform:
 $(libvirturi)
 $(baremetal_network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
-    provisioningBridge: ${PROVISIONING_NETWORK_NAME}
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
     clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
     apiVIP: ${API_VIP}

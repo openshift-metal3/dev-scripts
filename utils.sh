@@ -231,14 +231,14 @@ function generate_templates {
     go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
 
     if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
-      go run metal3-templater.go metal3-config.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" > ${OCP_DIR}/deploy/metal3-config.yaml
+      go run metal3-templater.go metal3-config.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" "$BOOTSTRAP_PROVISIONING_IP" "$CLUSTER_PROVISIONING_IP" > ${OCP_DIR}/deploy/metal3-config.yaml
       cp ${OCP_DIR}/deploy/metal3-config.yaml assets/generated/98_metal3-config.yaml
     else
       echo "OpenShift Version is > 4.3; skipping config map"
     fi
 
     # clouds.yaml
-    go run metal3-templater.go clouds.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" > clouds.yaml
+    go run metal3-templater.go clouds.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" "$BOOTSTRAP_PROVISIONING_IP" "$CLUSTER_PROVISIONING_IP" > clouds.yaml
     # For compatibility with metal3-dev-env openstackclient.sh
     # which mounts a config dir into the ironic-client container
     mkdir -p _clouds_yaml
@@ -388,7 +388,6 @@ function swtich_to_internal_dns() {
     sudo systemctl restart NetworkManager
   fi
 }
-
 
 _tmpfiles=
 function removetmp(){

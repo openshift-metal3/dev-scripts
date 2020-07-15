@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strings"
 	"text/template"
 )
 
@@ -27,8 +28,8 @@ type templater struct {
 func main() {
 	var templateData templater
 
-	if len(os.Args) < 5 {
-		fmt.Printf("usage: <prog> TEMPLATE_FILE INTERFACE NETWORK IMAGE_URL\n")
+	if len(os.Args) < 7 {
+		fmt.Printf("usage: <prog> TEMPLATE_FILE INTERFACE NETWORK BOOTSTRAP_IP CLUSTER_IP IMAGE_URL\n")
 		os.Exit(1)
 	}
 
@@ -52,22 +53,22 @@ func main() {
 	templateData.ProvisioningDHCPRange = fmt.Sprintf("%s,%s", startIP, endIP)
 
 	// BootstrapIP
-	bootstrapIP, _ := cidr.Host(&ipnet.IPNet, 2)
-	templateData.BootstrapIronicURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP.String(), "6385"))
-	templateData.BootstrapInspectorURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP.String(), "5050"))
+	bootstrapIP := os.Args[5]
+	templateData.BootstrapIronicURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP, "6385"))
+	templateData.BootstrapInspectorURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP, "5050"))
 
 	// ProvisioningIP
-	ip, _ := cidr.Host(&ipnet.IPNet, 3)
+	ip := os.Args[6]
 	size, _ := ipnet.IPNet.Mask.Size()
 	templateData.ProvisioningIP = fmt.Sprintf("%s/%d", ip, size)
-	templateData.ClusterIronicURL = fmt.Sprintf("http://%s", net.JoinHostPort(ip.String(), "6385"))
-	templateData.ClusterInspectorURL = fmt.Sprintf("http://%s", net.JoinHostPort(ip.String(), "5050"))
+	templateData.ClusterIronicURL = fmt.Sprintf("http://%s", net.JoinHostPort(ip, "6385"))
+	templateData.ClusterInspectorURL = fmt.Sprintf("http://%s", net.JoinHostPort(ip, "5050"))
 
 	// URL Host
-	if ip.To4() == nil {
+	if strings.Contains(ip, ":") {
 		templateData.ClusterProvisioningURLHost = fmt.Sprintf("[%s]", ip)
 	} else {
-		templateData.ClusterProvisioningURLHost = ip.String()
+		templateData.ClusterProvisioningURLHost = ip
 	}
 
 	t, err := template.New(templateFile).ParseFiles(templateFile)
