@@ -146,6 +146,9 @@ set -x
 #export WORKER_DISK=20
 #export WORKER_VCPU=4
 
+# Enable FIPS mode
+#export FIPS_MODE=true
+
 ##
 ## Multi-cluster/Hive variables
 ##

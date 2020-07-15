@@ -190,6 +190,7 @@ pullSecret: |
   $(echo $PULL_SECRET | jq -c .)
 sshKey: |
   ${SSH_PUB_KEY}
+fips: ${FIPS_MODE:-false}
 EOF
 
     cp "${outdir}/install-config.yaml" "${outdir}/install-config.yaml.save"
