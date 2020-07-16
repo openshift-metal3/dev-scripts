@@ -119,26 +119,30 @@ bootstrap VM and master nodes using the Terraform providers for libvirt
 and Ironic.  Once bootstrap is complete, the installer removes the
 bootstrap node and the cluster will be online.
 
-You can view the IP for the bootstrap node by running `virsh
+You can view the IP for the bootstrap node by running `sudo virsh
 net-dhcp-leases ostestbm`.  You can SSH to it using ssh core@IP.
 
 Then you can interact with the k8s API on the bootstrap VM e.g
-`sudo oc status --verbose --config /etc/kubernetes/kubeconfig`.
+`sudo oc status --kubeconfig /etc/kubernetes/kubeconfig`.
 
 You can also see the status of the bootkube.sh script which is running via
 `journalctl -b -f -u bootkube.service`.
 
 ## Interacting with the deployed cluster
 
+Consider `export KUBECONFIG=<path-to-config>` to avoid using the `--kubeconfig` flag on each command.
+
 When the master nodes are up and the cluster is active, you can interact with the API:
 
 ```
-$ oc --config ocp/${CLUSTER_NAME}/auth/kubeconfig get nodes
+$ oc --kubeconfig ocp/${CLUSTER_NAME}/auth/kubeconfig get nodes
 NAME       STATUS    ROLES     AGE       VERSION
 master-0   Ready     master    20m       v1.12.4+50c2f2340a
 master-1   Ready     master    20m       v1.12.4+50c2f2340a
 master-2   Ready     master    20m       v1.12.4+50c2f2340a
 ```
+
+### GUI
 
 Alternatively it is possible to manage the cluster using OpenShift Console web UI.
 The URL can be retrieved using
@@ -147,21 +151,73 @@ oc get routes --all-namespaces | grep console
 ```
 By default, the URL is https://console-openshift-console.apps.ostest.test.metalkube.org
 
-Accessing Console running on virtualized cluster from local web browser requires additional
-setup on local machine:
+Accessing the web Console running on virtualized cluster from local web browser requires additional setup on local machine and the virt host to enable forwarding to cluster's VMs.
 
-Add entry to ```/etc/hosts```:
-```
-# /etc/hosts
-192.168.111.4   console-openshift-console.apps.ostest.test.metalkube.org console openshift-authentication-openshift-authentication.apps.ostest.test.metalkube.org api.ostest.test.metalkube.org prometheus-k8s-openshift-monitoring.apps.ostest.test.metalkube.org alertmanager-main-openshift-monitoring.apps.ostest.test.metalkube.org kubevirt-web-ui.apps.ostest.test.metalkube.org oauth-openshift.apps.ostest.test.metalkube.org grafana-openshift-monitoring.apps.ostest.test.metalkube.org
-```
-Run sshuttle:
+There are two ways to achieve this, by using `sshuttle` or `xinetd`.
 
-```
-sshuttle -r <user>@<virthost> 192.168.111.0/24
-```
+### sshuttle (works only with IPv4)
 
-To access the web Console use the `kubeadmin` user, and password generated in the `ocp/${CLUSTER_NAME}/auth/kubeadmin-password` file.
+1. On your local machine install `sshuttle`
+   
+2. Add entry to `/etc/hosts`
+    
+    ```
+    192.168.111.4 console-openshift-console.apps.ostest.test.metalkube.org console openshift-authentication-openshift-authentication.apps.ostest.test.metalkube.org api.ostest.test.metalkube.org prometheus-k8s-openshift-monitoring.apps.ostest.test.metalkube.org alertmanager-main-openshift-monitoring.apps.ostest.test.metalkube.org kubevirt-web-ui.apps.ostest.test.metalkube.org oauth-openshift.apps.ostest.test.metalkube.org grafana-openshift-monitoring.apps.ostest.test.metalkube.org
+    ```
+
+3. Run sshuttle on the local machine
+
+    ```
+    sshuttle -r <user>@<virthost> 192.168.111.0/24
+    ```
+
+### xinetd
+
+This approach uses xinetd instead of iptables to allow IPv4 to IPv6 forwarding.
+
+1. Install xinetd
+
+    ```
+    sudo yum install xinetd -y
+    ```
+
+2. Copy the example config file
+
+    ```
+    sudo cp dev-scripts/openshift_xinetd_example.conf /etc/xinetd.d/openshift
+    ```
+
+3. Edit the config file
+
+    - The values can be found at `dev-scripts/ocp/.openshift_install_state.json`
+
+    ```
+    sudo vim /etc/xinetd.d/openshift
+    ```
+
+4. Restart xinetd
+   
+    ```
+    sudo systemctl restart xinetd
+    ```
+
+5. Populate your local machine's `/etc/hosts/`
+
+    - Replace `<HOST_IP>` with your host machine's address
+
+    ```
+    <HOST_IP> console-openshift-console.apps.ostest.test.metalkube.org openshift-authentication-openshift-authentication.apps.ostest.test.metalkube.org grafana-openshift-monitoring.apps.ostest.test.metalkube.org prometheus-k8s-openshift-monitoring.apps.ostest.test.metalkube.org api.ostest.test.metalkube.org oauth-openshift.apps.ostest.test.metalkube.org
+    ```
+
+6.  Ensure that ports 443 and 6443 ports on the host are open
+
+    ```
+    sudo firewall-cmd --zone=public --permanent --add-service=https
+    sudo firewall-cmd --permanent --add-port=6443/tcp
+    sudo firewall-cmd --reload
+    ```
+
+Finally, to access the web Console use the `kubeadmin` user, and password generated in the `dev-scripts/ocp/${CLUSTER_NAME}/auth/kubeadmin-password` file.
 
 
 ## Interacting with Ironic directly
