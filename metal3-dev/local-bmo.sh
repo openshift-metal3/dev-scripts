@@ -41,34 +41,34 @@ if oc get pod -o name -n openshift-machine-api | grep -v metal3-development | gr
 fi
 
 # Save a copy of the full deployment as input
-oc get deployment -n openshift-machine-api -o yaml metal3 > $OUTDIR/deployment-full.yaml
+oc get deployment -n openshift-machine-api -o yaml metal3 > $OUTDIR/bmo-deployment-full.yaml
 
 # Extract the containers list, skipping the bmo
-cat $OUTDIR/deployment-full.yaml \
+cat $OUTDIR/bmo-deployment-full.yaml \
     | yq -Y '.spec.template.spec.containers | map(select( .command[0] != "/baremetal-operator"))' \
-         > $OUTDIR/deployment-dev-containers.yaml
+         > $OUTDIR/bmo-deployment-dev-containers.yaml
 
 # Get a stripped down version of the deployment
-cat $OUTDIR/deployment-full.yaml \
+cat $OUTDIR/bmo-deployment-full.yaml \
     | yq -Y 'del(.spec.template.spec.containers) | del(.status) | del(.metadata.annotations) | del(.metadata.selfLink) | del(.metadata.uid) | del(.metadata.resourceVersion) | del(.metadata.creationTimestamp) | del(.metadata.generation)' \
-         > $OUTDIR/deployment-dev-without-containers.yaml
+         > $OUTDIR/bmo-deployment-dev-without-containers.yaml
 
 # Combine the stripped down deployment with the container list
-containers=$(cat $OUTDIR/deployment-dev-containers.yaml | yq '.')
-cat $OUTDIR/deployment-dev-without-containers.yaml \
+containers=$(cat $OUTDIR/bmo-deployment-dev-containers.yaml | yq '.')
+cat $OUTDIR/bmo-deployment-dev-without-containers.yaml \
     | yq -Y --argjson containers "$containers" \
          'setpath(["spec", "template", "spec", "containers"]; $containers) | setpath(["metadata", "name"]; "metal3-development")' \
          | yq -Y 'setpath(["spec", "replicas"]; 1)' \
-         > $OUTDIR/deployment-dev.yaml
+         > $OUTDIR/bmo-deployment-dev.yaml
 
 # Launch the deployment with the support services and ensure it is scaled up
-oc apply -f $OUTDIR/deployment-dev.yaml -n openshift-machine-api
+oc apply -f $OUTDIR/bmo-deployment-dev.yaml -n openshift-machine-api
 
 # Set some variables the operator expects to have in order to work
 export OPERATOR_NAME=baremetal-operator
 
 for var in IRONIC_ENDPOINT IRONIC_INSPECTOR_ENDPOINT DEPLOY_KERNEL_URL DEPLOY_RAMDISK_URL; do
-    export "$var"=$(cat $OUTDIR/deployment-full.yaml | yq -r ".spec.template.spec.containers[0].env | map(select( .name == \""${var}"\"))[0].value")
+    export "$var"=$(cat $OUTDIR/bmo-deployment-full.yaml | yq -r ".spec.template.spec.containers[0].env | map(select( .name == \""${var}"\"))[0].value")
 done
 
 # Wait for the ironic service to be available
