@@ -107,29 +107,50 @@ Update the `kubeconfig` path to reflect your own environment.
 bin/machine-api-operator start --images-json=custom-images.json --kubeconfig=/home/${USER}/dev-scripts/ocp/$CLUSTER_NAME/auth/kubeconfig -v 4
 ```
 
-## Run a custom baremetal-operator
-
-This step assumes that the machine-api-operator has been completely
-stopped, as described above, so that it does not re-deploy metal3 and
-break the manual configuration performed below.
-
-### 1) Remove the metal3 deployment
-
-The machine-api-provider creates a "metal3" deployment, which needs to
-be deleted.
-
-```sh
-oc delete deployment -n openshift-machine-api metal3
-```
-
-### 2) Launch the metal3 support services in the cluster
+## Run baremetal-operator from local source checkout
 
 metal3 relies on ironic, a database, and other services that normally
 run inside the cluster. These can be launched with the script
-"metal3-dev/run.sh". The script creates a Deployment called
-"metal3-development" to differentiate it from the standard "metal3"
-deployment.
+"metal3-dev/local-bmo.sh". The script stops the machine-api-operator,
+scales down the Deployment containing the services related to the
+baremetal-operator, and creates a new Deployment called
+"metal3-development" containing everything the baremetal-operator
+relies on. Finally, it uses the source in
+`$GOPATH/github.com/metal3-io/baremetal-operator` to build and run a
+version of the baremetal-operator from source, including updating the
+CRD for the BareMetalHost.
 
 ```sh
-./metal3-dev/run.sh
+./metal3-dev/local-bmo.sh
+```
+
+To restore the version of the baremetal-operator deployed with the
+cluster, run
+
+```sh
+./metal3-dev/mao-bmo.sh
+```
+
+## Run cluster-api-provider-baremetal from local source checkout
+
+The cluster API provider component is part of a Pod created by the
+machine-api-operator. The same Pod runs several other components which
+must be running for the cluster to function properly. The script
+
+"metal3-dev/local-capbm.sh". The script stops the
+machine-api-operator, scales down the Deployment it created, and
+creates a new Deployment called "capbm-development" containing
+everything the old Deployment contained except for the
+cluster-api-provider-baremetal. Finally, it runs `make run` in
+`$GOPATH/github.com/openshift/cluster-api-provider-baremetal` to build
+and run a version of CAPBM from source.
+
+```sh
+./metal3-dev/local-capbm.sh
+```
+
+To restore the version of CAPBM deployed with the cluster, run
+
+```sh
+./metal3-dev/mao-capbm.sh
 ```
