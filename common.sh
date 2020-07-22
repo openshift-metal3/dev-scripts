@@ -211,7 +211,8 @@ export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 # if we provide OPENSHIFT_RELEASE_IMAGE, do not curl. This is needed for offline installs
 if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
   OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.6}
-  LATEST_CI_IMAGE=$(curl -L https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.ci/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
+  OPENSHIFT_RELEASE_TYPE=${OPENSHIFT_RELEASE_TYPE:-ci}
+  LATEST_CI_IMAGE=$(curl -L https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
