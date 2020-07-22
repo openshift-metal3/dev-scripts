@@ -9,6 +9,10 @@ set -x
 # image name is not specified
 #export OPENSHIFT_RELEASE_STREAM=4.6
 
+# Select a different release type from which to pull the latest image,
+# e.g ci or nightly
+#export OPENSHIFT_RELEASE_TYPE=ci
+
 # Use <NAME>_LOCAL_IMAGE to build or use copy of container images locally e.g.
 #export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector
 #export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
