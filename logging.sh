@@ -10,5 +10,6 @@ if [ ! -d "$(dirname $LOGFILE)" ]; then
     mkdir -p "$(dirname $LOGFILE)"
 fi
 echo "Logging to $LOGFILE"
+
 # Set fd 1 and 2 to write to the log file
-exec 1> >( tee "${LOGFILE}" ) 2>&1
+exec 1> >( /bin/bash -c 'while read line; do echo $(date -Iseconds) $line; done' | tee "${LOGFILE}" ) 2>&1
