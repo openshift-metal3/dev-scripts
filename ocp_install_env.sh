@@ -217,6 +217,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: ${name}-bmc-secret
+  namespace: openshift-machine-api
 type: Opaque
 data:
   username: $encoded_username
@@ -227,6 +228,7 @@ apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
 metadata:
   name: $name
+  namespace: openshift-machine-api
 spec:
   online: true
   bootMACAddress: $mac
