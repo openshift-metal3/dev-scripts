@@ -87,7 +87,7 @@ if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
         -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
         -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
         -e "nodes_file=$EXTRA_NODES_FILE" \
-        -e "virtualbmc_base_port=$(( $VBMC_BASE_PORT + $NUM_MASTERS + $NUM_WORKERS + 1 ))" \
+        -e "virtualbmc_base_port=$(($VBMC_BASE_PORT + $NUM_MASTERS + $NUM_WORKERS))" \
         -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
         -e "worker_hostname_format=extra-$WORKER_HOSTNAME_FORMAT" \
         -i ${VM_SETUP_PATH}/inventory.ini \
