@@ -229,6 +229,16 @@ fi
 
 export OPENSHIFT_RELEASE_TAG=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -E 's/[[:alnum:]\/.-]*release.*://')
 
+# Use "ipmi" for 4.3 as it didn't support redfish, for other versions
+# use "redfish", unless its CI where we use "mixed"
+if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
+  export BMC_DRIVER=${BMC_DRIVER:-ipmi}
+elif [[ -z "$OPENSHIFT_CI" ]]; then
+  export BMC_DRIVER=${BMC_DRIVER:-redfish}
+else
+  export BMC_DRIVER=${BMC_DRIVER:-mixed}
+fi
+
 # Both utils.sh and 04_setup_ironic.sh use this log file, so set the
 # name one time. Users should not override this.
 export MIRROR_LOG_FILE=${REGISTRY_DIR}/${CLUSTER_NAME}-image_mirror-${OPENSHIFT_RELEASE_TAG}.log
