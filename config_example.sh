@@ -153,6 +153,10 @@ set -x
 # Enable FIPS mode
 #export FIPS_MODE=true
 
+# In order to test using unicast for keepalived, one needs to disable multicast.
+# Setting this variable to true will block multicast via ebtables for both IPv4 and IPv6.
+#export DISABLE_MULTICAST=false
+
 ##
 ## Multi-cluster/Hive variables
 ##
