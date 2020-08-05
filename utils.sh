@@ -16,7 +16,7 @@ function generate_assets() {
 
 function custom_ntp(){
   # TODO - consider adding NTP server config to install-config.yaml instead
-  if [ -z ${NTP_SERVERS} ] && $(host clock.redhat.com > /dev/null); then
+  if [ -z "${NTP_SERVERS}" ] && host clock.redhat.com; then
     NTP_SERVERS="clock.redhat.com"
   fi
 
