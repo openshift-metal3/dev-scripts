@@ -16,11 +16,15 @@ function generate_assets() {
 
 function custom_ntp(){
   # TODO - consider adding NTP server config to install-config.yaml instead
-  if [ -z "${NTP_SERVERS}" ] && host clock.redhat.com; then
-    NTP_SERVERS="clock.redhat.com"
+  if [ -z "${NTP_SERVERS}" ]; then
+    if host clock.redhat.com; then
+      NTP_SERVERS="clock.redhat.com"
+    elif host pool.ntp.org; then
+      NTP_SERVERS="pool.ntp.org"
+    fi
   fi
 
-  if [ "$NTP_SERVERS" ]; then
+  if [ -n "$NTP_SERVERS" ]; then
     cp assets/templates/98_worker-chronyd-custom.yaml.optional assets/generated/98_worker-chronyd-custom.yaml
     cp assets/templates/98_master-chronyd-custom.yaml.optional assets/generated/98_master-chronyd-custom.yaml
     NTPFILECONTENT=$(cat assets/files/etc/chrony.conf)
