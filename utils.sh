@@ -47,7 +47,7 @@ function create_cluster() {
     generate_templates
 
     mkdir -p ${assets_dir}/openshift
-    cp -rf assets/generated/*.yaml ${assets_dir}/openshift
+    find assets/generated -name '*.yaml' -exec cp -f {} ${assets_dir}/openshift \;
 
     if [[ "${IP_STACK}" == "v4v6" ]]; then
         # The IPv6DualStack feature is not on by default, because it doesn't
