@@ -72,12 +72,7 @@ function create_cluster() {
       mv ${assets_dir}/worker.ign ${assets_dir}/worker.ign.orig
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/worker.ign.orig | tee ${assets_dir}/worker.ign
     fi
-    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster || true
-    # FIXME(stbenjam): Deploying workers as part of the install now
-    # seems to reliably exceed the 30 minute limit. We're going to have
-    # to implement a 60-minute timeout for install-complete on baremetal
-    # I think.
-    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for install-complete
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
 }
 
 function ipversion(){
