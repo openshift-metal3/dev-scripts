@@ -29,6 +29,20 @@ jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} > ${COMBINED_AUTH_FI
 DOCKERFILE=$(mktemp --tmpdir "release-update--XXXXXXXXXX")
 _tmpfiles="$_tmpfiles $DOCKERFILE"
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
+
+# To build custom images is highly recommended to build a base image first.
+# Build a base image if we set a custom repo file in the config file and
+# the file exists
+if [[ -n ${CUSTOM_REPO_FILE:-} ]]; then
+    if [[ -f "${CUSTOM_REPO_FILE}" ]]; then
+        BASE_IMAGE_DIR=${BASE_IMAGE_DIR:-base-image}
+        sudo podman build --tag ${BASE_IMAGE_DIR} --build-arg TestRepo="${CUSTOM_REPO_FILE}" -f "${BASE_IMAGE_DIR}/Dockerfile"
+    else
+        echo "${CUSTOM_REPO_FILE} does not exist!"
+        exit 1
+    fi
+fi
+
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     IMAGE=${!IMAGE_VAR}
 
@@ -45,6 +59,12 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         # Some repos need to build with a non-default Dockerfile name
         IMAGE_DOCKERFILE_NAME=${IMAGE_VAR/_LOCAL_IMAGE}_DOCKERFILE
         IMAGE_DOCKERFILE=${!IMAGE_DOCKERFILE_NAME:-Dockerfile}
+        # If we built a custom base image, we should use it as a new base in
+        # the Dockerfile to prevent discrepancies between locally built images.
+        # Replace all FROM entries with the base-image.
+        if [[ -n ${BASE_IMAGE_DIR:-} ]]; then
+            sed -i 's/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g' ${IMAGE_DOCKERFILE}
+        fi
         sudo podman build --authfile $COMBINED_AUTH_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
         cd -
         sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
