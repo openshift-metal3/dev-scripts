@@ -18,6 +18,16 @@ set -x
 #export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
 #export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
 
+# Set this variable to point the custom base image to a different location
+# It can be an absolute path or a local path under the dev-scripts dir
+# export BASE_IMAGE_DIR=base-image
+
+# To build custom images based on custom base images with custom repositories
+# put all the custom repositories in a .repo file and set this variable with
+# the absolute path of the .repo file, e.g. if the filename is ocp46.repo and
+# it's in /home/goofy/
+# export CUSTOM_REPO_FILE=/home/goofy/ocp46.repo
+
 # IP stack version.  The default is "v6".  You may also set "v4".
 # For dual stack (IPv4 + IPv6), use "v4v6".
 # NOTE: dual stack is not expected to fully work yet.
