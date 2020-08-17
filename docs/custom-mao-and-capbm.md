@@ -98,8 +98,12 @@ Edit `custom-images.json` to have a modified image for the BareMetal case:
 
 ### 4) Now run the MAO
 
-Change `custom-images.json` to `pkg/operator/fixtures/images.json` if you
-didn’t build a custom CAPBM.
+Use `mao-images.sh` to extract the images being used by the current
+machine-api-operator if you have not customized the list:
+
+```sh
+./mao-images.sh > custom-images.json
+```
 
 Update the `kubeconfig` path to reflect your own environment.
 
