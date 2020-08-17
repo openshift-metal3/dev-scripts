@@ -34,8 +34,8 @@ echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 # Build a base image if we set a custom repo file in the config file and
 # the file exists
 if [[ -n ${CUSTOM_REPO_FILE:-} ]]; then
-    if [[ -f "${CUSTOM_REPO_FILE}" ]]; then
-        BASE_IMAGE_DIR=${BASE_IMAGE_DIR:-base-image}
+    BASE_IMAGE_DIR=${BASE_IMAGE_DIR:-base-image}
+    if [[ -f "${BASE_IMAGE_DIR}/${CUSTOM_REPO_FILE}" ]]; then
         sudo podman build --tag ${BASE_IMAGE_DIR} --build-arg TestRepo="${CUSTOM_REPO_FILE}" -f "${BASE_IMAGE_DIR}/Dockerfile"
     else
         echo "${CUSTOM_REPO_FILE} does not exist!"
@@ -63,7 +63,7 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         # the Dockerfile to prevent discrepancies between locally built images.
         # Replace all FROM entries with the base-image.
         if [[ -n ${BASE_IMAGE_DIR:-} ]]; then
-            sed -i 's/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g' ${IMAGE_DOCKERFILE}
+            sed -i "s/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g" ${IMAGE_DOCKERFILE}
         fi
         sudo podman build --authfile $COMBINED_AUTH_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
         cd -

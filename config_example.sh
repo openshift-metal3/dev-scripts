@@ -23,10 +23,10 @@ set -x
 # export BASE_IMAGE_DIR=base-image
 
 # To build custom images based on custom base images with custom repositories
-# put all the custom repositories in a .repo file and set this variable with
-# the absolute path of the .repo file, e.g. if the filename is ocp46.repo and
-# it's in /home/goofy/
-# export CUSTOM_REPO_FILE=/home/goofy/ocp46.repo
+# put all the custom repositories in a .repo file inside the base-image directory
+# (default to dev-scripts/base-image) and set this variable with the name of the
+# .repo file, e.g. if the filename is ocp46.repo
+# export CUSTOM_REPO_FILE=ocp46.repo
 
 # IP stack version.  The default is "v6".  You may also set "v4".
 # For dual stack (IPv4 + IPv6), use "v4v6".
