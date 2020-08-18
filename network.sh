@@ -4,7 +4,7 @@ function nth_ip() {
   network=$1
   idx=$2
 
-  echo `python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$network"', $idx))"`
+  python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$network"', $idx))"
 }
 
 
@@ -141,4 +141,3 @@ else
   export BOOTSTRAP_PROVISIONING_IP=${BOOTSTRAP_PROVISIONING_IP:-$(nth_ip $PROVISIONING_NETWORK 2)}
   export CLUSTER_PROVISIONING_IP=${CLUSTER_PROVISIONING_IP:-$(nth_ip $PROVISIONING_NETWORK 3)}
 fi
-
