@@ -4,6 +4,7 @@ set -euxo pipefail
 
 source logging.sh
 source common.sh
+source network.sh
 source rhcos.sh
 source ocp_install_env.sh
 source utils.sh

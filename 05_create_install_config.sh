@@ -3,8 +3,9 @@ set -x
 set -e
 
 source logging.sh
-source utils.sh
 source common.sh
+source network.sh
+source utils.sh
 source ocp_install_env.sh
 source rhcos.sh
 
@@ -14,10 +15,10 @@ verify_pull_secret
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
         API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
-        INGRESS_VIP=$(python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$EXTERNAL_SUBNET_V6"', 4))")
+        INGRESS_VIP=$(nth_ip $EXTERNAL_SUBNET_V6 4)
     else
         API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
-        INGRESS_VIP=$(python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$EXTERNAL_SUBNET_V4"', 4))")
+        INGRESS_VIP=$(nth_ip $EXTERNAL_SUBNET_V4 4)
     fi
     echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
     echo "address=/.apps.${CLUSTER_DOMAIN}/${INGRESS_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf

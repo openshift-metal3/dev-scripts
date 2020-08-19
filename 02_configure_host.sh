@@ -3,6 +3,7 @@ set -xe
 
 source logging.sh
 source common.sh
+source network.sh
 source utils.sh
 source ocp_install_env.sh
 

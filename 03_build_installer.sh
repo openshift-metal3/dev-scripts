@@ -3,8 +3,9 @@ set -x
 set -e
 
 source logging.sh
-source utils.sh
 source common.sh
+source network.sh
+source utils.sh
 source ocp_install_env.sh
 
 # Extract an updated client tools from the release image
