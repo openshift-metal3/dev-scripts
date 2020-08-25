@@ -91,6 +91,7 @@ elif [[ "$IP_STACK" = "v6" ]]; then
   export SERVICE_SUBNET_V6=${SERVICE_SUBNET_V6:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
   export MIRROR_IMAGES=true
+  export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
 elif [[ "$IP_STACK" = "v4v6" ]]; then
   export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"fd00:1101::0/64"}
   export EXTERNAL_SUBNET_V4=${EXTERNAL_SUBNET_V4:-"192.168.111.0/24"}
@@ -103,6 +104,7 @@ elif [[ "$IP_STACK" = "v4v6" ]]; then
   export SERVICE_SUBNET_V6=${SERVICE_SUBNET_V6:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
   export MIRROR_IMAGES=true
+  export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
 else
   echo "Unexpected setting for IP_STACK: '${IP_STACK}'"
   exit 1
