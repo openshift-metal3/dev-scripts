@@ -59,6 +59,3 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
   popd
 fi
 
-if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
-    setup_local_registry
-fi
