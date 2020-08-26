@@ -48,6 +48,11 @@ fi
 
 export ANSIBLE_FORCE_COLOR=true
 
+# Setup the registry for mirroring images
+if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=") ]]; then
+    setup_local_registry
+fi
+
 ansible-playbook \
     -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
