@@ -71,6 +71,28 @@ for var in IRONIC_ENDPOINT IRONIC_INSPECTOR_ENDPOINT DEPLOY_KERNEL_URL DEPLOY_RA
     export "$var"=$(cat $OUTDIR/bmo-deployment-full.yaml | yq -r ".spec.template.spec.containers[0].env | map(select( .name == \""${var}"\"))[0].value")
 done
 
+auth_dir=/opt/metal3/auth
+get_creds() {
+    local svc=$1
+    local cred_dir="${auth_dir}/${svc}"
+    local secret="metal3-${svc}-password"
+    if oc get -n openshift-machine-api secret ${secret} -o name >/dev/null; then
+        if [ ! -d ${auth_dir} ]; then
+            sudo mkdir -p "${auth_dir}"
+            sudo chown -R $USER:$USER "${auth_dir}/.."
+        fi
+        if [ ! -d ${cred_dir} ]; then
+            mkdir "${cred_dir}"
+        fi
+        for field in username password; do
+            oc get -n openshift-machine-api secret ${secret} -o jsonpath="{.data.${field}}" | base64 -d >${cred_dir}/${field}
+        done
+    fi
+}
+
+get_creds ironic
+get_creds ironic-inspector
+
 # Wait for the ironic service to be available
 wait_for_json ironic "$IRONIC_ENDPOINT" 300 \
               -H "Accept: application/json" -H "Content-Type: application/json"
