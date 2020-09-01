@@ -1,9 +1,24 @@
 clouds:
+{{- if eq .AuthType "none"}}
   metal3-bootstrap:
-    auth_type: none
+    auth_type: {{.AuthType}}
     baremetal_endpoint_override: {{.BootstrapIronicURL}}
     baremetal_introspection_endpoint_override: {{.BootstrapInspectorURL}}
   metal3:
-    auth_type: none
+    auth_type: {{.AuthType}}
     baremetal_endpoint_override: {{.ClusterIronicURL}}
     baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}
+{{- else if eq .AuthType "http_basic"}}
+  metal3:
+    auth_type: {{.AuthType}}
+    auth:
+      username: {{.IronicUser}}
+      password: {{.IronicPassword}}
+    baremetal_endpoint_override: {{.ClusterIronicURL}}
+  metal3-inspector:
+    auth_type: {{.AuthType}}
+    auth:
+      username: {{.InspectorUser}}
+      password: {{.InspectorPassword}}
+    baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}
+{{- end}}
