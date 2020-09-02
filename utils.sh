@@ -188,9 +188,25 @@ EOF
         # "default" as well -- currently the mapping doesn't work,
         # so we use the raw value for BMO's default which is "unknown"
         if [[ "$role" == "master" ]]; then
-          echo "        hardwareProfile: ${MASTER_HARDWARE_PROFILE:-default}"
+            if [ -z "${MASTER_HARDWARE_PROFILE:-}" ]; then
+                cat <<EOF
+        rootDeviceHints:
+          deviceName: "${ROOT_DISK_NAME}"
+EOF
+            else
+                echo "WARNING: host profiles are deprecated, set ROOT_DISK_NAME instead of MASTER_HARDWARE_PROFILE." 1>&2
+            fi
+            echo "        hardwareProfile: ${MASTER_HARDWARE_PROFILE:-default}"
         else
-          echo "        hardwareProfile: ${WORKER_HARDWARE_PROFILE:-unknown}"
+            if [ -z "${WORKER_HARDWARE_PROFILE:-}" ]; then
+                cat <<EOF
+        rootDeviceHints:
+          deviceName: "${ROOT_DISK_NAME}"
+EOF
+            else
+                echo "WARNING: host profiles are deprecated, set ROOT_DISK_NAME instead of WORKER_HARDWARE_PROFILE." 1>&2
+            fi
+            echo "        hardwareProfile: ${WORKER_HARDWARE_PROFILE:-unknown}"
         fi
     done
 }
