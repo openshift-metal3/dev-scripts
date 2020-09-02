@@ -269,10 +269,21 @@ case ${FSTYPE} in
   ;;
 esac
 
-# avoid "-z $PULL_SECRET" to ensure the secret is not logged
-if [ ${#PULL_SECRET} = 0 ]; then
-  error "No valid PULL_SECRET set in ${CONFIG}"
+# Ensure a few variables are set, even if empty, to avoid undefined
+# variable errors in the next 2 checks.
+export PULL_SECRET=${PULL_SECRET:-}
+export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-}
+export CI_TOKEN=${CI_TOKEN:-}
+
+# avoid "-z $PERSONAL_PULL_SECRET" to ensure the secret is not logged
+if [ ${#PERSONAL_PULL_SECRET} = 0 -a ${#PULL_SECRET} = 0 ]; then
+  error "No valid PERSONAL_PULL_SECRET set in ${CONFIG}"
   error "Get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret"
+  exit 1
+fi
+if [ ${#CI_TOKEN} = 0 -a ${#PULL_SECRET} = 0 ]; then
+  error "No valid CI_TOKEN set in ${CONFIG}"
+  error "Please login to https://api.ci.openshift.org and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
   exit 1
 fi
 

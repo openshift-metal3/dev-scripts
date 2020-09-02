@@ -19,6 +19,7 @@ rm -f assets/templates/99_local-registry.yaml $OPENSHIFT_INSTALL_PATH/data/data/
 
 # Various commands here need the Pull Secret in a file
 export REGISTRY_AUTH_FILE=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
+build_pull_secret
 _tmpfiles=$REGISTRY_AUTH_FILE
 { echo "${PULL_SECRET}" ; } 2> /dev/null > $REGISTRY_AUTH_FILE
 

@@ -14,6 +14,7 @@ function extract_command() {
     pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $extract_dir $pullsecret_file"
 
+    build_pull_secret
     echo "${PULL_SECRET}" > "${pullsecret_file}"
     oc adm release extract --registry-config "${pullsecret_file}" --command=$cmd --to "${extract_dir}" ${release_image}
 
@@ -47,6 +48,7 @@ function extract_rhcos_json() {
     pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $pullsecret_file"
 
+    build_pull_secret
     echo "${PULL_SECRET}" > "${pullsecret_file}"
 
     baremetal_image=$(oc adm release info --image-for=baremetal-installer --registry-config "$pullsecret_file" "$release_image")

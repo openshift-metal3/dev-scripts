@@ -2,7 +2,14 @@
 
 # You can get this secret from https://cloud.redhat.com/openshift/install/pull-secret
 set +x
-export PULL_SECRET=''
+export PERSONAL_SECRET=''
+set -x
+
+# You can get this token from https://api.ci.openshift.org/ by
+# clicking on your name in the top right corner and coping the login
+# command (the token is part of the command)
+set +x
+export CI_TOKEN=''
 set -x
 
 # Select a different release stream from which to pull the latest image, if the

@@ -17,6 +17,7 @@ other components of OpenShift via support for a baremetal platform type.
 - ideally on a bare metal host with at least 64G of RAM
 - run as a user with passwordless sudo access
 - get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret
+- get a login token from https://api.ci.openshift.org
 - hostnames for masters and workers must be in the format XX-master-# (e.g. openshift-master-0), or XX-worker-# (e.g. openshift-worker-0)
 
 # Instructions
@@ -24,7 +25,11 @@ other components of OpenShift via support for a baremetal platform type.
 ## Configuration
 
 Make a copy of the `config_example.sh` to `config_$USER.sh`, and set the
-`PULL_SECRET` variable to the secret obtained from cloud.openshift.com.
+`PERSONAL_PULL_SECRET` variable to the secret obtained from cloud.openshift.com.
+
+Go to https://api.ci.openshift.org, click on your name in the top
+right, copy the login command, extract the token from the command and
+use it to set `CI_TOKEN` in `config_$USER.sh`.
 
 There are variable defaults set in both the `common.sh` and the `ocp_install_env.sh`
 scripts, which may be important to override for your particular environment. You can

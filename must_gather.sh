@@ -4,6 +4,7 @@ set -xe
 
 source logging.sh
 source common.sh
+source utils.sh
 
 MUST_GATHER_PATH=${MUST_GATHER_PATH:-$LOGDIR/$CLUSTER_NAME/must-gather}
 if [ ! -d "$MUST_GATHER_PATH" ]; then
@@ -13,7 +14,9 @@ fi
 # must-gather doesn't correctly work in disconnected environment, so we
 # have to calculcate the pullspec for the image and pass it to oc
 if [ -n "${MIRROR_IMAGES}" ]; then
+  build_pull_secret
   pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
+  _tmpfiles="$_tmpfiles $pullsecret_file"
   echo "${PULL_SECRET}" > "${pullsecret_file}"
 
   OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$pullsecret_file" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".config.config.Labels.\"io.openshift.release\"")
