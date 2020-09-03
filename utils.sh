@@ -401,26 +401,20 @@ function write_pull_secret() {
 
     verify_pull_secret
 
+    # Get a current pull secret for registry.svc.ci.openshift.org using the token
     tmpkubeconfig=$(mktemp --tmpdir "kubeconfig--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpkubeconfig"
-    tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $tmppullsecret"
-
-    # Get a current token for registry.svc.ci.openshift.org
+    tmppullsecret1=$(mktemp --tmpdir "pullsecret1--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmppullsecret1"
     oc login https://api.ci.openshift.org --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
-    token=$(oc registry login --kubeconfig=$tmpkubeconfig --to=- \
-                | jq -r '.auths["registry.svc.ci.openshift.org"].auth')
+    oc registry login --kubeconfig=$tmpkubeconfig --to=$tmppullsecret1
 
-    # Build the full pull secret
-    jq --arg token "$token" \
-       '.auths + {"registry.svc.ci.openshift.org": {"auth": $token}}' \
-       "${PERSONAL_PULL_SECRET}" \
-        | jq '{"auths": .}' \
-             > $tmppullsecret
-
-    # Combine that pull secret with the local registry credentials to
-    # create the final output.
-    jq -s '.[0] * .[1]' ${tmppullsecret} ${REGISTRY_CREDS} > ${PULL_SECRET_FILE}
+    # Combine the personal pull secret with the one for the CI registry,
+    # then with the local registry credentials.
+    tmppullsecret2=$(mktemp --tmpdir "pullsecret2--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmppullsecret2"
+    jq -s '.[0] * .[1]' ${PERSONAL_PULL_SECRET} ${tmppullsecret1} > ${tmppullsecret2}
+    jq -s '.[0] * .[1]' ${tmppullsecret2} ${REGISTRY_CREDS} > ${PULL_SECRET_FILE}
 }
 
 function swtich_to_internal_dns() {
