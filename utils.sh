@@ -386,24 +386,25 @@ function verify_pull_secret() {
       fi
   fi
 
-  if [[ "${PERSONAL_PULL_SECRET}" != *"cloud.openshift.com"* ]]; then
+  if ! grep -q cloud.openshift.com "${PERSONAL_PULL_SECRET}"; then
       error "Get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret"
       exit 1
   fi
 }
 
-function build_pull_secret() {
-    # Check to see if we already have a full pull secret.
-    # avoid "-z $PULL_SECRET" to ensure the secret is not logged
+function write_pull_secret() {
     if [ ${#PULL_SECRET} != 0 ]; then
-        echo "PULL_SECRET is already set"
+        echo "Using PULL_SECRET variable. Consider switching to PULL_SECRET and CI_TOKEN."
+        echo "${PULL_SECRET}" > ${PULL_SECRET_FILE}
         return
     fi
 
     verify_pull_secret
 
-    tmpkubeconfig=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
+    tmpkubeconfig=$(mktemp --tmpdir "kubeconfig--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpkubeconfig"
+    tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmppullsecret"
 
     # Get a current token for registry.svc.ci.openshift.org
     oc login https://api.ci.openshift.org --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
@@ -411,10 +412,15 @@ function build_pull_secret() {
                 | jq -r '.auths["registry.svc.ci.openshift.org"].auth')
 
     # Build the full pull secret
-    export PULL_SECRET=$(echo "${PERSONAL_PULL_SECRET}" \
-        | jq --arg token "$token" \
-             '.auths + {"registry.svc.ci.openshift.org": {"auth": $token}}' \
-           | jq '{"auths": .}')
+    jq --arg token "$token" \
+       '.auths + {"registry.svc.ci.openshift.org": {"auth": $token}}' \
+       "${PERSONAL_PULL_SECRET}" \
+        | jq '{"auths": .}' \
+             > $tmppullsecret
+
+    # Combine that pull secret with the local registry credentials to
+    # create the final output.
+    jq -s '.[0] * .[1]' ${tmppullsecret} ${REGISTRY_CREDS} > ${PULL_SECRET_FILE}
 }
 
 function swtich_to_internal_dns() {

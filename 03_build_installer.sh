@@ -8,6 +8,8 @@ source network.sh
 source utils.sh
 source ocp_install_env.sh
 
+write_pull_secret
+
 # Extract an updated client tools from the release image
 extract_oc "${OPENSHIFT_RELEASE_IMAGE}"
 

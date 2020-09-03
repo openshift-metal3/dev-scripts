@@ -9,8 +9,6 @@ source utils.sh
 source ocp_install_env.sh
 source rhcos.sh
 
-verify_pull_secret
-
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then

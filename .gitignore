@@ -7,9 +7,10 @@ config_*.sh
 clouds.yaml
 _clouds_yaml
 metal3-dev/deployment-*.yaml
-
 assets/generated
 
 # Conditionally created for appropriate environments
 assets/templates/99_master-chronyd-redhat.yaml
 assets/templates/99_worker-chronyd-redhat.yaml
+
+pull_secret.json

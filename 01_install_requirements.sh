@@ -6,7 +6,6 @@ source logging.sh
 source common.sh
 source sanitychecks.sh
 source utils.sh
-source ocp_install_env.sh
 
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
@@ -58,4 +57,3 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
   oc version --client -o json
   popd
 fi
-
