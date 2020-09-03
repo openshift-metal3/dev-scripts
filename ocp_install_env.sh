@@ -148,9 +148,9 @@ function generate_ocp_install_config() {
     # when using local mirror set pull secret to just this mirror to
     # ensure we don't accidentally pull from upstream
     if [ ! -z "${MIRROR_IMAGES}" ]; then
-        export install_config_pull_secret="${REGISTRY_CREDS}"
+        install_config_pull_secret="${REGISTRY_CREDS}"
     else
-        export install_config_pull_secret="${PULL_SECRET_FILE}"
+        install_config_pull_secret="${PULL_SECRET_FILE}"
     fi
 
     mkdir -p "${outdir}"

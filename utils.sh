@@ -380,13 +380,14 @@ EOF
 function verify_pull_secret() {
   # Do some PULL_SECRET sanity checking
   if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then
-      if [[ -z "${CI_TOKEN}"  ]]; then
+      if [[ ${#CI_TOKEN} = 0 ]]; then
           error "Please login to https://api.ci.openshift.org and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
           exit 1
       fi
   fi
 
   if ! grep -q cloud.openshift.com "${PERSONAL_PULL_SECRET}"; then
+      error "No cloud.openshift.com pull secret in ${PERSONAL_PULL_SECRET}"
       error "Get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret"
       exit 1
   fi
@@ -394,8 +395,10 @@ function verify_pull_secret() {
 
 function write_pull_secret() {
     if [ ${#PULL_SECRET} != 0 ]; then
-        echo "Using PULL_SECRET variable. Consider switching to PULL_SECRET and CI_TOKEN."
+        echo "Using PULL_SECRET variable. Consider switching to PERSONAL_PULL_SECRET and CI_TOKEN."
+        set +x
         echo "${PULL_SECRET}" > ${PULL_SECRET_FILE}
+        set -x
         return
     fi
 
@@ -404,17 +407,14 @@ function write_pull_secret() {
     # Get a current pull secret for registry.svc.ci.openshift.org using the token
     tmpkubeconfig=$(mktemp --tmpdir "kubeconfig--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpkubeconfig"
-    tmppullsecret1=$(mktemp --tmpdir "pullsecret1--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $tmppullsecret1"
     oc login https://api.ci.openshift.org --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
-    oc registry login --kubeconfig=$tmpkubeconfig --to=$tmppullsecret1
+    tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmppullsecret"
+    oc registry login --kubeconfig=$tmpkubeconfig --to=$tmppullsecret
 
-    # Combine the personal pull secret with the one for the CI registry,
-    # then with the local registry credentials.
-    tmppullsecret2=$(mktemp --tmpdir "pullsecret2--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $tmppullsecret2"
-    jq -s '.[0] * .[1]' ${PERSONAL_PULL_SECRET} ${tmppullsecret1} > ${tmppullsecret2}
-    jq -s '.[0] * .[1]' ${tmppullsecret2} ${REGISTRY_CREDS} > ${PULL_SECRET_FILE}
+    # Combine the personal pull secret with the ones for the CI
+    # registry and the local registry credentials.
+    jq -s '.[0] * .[1] * .[2]' ${PERSONAL_PULL_SECRET} ${REGISTRY_CREDS} ${tmppullsecret} > ${PULL_SECRET_FILE}
 }
 
 function swtich_to_internal_dns() {
