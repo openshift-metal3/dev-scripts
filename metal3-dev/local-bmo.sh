@@ -93,10 +93,6 @@ get_creds() {
 get_creds ironic
 get_creds ironic-inspector
 
-# Wait for the ironic service to be available
-wait_for_json ironic "$IRONIC_ENDPOINT" 300 \
-              -H "Accept: application/json" -H "Content-Type: application/json"
-
 # Run the operator
 cd $bmo_path
 
