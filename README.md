@@ -22,6 +22,42 @@ other components of OpenShift via support for a baremetal platform type.
 
 # Instructions
 
+## Preparation
+
+Considering that this is a new install on a clean OS, the next tasks should be performed prior the installation:
+
+1. Enable passwordless sudo for the current user
+
+    Consider creating a separate user for deployments, one without SSH access.
+
+    `echo "$USER  ALL=(ALL) NOPASSWD: ALL" >/etc/sudoers.d/${USER}`
+
+2. In case of RHEL, invoke `subscription-manager` in order to `register` and `attach` the subscription
+
+3. Install new packages
+
+    ```bash
+    sudo dnf upgrade -y
+    sudo dnf install -y git make wget jq
+    ```
+
+4. Clone the dev-scripts repository
+
+    `git clone https://github.com/openshift-metal3/dev-scripts`
+
+5. Create a config file
+
+    `cp config_example.sh config_$USER.sh`
+
+6. Configure dev-scripts working directory
+
+    By default, dev-scripts' working directory is set to `/opt/dev-scripts`.
+    Make sure that the filesystem has at least 80GB of free space: `df -h /`.
+    
+    Alternatively you may have a large `/home` filesystem,
+    in which case you can `export WORKING_DIR=/home/dev-scripts` and the scripts will create this directory with appropriate permissions.
+    In the event you create this directory manually it should be world-readable (`chmod 755`) and `chown`ed by the non-root `$USER`.
+
 ## Configuration
 
 Make a copy of the `config_example.sh` to `config_$USER.sh`.
@@ -81,6 +117,8 @@ export IGNITION_EXTRA=extra.ign
 ```
 
 ## Installation
+
+Consider using `tmux`, `screen` or `nohup` as the installation takes around 1 hour.
 
 For a new setup, run:
 
