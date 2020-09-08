@@ -42,8 +42,6 @@ function extract_rhcos_json() {
 
     release_image="$1"
     outdir="$2"
-    pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $pullsecret_file"
 
     baremetal_image=$(oc adm release info --image-for=baremetal-installer --registry-config "$PULL_SECRET_FILE" "$release_image")
     baremetal_container=$(podman create --authfile "$PULL_SECRET_FILE" "$baremetal_image")
