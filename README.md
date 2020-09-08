@@ -16,7 +16,13 @@ other components of OpenShift via support for a baremetal platform type.
 - file system that supports d_type (see Troubleshooting section for more information)
 - ideally on a bare metal host with at least 64G of RAM
 - run as a user with passwordless sudo access
-- get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret
+- get a valid pull secret (json string)
+  - to install released OCP versions, get a pull secret from https://cloud.redhat.com/openshift/install/pull-secret
+  - if you plan to install nightly/CI builds, you need to merge that secret with a secret from the CI cluster:
+    - first download the release pull secret from above to a file, eg `/tmp/pull-secret`
+    - next go to https://api.ci.openshift.org/console/, log in, click on the user menu in the top-right, and click "Copy Login Command"
+    - paste the login command into a terminal and run it
+    - Run `oc registry login --to=/tmp/pull-secret` to add the CI pull secret to the file containing the release pull secret.
 - hostnames for masters and workers must be in the format XX-master-# (e.g. openshift-master-0), or XX-worker-# (e.g. openshift-worker-0)
 
 # Instructions
