@@ -11,11 +11,9 @@ function extract_command() {
     outdir="$3"
 
     extract_dir=$(mktemp --tmpdir -d "installer--XXXXXXXXXX")
-    pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $extract_dir $pullsecret_file"
+    _tmpfiles="$_tmpfiles $extract_dir"
 
-    echo "${PULL_SECRET}" > "${pullsecret_file}"
-    oc adm release extract --registry-config "${pullsecret_file}" --command=$cmd --to "${extract_dir}" ${release_image}
+    oc adm release extract --registry-config "${PULL_SECRET_FILE}" --command=$cmd --to "${extract_dir}" ${release_image}
 
     mv "${extract_dir}/${cmd}" "${outdir}"
 }
@@ -44,13 +42,9 @@ function extract_rhcos_json() {
 
     release_image="$1"
     outdir="$2"
-    pullsecret_file=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $pullsecret_file"
 
-    echo "${PULL_SECRET}" > "${pullsecret_file}"
-
-    baremetal_image=$(oc adm release info --image-for=baremetal-installer --registry-config "$pullsecret_file" "$release_image")
-    baremetal_container=$(podman create --authfile "$pullsecret_file" "$baremetal_image")
+    baremetal_image=$(oc adm release info --image-for=baremetal-installer --registry-config "$PULL_SECRET_FILE" "$release_image")
+    baremetal_container=$(podman create --authfile "$PULL_SECRET_FILE" "$baremetal_image")
 
     # This is OK to fail as rhcos.json isn't available in every release,
     # we'll download it from github if it's not available
@@ -149,10 +143,12 @@ function generate_ocp_install_config() {
 
     outdir="$1"
 
-    # when using local mirror set pull secret to this mirror
-    # also this should ensure we don't accidentally pull from upstream
+    # when using local mirror set pull secret to just this mirror to
+    # ensure we don't accidentally pull from upstream
     if [ ! -z "${MIRROR_IMAGES}" ]; then
-        export PULL_SECRET=$(cat ${REGISTRY_CREDS})
+        install_config_pull_secret="${REGISTRY_CREDS}"
+    else
+        install_config_pull_secret="${PULL_SECRET_FILE}"
     fi
 
     mkdir -p "${outdir}"
@@ -196,7 +192,7 @@ $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 $(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
 $(image_mirror_config)
 pullSecret: |
-  $(echo $PULL_SECRET | jq -c .)
+  $(jq -c . $install_config_pull_secret)
 sshKey: |
   ${SSH_PUB_KEY}
 fips: ${FIPS_MODE:-false}

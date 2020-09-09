@@ -17,15 +17,7 @@ source utils.sh
 #export BAREMETAL_OPERATOR_LOCAL_IMAGE=192.168.111.1:5000/localimages/bmo:latest
 rm -f assets/templates/99_local-registry.yaml $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
 
-# Various commands here need the Pull Secret in a file
-export REGISTRY_AUTH_FILE=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
-_tmpfiles=$REGISTRY_AUTH_FILE
-{ echo "${PULL_SECRET}" ; } 2> /dev/null > $REGISTRY_AUTH_FILE
-
-# Combine pull-secret with registry's password
-COMBINED_AUTH_FILE=$(mktemp --tmpdir "combined-pullsecret--XXXXXXXXXX")
-_tmpfiles="$_tmpfiles $COMBINED_AUTH_FILE"
-jq -s '.[0] * .[1]' ${REGISTRY_AUTH_FILE} ${REGISTRY_CREDS} > ${COMBINED_AUTH_FILE}
+write_pull_secret
 
 DOCKERFILE=$(mktemp --tmpdir "release-update--XXXXXXXXXX")
 _tmpfiles="$_tmpfiles $DOCKERFILE"
@@ -47,7 +39,7 @@ fi
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     IMAGE=${!IMAGE_VAR}
 
-    sudo -E podman pull --authfile $COMBINED_AUTH_FILE $OPENSHIFT_RELEASE_IMAGE
+    sudo -E podman pull --authfile $PULL_SECRET_FILE $OPENSHIFT_RELEASE_IMAGE
 
     # Is it a git repo?
     if [[ "$IMAGE" =~ "://" ]] ; then
@@ -66,9 +58,9 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         if [[ -n ${BASE_IMAGE_DIR:-} ]]; then
             sed -i "s/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g" ${IMAGE_DOCKERFILE}
         fi
-        sudo podman build --authfile $COMBINED_AUTH_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
+        sudo podman build --authfile $PULL_SECRET_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
         cd -
-        sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
+        sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
     fi
 
     IMAGE_NAME=$(echo ${IMAGE_VAR/_LOCAL_IMAGE} | tr '[:upper:]_' '[:lower:]-')
@@ -87,7 +79,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 
     oc adm release mirror \
        --insecure=true \
-        -a ${COMBINED_AUTH_FILE}  \
+        -a ${PULL_SECRET_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
         --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
         --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
@@ -96,7 +88,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
     #you must extract the installation program from the mirrored content:
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-      oc adm release extract --registry-config "${COMBINED_AUTH_FILE}" \
+      oc adm release extract --registry-config "${PULL_SECRET_FILE}" \
         --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
         "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
 
@@ -104,11 +96,11 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     fi
 
     # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
-    sudo podman image build --authfile $COMBINED_AUTH_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
-    sudo podman push --tls-verify=false --authfile $COMBINED_AUTH_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
+    sudo podman image build --authfile $PULL_SECRET_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
+    sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
 
     # If we're mirroring images, let's use the local Ironic image instead
-    OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$REGISTRY_AUTH_FILE" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".config.config.Labels.\"io.openshift.release\"")
+    OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$PULL_SECRET_FILE" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".config.config.Labels.\"io.openshift.release\"")
     IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_VERSION}-ironic"}
 fi
 
@@ -128,7 +120,7 @@ sudo podman pod create -n ironic-pod
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
 
 for IMAGE in ${IRONIC_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
-    sudo -E podman pull --authfile $COMBINED_AUTH_FILE $IMAGE || echo "WARNING: Could not pull latest $IMAGE; will try to use cached images instead"
+    sudo -E podman pull --authfile $PULL_SECRET_FILE $IMAGE || echo "WARNING: Could not pull latest $IMAGE; will try to use cached images instead"
 done
 
 CACHED_MACHINE_OS_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_IMAGE_NAME}"
@@ -153,7 +145,7 @@ sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_N
 # IPA Downloader - for testing
 if [ -n "${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-}" ];
 then
-  sudo -E podman pull --authfile $COMBINED_AUTH_FILE $IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE
+  sudo -E podman pull --authfile $PULL_SECRET_FILE $IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE
 
   sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE} /usr/local/bin/get-resource.sh
