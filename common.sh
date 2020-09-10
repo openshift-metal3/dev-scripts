@@ -283,7 +283,7 @@ if [ ! -s ${PERSONAL_PULL_SECRET} -a ${#PULL_SECRET} = 0 ]; then
   error "Get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret"
   exit 1
 fi
-if [ ${#CI_TOKEN} = 0 -a ${#PULL_SECRET} = 0 ]; then
+if [ "${OPENSHIFT_CI}" != "true" -a ${#CI_TOKEN} = 0 -a ${#PULL_SECRET} = 0 ]; then
   error "No valid CI_TOKEN set in ${CONFIG}"
   error "Please login to https://api.ci.openshift.org and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
   exit 1

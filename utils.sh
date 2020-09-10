@@ -411,6 +411,13 @@ function write_pull_secret() {
         return
     fi
 
+    if [ "${OPENSHIFT_CI}" == true ]; then
+        # Assume that the personal pull secret file we were given
+        # contains everything we need in CI.
+        cp "${PERSONAL_PULL_SECRET}" "${PULL_SECRET_FILE}"
+        return
+    fi
+
     verify_pull_secret
 
     # Get a current pull secret for registry.svc.ci.openshift.org using the token
