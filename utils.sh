@@ -260,7 +260,7 @@ function generate_auth_template {
     # For compatibility with metal3-dev-env openstackclient.sh
     # which mounts a config dir into the ironic-client container
     mkdir -p _clouds_yaml
-    cp clouds.yaml _clouds_yaml
+    ln -f clouds.yaml _clouds_yaml
 }
 
 function generate_metal3_config {
@@ -281,7 +281,7 @@ function generate_metal3_config {
     go run metal3-templater.go "bootstrap" -template-file=clouds.yaml.template -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" > clouds.yaml
 
     mkdir -p _clouds_yaml
-    cp clouds.yaml _clouds_yaml
+    ln -f clouds.yaml _clouds_yaml/clouds.yaml
 }
 
 function image_mirror_config {
