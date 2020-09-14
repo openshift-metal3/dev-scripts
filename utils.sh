@@ -48,7 +48,7 @@ function create_cluster() {
 
     generate_assets
     custom_ntp
-    generate_templates
+    generate_metal3_config
 
     mkdir -p ${assets_dir}/openshift
     find assets/generated -name '*.yaml' -exec cp -f {} ${assets_dir}/openshift \;
@@ -73,6 +73,8 @@ function create_cluster() {
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/worker.ign.orig | tee ${assets_dir}/worker.ign
     fi
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
+
+    generate_auth_template
 }
 
 function ipversion(){
@@ -239,24 +241,45 @@ function sync_repo_and_patch {
     popd
 }
 
-function generate_templates {
-    MACHINE_OS_IMAGE_URL="http:///$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
+function generate_auth_template {
+    # clouds.yaml
+    OCP_VERSIONS_NOAUTH="4.3 4.4 4.5"
+    if [[ "$OCP_VERSIONS_NOAUTH" == *"$OPENSHIFT_VERSION"* ]]; then
+        go run metal3-templater.go "noauth" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
+    else
+        IRONIC_USER=$(oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' | base64 -d)
+        IRONIC_PASSWORD=$(oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' | base64 -d)
+	IRONIC_CREDS="$IRONIC_USER:$IRONIC_PASSWORD"
+        INSPECTOR_USER=$(oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' | base64 -d)
+        INSPECTOR_PASSWORD=$(oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' | base64 -d)
+	INSPECTOR_CREDS="$INSPECTOR_USER:$INSPECTOR_PASSWORD"
 
+        go run metal3-templater.go "http_basic" -ironic-basic-auth="$IRONIC_CREDS" -inspector-basic-auth="$INSPECTOR_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
+    fi
+
+    # For compatibility with metal3-dev-env openstackclient.sh
+    # which mounts a config dir into the ironic-client container
+    mkdir -p _clouds_yaml
+    cp clouds.yaml _clouds_yaml
+}
+
+function generate_metal3_config {
+    MACHINE_OS_IMAGE_URL="http:///$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
     # metal3-config.yaml
     mkdir -p ${OCP_DIR}/deploy
     go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
 
     if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
-      go run metal3-templater.go metal3-config.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" "$BOOTSTRAP_PROVISIONING_IP" "$CLUSTER_PROVISIONING_IP" > ${OCP_DIR}/deploy/metal3-config.yaml
+      go run metal3-templater.go noauth -template-file=metal3-config.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > ${OCP_DIR}/deploy/metal3-config.yaml
       cp ${OCP_DIR}/deploy/metal3-config.yaml assets/generated/98_metal3-config.yaml
     else
       echo "OpenShift Version is > 4.3; skipping config map"
     fi
 
-    # clouds.yaml
-    go run metal3-templater.go clouds.yaml.template "$CLUSTER_PRO_IF" "$PROVISIONING_NETWORK" "$MACHINE_OS_IMAGE_URL" "$BOOTSTRAP_PROVISIONING_IP" "$CLUSTER_PROVISIONING_IP" > clouds.yaml
-    # For compatibility with metal3-dev-env openstackclient.sh
-    # which mounts a config dir into the ironic-client container
+
+    # Function to generate the bootstrap cloud information
+    go run metal3-templater.go "bootstrap" -template-file=clouds.yaml.template -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" > clouds.yaml
+
     mkdir -p _clouds_yaml
     cp clouds.yaml _clouds_yaml
 }
