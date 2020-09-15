@@ -98,6 +98,9 @@ set -x
 # IPv6 Provisioning network
 #export PROVISIONING_NETWORK=fd00:1101::0/64
 
+# Provisioning network profile, can be set to "Managed" or "Disabled"
+#PROVISIONING_NETWORK_PROFILE=Managed
+
 # External subnet
 #export EXTERNAL_SUBNET_V4="11.0.0.0/24"
 #export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/120"
