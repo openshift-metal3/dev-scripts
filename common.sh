@@ -273,9 +273,11 @@ export PULL_SECRET_FILE=${PULL_SECRET_FILE:-$WORKING_DIR/pull_secret.json}
 
 # Ensure a few variables are set, even if empty, to avoid undefined
 # variable errors in the next 2 checks.
+set +x
 export PULL_SECRET=${PULL_SECRET:-}
-export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 export CI_TOKEN=${CI_TOKEN:-}
+set -x
+export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 
 # avoid "-z $PULL_SECRET" to ensure the secret is not logged
 if [ ! -s ${PERSONAL_PULL_SECRET} -a ${#PULL_SECRET} = 0 ]; then
