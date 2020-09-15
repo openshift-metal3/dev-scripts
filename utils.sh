@@ -72,6 +72,12 @@ function create_cluster() {
       mv ${assets_dir}/worker.ign ${assets_dir}/worker.ign.orig
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/worker.ign.orig | tee ${assets_dir}/worker.ign
     fi
+
+    # Preserve the assets for debugging
+    mkdir -p "${assets_dir}/saved-assets"
+    cp -av "${assets_dir}/openshift" "${assets_dir}/saved-assets"
+    cp -av "${assets_dir}/manifests" "${assets_dir}/saved-assets"
+
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
 
     generate_auth_template
