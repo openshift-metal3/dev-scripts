@@ -3,6 +3,7 @@ set -x
 
 source logging.sh
 source common.sh
+source network.sh
 source ocp_install_env.sh
 
 sudo systemctl stop fix_certs.timer
