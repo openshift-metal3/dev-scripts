@@ -441,9 +441,10 @@ function write_pull_secret() {
     fi
 
     if [ "${OPENSHIFT_CI}" == true ]; then
-        # Assume that the personal pull secret file we were given
-        # contains everything we need in CI.
-        cp "${PERSONAL_PULL_SECRET}" "${PULL_SECRET_FILE}"
+        # We don't need to fetch a personal pull secret with the
+        # token, but we still need to merge what we're given with the
+        # credentials for the local reigstry.
+        jq -s '.[0] * .[1]' ${REGISTRY_CREDS} ${PERSONAL_PULL_SECRET} > ${PULL_SECRET_FILE}
         return
     fi
 
