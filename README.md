@@ -226,6 +226,29 @@ This approach uses xinetd instead of iptables to allow IPv4 to IPv6 forwarding.
 
 Finally, to access the web Console use the `kubeadmin` user, and password generated in the `dev-scripts/ocp/${CLUSTER_NAME}/auth/kubeadmin-password` file.
 
+## Hosting multiple dev-scripts on the same host
+
+dev-scripts has some support for running multiple instances on the
+same resources, when doing this CLUSTER\_NAME is used to namespace various
+resources on the virtual host. This support is not activly tested and
+has a few limitations but aims to allow you to run two separate clusters
+on the same host.
+
+To do this a the same user should be used to run dev-scripts for all
+environments but with a different config file. In the config file at least
+the following 3 environment variables should be defined and differ from
+their defaults
+CLUSTER\_NAME, PROVISIONING\_NETWORK and EXTERNAL\_SUBNET\_V4 e.g.
+```
+export CLUSTER_NAME=osopenshift
+export PROVISIONING_NETWORK=172.33.0.0/24
+export EXTERNAL_SUBNET_V4=192.168.222.0/24
+```
+
+Some resources are also shared on the virt hosts (e.g. some of the
+container on the virt host serving images, redfish etc..) In order
+to avoid multiple environments interfering with each other you
+should not clean or deploy one environment while another is deploying
 
 ## Interacting with Ironic directly
 
