@@ -90,7 +90,7 @@ set -x
 #export DNS_VIP="11.0.0.2"
 
 # Network type
-#export NETWORK_TYPE="OpenShiftSDN"
+#export NETWORK_TYPE="OVNKubernetes"
 
 # Provisioning network
 #export PROVISIONING_NETWORK="172.23.0.0/16"
