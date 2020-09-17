@@ -8,6 +8,9 @@ clouds:
     auth_type: {{.AuthType}}
     baremetal_endpoint_override: {{.ClusterIronicURL}}
     baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}
+  metal3-inspector:
+    auth_type: {{.AuthType}}
+    baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}
 {{- else if eq .AuthType "http_basic"}}
   metal3:
     auth_type: {{.AuthType}}
