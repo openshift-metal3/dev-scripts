@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    baremetal.openshift.io/owned: ""
+  generation: 1
+  labels:
+    api: clusterapi
+    k8s-app: controller
+  name: metal3
+  namespace: openshift-machine-api
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      api: clusterapi
+      k8s-app: controller
+  template:
+    metadata:
+      labels:
+        api: clusterapi
+        k8s-app: controller
+    spec:
+      containers:
+      - name: metal3-empty
+        image: virthost.ostest.test.metalkube.org:5000/localimages/empty:latest        
+      hostNetwork: true
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsNonRoot: false
+      serviceAccount: machine-api-controllers
+      serviceAccountName: machine-api-controllers
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+        tolerationSeconds: 120
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+        tolerationSeconds: 120
