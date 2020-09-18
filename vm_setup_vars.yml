@@ -12,7 +12,7 @@ num_workers: 1
 flavors:
   master:
     memory: "{{ lookup('env', 'MASTER_MEMORY') | default('16384', true) }}"
-    disk: "{{ lookup('env', 'MASTER_DISK') | default('20', true) }}"
+    disk: "{{ lookup('env', 'MASTER_DISK') | default('30', true) }}"
     vcpu: "{{ lookup('env', 'MASTER_VCPU') | default('8', true) }}"
     extradisks: false
 
