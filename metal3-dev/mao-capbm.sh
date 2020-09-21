@@ -5,6 +5,8 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 LOGDIR=${SCRIPTDIR}/logs
 source $SCRIPTDIR/logging.sh
 
+source $SCRIPTDIR/common.sh
+
 # Scale down dev deployment
 oc scale deployment -n openshift-machine-api --replicas=0 capbm-development
 if oc get pod -o name -n openshift-machine-api | grep -q capbm-development; then
