@@ -401,4 +401,16 @@ The following adds an additional file `/etc/test` as an example:
 
 ```
 export IGNITION_EXTRA="ignition/file_example.ign"
-``` 
+```
+
+### Testing with extra workers
+
+It is possible to specify additional workers, which are not used in the initial
+deployment, and can then later be used e.g to test scale-out.
+
+```
+export NUM_EXTRA_WORKERS=2
+```
+
+After initial deployment, a file containing the BareMetalHost manifests can be
+applied, e.g `oc apply -f ocp/ostest/extra_host_manifests.yaml`
