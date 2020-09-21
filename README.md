@@ -274,24 +274,17 @@ using the cloud name `metal3-bootstrap` and the copy running inside
 the cluster once deployment is finished can be accessed by using the
 cloud name `metal3`.
 
-The dev-scripts will install the `openstack` command line tool on the
-provisioning host as part of setting up the cluster.  The `openstack`
-tool will look for `clouds.yaml` in the current directory or you can
-copy it to `~/.config/openstack/clouds.yaml`.  Version 3.19.0 or
-higher is needed to interact with ironic using `clouds.yaml`.
+The dev-scripts will install the `baremetal` command line tool on the
+provisioning host as part of setting up the cluster.  The `baremetal`
+tool will look for `clouds.yaml` in the `_clouds_yaml` directory.
 
-```
-$ openstack --version
-openstack 3.19.0
-```
-
-For manual debugging via the openstack client connecting to the bootstrap
+For manual debugging via the baremetal client connecting to the bootstrap
 VM, which is ephemeral and won't be available once the masters have
 been deployed:
 
 ```
 export OS_CLOUD=metal3-bootstrap
-openstack baremetal node list
+baremetal node list
 ...
 ```
 
@@ -299,7 +292,16 @@ To access the Ironic instance running in the baremetal-operator pod:
 
 ```
 export OS_CLOUD=metal3
-openstack baremetal node list
+baremetal node list
+...
+```
+
+And to access the Ironic inspector instance running in the baremetal-operator pod:
+
+```
+export OS_CLOUD=metal3-inspector
+baremetal introspection list
+...
 ```
 
 NOTE: If you use a provisioning network other than the default, you
