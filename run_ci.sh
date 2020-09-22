@@ -62,7 +62,7 @@ sudo mount -o bind /opt/data/occache /home/dev-scripts/oc
 
 sudo chown -R notstack /home/dev-scripts
 
-# Point at our CI custom config file (contains the PULL_SECRET)
+# Point at our CI custom config file
 export CONFIG=/opt/data/config_notstack.sh
 
 sudo yum install -y jq golang make unzip
@@ -166,4 +166,3 @@ wait_for_worker() {
     oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
 }
 wait_for_worker worker-0
-

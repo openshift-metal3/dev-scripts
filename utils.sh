@@ -432,23 +432,6 @@ function verify_pull_secret() {
 }
 
 function write_pull_secret() {
-    if [ ${#PULL_SECRET} != 0 ]; then
-        echo "Using PULL_SECRET variable. Consider switching to PERSONAL_PULL_SECRET and CI_TOKEN."
-
-        # Write PULL_SECRET to a file so it can be merged with the
-        # local registry credentials
-        set +x
-        tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
-        _tmpfiles="$_tmpfiles $tmppullsecret"
-        echo "${PULL_SECRET}" > ${tmppullsecret}
-        set -x
-
-        # Combine the personal pull secret with the ones for the CI
-        # registry and the local registry credentials.
-        jq -s '.[0] * .[1]' ${REGISTRY_CREDS} ${tmppullsecret} > ${PULL_SECRET_FILE}
-        return
-    fi
-
     if [ "${OPENSHIFT_CI}" == true ]; then
         # We don't need to fetch a personal pull secret with the
         # token, but we still need to merge what we're given with the
