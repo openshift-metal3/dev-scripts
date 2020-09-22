@@ -440,4 +440,21 @@ export NUM_EXTRA_WORKERS=2
 ```
 
 After initial deployment, a file containing the BareMetalHost manifests can be
-applied, e.g `oc apply -f ocp/ostest/extra_host_manifests.yaml`
+applied:
+
+```
+oc apply -f ocp/ostest/extra_host_manifests.yaml
+```
+
+Once completed, it's possibile to scale up the machineset to provision the extra workers.
+The following example shows how to add another worker to the current deployment:
+
+```
+$ oc get machineset -n openshift-machine-api
+NAME              DESIRED   CURRENT   READY   AVAILABLE   AGE
+ostest-worker-0   2         2         2       2           27h
+
+$ oc scale machineset ostest-worker-0 --replicas=3 -n openshift-machine-api
+machineset.machine.openshift.io/ostest-worker-0 scaled
+```
+
