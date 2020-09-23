@@ -70,11 +70,15 @@ function create_cluster() {
       cp assets/metal3-cbo-deployment.yaml ${assets_dir}/openshift/.
     fi
 
+    if [ ! -z "${ASSETS_EXTRA_FOLDER:-}" ]; then
+      cp -rf ${ASSETS_EXTRA_FOLDER}/*.yaml ${assets_dir}/openshift/
+    fi
+
     if [ ! -z "${IGNITION_EXTRA:-}" ]; then
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
       if ! jq . ${IGNITION_EXTRA}; then
         echo "Error ${IGNITION_EXTRA} not valid json"
-	exit 1
+        exit 1
       fi
       mv ${assets_dir}/master.ign ${assets_dir}/master.ign.orig
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/master.ign.orig | tee ${assets_dir}/master.ign
