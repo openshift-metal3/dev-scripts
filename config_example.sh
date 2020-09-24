@@ -12,7 +12,8 @@ set -x
 #export OPENSHIFT_RELEASE_STREAM=4.6
 
 # Select a different release type from which to pull the latest image,
-# e.g ci or nightly
+# e.g ci, nightly or ga
+# if using ga then set OPENSHIFT_VERSION to the required version.
 #export OPENSHIFT_RELEASE_TYPE=ci
 
 # Use <NAME>_LOCAL_IMAGE to build or use copy of container images locally e.g.
