@@ -22,4 +22,4 @@ else
   MUST_GATHER_IMAGE=""
 fi
 
-oc --insecure-skip-tls-verify adm must-gather $MUST_GATHER_IMAGE --dest-dir "$MUST_GATHER_PATH" > "$MUST_GATHER_PATH/must-gather.log"
+oc --insecure-skip-tls-verify adm must-gather $MUST_GATHER_IMAGE --dest-dir "$MUST_GATHER_PATH" "$@" > "$MUST_GATHER_PATH/must-gather.log"

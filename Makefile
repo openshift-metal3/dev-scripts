@@ -29,6 +29,9 @@ ocp_run:
 gather:
 	./must_gather.sh
 
+gather_audit_logs:
+	./must_gather.sh -- /usr/bin/gather_audit_logs
+
 clean: ocp_cleanup ironic_cleanup host_cleanup assisted_deployment_cleanup
 
 assisted_deployment_cleanup:
