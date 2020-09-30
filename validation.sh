@@ -74,6 +74,17 @@ function early_deploy_validation() {
         error "Refer to https://github.com/openshift-metal3/dev-scripts#configuration for details."
         exit 1
     fi
+
+    # Verify that the token we have is valid
+    if [ ${#CI_TOKEN} != 0 ]; then
+        _test_token=$(mktemp --tmpdir "test-token--XXXXXXXXXX")
+        _tmpfiles="$_tmpfiles $_test_token"
+        if ! oc login https://api.ci.openshift.org --kubeconfig=$_test_token --token=${CI_TOKEN}; then
+            error "Please login to https://api.ci.openshift.org and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
+            error "Refer to https://github.com/openshift-metal3/dev-scripts#configuration for details."
+            exit 1
+        fi
+    fi
 }
 
 # Perform validation steps that we only want done when trying to clean
