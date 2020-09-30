@@ -5,6 +5,9 @@ source logging.sh
 source common.sh
 source network.sh
 source ocp_install_env.sh
+source validation.sh
+
+early_cleanup_validation
 
 sudo systemctl stop fix_certs.timer
 

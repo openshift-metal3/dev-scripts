@@ -3,6 +3,9 @@ set -x
 
 source logging.sh
 source common.sh
+source validation.sh
+
+early_cleanup_validation
 
 sudo podman kill registry
 sudo podman rm registry

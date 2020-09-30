@@ -8,6 +8,9 @@ source network.sh
 source utils.sh
 source ocp_install_env.sh
 source rhcos.sh
+source validation.sh
+
+early_deploy_validation
 
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
