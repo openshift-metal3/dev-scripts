@@ -11,4 +11,4 @@ if [ ! -d "$(dirname $LOGFILE)" ]; then
 fi
 echo "Logging to $LOGFILE"
 # Set fd 1 and 2 to write to the log file
-exec 1> >( awk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; fflush() }' | tee "${LOGFILE}" ) 2>&1
+exec &> >(tee >(awk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; fflush() }' >"${LOGFILE}"))
