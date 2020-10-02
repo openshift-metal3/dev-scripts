@@ -44,9 +44,14 @@ fi
 
 # Install oc client - unless we're in openshift CI
 if [[ -z "$OPENSHIFT_CI" ]]; then
+  oc_version=${OPENSHIFT_VERSION}
+  if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
+    oc_version=${OPENSHIFT_RELEASE_STREAM}
+  fi
+
   oc_tools_dir="${WORKING_DIR}/oc/${OPENSHIFT_VERSION}"
-  oc_tools_local_file=openshift-client-${OPENSHIFT_VERSION}.tar.gz
-  oc_download_url="https://mirror.openshift.com/pub/openshift-v4/clients/oc/${OPENSHIFT_VERSION}/linux/oc.tar.gz"
+  oc_tools_local_file=openshift-client-${oc_version}.tar.gz
+  oc_download_url="https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz"
   mkdir -p ${oc_tools_dir}
   pushd ${oc_tools_dir}
   if [ ! -f "${oc_tools_local_file}" ]; then

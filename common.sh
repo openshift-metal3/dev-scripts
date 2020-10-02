@@ -87,14 +87,26 @@ export REGISTRY_CRT=registry.2.crt
 # Set this variable to build the installer from source
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 
+export OPENSHIFT_RELEASE_TYPE=${OPENSHIFT_RELEASE_TYPE:-ci}
+export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.6}
+if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
+    if [[ -z "$OPENSHIFT_VERSION" ]]; then
+      error "OPENSHIFT_VERSION is required with OPENSHIFT_RELEASE_TYPE=ga"
+      exit 1
+    fi
+    export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_VERSION%.*}
+fi
+
 #
 # See https://openshift-release.svc.ci.openshift.org for release details
 #
 # if we provide OPENSHIFT_RELEASE_IMAGE, do not curl. This is needed for offline installs
 if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
-  OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.6}
-  OPENSHIFT_RELEASE_TYPE=${OPENSHIFT_RELEASE_TYPE:-ci}
-  LATEST_CI_IMAGE=$(curl -L https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
+  if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
+    LATEST_CI_IMAGE=$(curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OPENSHIFT_VERSION}/release.txt  | grep -o 'quay.io/openshift-release-dev/ocp-release[^"]\+')
+  else
+    LATEST_CI_IMAGE=$(curl -L https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+')
+  fi
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
