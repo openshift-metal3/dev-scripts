@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
-set -xe
+set -xeu
 
 source logging.sh
 source common.sh
 source utils.sh
+source network.sh
 
 MUST_GATHER_PATH=${MUST_GATHER_PATH:-$LOGDIR/$CLUSTER_NAME/must-gather}
 if [ ! -d "$MUST_GATHER_PATH" ]; then
