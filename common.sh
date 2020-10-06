@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH="/usr/local/go/bin:$PATH"
+export PATH="/usr/local/go/bin:$HOME/.local/bin:$PATH"
 
 # Set a PS4 value which logs the script name and line #.
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'

@@ -15,6 +15,7 @@ function generate_assets() {
 }
 
 function custom_ntp(){
+  ASSESTS_DIR=$1
   # TODO - consider adding NTP server config to install-config.yaml instead
   if [ -z "${NTP_SERVERS}" ]; then
     if host clock.redhat.com; then
@@ -33,6 +34,11 @@ function custom_ntp(){
     done
     NTPFILECONTENT=$(echo "${NTPFILECONTENT}" | base64 -w0)
     sed -i -e "s/NTPFILECONTENT/${NTPFILECONTENT}/g" assets/generated/*-chronyd-custom.yaml
+    IGNITION_VERSION=$(yq -r .spec.config.ignition.version ${ASSESTS_DIR}/99_openshift-machineconfig_99-master-ssh.yaml)
+    sed -i -e "s/IGNITION_VERSION/${IGNITION_VERSION}/g" assets/generated/*-chronyd-custom.yaml
+    if [[ ${IGNITION_VERSION} =~ ^3\. ]]; then
+      sed -i -e "/filesystem: root/d" assets/generated/*-chronyd-custom.yaml
+    fi
   fi
 }
 
@@ -46,11 +52,11 @@ function create_cluster() {
 
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create manifests
 
+    mkdir -p ${assets_dir}/openshift
     generate_assets
-    custom_ntp
+    custom_ntp ${assets_dir}/openshift
     generate_metal3_config
 
-    mkdir -p ${assets_dir}/openshift
     find assets/generated -name '*.yaml' -exec cp -f {} ${assets_dir}/openshift \;
 
     if [[ "${IP_STACK}" == "v4v6" ]]; then
