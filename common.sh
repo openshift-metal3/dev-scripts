@@ -88,7 +88,7 @@ export REGISTRY_CRT=registry.2.crt
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 
 export OPENSHIFT_RELEASE_TYPE=${OPENSHIFT_RELEASE_TYPE:-ci}
-export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.6}
+export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.7}
 if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
     if [[ -z "$OPENSHIFT_VERSION" ]]; then
       error "OPENSHIFT_VERSION is required with OPENSHIFT_RELEASE_TYPE=ga"
@@ -158,11 +158,7 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     # This is an URI so we can use curl for either the file on GitHub, or locally
     export OPENSHIFT_INSTALLER_MACHINE_OS=${OPENSHIFT_INSTALLER_MACHINE_OS:-file:///$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json}
 
-    # The installer defaults to origin/CI releases, e.g registry.svc.ci.openshift.org/origin/release:4.6
-    # Which currently don't work for us ref
-    # https://github.com/openshift/ironic-inspector-image/pull/17
-    # Until we can align OPENSHIFT_RELEASE_IMAGE with the installer default, we still need
-    # to set OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE for openshift-install source builds
+    # The installer defaults to origin releases when building from source
     export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE}"
 fi
 
