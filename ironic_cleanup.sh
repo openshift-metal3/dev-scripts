@@ -3,6 +3,9 @@ set -x
 
 source logging.sh
 source common.sh
+source validation.sh
+
+early_cleanup_validation
 
 # Kill and remove the running ironic containers
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb vbmc sushy-tools; do

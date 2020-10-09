@@ -4,6 +4,9 @@ set -x
 source logging.sh
 source common.sh
 source utils.sh
+source validation.sh
+
+early_cleanup_validation
 
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}

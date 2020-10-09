@@ -5,6 +5,9 @@ source logging.sh
 source common.sh
 source network.sh
 source utils.sh
+source validation.sh
+
+early_deploy_validation
 
 # Generate user ssh key
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then

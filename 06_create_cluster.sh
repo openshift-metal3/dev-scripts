@@ -8,6 +8,9 @@ source network.sh
 source utils.sh
 source ocp_install_env.sh
 source rhcos.sh
+source validation.sh
+
+early_deploy_validation
 
 # Call openshift-installer to deploy the bootstrap node and masters
 create_cluster ${OCP_DIR}

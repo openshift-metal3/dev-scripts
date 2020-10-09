@@ -7,6 +7,9 @@ source common.sh
 source network.sh
 source utils.sh
 source ocp_install_env.sh
+source validation.sh
+
+early_deploy_validation
 
 write_pull_secret
 

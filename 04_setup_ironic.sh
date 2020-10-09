@@ -8,6 +8,9 @@ source network.sh
 source rhcos.sh
 source ocp_install_env.sh
 source utils.sh
+source validation.sh
+
+early_deploy_validation
 
 # To replace an image entry in the openshift releae image, set
 # <ENTRYNAME>_LOCAL_IMAGE - where ENTRYNAME matches an uppercase version of the name in the release image
