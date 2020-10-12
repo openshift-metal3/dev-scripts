@@ -51,6 +51,8 @@ function early_either_validation() {
 # build a cluster.
 function early_deploy_validation() {
 
+    CHECK_OC_TOOL_PRESENCE=${1:-"false"}
+
     early_either_validation
 
     if [ ! -s ${PERSONAL_PULL_SECRET} ]; then
@@ -75,8 +77,12 @@ function early_deploy_validation() {
         exit 1
     fi
 
+    LOGIN_CHECK="true"
+    if [ "${CHECK_OC_TOOL_PRESENCE}" == "true" -a ! -x "$(command -v oc)" ]; then
+        LOGIN_CHECK="false"
+    fi
     # Verify that the token we have is valid
-    if [ ${#CI_TOKEN} != 0 ]; then
+    if [ ${#CI_TOKEN} != 0 -a ${LOGIN_CHECK} == "true" ]; then
         _test_token=$(mktemp --tmpdir "test-token--XXXXXXXXXX")
         _tmpfiles="$_tmpfiles $_test_token"
         if ! oc login https://api.ci.openshift.org --kubeconfig=$_test_token --token=${CI_TOKEN}; then
