@@ -47,9 +47,12 @@ fi
 
 # Install oc client - unless we're in openshift CI
 if [[ -z "$OPENSHIFT_CI" ]]; then
-  oc_version=${OPENSHIFT_VERSION}
   if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
     oc_version=${OPENSHIFT_RELEASE_STREAM}
+  elif [[ "$OPENSHIFT_VERSION" == "4.7" ]]; then
+    oc_version="latest"
+  else
+    oc_version=${OPENSHIFT_VERSION}
   fi
 
   oc_tools_dir="${WORKING_DIR}/oc/${OPENSHIFT_VERSION}"
