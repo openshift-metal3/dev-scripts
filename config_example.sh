@@ -206,3 +206,10 @@ set -x
 # certificate store. This trust bundle may also be used when a proxy has 
 # been configured.
 # export ADDITIONAL_TRUST_BUNDLE=/path/to/ca_file
+
+##
+## VLAN testing variables
+##
+
+# VLAN to configure for baremetal network
+#export BAREMETAL_NETWORK_VLAN=404

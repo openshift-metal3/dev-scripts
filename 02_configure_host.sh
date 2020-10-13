@@ -167,8 +167,46 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ] || [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
   sudo systemctl enable network
 fi
 
+# Is the baremetal network a vlan overlaid on the provisioning network
+# In this case we remove the baremetal libvirt network and configure
+# a vlan interface so tagged traffic can use the same "physical" network
+# as the provisioning traffic (which remains untagged).
+if [ ! -z "${BAREMETAL_NETWORK_VLAN}" ] ; then
+    sudo cp /var/lib/libvirt/dnsmasq/${BAREMETAL_NETWORK_NAME}.conf /etc/NetworkManager/dnsmasq.d/
+    sudo sed -i "/^bind-dynamic/d" /etc/NetworkManager/dnsmasq.d/${BAREMETAL_NETWORK_NAME}.conf
+    sudo sed -i "/^pid-file/d" /etc/NetworkManager/dnsmasq.d/${BAREMETAL_NETWORK_NAME}.conf
+    sudo sed -i "/^##/d" /etc/NetworkManager/dnsmasq.d/${BAREMETAL_NETWORK_NAME}.conf
+    sudo sed -i 's#/var/lib/libvirt/dnsmasq/#/etc/NetworkManager/dnsmasq-shared.d/#' /etc/NetworkManager/dnsmasq.d/${BAREMETAL_NETWORK_NAME}.conf
+    sudo cp /var/lib/libvirt/dnsmasq/${BAREMETAL_NETWORK_NAME}.hostsfile /etc/NetworkManager/dnsmasq-shared.d/
+    sudo cp /var/lib/libvirt/dnsmasq/${BAREMETAL_NETWORK_NAME}.addnhosts /etc/NetworkManager/dnsmasq-shared.d/
+
+    # Remove the baremetal libvirt network
+    sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-undefine ${BAREMETAL_NETWORK_NAME}
+
+    # Modify bridge for the VM baremetal nic - we connect it to the remaining
+    # provisioning bridge, so we can test the common bond+vlans case
+    DOMLIST=$(sudo virsh list --all | grep ${CLUSTER_NAME} | awk '{print $2}')
+    for VM in ${DOMLIST}; do
+        sudo virt-xml --edit all ${VM} --network bridge=${PROVISIONING_NETWORK_NAME}
+    done
+
+    # Create the vlan interface and add it to the baremetal bridge
+    echo -e "DEVICE=${BAREMETAL_NETWORK_VLAN_INTERFACE}\nVLAN=yes\nNM_CONTROLLED=no\nONBOOT=yes\nBRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_VLAN_INTERFACE}
+
+    # Add an IP to the baremetal bridge, since libvirt doesn't do it in the vlan case
+    if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+        echo -e "IPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_EXTERNAL_IP}" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
+    else
+        echo -e "IPADDR=${PROVISIONING_HOST_EXTERNAL_IP}\nPREFIX=${PROVISIONING_HOST_EXTERNAL_NETMASK}" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
+   fi
+    sudo systemctl restart network
+    # Restart NetworkManager to start dnsmasq
+    sudo systemctl restart NetworkManager
+fi
+
 # restart the libvirt network so it applies an ip to the bridge
-if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
+if [ "$MANAGE_BR_BRIDGE" == "y" -a -z "${BAREMETAL_NETWORK_VLAN}" ] ; then
     sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
     sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
     if [ "$INT_IF" ]; then #Need to bring UP the NIC after destroying the libvirt network
@@ -191,8 +229,11 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -b -vvv ${VM_SETUP_PATH}/firewall.yml
 
 # FIXME(stbenjam): ansbile firewalld module doesn't seem to be doing the right thing
-sudo firewall-cmd --zone=libvirt --change-interface=provisioning
-sudo firewall-cmd --zone=libvirt --change-interface=baremetal
+sudo firewall-cmd --zone=libvirt --change-interface=$PROVISIONING_NETWORK_NAME
+sudo firewall-cmd --zone=libvirt --change-interface=$BAREMETAL_NETWORK_NAME
+if [ ! -z "${BAREMETAL_NETWORK_VLAN}" ] ; then
+    sudo firewall-cmd --zone=libvirt --change-interface=${PROVISIONING_NETWORK_NAME}.${BAREMETAL_NETWORK_VLAN}
+fi
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
