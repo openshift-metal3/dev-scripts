@@ -8,7 +8,7 @@ source sanitychecks.sh
 source utils.sh
 source validation.sh
 
-early_deploy_validation
+early_deploy_validation true
 
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
