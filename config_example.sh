@@ -33,7 +33,6 @@ set -x
 
 # IP stack version.  The default is "v6".  You may also set "v4".
 # For dual stack (IPv4 + IPv6), use "v4v6".
-# NOTE: dual stack is not expected to fully work yet.
 #export IP_STACK=v4
 
 # BMC type. Valid values are redfish, redfish-virtualmedia, or ipmi.
