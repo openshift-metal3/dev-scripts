@@ -14,7 +14,7 @@ set -x
 # Select a different release type from which to pull the latest image,
 # e.g ci, nightly or ga
 # if using ga then set OPENSHIFT_VERSION to the required version.
-#export OPENSHIFT_RELEASE_TYPE=ci
+#export OPENSHIFT_RELEASE_TYPE=nightly
 
 # Use <NAME>_LOCAL_IMAGE to build or use copy of container images locally e.g.
 #export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector
