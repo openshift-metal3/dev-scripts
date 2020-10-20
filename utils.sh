@@ -269,7 +269,11 @@ function sync_repo_and_patch {
 function generate_auth_template {
     # clouds.yaml
     OCP_VERSIONS_NOAUTH="4.3 4.4 4.5"
-    if [[ "$OCP_VERSIONS_NOAUTH" == *"$OPENSHIFT_VERSION"* ]]; then
+
+    # Fix the version if OPENSHIFT_VERSION follows x.y.z format to change it to x.y
+    OPENSHIFT_VERSION_TRIM=$(echo "$OPENSHIFT_VERSION" | grep -oE '^[[:digit:]]+\.[[:digit:]]+' || echo "$OPENSHIFT_VERSION")
+
+    if [[ "$OCP_VERSIONS_NOAUTH" == *"$OPENSHIFT_VERSION_TRIM"* ]]; then
         go run metal3-templater.go "noauth" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
     else
         IRONIC_USER=$(oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' | base64 -d)
