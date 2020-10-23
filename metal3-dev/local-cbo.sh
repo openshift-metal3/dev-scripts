@@ -18,5 +18,6 @@ fi
 cd $cbo_path
 
 export RUN_NAMESPACE=openshift-machine-api
+oc apply -f manifests/
 make run
 
