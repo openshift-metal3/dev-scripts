@@ -15,6 +15,30 @@ early_deploy_validation
 # Account for differences in 1.* and 2.* version reporting.
 PODMAN_VERSION=$(sudo podman version -f json | jq -r '.Version,.Client.Version|strings')
 
+OKD_IW_CALLED=""
+function okd_image_workaround() {
+    echo "OKD image workaround $1 $2 $3"
+    if [ -z "${OKD_IW_CALLED}" ]; then
+        echo "RUN dnf -y install jq" >> $3
+        OKD_IW_CALLED="y"
+    fi
+    # Update image-references
+    echo "RUN jq '.spec.tags = [.spec.tags[] | if (.name == \"$1\") then (.from.name = \"$2\") else . end]' /release-manifests/image-references > /release-manifests/image-references.tmp && mv /release-manifests/image-references.tmp /release-manifests/image-references" >> $3
+    # Update the MAO images configmap
+    # FIXME(shardy) this will need updating to work with the CBO
+    if [[ $1 == "ironic" ]]; then
+      echo "RUN sed -i 's%\"baremetalIronic\": \".*%\"baremetalIronic\": \"$2\",%' /release-manifests/0000_30_machine-api-operator_01_images.configmap.yaml" >> $3
+    elif [[ $1 == "ironic-inspector" ]]; then
+      echo "RUN sed -i 's%\"baremetalIronicInspector\": \".*%\"baremetalIronicInspector\": \"$2\",%' /release-manifests/0000_30_machine-api-operator_01_images.configmap.yaml" >> $3
+    elif [[ $1 == "ironic-ipa-downloader" ]]; then
+      echo "RUN sed -i 's%\"baremetalIpaDownloader\": \".*%\"baremetalIpaDownloader\": \"$2\",%' /release-manifests/0000_30_machine-api-operator_01_images.configmap.yaml" >> $3
+    elif [[ $1 == "ironic-machine-os-downloader" ]]; then
+      echo "RUN sed -i 's%\"baremetalMachineOsDownloader\": \".*%\"baremetalMachineOsDownloader\": \"$2\",%' /release-manifests/0000_30_machine-api-operator_01_images.configmap.yaml" >> $3
+    elif [[ $1 == "ironic-static-ip-manager" ]]; then
+      echo "RUN sed -i 's%\"baremetalStaticIpManager\": \".*%\"baremetalStaticIpManager\": \"$2\",%' /release-manifests/0000_30_machine-api-operator_01_images.configmap.yaml" >> $3
+    fi
+}
+
 # To replace an image entry in the openshift releae image, set
 # <ENTRYNAME>_LOCAL_IMAGE - where ENTRYNAME matches an uppercase version of the name in the release image
 # with "-" converted to "_" e.g. to use a custom ironic-inspector
@@ -86,8 +110,17 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     fi
 
     IMAGE_NAME=$(echo ${IMAGE_VAR/_LOCAL_IMAGE} | tr '[:upper:]_' '[:lower:]-')
-    OLDIMAGE=$(sudo podman run --rm $OPENSHIFT_RELEASE_IMAGE image $IMAGE_NAME)
-    echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> $DOCKERFILE
+
+    # FIXME(shardy) - Workaround for OKD
+    # Currently OKD uses the same stub image for all IRONIC*_LOCAL_IMAGE
+    # so the sed in $DOCKERFILE won't work, instead we have to explicitly
+    # update each image (until unique images show up in OKD)
+    if [[ $OPENSHIFT_RELEASE_IMAGE =~ \.okd- && $IMAGE_VAR =~ ^IRONIC ]]; then
+        okd_image_workaround $IMAGE_NAME ${!IMAGE_VAR} $DOCKERFILE
+    else
+        OLDIMAGE=$(sudo podman run --rm $OPENSHIFT_RELEASE_IMAGE image $IMAGE_NAME)
+        echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> $DOCKERFILE
+    fi
 done
 
 if [ ! -z "${MIRROR_IMAGES}" ]; then
@@ -115,6 +148,11 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
         "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
 
       mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ${OCP_DIR}
+    fi
+
+    if [ -n "${RELEASE_IMAGE_DEBUG:-}" ]; then
+        echo "RUN cat /release-manifests/image-references /release-manifests/0000_30_machine-api-operator_01_images.configmap.yaml" >> $DOCKERFILE
+        cat $DOCKERFILE
     fi
 
     # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
