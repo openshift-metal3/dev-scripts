@@ -213,3 +213,6 @@ set -x
 
 # VLAN to configure for baremetal network
 #export BAREMETAL_NETWORK_VLAN=404
+
+# Enable workaround for VLAN on baremetal network
+#export BAREMETAL_NETWORK_VLAN_WORKAROUND=y

@@ -140,6 +140,20 @@ function additional_trust_bundle() {
   fi
 }
 
+function cluster_os_image() {
+  # FIXME(shardy) this is just a workaround until we can do the config via ignition
+  if [ -n "${BAREMETAL_NETWORK_VLAN}" -a -n "${BAREMETAL_NETWORK_VLAN_WORKAROUND}" ]; then
+    OS_IMAGE="${BAREMETAL_VM_NIC}.${BAREMETAL_NETWORK_VLAN}.${MACHINE_OS_IMAGE_NAME}"
+    SHA256SUM=$(cat ${IRONIC_DATA_DIR}/html/images/$OS_IMAGE.sha256sum | awk '{print $1}')
+    OS_IMAGE=${OS_IMAGE}?sha256=${SHA256SUM}
+  else
+    OS_IMAGE="${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}"
+  fi
+cat <<EOF
+    clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${OS_IMAGE}
+EOF
+}
+
 function cluster_network() {
   if [[ "${IP_STACK}" == "v4" ]]; then
 cat <<EOF
@@ -226,7 +240,7 @@ $(libvirturi)
 $(baremetal_network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
-    clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
+$(cluster_os_image)
     apiVIP: ${API_VIP}
     ingressVIP: ${INGRESS_VIP}
 $(dnsvip)

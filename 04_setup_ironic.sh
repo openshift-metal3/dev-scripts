@@ -144,8 +144,37 @@ if [ ! -f "${CACHED_MACHINE_OS_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_IMAGE}" "${MACHINE_OS_IMAGE_URL}"
   echo "${MACHINE_OS_IMAGE_SHA256} ${CACHED_MACHINE_OS_IMAGE}" | tee ${CACHED_MACHINE_OS_IMAGE}.sha256sum
   sha256sum --strict --check ${CACHED_MACHINE_OS_IMAGE}.sha256sum || ( rm -f "${CACHED_MACHINE_OS_IMAGE}" ; exit 1 )
-
 fi
+
+# FIXME(shardy) this is just a workaround until we can do the config via ignition
+if [ -n "${BAREMETAL_NETWORK_VLAN}" -a -n "${BAREMETAL_NETWORK_VLAN_WORKAROUND}" ]; then
+  VLAN_CACHED_MACHINE_OS_IMAGE="$(dirname ${CACHED_MACHINE_OS_IMAGE})/${BAREMETAL_VM_NIC}.${BAREMETAL_NETWORK_VLAN}.$(basename ${CACHED_MACHINE_OS_IMAGE})"
+  if [ ! -f "${VLAN_CACHED_MACHINE_OS_IMAGE}" ]; then
+    # FIXME clean this up with _tmpfiles, but guestfish expects a relative path..
+    NICFILE="${BAREMETAL_VM_NIC}.${BAREMETAL_NETWORK_VLAN}.nmconnection"
+    cat > ${NICFILE} << EOF
+[connection]
+id=${BAREMETAL_VM_NIC}.${BAREMETAL_NETWORK_VLAN}
+type=vlan
+interface-name=${BAREMETAL_VM_NIC}.${BAREMETAL_NETWORK_VLAN}
+multi-connect=1
+
+[vlan]
+flags=1
+id=${BAREMETAL_NETWORK_VLAN}
+parent=${BAREMETAL_VM_NIC}
+EOF
+    IMAGE_UNCOMPRESSED=${VLAN_CACHED_MACHINE_OS_IMAGE/.[gx]z}
+    gunzip -c ${CACHED_MACHINE_OS_IMAGE} > ${IMAGE_UNCOMPRESSED}
+    guestfish -a ${IMAGE_UNCOMPRESSED} -m /dev/sda1 \
+      mkdir-p /coreos-firstboot-network : \
+      copy-in ${NICFILE} /coreos-firstboot-network
+    guestfish -a ${IMAGE_UNCOMPRESSED} -m /dev/sda1 ls /coreos-firstboot-network
+    gzip ${IMAGE_UNCOMPRESSED}
+    sha256sum ${VLAN_CACHED_MACHINE_OS_IMAGE} > ${VLAN_CACHED_MACHINE_OS_IMAGE}.sha256sum
+  fi
+fi
+
 CACHED_MACHINE_OS_BOOTSTRAP_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}"
 if [ ! -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" "${MACHINE_OS_BOOTSTRAP_IMAGE_URL}"
