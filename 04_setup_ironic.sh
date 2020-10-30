@@ -64,6 +64,9 @@ if [[ -n ${CUSTOM_REPO_FILE:-} ]]; then
         echo "${CUSTOM_REPO_FILE} does not exist!"
         exit 1
     fi
+    # Also update the Dockerfile used for the custom-release CVO image
+    echo "RUN rm -f /etc/yum.repos.d/*" >> $DOCKERFILE
+    echo "COPY ${CUSTOM_REPO_FILE} /etc/yum.repos.d/" >> $DOCKERFILE
 fi
 
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
