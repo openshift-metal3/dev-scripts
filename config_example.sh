@@ -20,6 +20,8 @@ set -x
 #export IRONIC_INSPECTOR_LOCAL_IMAGE=https://github.com/metal3-io/ironic-inspector
 #export IRONIC_LOCAL_IMAGE=quay.io/username/ironic
 #export MACHINE_CONFIG_OPERATOR_LOCAL_IMAGE=https://github.com/openshift/machine-config-operator
+# NOTE: If a checkout already exists in $HOME, it won't be re-created.
+# NOTE: You must set CUSTOM_REPO_FILE to build OpenShift ironic images locally.
 
 # Set this variable to point the custom base image to a different location
 # It can be an absolute path or a local path under the dev-scripts dir
