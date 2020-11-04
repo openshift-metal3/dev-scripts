@@ -54,7 +54,14 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         export $IMAGE_VAR=$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
         # Some repos need to build with a non-default Dockerfile name
         IMAGE_DOCKERFILE_NAME=${IMAGE_VAR/_LOCAL_IMAGE}_DOCKERFILE
-        IMAGE_DOCKERFILE=${!IMAGE_DOCKERFILE_NAME:-Dockerfile}
+        IMAGE_DOCKERFILE=${!IMAGE_DOCKERFILE_NAME:-}
+        if [[ -z "$IMAGE_DOCKERFILE" ]]; then
+            for IMAGE_DOCKERFILE in Dockerfile.ocp Dockerfile; do
+                if [[ -e "$IMAGE_DOCKERFILE" ]]; then
+                    break
+                fi
+            done
+        fi
         # If we built a custom base image, we should use it as a new base in
         # the Dockerfile to prevent discrepancies between locally built images.
         # Replace all FROM entries with the base-image.
