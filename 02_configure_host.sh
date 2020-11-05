@@ -196,10 +196,10 @@ if [ ! -z "${BAREMETAL_NETWORK_VLAN}" ] ; then
 
     # Add an IP to the baremetal bridge, since libvirt doesn't do it in the vlan case
     if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-        echo -e "IPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_EXTERNAL_IP}" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
+        echo -e "IPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_EXTERNAL_IP}/64" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
     else
         echo -e "IPADDR=${PROVISIONING_HOST_EXTERNAL_IP}\nPREFIX=${PROVISIONING_HOST_EXTERNAL_NETMASK}" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
-   fi
+    fi
     sudo systemctl restart network
     # Restart NetworkManager to start dnsmasq
     sudo systemctl restart NetworkManager
