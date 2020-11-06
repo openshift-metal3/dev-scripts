@@ -98,7 +98,7 @@ cd $bmo_path
 
 # Use our local verison of the CRD, in case it is newer than the one
 # in the cluster now.
-oc apply -f deploy/crds/metal3.io_baremetalhosts_crd.yaml
+oc apply -f config/crd/bases/metal3.io_baremetalhosts.yaml
 
 export RUN_NAMESPACE=openshift-machine-api
 make -e run
