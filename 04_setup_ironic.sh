@@ -38,6 +38,7 @@ fi
 
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     IMAGE=${!IMAGE_VAR}
+    BUILD_COMMAND_ARGS=""
 
     sudo -E podman pull --authfile $PULL_SECRET_FILE $OPENSHIFT_RELEASE_IMAGE
 
@@ -67,6 +68,17 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
                 git fetch origin pull/${IMAGE_PR}/head:pr${IMAGE_PR}
                 git checkout pr${IMAGE_PR}
         fi
+        
+        # If we want to install extra packages, we set the path to a
+        # file containing the packages (one per line) we want to install
+        EXTRA_PKGS_FILE_PATH=${IMAGE_VAR/_LOCAL_IMAGE}_EXTRA_PACKAGES
+        EXTRA_PKGS_FILE=${!EXTRA_PKGS_FILE_PATH:-}
+        EXTRA_PKGS_FILE=$(cd $OLDPWD; realpath $EXTRA_PKGS_FILE)
+        if [[ -n $EXTRA_PKGS_FILE ]]; then
+            cp $EXTRA_PKGS_FILE "$REPOPATH"
+            EXTRA_PKGS_FILE_NAME=$(basename $EXTRA_PKGS_FILE)
+            BUILD_COMMAND_ARGS+=" --build-arg EXTRA_PKGS_LIST=$EXTRA_PKGS_FILE_NAME"
+        fi
 
         # If we built a custom base image, we should use it as a new base in
         # the Dockerfile to prevent discrepancies between locally built images.
@@ -74,7 +86,8 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         if [[ -n ${BASE_IMAGE_DIR:-} ]]; then
             sed -i "s/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g" ${IMAGE_DOCKERFILE}
         fi
-        sudo podman build --authfile $PULL_SECRET_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
+        
+        sudo podman build --authfile $PULL_SECRET_FILE $BUILD_COMMAND_ARGS -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
         cd -
         sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
     fi

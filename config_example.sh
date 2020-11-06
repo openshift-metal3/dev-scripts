@@ -23,6 +23,12 @@ set -x
 # NOTE: If a checkout already exists in $HOME, it won't be re-created.
 # NOTE: You must set CUSTOM_REPO_FILE to build some OpenShift images, e.g. ironic ones.
 
+# Use <IMAGE_NAME>_EXTRA_PACKAGES to set the path (relative to dev-scripts or
+# absolute) to a file with extra packages to install in the image, one per line.
+# At the moment, this option is supported with ironic-image and ironic-inspector-image
+# For example:
+# export IRONIC_EXTRA_PACKAGES=ironic-extra-pkgs.txt
+
 # Set this variable to point the custom base image to a different location
 # It can be an absolute path or a local path under the dev-scripts dir
 # export BASE_IMAGE_DIR=base-image
