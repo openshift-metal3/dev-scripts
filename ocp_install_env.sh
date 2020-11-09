@@ -114,6 +114,15 @@ EOF
   fi
 }
 
+function dnsvip() {
+  # dnsVIP was removed from 4.5
+  if printf '%s\n4.4\n' "$(openshift_version)" | sort -V -C; then
+cat <<EOF
+    dnsVIP: ${DNS_VIP}
+EOF
+  fi
+}
+
 function libvirturi() {
     if [[ "$REMOTE_LIBVIRT" -ne 0 ]]; then
 cat <<EOF
@@ -224,7 +233,7 @@ $(baremetal_network_configuration)
     clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
     apiVIP: ${API_VIP}
     ingressVIP: ${INGRESS_VIP}
-    dnsVIP: ${DNS_VIP}
+$(dnsvip)
     hosts:
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 $(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
