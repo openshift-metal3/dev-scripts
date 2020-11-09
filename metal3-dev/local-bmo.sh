@@ -28,6 +28,7 @@ fi
 
 # Stop the machine-api-operator so it does not try to fix the
 # deployment we are going to change.
+cd $SCRIPTDIR
 $SCRIPTDIR/stop-mao.sh
 
 OUTDIR=${OCP_DIR}/metal3-dev
@@ -68,7 +69,7 @@ oc apply -f $OUTDIR/bmo-deployment-dev.yaml -n openshift-machine-api
 export OPERATOR_NAME=baremetal-operator
 
 for var in IRONIC_ENDPOINT IRONIC_INSPECTOR_ENDPOINT DEPLOY_KERNEL_URL DEPLOY_RAMDISK_URL; do
-    export "$var"=$(cat $OUTDIR/bmo-deployment-full.yaml | yq -r ".spec.template.spec.containers[0].env | map(select( .name == \""${var}"\"))[0].value")
+    export "$var"=$(cat $OUTDIR/bmo-deployment-full.yaml | yq -r ".spec.template.spec.containers[] | select(.name == \"metal3-baremetal-operator\").env[] | select(.name == \"${var}\").value")
 done
 
 auth_dir=/opt/metal3/auth
@@ -98,7 +99,7 @@ cd $bmo_path
 
 # Use our local verison of the CRD, in case it is newer than the one
 # in the cluster now.
-oc apply -f deploy/crds/metal3.io_baremetalhosts_crd.yaml
+oc apply -f config/crd/bases/metal3.io_baremetalhosts.yaml
 
 export RUN_NAMESPACE=openshift-machine-api
 make -e run
