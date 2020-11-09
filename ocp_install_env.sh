@@ -46,8 +46,15 @@ function save_release_info() {
     oc adm release info --registry-config "$PULL_SECRET_FILE" "$release_image" -o json > ${outdir}/release_info.json
 }
 
+# Gives e.g 4.7.0-0.nightly-2020-10-27-051128
 function openshift_release_version() {
-    jq -r ".config.config.Labels.\"io.openshift.release\"" ${OCP_DIR}/release_info.json
+    jq -r ".metadata.version" ${OCP_DIR}/release_info.json
+}
+
+# Gives us e.g 4.7 because although OPENSHIFT_VERSION is set by users,
+# but is not set in CI
+function openshift_version() {
+    jq -r ".metadata.version" ${OCP_DIR}/release_info.json | grep -oP "\d\.\d+"
 }
 
 function image_for() {
@@ -88,7 +95,7 @@ function build_installer() {
 }
 
 function baremetal_network_configuration() {
-  if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
+  if [[ "$(openshift_version $OCP_DIR)" == "4.3" ]]; then
     return
   fi
 
