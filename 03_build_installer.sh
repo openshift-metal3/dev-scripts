@@ -18,6 +18,8 @@ extract_oc "${OPENSHIFT_RELEASE_IMAGE}"
 
 mkdir -p $OCP_DIR
 
+save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
+
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
   # Extract openshift-install from the release image
   extract_installer "${OPENSHIFT_RELEASE_IMAGE}" $OCP_DIR

@@ -36,6 +36,24 @@ function extract_installer() {
     extract_command openshift-baremetal-install "$1" "$2"
 }
 
+function save_release_info() {
+    local release_image
+    local outdir
+
+    release_image="$1"
+    outdir="$2"
+
+    oc adm release info --registry-config "$PULL_SECRET_FILE" "$release_image" -o json > ${outdir}/release_info.json
+}
+
+function openshift_release_version() {
+    jq -r ".config.config.Labels.\"io.openshift.release\"" ${OCP_DIR}/release_info.json
+}
+
+function image_for() {
+    jq -r ".references.spec.tags[] | select(.name == \"$1\") | .from.name" ${OCP_DIR}/release_info.json
+}
+
 function extract_rhcos_json() {
     local release_image
     local outdir
@@ -43,7 +61,7 @@ function extract_rhcos_json() {
     release_image="$1"
     outdir="$2"
 
-    baremetal_image=$(oc adm release info --image-for=baremetal-installer --registry-config "$PULL_SECRET_FILE" "$release_image")
+    baremetal_image=$(image_for baremetal-installer)
     baremetal_container=$(podman create --authfile "$PULL_SECRET_FILE" "$baremetal_image")
 
     # This is OK to fail as rhcos.json isn't available in every release,
