@@ -32,7 +32,7 @@ echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 if [[ -n ${CUSTOM_REPO_FILE:-} ]]; then
     BASE_IMAGE_DIR=${BASE_IMAGE_DIR:-base-image}
     if [[ -f "${BASE_IMAGE_DIR}/${CUSTOM_REPO_FILE}" ]]; then
-        sudo podman build --tag ${BASE_IMAGE_DIR} --build-arg TestRepo="${CUSTOM_REPO_FILE}" -f "${BASE_IMAGE_DIR}/Dockerfile"
+        sudo podman build --tag ${BASE_IMAGE_DIR} --build-arg TEST_REPO="${CUSTOM_REPO_FILE}" -f "${BASE_IMAGE_DIR}/Dockerfile"
     else
         echo "${CUSTOM_REPO_FILE} does not exist!"
         exit 1
