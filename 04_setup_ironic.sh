@@ -62,6 +62,15 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
                 fi
             done
         fi
+
+        # If we set a specific PR number for the image, we can test it locally
+        IMAGE_PR_VAR=${IMAGE_VAR/_LOCAL_IMAGE}_PR
+        IMAGE_PR=${!IMAGE_PR_VAR:-}
+        if [[ -n ${IMAGE_PR:-} ]]; then
+                git fetch origin pull/${IMAGE_PR}/head:pr${IMAGE_PR}
+                git checkout pr${IMAGE_PR}
+        fi
+
         # If we built a custom base image, we should use it as a new base in
         # the Dockerfile to prevent discrepancies between locally built images.
         # Replace all FROM entries with the base-image.
