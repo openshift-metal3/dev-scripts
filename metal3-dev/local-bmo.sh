@@ -8,12 +8,6 @@ source $SCRIPTDIR/logging.sh
 source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/utils.sh
 
-if ! which operator-sdk 2>&1 >/dev/null ; then
-    echo "Did not find operator-sdk." 1>&2
-    echo "Install it following the instructions from the baremetal-operator repository." 1>&2
-    exit 1
-fi
-
 if ! which yq 2>&1 >/dev/null ; then
     echo "Did not find yq" 1>&2
     echo "Install with: pip3 install --user yq" 1>&2
@@ -102,4 +96,5 @@ cd $bmo_path
 oc apply -f config/crd/bases/metal3.io_baremetalhosts.yaml
 
 export RUN_NAMESPACE=openshift-machine-api
+export GOPATH
 make -e run
