@@ -160,7 +160,7 @@ then
   sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE} /usr/local/bin/get-resource.sh
 
-  sudo podman wait -i 1000ms ipa-downloader
+  sudo podman wait -i 1000 ipa-downloader
 fi
 
 function is_running() {
