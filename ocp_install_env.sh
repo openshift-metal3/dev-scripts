@@ -98,10 +98,10 @@ EOF
 }
 
 function additional_trust_bundle() {
-    if [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ]; then
+    if [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ] && [ -z $MIRROR_IMAGES ]; then
 cat <<EOF
 additionalTrustBundle: |
-  $(echo ${ADDITIONAL_TRUST_BUNDLE} | sed -e ':a;N;$!ba;s/\n/\n  /g')
+$(echo ${ADDITIONAL_TRUST_BUNDLE} | awk '{ print " ", $0 }')
 EOF
     fi
 }
