@@ -292,7 +292,6 @@ export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
 # Enabled only when a number between 2 and 4094 is specified
 export BAREMETAL_NETWORK_VLAN=${BAREMETAL_NETWORK_VLAN:-}
 export BAREMETAL_NETWORK_VLAN_WORKAROUND=${BAREMETAL_NETWORK_VLAN_WORKAROUND:-}
-export BAREMETAL_VM_NIC=${BAREMETAL_VM_NIC:-enp2s0}
 if [[ -n "${BAREMETAL_NETWORK_VLAN}" ]] ; then
   if ! [[ "${BAREMETAL_NETWORK_VLAN}" =~ ^[0-9]+$ ]] ; then
      error "BAREMETAL_NETWORK_VLAN value must be an integer."
@@ -302,5 +301,6 @@ if [[ -n "${BAREMETAL_NETWORK_VLAN}" ]] ; then
      echo "Wrong BAREMETAL_NETWORK_VLAN value: "${BAREMETAL_NETWORK_VLAN}" specified. Specify a VLAN value between 2 and 4094"
      exit 1
   fi
+  export BAREMETAL_VM_NIC=${BAREMETAL_VM_NIC:-enp1s0}
   export BAREMETAL_NETWORK_VLAN_INTERFACE=${PROVISIONING_NETWORK_NAME}.${BAREMETAL_NETWORK_VLAN}
 fi

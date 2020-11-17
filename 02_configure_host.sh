@@ -189,6 +189,12 @@ if [ ! -z "${BAREMETAL_NETWORK_VLAN}" ] ; then
     DOMLIST=$(sudo virsh list --all | grep ${CLUSTER_NAME} | awk '{print $2}')
     for VM in ${DOMLIST}; do
         sudo virt-xml --edit all ${VM} --network bridge=${PROVISIONING_NETWORK_NAME}
+
+        # When testing bonding the bond gets the mac from the first nic unless
+        # statically configured per-node, so we need to update the mac in the
+        # dnsmasq hostsfile to reference the first nic
+        MACS=($(sudo virsh domiflist ${VM} | grep ${PROVISIONING_NETWORK_NAME} | awk '{print $5}'))
+        sudo sed -i "s/${MACS[1]}/${MACS[0]}/" /etc/NetworkManager/dnsmasq-shared.d/${BAREMETAL_NETWORK_NAME}.hostsfile
     done
 
     # Create the vlan interface and add it to the baremetal bridge

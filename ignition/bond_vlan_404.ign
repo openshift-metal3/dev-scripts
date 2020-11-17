@@ -1,0 +1,37 @@
+{
+  "ignition": {
+    "version": "3.1.0"
+  },
+  "storage": {
+    "files": [
+      {
+        "path": "/etc/sysconfig/network-scripts/ifcfg-enp1s0",
+        "mode": 436,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8,DEVICE=enp1s0%0ABOOTPROTO=none%0AONBOOT=yes%0AMASTER=bond0%0ASLAVE=yes%0A"
+        }
+      },
+      {
+        "path": "/etc/sysconfig/network-scripts/ifcfg-enp2s0",
+        "mode": 436,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8,DEVICE=enp2s0%0ABOOTPROTO=none%0AONBOOT=yes%0AMASTER=bond0%0ASLAVE=yes%0A"
+        }
+      },
+      {
+        "path": "/etc/sysconfig/network-scripts/ifcfg-bond0",
+        "mode": 436,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8,BONDING_OPTS%3D%22miimon%3D100%20mode%3Dactive-backup%20primary%3Denp2s0%22%0ATYPE%3DBond%0ABONDING_MASTER%3Dyes%0ABOOTPROTO%3Ddhcp%0ANAME%3Dbond0%0ADEVICE%3Dbond0%0AONBOOT%3Dyes%0ABONDING_SLAVE0%3Denp2s0BONDING_SLAVE1%3Denp1s0%0A"
+        }
+      },
+      {
+        "path": "/etc/sysconfig/network-scripts/ifcfg-bond0.404",
+        "mode": 436,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8,DEVICE=bond0.404%0ABOOTPROTO=dhcp%0AONBOOT=yes%0AVLAN=yes%0A"
+        }
+      }
+    ]
+  }
+}
