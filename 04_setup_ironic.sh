@@ -12,6 +12,9 @@ source validation.sh
 
 early_deploy_validation
 
+# Account for differences in 1.* and 2.* version reporting.
+PODMAN_VERSION=$(sudo podman version -f json | jq -r '.Version,.Client.Version|strings')
+
 # To replace an image entry in the openshift releae image, set
 # <ENTRYNAME>_LOCAL_IMAGE - where ENTRYNAME matches an uppercase version of the name in the release image
 # with "-" converted to "_" e.g. to use a custom ironic-inspector
@@ -160,7 +163,12 @@ then
   sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
      -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE} /usr/local/bin/get-resource.sh
 
-  sudo podman wait -i 1000ms ipa-downloader
+  # Units have been introduced in 2.x
+  if printf '2.0.0\n%s\n' "$PODMAN_VERSION" | sort -V -C; then
+      sudo podman wait -i 1000ms ipa-downloader
+  else
+      sudo podman wait -i 1000 ipa-downloader
+  fi
 fi
 
 function is_running() {
