@@ -103,6 +103,10 @@ cat <<EOF
 additionalTrustBundle: |
 $(echo ${ADDITIONAL_TRUST_BUNDLE} | awk '{ print " ", $0 }')
 EOF
+    elif [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ] && [ ! -z "$MIRROR_IMAGES" ]; then
+cat <<EOF
+$(echo ${ADDITIONAL_TRUST_BUNDLE} | awk '{ print " ", $0 }')
+EOF
     fi
 }
 
