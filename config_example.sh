@@ -33,6 +33,12 @@ set -x
 # .repo file, e.g. if the filename is ocp46.repo
 # export CUSTOM_REPO_FILE=ocp46.repo
 
+# If needed, we can fetch the change associated to a Pull Request for the images
+# we're building locally. Specifying the PR number will fetch the PR, switch the
+# local image repo to it, and build the image locally with that specific change.
+# For example, for the PR #34 for the ironic-image:
+# export IRONIC_PR=34
+
 # IP stack version.  The default is "v6".  You may also set "v4".
 # For dual stack (IPv4 + IPv6), use "v4v6".
 #export IP_STACK=v4
