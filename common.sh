@@ -27,6 +27,7 @@ export MOBY_DISABLE_PIGZ=true
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=`whoami`
+GROUP=`id -gn`
 
 function error () {
     echo $@ 1>&2
@@ -260,7 +261,7 @@ export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 if [ ! -d "$WORKING_DIR" ]; then
   error "Creating Working Dir"
   sudo mkdir -p "$WORKING_DIR"
-  sudo chown "${USER}:${USER}" "$WORKING_DIR"
+  sudo chown "${USER}:${GROUP}" "$WORKING_DIR"
   chmod 755 "$WORKING_DIR"
 fi
 
@@ -275,7 +276,7 @@ fi
 # permissions to be owned by the user running dev-scripts.
 if [ ! -f "$IRONIC_IMAGES_DIR/.permissions" ]; then
   error "Resetting permissions on Ironic Images Dir..."
-  sudo chown -R "${USER}:${USER}" "$IRONIC_DATA_DIR"
+  sudo chown -R "${USER}:${GROUP}" "$IRONIC_DATA_DIR"
   sudo find "$IRONIC_DATA_DIR" -type d -print0 | xargs -0 chmod 755
   sudo chmod -R +r "$IRONIC_DATA_DIR"
   touch "$IRONIC_IMAGES_DIR/.permissions"

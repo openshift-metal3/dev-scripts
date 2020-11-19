@@ -74,7 +74,7 @@ get_creds() {
     if oc get -n openshift-machine-api secret ${secret} -o name >/dev/null; then
         if [ ! -d ${auth_dir} ]; then
             sudo mkdir -p "${auth_dir}"
-            sudo chown -R $USER:$USER "${auth_dir}/.."
+            sudo chown -R $USER:$GROUP "${auth_dir}/.."
         fi
         if [ ! -d ${cred_dir} ]; then
             mkdir "${cred_dir}"
