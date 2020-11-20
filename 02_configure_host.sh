@@ -80,7 +80,7 @@ ansible-playbook \
 if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
   ORIG_NODES_FILE="${NODES_FILE}.orig"
   cp -f ${NODES_FILE} ${ORIG_NODES_FILE}
-  sudo chown -R $USER:$USER ${NODES_FILE}
+  sudo chown -R $USER:$GROUP ${NODES_FILE}
   jq "{nodes: .nodes[:$((NUM_MASTERS + NUM_WORKERS))]}" ${ORIG_NODES_FILE} | tee ${NODES_FILE}
   jq "{nodes: .nodes[-${NUM_EXTRA_WORKERS}:]}" ${ORIG_NODES_FILE} | tee ${EXTRA_NODES_FILE}
 fi

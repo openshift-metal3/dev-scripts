@@ -348,7 +348,7 @@ function setup_local_registry() {
     sudo yum install -y httpd-tools
 
     sudo mkdir -pv ${REGISTRY_DIR}/{auth,certs,data}
-    sudo chown -R $USER:$USER ${REGISTRY_DIR}
+    sudo chown -R $USER:$GROUP ${REGISTRY_DIR}
 
     pushd $REGISTRY_DIR/certs
 
