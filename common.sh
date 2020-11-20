@@ -94,7 +94,7 @@ if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
       error "OPENSHIFT_VERSION is required with OPENSHIFT_RELEASE_TYPE=ga"
       exit 1
     fi
-    export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_VERSION%.*}
+    export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_VERSION}
 fi
 
 # DNS resolution for openshift-release.svc.ci.openshift.org fails
@@ -115,7 +115,7 @@ function get_latest_ci_image() {
 # if we provide OPENSHIFT_RELEASE_IMAGE, do not curl. This is needed for offline installs
 if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
   if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
-    LATEST_CI_IMAGE=$(curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OPENSHIFT_VERSION}/release.txt  | grep -o 'quay.io/openshift-release-dev/ocp-release[^"]\+')
+    LATEST_CI_IMAGE=$(curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-${OPENSHIFT_VERSION}/release.txt  | grep -o 'quay.io/openshift-release-dev/ocp-release[^"]\+')
   else
     LATEST_CI_IMAGE=$(get_latest_ci_image)
   fi
