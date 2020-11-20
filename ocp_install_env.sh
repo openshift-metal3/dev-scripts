@@ -97,6 +97,19 @@ EOF
     fi
 }
 
+function additional_trust_bundle() {
+    if [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ] && [ -z $MIRROR_IMAGES ]; then
+cat <<EOF
+additionalTrustBundle: |
+$(echo ${ADDITIONAL_TRUST_BUNDLE} | awk '{ print " ", $0 }')
+EOF
+    elif [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ] && [ ! -z "$MIRROR_IMAGES" ]; then
+cat <<EOF
+$(echo ${ADDITIONAL_TRUST_BUNDLE} | awk '{ print " ", $0 }')
+EOF
+    fi
+}
+
 function cluster_network() {
   if [[ "${IP_STACK}" == "v4" ]]; then
 cat <<EOF
@@ -191,6 +204,7 @@ $(baremetal_network_configuration)
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 $(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
 $(image_mirror_config)
+$(additional_trust_bundle)
 pullSecret: |
   $(jq -c . $install_config_pull_secret)
 sshKey: |

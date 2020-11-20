@@ -194,3 +194,8 @@ set -x
 
 # Image reference for installing hive. See hive_install.sh.
 #export HIVE_DEPLOY_IMAGE="registry.svc.ci.openshift.org/openshift/hive-v4.0:hive"
+
+# PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted 
+# certificate store. This trust bundle may also be used when a proxy has 
+# been configured.
+# export ADDITIONAL_TRUST_BUNDLE=$(cat ca)
