@@ -36,6 +36,31 @@ function extract_installer() {
     extract_command openshift-baremetal-install "$1" "$2"
 }
 
+function save_release_info() {
+    local release_image
+    local outdir
+
+    release_image="$1"
+    outdir="$2"
+
+    oc adm release info --registry-config "$PULL_SECRET_FILE" "$release_image" -o json > ${outdir}/release_info.json
+}
+
+# Gives e.g 4.7.0-0.nightly-2020-10-27-051128
+function openshift_release_version() {
+    jq -r ".metadata.version" ${OCP_DIR}/release_info.json
+}
+
+# Gives us e.g 4.7 because although OPENSHIFT_VERSION is set by users,
+# but is not set in CI
+function openshift_version() {
+    jq -r ".metadata.version" ${OCP_DIR}/release_info.json | grep -oP "\d\.\d+"
+}
+
+function image_for() {
+    jq -r ".references.spec.tags[] | select(.name == \"$1\") | .from.name" ${OCP_DIR}/release_info.json
+}
+
 function extract_rhcos_json() {
     local release_image
     local outdir
@@ -43,7 +68,7 @@ function extract_rhcos_json() {
     release_image="$1"
     outdir="$2"
 
-    baremetal_image=$(oc adm release info --image-for=baremetal-installer --registry-config "$PULL_SECRET_FILE" "$release_image")
+    baremetal_image=$(image_for baremetal-installer)
     baremetal_container=$(podman create --authfile "$PULL_SECRET_FILE" "$baremetal_image")
 
     # This is OK to fail as rhcos.json isn't available in every release,
@@ -70,7 +95,7 @@ function build_installer() {
 }
 
 function baremetal_network_configuration() {
-  if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
+  if [[ "$(openshift_version $OCP_DIR)" == "4.3" ]]; then
     return
   fi
 
@@ -85,6 +110,15 @@ cat <<EOF
     provisioningBridge: ${PROVISIONING_NETWORK_NAME}
     provisioningNetworkCIDR: $PROVISIONING_NETWORK
     provisioningNetworkInterface: $CLUSTER_PRO_IF
+EOF
+  fi
+}
+
+function dnsvip() {
+  # dnsVIP was removed from 4.5
+  if printf '%s\n4.4\n' "$(openshift_version)" | sort -V -C; then
+cat <<EOF
+    dnsVIP: ${DNS_VIP}
 EOF
   fi
 }
@@ -199,7 +233,7 @@ $(baremetal_network_configuration)
     clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
     apiVIP: ${API_VIP}
     ingressVIP: ${INGRESS_VIP}
-    dnsVIP: ${DNS_VIP}
+$(dnsvip)
     hosts:
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 $(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)

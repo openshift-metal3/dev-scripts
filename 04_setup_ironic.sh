@@ -122,7 +122,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
 
     # If we're mirroring images, let's use the local Ironic image instead
-    OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$PULL_SECRET_FILE" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".config.config.Labels.\"io.openshift.release\"")
+    OPENSHIFT_RELEASE_VERSION=$(openshift_release_version)
     IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_VERSION}-ironic"}
 fi
 

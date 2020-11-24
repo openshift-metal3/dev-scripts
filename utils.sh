@@ -270,18 +270,17 @@ function generate_auth_template {
     # clouds.yaml
     OCP_VERSIONS_NOAUTH="4.3 4.4 4.5"
 
-    # Fix the version if OPENSHIFT_VERSION follows x.y.z format to change it to x.y
-    OPENSHIFT_VERSION_TRIM=$(echo "$OPENSHIFT_VERSION" | grep -oE '^[[:digit:]]+\.[[:digit:]]+' || echo "$OPENSHIFT_VERSION")
+    VERSION=$(openshift_version $OCP_DIR)
 
-    if [[ "$OCP_VERSIONS_NOAUTH" == *"$OPENSHIFT_VERSION_TRIM"* ]]; then
+    if [[ "$OCP_VERSIONS_NOAUTH" == *"$VERSION"* ]]; then
         go run metal3-templater.go "noauth" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
     else
         IRONIC_USER=$(oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' | base64 -d)
         IRONIC_PASSWORD=$(oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' | base64 -d)
-	IRONIC_CREDS="$IRONIC_USER:$IRONIC_PASSWORD"
+        IRONIC_CREDS="$IRONIC_USER:$IRONIC_PASSWORD"
         INSPECTOR_USER=$(oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' | base64 -d)
         INSPECTOR_PASSWORD=$(oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' | base64 -d)
-	INSPECTOR_CREDS="$INSPECTOR_USER:$INSPECTOR_PASSWORD"
+        INSPECTOR_CREDS="$INSPECTOR_USER:$INSPECTOR_PASSWORD"
 
         go run metal3-templater.go "http_basic" -ironic-basic-auth="$IRONIC_CREDS" -inspector-basic-auth="$INSPECTOR_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
     fi
