@@ -292,12 +292,17 @@ should not clean or deploy one environment while another is deploying
 
 ## Interacting with Ironic directly
 
-The dev-scripts repository contains a `clouds.yaml` file with
+The `./06_create_cluster.sh` script generates a `clouds.yaml` file with
 connection settings for both instances of Ironic. The copy of Ironic
 that runs on the bootstrap node during installation can be accessed by
 using the cloud name `metal3-bootstrap` and the copy running inside
 the cluster once deployment is finished can be accessed by using the
 cloud name `metal3`.
+
+Note that the `clouds.yaml` is generated on exit from `./06_create_cluster.sh`
+(on success, and also on failure if possible), however it can be useful
+to generate the file during deployment, in which case `generate_clouds_yaml.sh`
+may be run manually.
 
 The dev-scripts will install the `baremetal` command line tool on the
 provisioning host as part of setting up the cluster.  The `baremetal`
