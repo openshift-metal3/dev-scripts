@@ -481,6 +481,21 @@ function swtich_to_internal_dns() {
   fi
 }
 
+function bootstrap_ip {
+  if [[ "${IP_STACK}" == "v6" ]]; then
+    pref_ip=ipv6
+  else
+    pref_ip=ipv4
+  fi
+
+  sudo virsh net-dhcp-leases ${BAREMETAL_NETWORK_NAME} \
+                      | grep -v master \
+                      | grep "${pref_ip}" \
+                      | tail -n1 \
+                      | awk '{print $5}' \
+                      | sed -e 's/\(.*\)\/.*/\1/'
+}
+
 _tmpfiles=
 function removetmp(){
     [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
