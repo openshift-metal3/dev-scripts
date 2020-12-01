@@ -97,9 +97,8 @@ function create_cluster() {
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/worker.ign.orig | tee ${assets_dir}/worker.ign
     fi
 
+    trap auth_template_and_removetmp EXIT
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
-
-    generate_auth_template
 }
 
 function ipversion(){
@@ -275,14 +274,23 @@ function generate_auth_template {
     if [[ "$OCP_VERSIONS_NOAUTH" == *"$VERSION"* ]]; then
         go run metal3-templater.go "noauth" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
     else
-        IRONIC_USER=$(oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' | base64 -d)
-        IRONIC_PASSWORD=$(oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' | base64 -d)
+        IRONIC_USER=$((oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
+        IRONIC_PASSWORD=$((oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
         IRONIC_CREDS="$IRONIC_USER:$IRONIC_PASSWORD"
-        INSPECTOR_USER=$(oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' | base64 -d)
-        INSPECTOR_PASSWORD=$(oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' | base64 -d)
+        INSPECTOR_USER=$((oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
+        INSPECTOR_PASSWORD=$((oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
         INSPECTOR_CREDS="$INSPECTOR_USER:$INSPECTOR_PASSWORD"
 
         go run metal3-templater.go "http_basic" -ironic-basic-auth="$IRONIC_CREDS" -inspector-basic-auth="$INSPECTOR_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
+
+        BOOTSTRAP_VM_IP=$(bootstrap_ip)
+        if [ ! -z "${BOOTSTRAP_VM_IP}" ]; then
+            if ping -c 1 ${BOOTSTRAP_VM_IP}; then
+                # From 4.7 basic_auth is also enabled on the bootstrap VM
+                # There's a clouds.yaml we can copy in that case
+                ($SSH core@${BOOTSTRAP_VM_IP} sudo cat /opt/metal3/auth/clouds.yaml || echo "") | sed "s/^clouds://" >> clouds.yaml
+            fi
+        fi
     fi
 
     # For compatibility with metal3-dev-env openstackclient.sh
@@ -481,8 +489,29 @@ function swtich_to_internal_dns() {
   fi
 }
 
+function bootstrap_ip {
+  if [[ "${IP_STACK}" == "v6" ]]; then
+    pref_ip=ipv6
+  else
+    pref_ip=ipv4
+  fi
+
+  sudo virsh net-dhcp-leases ${BAREMETAL_NETWORK_NAME} \
+                      | grep -v master \
+                      | grep "${pref_ip}" \
+                      | tail -n1 \
+                      | awk '{print $5}' \
+                      | sed -e 's/\(.*\)\/.*/\1/'
+}
+
 _tmpfiles=
 function removetmp(){
     [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
 }
+
+function auth_template_and_removetmp(){
+    generate_auth_template
+    removetmp
+}
+
 trap removetmp EXIT
