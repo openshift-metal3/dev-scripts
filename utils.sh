@@ -99,6 +99,29 @@ function create_cluster() {
 
     trap auth_template_and_removetmp EXIT
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
+
+    # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1816904
+    wait_for_workers
+}
+
+wait_for_workers() {
+    TIMEOUT_MINUTES=30
+    if ! timeout ${TIMEOUT_MINUTES}m bash <<EOF
+while (( $(oc get nodes | grep "^worker" | wc -l) < $NUM_WORKERS )); do
+  echo "Waiting for $NUM_WORKERS workers"
+  sleep 5
+done
+EOF
+    then
+      echo "Error - timeout waiting for $NUM_WORKERS workers"
+      exit 1
+    fi
+
+    TIMEOUT_MINUTES=15
+    for worker in $(oc get nodes -o json | jq -r ".items[].metadata.name" | grep ^worker); do
+        echo "$worker registered, waiting $TIMEOUT_MINUTES minutes for Ready condition ..."
+        oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
+    done
 }
 
 function ipversion(){
