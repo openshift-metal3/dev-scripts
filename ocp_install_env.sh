@@ -132,16 +132,12 @@ EOF
 }
 
 function additional_trust_bundle() {
-    if [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ] && [ -z $MIRROR_IMAGES ]; then
-cat <<EOF
-additionalTrustBundle: |
-$(echo ${ADDITIONAL_TRUST_BUNDLE} | awk '{ print " ", $0 }')
-EOF
-    elif [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ] && [ ! -z "$MIRROR_IMAGES" ]; then
-cat <<EOF
-$(echo ${ADDITIONAL_TRUST_BUNDLE} | awk '{ print " ", $0 }')
-EOF
+  if [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ]; then
+    if [ -z $MIRROR_IMAGES ]; then
+      echo "additionalTrustBundle: |"
     fi
+    awk '{ print " ", $0 }' "${ADDITIONAL_TRUST_BUNDLE}"
+  fi
 }
 
 function cluster_network() {

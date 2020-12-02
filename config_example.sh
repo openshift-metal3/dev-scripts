@@ -198,4 +198,4 @@ set -x
 # PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted 
 # certificate store. This trust bundle may also be used when a proxy has 
 # been configured.
-# export ADDITIONAL_TRUST_BUNDLE=$(cat ca)
+# export ADDITIONAL_TRUST_BUNDLE=/path/to/ca_file
