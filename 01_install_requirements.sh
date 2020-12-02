@@ -52,12 +52,12 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
   elif [[ "$OPENSHIFT_VERSION" == "4.7" ]]; then
     oc_version="latest"
   else
-    oc_version=${OPENSHIFT_VERSION}
+    oc_version="latest-${OPENSHIFT_VERSION}"
   fi
 
   oc_tools_dir="${WORKING_DIR}/oc/${OPENSHIFT_VERSION}"
   oc_tools_local_file=openshift-client-${oc_version}.tar.gz
-  oc_download_url="https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz"
+  oc_download_url="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${oc_version}/openshift-client-linux.tar.gz"
   mkdir -p ${oc_tools_dir}
   pushd ${oc_tools_dir}
   if [ ! -f "${oc_tools_local_file}" ]; then
