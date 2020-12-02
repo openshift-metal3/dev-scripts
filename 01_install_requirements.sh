@@ -45,26 +45,6 @@ if sudo systemctl is-active docker-distribution.service; then
   sudo systemctl disable --now docker-distribution.service
 fi
 
-# Install oc client - unless we're in openshift CI
-if [[ -z "$OPENSHIFT_CI" ]]; then
-  if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
-    oc_version=${OPENSHIFT_RELEASE_STREAM}
-  elif [[ "$OPENSHIFT_VERSION" == "4.7" ]]; then
-    oc_version="latest"
-  else
-    oc_version=${OPENSHIFT_VERSION}
-  fi
-
-  oc_tools_dir="${WORKING_DIR}/oc/${OPENSHIFT_VERSION}"
-  oc_tools_local_file=openshift-client-${oc_version}.tar.gz
-  oc_download_url="https://mirror.openshift.com/pub/openshift-v4/clients/oc/${oc_version}/linux/oc.tar.gz"
-  mkdir -p ${oc_tools_dir}
-  pushd ${oc_tools_dir}
-  if [ ! -f "${oc_tools_local_file}" ]; then
-    curl -L -o ${oc_tools_local_file} ${oc_download_url}
-    tar xvzf ${oc_tools_local_file}
-  fi
-  sudo cp oc /usr/local/bin/
-  oc version --client -o json
-  popd
-fi
+curl --retry 5 "$OPENSHIFT_CLIENT_TOOLS_URL" | sudo tar -U -C /usr/local/bin -xzf -
+sudo chmod +x /usr/local/bin/oc
+oc version --client -o json
