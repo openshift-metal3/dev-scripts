@@ -462,4 +462,3 @@ ostest-worker-0   2         2         2       2           27h
 $ oc scale machineset ostest-worker-0 --replicas=3 -n openshift-machine-api
 machineset.machine.openshift.io/ostest-worker-0 scaled
 ```
-
