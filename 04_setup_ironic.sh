@@ -34,12 +34,22 @@ echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 # the file exists
 if [[ -n ${CUSTOM_REPO_FILE:-} ]]; then
     BASE_IMAGE_DIR=${BASE_IMAGE_DIR:-base-image}
-    if [[ -f "${BASE_IMAGE_DIR}/${CUSTOM_REPO_FILE}" ]]; then
-        sudo podman build --tag ${BASE_IMAGE_DIR} --build-arg TEST_REPO="${CUSTOM_REPO_FILE}" -f "${BASE_IMAGE_DIR}/Dockerfile"
-    else
+    if [[ ! -f "${BASE_IMAGE_DIR}/${CUSTOM_REPO_FILE}" ]]; then
         echo "${CUSTOM_REPO_FILE} does not exist!"
         exit 1
     fi
+
+    BUILD_COMMAND_ARGS="--build-arg TEST_REPO=${CUSTOM_REPO_FILE}"
+
+    # we can change the image used to build the base-image setting the BASE_IMAGE_FROM variable
+    # in the config file, for example export BASE_IMAGE_FROM=centos:8
+    if [[ -n ${BASE_IMAGE_FROM:-} ]]; then
+        BUILD_COMMAND_ARGS+=" --build-arg BASE_IMAGE_FROM=${BASE_IMAGE_FROM}"
+        BUILD_COMMAND_ARGS+=" --build-arg REMOVE_OLD_REPOS=no"
+    fi
+
+    sudo podman build --tag ${BASE_IMAGE_DIR} ${BUILD_COMMAND_ARGS} -f "${BASE_IMAGE_DIR}/Dockerfile"
+
 fi
 
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
