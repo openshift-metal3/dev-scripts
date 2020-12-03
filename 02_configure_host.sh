@@ -199,7 +199,7 @@ fi
 
 # Switch NetworkManager to internal DNS
 if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
-  swtich_to_internal_dns
+  switch_to_internal_dns
 fi
 
 # Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME

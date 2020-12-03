@@ -21,7 +21,7 @@ function install_assisted_env() {
   popd
 
   if ! [ "$MANAGE_BR_BRIDGE" == "y" ];then
-    swtich_to_internal_dns
+    switch_to_internal_dns
   fi
 
 }

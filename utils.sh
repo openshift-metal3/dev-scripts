@@ -445,7 +445,7 @@ function write_pull_secret() {
     jq -s '.[0] * .[1] * .[2]' ${PERSONAL_PULL_SECRET} ${REGISTRY_CREDS} ${tmppullsecret} > ${PULL_SECRET_FILE}
 }
 
-function swtich_to_internal_dns() {
+function switch_to_internal_dns() {
   sudo mkdir -p /etc/NetworkManager/conf.d/
   ansible localhost -b -m ini_file -a "path=/etc/NetworkManager/conf.d/dnsmasq.conf section=main option=dns value=dnsmasq"
   if [ "$ADDN_DNS" ] ; then
