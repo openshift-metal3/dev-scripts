@@ -102,10 +102,10 @@ function baremetal_network_configuration() {
   if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
 cat <<EOF
     provisioningNetwork: "${PROVISIONING_NETWORK_PROFILE}"
-    provisioningHostIP: "${CLUSTER_PROVISIONING_IP}"
 EOF
   if printf '%s\n4.6\n' "$(openshift_version)" | sort -V -C; then
 cat <<EOF
+    provisioningHostIP: "${CLUSTER_PROVISIONING_IP}"
     bootstrapProvisioningIP: "${BOOTSTRAP_PROVISIONING_IP}"
 EOF
     fi
