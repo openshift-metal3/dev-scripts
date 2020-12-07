@@ -85,12 +85,18 @@ if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
   jq "{nodes: .nodes[-${NUM_EXTRA_WORKERS}:]}" ${ORIG_NODES_FILE} | tee ${EXTRA_NODES_FILE}
 fi
 
+ZONE="\nZONE=libvirt"
+sudo systemctl enable --now firewalld
+
 # Allow local non-root-user access to libvirt
 # Restart libvirtd service to get the new group membership loaded
 if ! id $USER | grep -q libvirt; then
   sudo usermod -a -G "libvirt" $USER
-  sudo systemctl restart libvirtd
 fi
+
+# Restart to see we are using firewalld and the new
+# usergroup from above
+sudo systemctl restart libvirtd
 
 # As per https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#configure-default-libvirt-storage-pool
 # Usually virt-manager/virt-install creates this: https://www.redhat.com/archives/libvir-list/2008-August/msg00179.html
@@ -106,9 +112,6 @@ EOF
     virsh pool-start default
     virsh pool-autostart default
 fi
-
-ZONE="\nZONE=libvirt"
-sudo systemctl enable --now firewalld
 
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Adding an IP address in the libvirt definition for this network results in
