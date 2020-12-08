@@ -33,6 +33,10 @@ set -x
 # .repo file, e.g. if the filename is ocp46.repo
 # export CUSTOM_REPO_FILE=ocp46.repo
 
+# We can also change the very image the base-image is built from using the BASE_IMAGE_FROM
+# variable; when we choose this, the repos included in the base image won't be removed.
+# export BASE_IMAGE_FROM=centos:8
+
 # If needed, we can fetch the change associated to a Pull Request for the images
 # we're building locally. Specifying the PR number will fetch the PR, switch the
 # local image repo to it, and build the image locally with that specific change.
