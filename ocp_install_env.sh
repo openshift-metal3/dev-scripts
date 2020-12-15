@@ -283,7 +283,7 @@ metadata:
   name: $name
   namespace: openshift-machine-api
 spec:
-  online: true
+  online: ${EXTRA_WORKERS_ONLINE_STATUS}
   bootMACAddress: $mac
   bmc:
     address: $address
