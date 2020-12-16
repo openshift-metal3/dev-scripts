@@ -17,8 +17,9 @@ fi
 if [ -n "${MIRROR_IMAGES}" ]; then
   write_pull_secret
 
-  OPENSHIFT_RELEASE_VERSION=$(oc adm release info --registry-config="$PULL_SECRET_FILE" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".config.config.Labels.\"io.openshift.release\"")
-  MUST_GATHER_IMAGE="--image=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_VERSION}-must-gather"
+  MUST_GATHER_RELEASE_IMAGE=$(image_for must-gather | cut -d '@' -f2)
+  LOCAL_REGISTRY_PREFIX="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image"
+  MUST_GATHER_IMAGE="--image=${LOCAL_REGISTRY_PREFIX}@${MUST_GATHER_RELEASE_IMAGE}"
 else
   MUST_GATHER_IMAGE=""
 fi

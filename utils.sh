@@ -473,6 +473,10 @@ function bootstrap_ip {
                       | sed -e 's/\(.*\)\/.*/\1/'
 }
 
+function image_for() {
+    jq -r ".references.spec.tags[] | select(.name == \"$1\") | .from.name" ${OCP_DIR}/release_info.json
+}
+
 _tmpfiles=
 function removetmp(){
     [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
