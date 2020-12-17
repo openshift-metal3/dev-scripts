@@ -57,10 +57,6 @@ function openshift_version() {
     jq -r ".metadata.version" ${OCP_DIR}/release_info.json | grep -oP "\d\.\d+"
 }
 
-function image_for() {
-    jq -r ".references.spec.tags[] | select(.name == \"$1\") | .from.name" ${OCP_DIR}/release_info.json
-}
-
 function extract_rhcos_json() {
     local release_image
     local outdir
