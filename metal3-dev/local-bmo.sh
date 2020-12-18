@@ -57,6 +57,10 @@ cat $OUTDIR/bmo-deployment-dev-without-containers.yaml \
          | yq -Y 'setpath(["spec", "replicas"]; 1)' \
          > $OUTDIR/bmo-deployment-dev.yaml
 
+# Modify the image pull policy to always pull, in case we're using
+# local images.
+sed -i 's/imagePullPolicy: IfNotPresent/imagePullPolicy: Always/g' $OUTDIR/bmo-deployment-dev.yaml
+
 # Launch the deployment with the support services and ensure it is scaled up
 oc apply -f $OUTDIR/bmo-deployment-dev.yaml -n openshift-machine-api
 
