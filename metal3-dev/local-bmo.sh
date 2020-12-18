@@ -7,6 +7,7 @@ source $SCRIPTDIR/logging.sh
 
 source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/utils.sh
+source $SCRIPTDIR/network.sh
 
 if ! which yq 2>&1 >/dev/null ; then
     echo "Did not find yq" 1>&2
@@ -63,7 +64,7 @@ oc apply -f $OUTDIR/bmo-deployment-dev.yaml -n openshift-machine-api
 export OPERATOR_NAME=baremetal-operator
 
 for var in IRONIC_ENDPOINT IRONIC_INSPECTOR_ENDPOINT DEPLOY_KERNEL_URL DEPLOY_RAMDISK_URL; do
-    export "$var"=$(cat $OUTDIR/bmo-deployment-full.yaml | yq -r ".spec.template.spec.containers[] | select(.name == \"metal3-baremetal-operator\").env[] | select(.name == \"${var}\").value")
+    export "$var"=$(cat $OUTDIR/bmo-deployment-full.yaml | yq -r ".spec.template.spec.containers[] | select(.name == \"metal3-baremetal-operator\").env[] | select(.name == \"${var}\").value" | sed "s/localhost/${CLUSTER_PROVISIONING_IP}/g")
 done
 
 auth_dir=/opt/metal3/auth
