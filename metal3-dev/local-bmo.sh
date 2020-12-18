@@ -20,10 +20,10 @@ if [ ! -d $bmo_path ]; then
     exit 1
 fi
 
-# Stop the machine-api-operator so it does not try to fix the
+# Stop the cluster-baremetal-operator so it does not try to fix the
 # deployment we are going to change.
 cd $SCRIPTDIR
-$SCRIPTDIR/stop-mao.sh
+$SCRIPTDIR/stop-cbo.sh
 
 OUTDIR=${OCP_DIR}/metal3-dev
 mkdir -p $OUTDIR
