@@ -31,8 +31,8 @@ mkdir -p $OUTDIR
 
 # Scale the existing deployment down.
 oc scale deployment -n openshift-machine-api --replicas=0 metal3
-if oc get pod -o name -n openshift-machine-api | grep -v metal3-development | grep -q metal3; then
-    metal3pods=$(oc get pod -o name -n openshift-machine-api | grep -v metal3-development | grep metal3)
+if oc get pod -o name -n openshift-machine-api | egrep -v 'metal3-(development|image-cache)' | grep -q metal3; then
+    metal3pods=$(oc get pod -o name -n openshift-machine-api | egrep -v 'metal3-(development|image-cache)' | grep metal3)
     oc wait --for=delete -n openshift-machine-api $metal3pods || true
 fi
 
