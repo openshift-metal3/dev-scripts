@@ -7,6 +7,7 @@ source $SCRIPTDIR/logging.sh
 
 source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/utils.sh
+source $SCRIPTDIR/network.sh
 
 if ! which yq 2>&1 >/dev/null ; then
     echo "Did not find yq" 1>&2
@@ -20,18 +21,18 @@ if [ ! -d $bmo_path ]; then
     exit 1
 fi
 
-# Stop the machine-api-operator so it does not try to fix the
+# Stop the cluster-baremetal-operator so it does not try to fix the
 # deployment we are going to change.
 cd $SCRIPTDIR
-$SCRIPTDIR/stop-mao.sh
+$SCRIPTDIR/stop-cbo.sh
 
 OUTDIR=${OCP_DIR}/metal3-dev
 mkdir -p $OUTDIR
 
 # Scale the existing deployment down.
 oc scale deployment -n openshift-machine-api --replicas=0 metal3
-if oc get pod -o name -n openshift-machine-api | grep -v metal3-development | grep -q metal3; then
-    metal3pods=$(oc get pod -o name -n openshift-machine-api | grep -v metal3-development | grep metal3)
+if oc get pod -o name -n openshift-machine-api | egrep -v 'metal3-(development|image-cache)' | grep -q metal3; then
+    metal3pods=$(oc get pod -o name -n openshift-machine-api | egrep -v 'metal3-(development|image-cache)' | grep metal3)
     oc wait --for=delete -n openshift-machine-api $metal3pods || true
 fi
 
@@ -56,6 +57,10 @@ cat $OUTDIR/bmo-deployment-dev-without-containers.yaml \
          | yq -Y 'setpath(["spec", "replicas"]; 1)' \
          > $OUTDIR/bmo-deployment-dev.yaml
 
+# Modify the image pull policy to always pull, in case we're using
+# local images.
+sed -i 's/imagePullPolicy: IfNotPresent/imagePullPolicy: Always/g' $OUTDIR/bmo-deployment-dev.yaml
+
 # Launch the deployment with the support services and ensure it is scaled up
 oc apply -f $OUTDIR/bmo-deployment-dev.yaml -n openshift-machine-api
 
@@ -63,7 +68,7 @@ oc apply -f $OUTDIR/bmo-deployment-dev.yaml -n openshift-machine-api
 export OPERATOR_NAME=baremetal-operator
 
 for var in IRONIC_ENDPOINT IRONIC_INSPECTOR_ENDPOINT DEPLOY_KERNEL_URL DEPLOY_RAMDISK_URL; do
-    export "$var"=$(cat $OUTDIR/bmo-deployment-full.yaml | yq -r ".spec.template.spec.containers[] | select(.name == \"metal3-baremetal-operator\").env[] | select(.name == \"${var}\").value")
+    export "$var"=$(cat $OUTDIR/bmo-deployment-full.yaml | yq -r ".spec.template.spec.containers[] | select(.name == \"metal3-baremetal-operator\").env[] | select(.name == \"${var}\").value" | sed "s/localhost/${CLUSTER_PROVISIONING_IP}/g")
 done
 
 auth_dir=/opt/metal3/auth
