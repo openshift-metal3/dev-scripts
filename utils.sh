@@ -293,7 +293,7 @@ function image_mirror_config {
     if [ ! -z "${MIRROR_IMAGES}" ]; then
         . /tmp/mirrored_release_image
         TAGGED=$(echo $MIRRORED_RELEASE_IMAGE | sed -e 's/release://')
-        RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.svc.ci.openshift.org[^":\@]\+')
+        RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.ci.openshift.org[^":\@]\+')
         INDENTED_CERT=$( cat $REGISTRY_DIR/certs/$REGISTRY_CRT | awk '{ print " ", $0 }' )
         if [ ! -s ${MIRROR_LOG_FILE} ]; then
             cat << EOF
@@ -407,9 +407,9 @@ EOF
 
 function verify_pull_secret() {
   # Do some PULL_SECRET sanity checking
-  if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.svc.ci.openshift.org"* ]]; then
+  if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.ci.openshift.org"* ]]; then
       if [[ ${#CI_TOKEN} = 0 ]]; then
-          error "Please login to https://api.ci.openshift.org and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
+          error "Please login to https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
           exit 1
       fi
   fi
@@ -432,10 +432,10 @@ function write_pull_secret() {
 
     verify_pull_secret
 
-    # Get a current pull secret for registry.svc.ci.openshift.org using the token
+    # Get a current pull secret for registry.ci.openshift.org using the token
     tmpkubeconfig=$(mktemp --tmpdir "kubeconfig--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpkubeconfig"
-    oc login https://api.ci.openshift.org --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
+    oc login https://api.ci.l2s4.p1.openshiftapps.com:6443 --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
     tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmppullsecret"
     oc registry login --kubeconfig=$tmpkubeconfig --to=$tmppullsecret

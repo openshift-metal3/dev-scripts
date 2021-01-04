@@ -1,14 +1,14 @@
 # This Dockerfile builds the image used by the e2e-metal-ipi test steps in the OpenShift CI.
 # For more details about the test see https://steps.svc.ci.openshift.org/job/openshift-baremetal-operator-master-e2e-metal-ipi
 
-FROM registry.svc.ci.openshift.org/openshift/release:golang-1.14
+FROM registry.ci.openshift.org/openshift/release:golang-1.14
 ENV HOME /output
 RUN INSTALL_PKGS="ansible python-pip" && \
     yum install -y $INSTALL_PKGS && \
     pip install packet-python && \
     ansible-galaxy collection install community.general && \
     yum clean all && \
-    rm -rf /var/cache/yum/* && \         
+    rm -rf /var/cache/yum/* && \
     chmod -R g+rwx /output && \
 # TODO: Remove once OpenShift CI will be upgraded to 4.2 (see https://access.redhat.com/articles/4859371)
     chmod g+w /etc/passwd && \

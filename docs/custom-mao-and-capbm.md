@@ -8,7 +8,7 @@ This is helpful if you want to try some changes not in the current release
 image.  You can check with a command like:
 
 ```sh
-oc adm release info registry.svc.ci.openshift.org/openshift/origin-release:v4.0 --commits | grep baremetal
+oc adm release info registry.ci.openshift.org/openshift/origin-release:v4.0 --commits | grep baremetal
 ```
 
 ## 1) Launch a cluster as usual

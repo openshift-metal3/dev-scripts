@@ -72,7 +72,7 @@ function early_deploy_validation() {
         if [ -n "${PULL_SECRET:-}" ]; then
             error "It looks like you are using the old PULL_SECRET variable."
         fi
-        error "Please login to https://api.ci.openshift.org and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
+        error "Please login to https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
         error "Refer to https://github.com/openshift-metal3/dev-scripts#configuration for details."
         exit 1
     fi
@@ -85,8 +85,8 @@ function early_deploy_validation() {
     if [ ${#CI_TOKEN} != 0 -a ${LOGIN_CHECK} == "true" ]; then
         _test_token=$(mktemp --tmpdir "test-token--XXXXXXXXXX")
         _tmpfiles="$_tmpfiles $_test_token"
-        if ! oc login https://api.ci.openshift.org --kubeconfig=$_test_token --token=${CI_TOKEN}; then
-            error "Please login to https://api.ci.openshift.org and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
+        if ! oc login https://api.ci.l2s4.p1.openshiftapps.com:6443 --kubeconfig=$_test_token --token=${CI_TOKEN}; then
+            error "Please login to https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
             error "Refer to https://github.com/openshift-metal3/dev-scripts#configuration for details."
             exit 1
         fi

@@ -104,7 +104,7 @@ fi
 # pretty regularly, so try a few times before giving up.
 function get_latest_ci_image() {
     for i in {1..3}; do
-        if curl -L https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest | grep -o 'registry.svc.ci.openshift.org[^"]\+'; then
+        if curl -L https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest | grep -o 'registry.ci.openshift.org[^"]\+'; then
             return
         fi
         echo "Failed to get CI image" 1>&2
@@ -127,7 +127,7 @@ export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
 
 # Override the image to use for installing hive
-export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.svc.ci.openshift.org/openshift/hive-v4.0:hive}"
+export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshift/hive-v4.0:hive}"
 
 # CI images don't have version numbers
 export OPENSHIFT_CI=${OPENSHIFT_CI:-""}

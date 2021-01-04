@@ -12,7 +12,7 @@ release payload, which contains an openshift-installer compiled by with
 the `baremetal` and `libvirt` build tags.
 
 ```sh
-$ oc adm release info registry.svc.ci.openshift.org/ocp/release:4.2 | grep baremetal-installer
+$ oc adm release info registry.ci.openshift.org/ocp/release:4.2 | grep baremetal-installer
 baremetal-installer  sha256:fa2c82f8d88d375f048b8da6fc823ffc8a99da4560e7478bc6a63f83f6721ca3
 ```
 
