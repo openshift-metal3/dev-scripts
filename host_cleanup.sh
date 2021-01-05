@@ -60,3 +60,9 @@ sudo ebtables --flush
 
 # Kill any lingering proxy
 sudo pkill -f oc.*proxy
+
+# Kill the infinite lease script
+if [ -s "${WORKING_DIR}/infinite-lease-pid" ]; then
+    kill $(cat "${WORKING_DIR}/infinite-lease-pid")
+    rm "${WORKING_DIR}/infinite-lease-pid"
+fi

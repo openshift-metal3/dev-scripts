@@ -243,3 +243,13 @@ if [ "$DISABLE_MULTICAST" == "true" ]; then
         sudo ebtables -A OUTPUT --pkttype-type multicast -p ip6 --ip6-dst ${dst} -j DROP
     done
 fi
+
+# Hack to force use of infinite leases in versions of libvirt that don't
+# support setting the lease time in the network config.
+# This should be removed when we have a new enough version of libvirt to
+# do it properly. I believe any version 6.3.0 or above should have the feature.
+if [ ${INFINITE_LEASES:-0} -eq 1 ]
+then
+    ./infinite-leases.sh &
+    echo "$!" > "${WORKING_DIR}/infinite-lease-pid"
+fi
