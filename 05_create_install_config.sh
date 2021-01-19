@@ -24,6 +24,11 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
     echo "address=/.apps.${CLUSTER_DOMAIN}/${INGRESS_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
     echo "listen-address=::1" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
+
+    # Risk reduction for CVE-2020-25684, CVE-2020-25685, and CVE-2020-25686
+    # See: https://access.redhat.com/security/vulnerabilities/RHSB-2021-001
+    echo "cache-size=0" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
+
     sudo systemctl reload NetworkManager
 else
     if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
