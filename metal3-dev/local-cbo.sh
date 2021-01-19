@@ -22,5 +22,5 @@ fi
 cd $cbo_path
 
 export RUN_NAMESPACE=openshift-machine-api
-make run -e ${OCP_DIR}/cbo-images.json
+make run IMAGES_JSON=$SCRIPTDIR/$OCP_DIR/cbo-images.json
 
