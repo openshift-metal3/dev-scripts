@@ -84,7 +84,7 @@ set -x
 #export CLUSTER_PRO_IF="eno1"
 
 # Which disk to deploy
-#export ROOT_DISK="/dev/sda"
+#export ROOT_DISK_NAME="/dev/sda"
 
 # Cluster name
 #export CLUSTER_NAME="mycluster"
