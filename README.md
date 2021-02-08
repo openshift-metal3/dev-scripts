@@ -466,3 +466,13 @@ $ oc scale machineset ostest-worker-0 --replicas=3 -n openshift-machine-api
 machineset.machine.openshift.io/ostest-worker-0 scaled
 ```
 
+### Deploying dummy remote cluster nodes
+
+It is possible to add remote site nodes along with their own L2 network. To do so, use the 
+`remote-cluster.sh` script to create/teardown definitions of VMs and their corresponding network.
+Additional configuration can be made by altering the environment variables within the script.
+
+Create remote cluster VMs and their network using. The script requires a single `namespace` argument:
+```
+./create_remote_nodes.sh <namespace>
+```

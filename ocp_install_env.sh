@@ -250,6 +250,8 @@ function generate_ocp_host_manifest() {
 
     outdir="$1"
     host_input="$2"
+    host_output="$3"
+    namespace="$4"
 
     mkdir -p "${outdir}"
     rm -f "${outdir}/extra_hosts.yaml"
@@ -260,13 +262,13 @@ function generate_ocp_host_manifest() {
         encoded_username=$(echo -n "$username" | base64)
         encoded_password=$(echo -n "$password" | base64)
 
-    cat >> "${outdir}/extra_host_manifests.yaml" << EOF
+    cat >> "${outdir}/${host_output}" << EOF
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: ${name}-bmc-secret
-  namespace: openshift-machine-api
+  namespace: $namespace
 type: Opaque
 data:
   username: $encoded_username
@@ -277,7 +279,7 @@ apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
 metadata:
   name: $name
-  namespace: openshift-machine-api
+  namespace: $namespace
 spec:
   online: ${EXTRA_WORKERS_ONLINE_STATUS}
   bootMACAddress: $mac
