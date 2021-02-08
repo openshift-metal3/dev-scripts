@@ -91,7 +91,7 @@ export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 export OPENSHIFT_CLIENT_TOOLS_URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz
 
 export OPENSHIFT_RELEASE_TYPE=${OPENSHIFT_RELEASE_TYPE:-nightly}
-export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.7}
+export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.8}
 if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
     if [[ -z "$OPENSHIFT_VERSION" ]]; then
       error "OPENSHIFT_VERSION is required with OPENSHIFT_RELEASE_TYPE=ga"

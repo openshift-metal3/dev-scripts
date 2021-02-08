@@ -9,7 +9,7 @@ set -x
 
 # Select a different release stream from which to pull the latest image, if the
 # image name is not specified
-#export OPENSHIFT_RELEASE_STREAM=4.7
+#export OPENSHIFT_RELEASE_STREAM=4.8
 
 # Select a different release type from which to pull the latest image,
 # e.g ci, nightly or ga
