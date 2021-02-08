@@ -54,6 +54,9 @@ set -x
 # for an IPv4 install.
 #export MIRROR_IMAGES=true
 
+# Ensure that the local registry will be available
+#export ENABLE_LOCAL_REGISTRY=true
+
 # Switch to upstream metal3-io ironic images instead of openshift ones.
 #export UPSTREAM_IRONIC=true
 

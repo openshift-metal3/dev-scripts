@@ -50,8 +50,11 @@ fi
 
 export ANSIBLE_FORCE_COLOR=true
 
+
 # Setup the registry for mirroring images
-if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST}" ]]; then
+export ENABLE_LOCAL_REGISTRY=${ENABLE_LOCAL_REGISTRY:-${MIRROR_IMAGES:-${ENABLE_CBO_TEST:-$(env | grep "_LOCAL_IMAGE=")}}}
+
+if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     setup_local_registry
 fi
 
@@ -212,7 +215,7 @@ echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a
 # Remove any previous file, or podman login panics when reading the
 # blank authfile with a "assignment to entry in nil map" error
 rm -f ${REGISTRY_CREDS}
-if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST}" ]]; then
+if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     # create authfile for local registry
     sudo podman login --authfile ${REGISTRY_CREDS} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
