@@ -22,4 +22,8 @@ for name in dnsmasq ironic-inspector ; do
     sudo podman ps | grep -w "$name$" && sudo podman stop $name
 done
 
+# Configure storage for the image registry
+oc patch configs.imageregistry.operator.openshift.io \
+    cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}},"managementState":"Managed"}}'
+
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"
