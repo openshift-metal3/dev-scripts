@@ -65,6 +65,7 @@ external_network:
     dhcp_range_v6:
       - "{{ baremetal_network_cidr_v6|nthhost(20) }}"
       - "{{ baremetal_network_cidr_v6|nthhost(60) }}"
+    lease_expiry: "{{ lookup('env', 'DHCP_LEASE_EXPIRY') }}"
     nat_port_range:
       - 1024
       - 65535
