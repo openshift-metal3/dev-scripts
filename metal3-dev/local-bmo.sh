@@ -15,9 +15,9 @@ if ! which yq 2>&1 >/dev/null ; then
     exit 1
 fi
 
-bmo_path=$GOPATH/src/github.com/metal3-io/baremetal-operator
-if [ ! -d $bmo_path ]; then
-    echo "Did not find $bmo_path" 1>&2
+BMO_PATH=${BAREMETAL_OPERATOR_PATH:-$GOPATH/src/github.com/metal3-io/baremetal-operator}
+if [ ! -d $BMO_PATH ]; then
+    echo "Did not find $BMO_PATH" 1>&2
     exit 1
 fi
 
@@ -95,7 +95,7 @@ get_creds ironic
 get_creds ironic-inspector
 
 # Run the operator
-cd $bmo_path
+cd $BMO_PATH
 
 # Use our local verison of the CRD, in case it is newer than the one
 # in the cluster now.
