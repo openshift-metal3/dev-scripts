@@ -287,3 +287,6 @@ fi
 
 # Defaults the variable to enable testing a custom machine-api-operator image
 export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
+
+# Enable testing with a live-iso image (experimental)
+export TEST_LIVE_ISO=${TEST_LIVE_ISO:-}

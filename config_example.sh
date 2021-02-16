@@ -214,3 +214,11 @@ set -x
 # certificate store. This trust bundle may also be used when a proxy has 
 # been configured.
 # export ADDITIONAL_TRUST_BUNDLE=/path/to/ca_file
+
+
+##
+## Experimental/unsupported options
+##
+
+# Enable dev-testing with the installer live-iso
+#export TEST_LIVE_ISO=true
