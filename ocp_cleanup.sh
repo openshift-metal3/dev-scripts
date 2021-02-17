@@ -50,13 +50,13 @@ for vm in $(sudo virsh list --all --name | grep "^${CLUSTER_NAME}.*bootstrap"); 
   sudo virsh undefine $vm --remove-all-storage
 done
 
-# For some reason --remove-all-storage doesn't actually remove the storage...
+# For some reason --remove-all-storage doesn't actually remove the storage
+# so we do some extra cleanup of volumes
 if [ -d /var/lib/libvirt/openshift-images ]; then
   sudo rm -fr /var/lib/libvirt/openshift-images/${CLUSTER_NAME}-*
 fi
 
-# The .ign volume isn't deleted via --remove-all-storage
-VOLS="$(sudo virsh vol-list --pool default | awk '{print $1}' | grep "^${CLUSTER_NAME}.*bootstrap")"
+VOLS="$(sudo virsh vol-list --pool default | awk '{print $1}' | grep -e "^${CLUSTER_NAME}.*bootstrap" -e "^configdrive-" -e "boot-*-iso-*")"
 for v in $VOLS; do
   sudo virsh vol-delete $v --pool default
 done
