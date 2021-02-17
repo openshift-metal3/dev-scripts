@@ -249,15 +249,22 @@ function generate_auth_template {
         INSPECTOR_USER=$((oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
         INSPECTOR_PASSWORD=$((oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
         INSPECTOR_CREDS="$INSPECTOR_USER:$INSPECTOR_PASSWORD"
+        CLUSTER_IRONIC_IP=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o jsonpath="{.items[0].status.hostIP}" || echo "")
 
-        go run metal3-templater.go "http_basic" -ironic-basic-auth="$IRONIC_CREDS" -inspector-basic-auth="$INSPECTOR_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
+        if [ ! -z "${CLUSTER_IRONIC_IP}" ]; then
+            go run metal3-templater.go "http_basic" -ironic-basic-auth="$IRONIC_CREDS" -inspector-basic-auth="$INSPECTOR_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_IRONIC_IP" > clouds.yaml
+        else
+            echo "Unable to read CLUSTER_IRONIC_IP - you may need to run generate_clouds_yaml.sh manually"
+        fi
 
         BOOTSTRAP_VM_IP=$(bootstrap_ip)
         if [ ! -z "${BOOTSTRAP_VM_IP}" ]; then
             if ping -c 1 ${BOOTSTRAP_VM_IP}; then
                 # From 4.7 basic_auth is also enabled on the bootstrap VM
                 # There's a clouds.yaml we can copy in that case
-                ($SSH core@${BOOTSTRAP_VM_IP} sudo cat /opt/metal3/auth/clouds.yaml || echo "") | sed "s/^clouds://" >> clouds.yaml
+                # FIXME: the sed of the URL is a workaround for
+                # https://bugzilla.redhat.com/show_bug.cgi?id=1930240
+                ($SSH core@${BOOTSTRAP_VM_IP} sudo cat /opt/metal3/auth/clouds.yaml || echo "") | sed "s/^clouds://" | sed "s/http:\/\/:/http:\/\/${BOOTSTRAP_VM_IP}:/" >> clouds.yaml
             fi
         fi
     fi
