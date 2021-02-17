@@ -43,9 +43,14 @@ set -x
 # For example, for the PR #34 for the ironic-image:
 # export IRONIC_PR=34
 
-# IP stack version.  The default is "v6".  You may also set "v4".
-# For dual stack (IPv4 + IPv6), use "v4v6".
+# IP stack for the cluster.  The default is "v6".  You may also set "v4", or
+# "v4v6" for dual stack.
 #export IP_STACK=v4
+
+# IP stack for the hosts. If unset, defaults to ${IP_STACK}, but you can set
+# IP_STACK to "v4" or "v6" and HOST_IP_STACK to "v4v6" to install a single-stack
+# cluster on dual-stack hosts.
+#export HOST_IP_STACK=v4v6
 
 # BMC type. Valid values are redfish, redfish-virtualmedia, or ipmi.
 #export BMC_DRIVER=redfish-virtualmedia
