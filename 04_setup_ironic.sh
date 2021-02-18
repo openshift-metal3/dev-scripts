@@ -152,6 +152,16 @@ if [ ! -z "${TEST_LIVE_ISO:-}" ]; then
     curl -g --insecure -L -o "${CACHED_MACHINE_OS_ISO_IMAGE}" "${MACHINE_OS_ISO_IMAGE_URL}"
     echo "${MACHINE_OS_ISO_IMAGE_SHA256} ${CACHED_MACHINE_OS_ISO_IMAGE}" | tee ${CACHED_MACHINE_OS_ISO_IMAGE}.sha256sum
     sha256sum --strict --check ${CACHED_MACHINE_OS_ISO_IMAGE}.sha256sum || ( rm -f "${CACHED_MACHINE_OS_ISO_IMAGE}" ; exit 1 )
+    # Modify the cached image to enable the openstack ignition datasource
+    # We need this so the live-iso can access ignition user_data via the
+    # configdrive ref https://review.opendev.org/c/openstack/ironic/+/764333
+    # This process is from https://coreos.github.io/coreos-installer/getting-started/#run-from-a-container
+    COREOS_INSTALL="sudo podman run --pull=always --privileged --rm -v /dev:/dev \
+        -v /run/udev:/run/udev -v ${IRONIC_DATA_DIR}/html/images:/data \
+        -w /data quay.io/coreos/coreos-installer:release"
+    ${COREOS_INSTALL} iso kargs modify -r ignition.platform.id=metal=openstack /data/${MACHINE_OS_ISO_IMAGE_NAME}
+    ${COREOS_INSTALL} iso kargs show /data/${MACHINE_OS_ISO_IMAGE_NAME}
+    sha256sum ${CACHED_MACHINE_OS_ISO_IMAGE} > ${CACHED_MACHINE_OS_ISO_IMAGE}.sha256sum
   fi
 fi
 
