@@ -290,12 +290,12 @@ function generate_metal3_config {
 }
 
 function image_mirror_config {
-    if [ ! -z "${MIRROR_IMAGES}" ]; then
-        . /tmp/mirrored_release_image
-        TAGGED=$(echo $MIRRORED_RELEASE_IMAGE | sed -e 's/release://')
-        RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.ci.openshift.org[^":\@]\+')
+    if [ ! -z "${MIRROR_IMAGES}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]; then
         INDENTED_CERT=$( cat $REGISTRY_DIR/certs/$REGISTRY_CRT | awk '{ print " ", $0 }' )
-        if [ ! -s ${MIRROR_LOG_FILE} ]; then
+        if [ ! -z "${MIRROR_IMAGES}" && ! -s ${MIRROR_LOG_FILE} ]; then
+            . /tmp/mirrored_release_image
+            TAGGED=$(echo $MIRRORED_RELEASE_IMAGE | sed -e 's/release://')
+            RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.ci.openshift.org[^":\@]\+')
             cat << EOF
 imageContentSources:
 - mirrors:
