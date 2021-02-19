@@ -222,3 +222,6 @@ set -x
 
 # Enable dev-testing with the installer live-iso
 #export TEST_LIVE_ISO=true
+
+# Indicate the extra hosts should be annotated to skip inspection
+#EXTRA_HOST_INSPECT_DISABLED=true

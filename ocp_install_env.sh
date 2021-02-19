@@ -245,7 +245,16 @@ EOF
     cp "${outdir}/install-config.yaml" "${outdir}/install-config.yaml.save"
 }
 
-function generate_ocp_host_manifest() {
+function extra_host_annotations() {
+  if [ ! -z "${EXTRA_HOST_INSPECT_DISABLED:-}" ]; then
+cat <<EOF
+  annotations:
+    inspect.metal3.io: disabled
+EOF
+  fi
+}
+
+function generate_extra_host_manifest() {
     local outdir
 
     outdir="$1"
@@ -280,6 +289,7 @@ kind: BareMetalHost
 metadata:
   name: $name
   namespace: $namespace
+$(extra_host_annotations)
 spec:
   online: ${EXTRA_WORKERS_ONLINE_STATUS}
   bootMACAddress: $mac
