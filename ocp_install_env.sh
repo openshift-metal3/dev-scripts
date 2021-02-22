@@ -254,6 +254,16 @@ EOF
   fi
 }
 
+function extra_host_image() {
+  if [ ! -z "${TEST_LIVE_ISO:-}" ]; then
+cat <<EOF
+  image:
+    url: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_ISO_IMAGE_NAME}
+    format: live-iso
+EOF
+  fi
+}
+
 function generate_extra_host_manifest() {
     local outdir
 
@@ -296,6 +306,7 @@ spec:
   bmc:
     address: $address
     credentialsName: ${name}-bmc-secret
+$(extra_host_image)
 EOF
 
     done
