@@ -264,6 +264,68 @@ EOF
   fi
 }
 
+function extra_host_userdata() {
+  SECRET_NAME=$1
+  if [ ! -z "${TEST_LIVE_ISO:-}" ]; then
+cat <<EOF
+  userData:
+    name: ${SECRET_NAME}
+    namespace: openshift-machine-api
+EOF
+  fi
+}
+
+function extra_host_userdata_secret() {
+  SECRET_NAME="$1"
+  if [ ! -z "${TEST_LIVE_ISO:-}" ]; then
+    EXTRA_HOST_IGN=$(oc get secret worker-user-data -n openshift-machine-api -o json | jq -r .data.userData)
+    set +x
+    EXTRA_HOST_PASSWORD=FIXME
+    EXTRA_HOST_PWHASH=$(echo ${EXTRA_HOST_PASSWORD} | openssl passwd -6 -stdin)
+    set -x
+    EXTRA_HOST_USERDATA=$(cat <<EOF
+{
+  "ignition": { "version": "3.2.0" },
+  "passwd": {
+    "users": [
+      {
+        "name": "core",
+        "passwordHash": "${EXTRA_HOST_PWHASH}",
+        "groups": [ "sudo" ]
+      }
+    ]
+  },
+  "systemd": {
+    "units": [{
+      "name": "coreos_installer.service",
+      "enabled": true,
+      "contents": "[Unit]\nAfter=network.target\nAfter=network-online.target\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'while ! /usr/bin/coreos-installer install --insecure -i /home/core/config.ign ${ROOT_DISK_NAME}; do sleep 5; done'\nExecStartPost=reboot\n\n[Install]\nWantedBy=multi-user.target"
+}]
+},
+"storage": {
+    "files": [{
+      "filesystem": "root",
+      "path": "/home/core/config.ign",
+      "mode": 644,
+      "contents": { "source": "data:text/plain;base64,${EXTRA_HOST_IGN}" }
+    }]
+  }
+}
+EOF)
+
+  cat <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SECRET_NAME}
+  namespace: openshift-machine-api
+type: Opaque
+data:
+  userData: $(echo ${EXTRA_HOST_USERDATA} | base64 -w 0)
+EOF
+  fi
+}
+
 function generate_extra_host_manifest() {
     local outdir
 
@@ -292,7 +354,8 @@ type: Opaque
 data:
   username: $encoded_username
   password: $encoded_password
-
+---
+$(extra_host_userdata_secret ${name}-userdata-secret)
 ---
 apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
@@ -307,6 +370,7 @@ spec:
     address: $address
     credentialsName: ${name}-bmc-secret
 $(extra_host_image)
+$(extra_host_userdata ${name}-userdata-secret)
 EOF
 
     done
