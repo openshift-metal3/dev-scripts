@@ -179,6 +179,14 @@ EOF
     echo "Unexpected IP_STACK value: '${IP_STACK}'"
     exit 1
   fi
+if [[ ! -z "${SQUID_PROXY}" ]]; then
+cat <<EOF
+proxy:
+  httpProxy: http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP}):3128
+  httpsProxy: http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP}):3128
+  noProxy: ${PROVISIONING_NETWORK}
+EOF
+fi
 }
 
 function generate_ocp_install_config() {

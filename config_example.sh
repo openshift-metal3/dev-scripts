@@ -59,6 +59,9 @@ set -x
 # for an IPv4 install.
 #export MIRROR_IMAGES=true
 
+# Enable a squid proxy
+#export SQUID_PROXY=true
+
 # Ensure that the local registry will be available
 #export ENABLE_LOCAL_REGISTRY=true
 
