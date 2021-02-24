@@ -1,13 +1,13 @@
 #!/bin/bash
+set -xe
 
+source logging.sh
 source common.sh
 source ocp_install_env.sh
 
 namespace=$1
 if [ $namespace == "" ]; then
-	echo "Error: Insufficient arguments. Please specify the namespace"
-	echo "Usage: $0 <namespace>"
-	exit 1
+	namespace=openshift-machine-api
 fi
 
 export REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME:-${CLUSTER_NAME}rc}
