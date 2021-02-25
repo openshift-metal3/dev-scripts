@@ -277,6 +277,7 @@ EOF
 
 function extra_host_userdata_secret() {
   SECRET_NAME="$1"
+  outdir="$2"
   if [ ! -z "${TEST_LIVE_ISO:-}" ]; then
     EXTRA_HOST_IGN=$(oc get secret worker-user-data -n openshift-machine-api -o json | jq -r .data.userData)
     set +x
@@ -312,6 +313,9 @@ function extra_host_userdata_secret() {
   }
 }
 EOF)
+
+# Write the unencoded userData for easier debugging
+echo "${EXTRA_HOST_USERDATA}" > ${outdir}/${SECRET_NAME}-userData.json
 
   cat <<EOF
 apiVersion: v1
@@ -355,7 +359,7 @@ data:
   username: $encoded_username
   password: $encoded_password
 ---
-$(extra_host_userdata_secret ${name}-userdata-secret)
+$(extra_host_userdata_secret ${name}-userdata-secret ${outdir})
 ---
 apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
