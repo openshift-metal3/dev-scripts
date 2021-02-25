@@ -300,7 +300,7 @@ function extra_host_userdata_secret() {
     "units": [{
       "name": "coreos_installer.service",
       "enabled": true,
-      "contents": "[Unit]\nAfter=network.target\nAfter=network-online.target\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'while ! /usr/bin/coreos-installer install --insecure -i /home/core/config.ign ${ROOT_DISK_NAME}; do sleep 5; done'\nExecStartPost=reboot\n\n[Install]\nWantedBy=multi-user.target"
+      "contents": "[Unit]\nAfter=network.target\nAfter=network-online.target\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'while ! /usr/bin/coreos-installer install --insecure -i /home/core/config.ign ${ROOT_DISK_NAME}; do sleep 5; done'\nExecStartPost=/bin/sh -c 'efibootmgr -d ${ROOT_DISK_NAME} -p 2 -c -L fcos -l \"\\\EFI\\\BOOT\\\BOOTX64.EFI\"; efibootmgr -n 3; reboot'\n\n[Install]\nWantedBy=multi-user.target"
 }]
 },
 "storage": {
