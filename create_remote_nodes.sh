@@ -5,10 +5,7 @@ source logging.sh
 source common.sh
 source ocp_install_env.sh
 
-namespace=$1
-if [ $namespace == "" ]; then
-	namespace=openshift-machine-api
-fi
+namespace=${1:-openshift-machine-api}
 
 export REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME:-${CLUSTER_NAME}rc}
 export REMOTE_CLUSTER_NUM_MASTERS=${REMOTE_CLUSTER_NUM_MASTERS:-1}
