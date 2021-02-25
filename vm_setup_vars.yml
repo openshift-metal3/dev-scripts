@@ -67,3 +67,6 @@ external_network:
           addr: "127.0.0.1"
 
 networks: "{{ (provisioning_network if lookup('env', 'PROVISIONING_NETWORK_PROFILE') != 'Disabled' else []) + external_network }}"
+
+# Allow overriding boot order with efibootmgr when testing with the live-iso
+sushy_ignore_boot_device: "{{ lookup('env', 'TEST_LIVE_ISO') | default(False, True) }}"
