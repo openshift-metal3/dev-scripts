@@ -255,28 +255,36 @@ EOF
 }
 
 function extra_host_image() {
+  name=$1
+  outdir="$2"
+  IMAGE_NAME=${MACHINE_OS_ISO_IMAGE_NAME}
   if [ ! -z "${TEST_LIVE_ISO:-}" ]; then
+    if [ ! -z "${LIVE_ISO_CONFIG_EMBED:-}" ]; then
+      IMAGE_NAME=${MACHINE_OS_ISO_IMAGE_NAME%.iso}-${name}.iso
+      cp ${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_ISO_IMAGE_NAME} ${IRONIC_DATA_DIR}/html/images/${IMAGE_NAME}
+      sudo podman run --pull=always --privileged --rm -v /dev:/dev -v /run/udev:/run/udev -v ./${outdir}:/data -v ${IRONIC_DATA_DIR}/html/images:/images -w /data quay.io/coreos/coreos-installer:release iso ignition embed -i /data/${name}-userData.json /images/${IMAGE_NAME} -f
+    fi
 cat <<EOF
   image:
-    url: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_ISO_IMAGE_NAME}
+    url: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${IMAGE_NAME}
     format: live-iso
 EOF
   fi
 }
 
 function extra_host_userdata() {
-  SECRET_NAME=$1
-  if [ ! -z "${TEST_LIVE_ISO:-}" ]; then
+  name=$1
+  if [ ! -z "${TEST_LIVE_ISO:-}" -a -z "${LIVE_ISO_CONFIG_EMBED:-}" ]; then
 cat <<EOF
   userData:
-    name: ${SECRET_NAME}
+    name: ${name}-userdata-secret
     namespace: openshift-machine-api
 EOF
   fi
 }
 
 function extra_host_userdata_secret() {
-  SECRET_NAME="$1"
+  name="$1"
   outdir="$2"
   if [ ! -z "${TEST_LIVE_ISO:-}" ]; then
     EXTRA_HOST_IGN=$(oc get secret worker-user-data -n openshift-machine-api -o json | jq -r .data.userData)
@@ -314,19 +322,22 @@ function extra_host_userdata_secret() {
 }
 EOF)
 
-# Write the unencoded userData for easier debugging
-echo "${EXTRA_HOST_USERDATA}" > ${outdir}/${SECRET_NAME}-userData.json
+# Write the unencoded userData for easier debugging and so it
+# can optionally be embedded into the iso
+echo "${EXTRA_HOST_USERDATA}" > ${outdir}/${name}-userData.json
 
-  cat <<EOF
+    if [ -z "${LIVE_ISO_CONFIG_EMBED:-}" ]; then
+      cat <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
-  name: ${SECRET_NAME}
+  name: ${name}-userdata-secret
   namespace: openshift-machine-api
 type: Opaque
 data:
   userData: $(echo ${EXTRA_HOST_USERDATA} | base64 -w 0)
 EOF
+    fi
   fi
 }
 
@@ -359,7 +370,7 @@ data:
   username: $encoded_username
   password: $encoded_password
 ---
-$(extra_host_userdata_secret ${name}-userdata-secret ${outdir})
+$(extra_host_userdata_secret ${name} ${outdir})
 ---
 apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
@@ -373,8 +384,8 @@ spec:
   bmc:
     address: $address
     credentialsName: ${name}-bmc-secret
-$(extra_host_image)
-$(extra_host_userdata ${name}-userdata-secret)
+$(extra_host_image ${name} ${outdir})
+$(extra_host_userdata ${name})
 EOF
 
     done

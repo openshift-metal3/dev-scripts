@@ -290,3 +290,4 @@ export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
 
 # Enable testing with a live-iso image (experimental)
 export TEST_LIVE_ISO=${TEST_LIVE_ISO:-}
+export LIVE_ISO_CONFIG_EMBED=${LIVE_ISO_CONFIG_EMBED:-}

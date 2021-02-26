@@ -225,3 +225,8 @@ set -x
 
 # Indicate the extra hosts should be annotated to skip inspection
 #EXTRA_HOST_INSPECT_DISABLED=true
+
+# When using TEST_LIVE_ISO=true embed the ignition config
+# in the iso, instead of the default which is to provide it
+# via the ironic config drive (using the BMH userData field)
+# export LIVE_ISO_CONFIG_EMBED=true
