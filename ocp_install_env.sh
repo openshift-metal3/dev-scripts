@@ -246,10 +246,15 @@ EOF
 }
 
 function extra_host_annotations() {
+  name=$1
+  vmname=${name#"${CLUSTER_NAME}-"}
+  vmmac=$(grep ${vmname} /var/lib/libvirt/dnsmasq/ostestbm.hostsfile | cut -d"," -f1)
+  vmip=$(grep ${vmname} /var/lib/libvirt/dnsmasq/ostestbm.hostsfile | cut -d"," -f2)
   if [ ! -z "${EXTRA_HOST_INSPECT_DISABLED:-}" ]; then
 cat <<EOF
   annotations:
     inspect.metal3.io: disabled
+    inspect.metal3.io/hardwaredetails: '{"nics":[{"name":"enp1s0","mac": "$vmmac", "ip":"${vmip}"}],"hostname":"${name}"}'
 EOF
   fi
 }
@@ -377,7 +382,7 @@ kind: BareMetalHost
 metadata:
   name: $name
   namespace: $namespace
-$(extra_host_annotations)
+$(extra_host_annotations ${name})
 spec:
   online: ${EXTRA_WORKERS_ONLINE_STATUS}
   bootMACAddress: $mac
