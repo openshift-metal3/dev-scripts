@@ -356,6 +356,7 @@ function generate_extra_host_manifest() {
 
     mkdir -p "${outdir}"
     rm -f "${outdir}/extra_hosts.yaml"
+    rm -f "${outdir}/${host_output}"
 
     jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address' $host_input \
        | while read name mac username password address ; do
