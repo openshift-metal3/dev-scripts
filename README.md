@@ -13,7 +13,7 @@ other components of OpenShift via support for a baremetal platform type.
 # Pre-requisites
 
 - CentOS 8 or RHEL 8 host
-- file system that supports d_type (see Troubleshooting section for more information)
+- file system that supports d_type (see [Troubleshooting](#Troubleshooting) section for more information)
 - ideally on a bare metal host with at least 64G of RAM
 - run as a user with passwordless sudo access
 - get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret
@@ -270,7 +270,7 @@ Finally, to access the web Console use the `kubeadmin` user, and password genera
 
 dev-scripts has some support for running multiple instances on the
 same resources, when doing this CLUSTER\_NAME is used to namespace various
-resources on the virtual host. This support is not activly tested and
+resources on the virtual host. This support is not actively tested and
 has a few limitations but aims to allow you to run two separate clusters
 on the same host.
 
@@ -439,7 +439,7 @@ export IGNITION_EXTRA="ignition/file_example.ign"
 
 It is possible to specify additional workers, which are not used in the initial
 deployment, and can then later be used e.g to test scale-out. The default online
-status of the exrea workers is true, but can be changed to false using
+status of the extra workers is true, but can be changed to false using
 EXTRA_WORKERS_ONLINE_STATUS.
 
 ```
