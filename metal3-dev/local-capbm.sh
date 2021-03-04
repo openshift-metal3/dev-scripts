@@ -14,9 +14,9 @@ if ! which yq 2>&1 >/dev/null ; then
     exit 1
 fi
 
-capbm_path=$GOPATH/src/github.com/openshift/cluster-api-provider-baremetal
-if [ ! -d $capbm_path ]; then
-    echo "Did not find $capbm_path" 1>&2
+CAPBM_PATH=${CLUSTER_API_PROVIDER_BAREMETAL_PATH:-$GOPATH/src/github.com/openshift/cluster-api-provider-baremetal}
+if [ ! -d $CAPBM_PATH ]; then
+    echo "Did not find $CAPBM_PATH" 1>&2
     exit 1
 fi
 
@@ -59,6 +59,6 @@ cat $OUTDIR/capbm-deployment-dev-without-containers.yaml \
 oc apply -f $OUTDIR/capbm-deployment-dev.yaml -n openshift-machine-api
 
 # Run the local capbm
-cd $capbm_path
+cd $CAPBM_PATH
 
 make build && ./bin/machine-controller-manager --logtostderr=true --v=3 --namespace=openshift-machine-api
