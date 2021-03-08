@@ -61,4 +61,4 @@ oc apply -f $OUTDIR/capbm-deployment-dev.yaml -n openshift-machine-api
 # Run the local capbm
 cd $CAPBM_PATH
 
-make build && ./bin/machine-controller-manager --logtostderr=true --v=3 --namespace=openshift-machine-api
+make build && ./bin/machine-controller-manager --logtostderr=true --v=3 --namespace=openshift-machine-api --health-addr ":9441"
