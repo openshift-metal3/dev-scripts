@@ -17,6 +17,7 @@ fi
 # Run the operator
 cd $cbo_path
 
+export IMAGES_JSON=${SCRIPTDIR}/${OCP_DIR}/cbo-images.json
 export RUN_NAMESPACE=openshift-machine-api
 oc apply -f manifests/
 make run
