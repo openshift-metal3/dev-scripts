@@ -8,6 +8,7 @@ clouds.yaml
 _clouds_yaml
 metal3-dev/deployment-*.yaml
 assets/generated
+squid.conf
 
 # Conditionally created for appropriate environments
 assets/templates/99_master-chronyd-redhat.yaml

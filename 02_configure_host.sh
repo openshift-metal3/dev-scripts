@@ -55,6 +55,8 @@ if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABL
 fi
 
 if [[ ! -z "${SQUID_PROXY}" ]]; then
+  generate_squid_conf > squid.conf
+
   sudo podman run -d --rm \
      --net host \
      --volume $PWD/squid.conf:/etc/squid/squid.conf \

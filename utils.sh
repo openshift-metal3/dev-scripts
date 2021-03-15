@@ -477,6 +477,28 @@ function image_for() {
     jq -r ".references.spec.tags[] | select(.name == \"$1\") | .from.name" ${OCP_DIR}/release_info.json
 }
 
+function generate_squid_conf() {
+  echo "acl all src $PROVISIONING_NETWORK"
+
+  if [[ ! -z "${EXTERNAL_SUBNET_V4}" ]]
+  then
+    echo "acl all src $EXTERNAL_SUBNET_V4"
+  fi
+
+  if [[ ! -z "${EXTERNAL_SUBNET_V6}" ]]
+  then
+    echo "acl all src $EXTERNAL_SUBNET_V6"
+  fi
+
+  cat <<EOF
+http_access allow all
+http_port 3128
+debug_options ALL,1 33,2 28,9
+dns_v4_first on
+coredump_dir /var/spool/squid
+EOF
+}
+
 _tmpfiles=
 function removetmp(){
     [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
