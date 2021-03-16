@@ -60,6 +60,7 @@ if [[ ! -z "${SQUID_PROXY}" ]]; then
   sudo podman run -d --rm \
      --net host \
      --volume $PWD/squid.conf:/etc/squid/squid.conf \
+     --name squid \
      sameersbn/squid:latest
 fi
 
