@@ -76,4 +76,48 @@ external_network:
         - domain: "apps.{{ cluster_domain }}"
           addr: "127.0.0.1"
 
-networks: "{{ provisioning_network + external_network }}"
+nmstate_network_1_cidr_v4: "{{ lookup('env', 'NMSTATE_NETWORK_1_SUBNET_V4') | default('192.168.221.0/24',true) }}"
+nmstate_network_1_cidr_v6: "{{ lookup('env', 'NMSTATE_NETWORK_1_SUBNET_V6') | default('fd2e:6f44:5dd8:ca56::/120',true) }}"
+nmstate_network_1_cidr: "{{ nmstate_network_1_cidr_v4 | default(nmstate_network_1_cidr_v6, true) }}"
+
+nmstate_network_2_cidr_v4: "{{ lookup('env', 'NMSTATE_NETWORK_2_SUBNET_V4') | default('192.168.222.0/24',true) }}"
+nmstate_network_2_cidr_v6: "{{ lookup('env', 'NMSTATE_NETWORK_2_SUBNET_V6') | default('fd2e:6f44:5dd8:cc56::/120',true) }}"
+nmstate_network_2_cidr: "{{ nmstate_network_2_cidr_v4 | default(nmstate_network_2_cidr_v6, true) }}"
+
+additional_networks:
+  - name: "nmstate1"
+    bridge: "nmstate1"
+    forward_mode: nat
+    lease_expiry: 60
+    address_v4: "{{ nmstate_network_1_cidr_v4|nthhost(1)|default('', true) }}"
+    netmask_v4: "{{ nmstate_network_1_cidr_v4|ipaddr('netmask') }}"
+    address_v6: "{{ nmstate_network_1_cidr_v6|nthhost(1)|default('', true) }}"
+    prefix_v6: "{{ nmstate_network_1_cidr_v6|ipaddr('prefix') }}"
+    dhcp_range_v4:
+      - "{{ nmstate_network_1_cidr_v4|nthhost(20) }}"
+      - "{{ nmstate_network_1_cidr_v4|nthhost(60) }}"
+    dhcp_range_v6:
+      - "{{ nmstate_network_1_cidr_v6|nthhost(20) }}"
+      - "{{ nmstate_network_1_cidr_v6|nthhost(60) }}"
+    nat_port_range:
+      - 1024
+      - 65535
+  - name: "nmstate2"
+    bridge: "nmstate2"
+    forward_mode: nat
+    lease_expiry: 60
+    address_v4: "{{ nmstate_network_2_cidr_v4|nthhost(1)|default('', true) }}"
+    netmask_v4: "{{ nmstate_network_2_cidr_v4|ipaddr('netmask') }}"
+    address_v6: "{{ nmstate_network_2_cidr_v6|nthhost(1)|default('', true) }}"
+    prefix_v6: "{{ nmstate_network_2_cidr_v6|ipaddr('prefix') }}"
+    dhcp_range_v4:
+      - "{{ nmstate_network_2_cidr_v4|nthhost(20) }}"
+      - "{{ nmstate_network_2_cidr_v4|nthhost(60) }}"
+    dhcp_range_v6:
+      - "{{ nmstate_network_2_cidr_v6|nthhost(20) }}"
+      - "{{ nmstate_network_2_cidr_v6|nthhost(60) }}"
+    nat_port_range:
+      - 1024
+      - 65535
+
+networks: "{{ provisioning_network + external_network + additional_networks if lookup('env', 'ADDITIONAL_NETWORKS') == 'y' else provisioning_network + external_network }}"
