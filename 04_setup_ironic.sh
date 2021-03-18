@@ -73,8 +73,8 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         # file containing the packages (one per line) we want to install
         EXTRA_PKGS_FILE_PATH=${IMAGE_VAR/_LOCAL_IMAGE}_EXTRA_PACKAGES
         EXTRA_PKGS_FILE=${!EXTRA_PKGS_FILE_PATH:-}
-        EXTRA_PKGS_FILE=$(cd $OLDPWD; realpath $EXTRA_PKGS_FILE)
         if [[ -n $EXTRA_PKGS_FILE ]]; then
+            EXTRA_PKGS_FILE=$(cd $OLDPWD; realpath $EXTRA_PKGS_FILE)
             cp $EXTRA_PKGS_FILE "$REPOPATH"
             EXTRA_PKGS_FILE_NAME=$(basename $EXTRA_PKGS_FILE)
             BUILD_COMMAND_ARGS+=" --build-arg EXTRA_PKGS_LIST=$EXTRA_PKGS_FILE_NAME"
