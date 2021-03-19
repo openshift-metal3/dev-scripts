@@ -67,7 +67,7 @@ oc apply -f $OUTDIR/bmo-deployment-dev.yaml -n openshift-machine-api
 # Set some variables the operator expects to have in order to work
 export OPERATOR_NAME=baremetal-operator
 
-oc wait --for=condition=Ready pod -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state --timeout=90s
+oc wait -n openshift-machine-api --for=condition=Ready pod -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state --timeout=90s
 CLUSTER_IRONIC_IP=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o jsonpath="{.items[0].status.hostIP}")
 CLUSTER_IP=$(wrap_if_ipv6 ${CLUSTER_IRONIC_IP})
 for var in IRONIC_ENDPOINT IRONIC_INSPECTOR_ENDPOINT DEPLOY_KERNEL_URL DEPLOY_RAMDISK_URL; do
