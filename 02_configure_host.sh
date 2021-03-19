@@ -61,7 +61,7 @@ if [[ ! -z "${SQUID_PROXY}" ]]; then
      --net host \
      --volume $PWD/squid.conf:/etc/squid/squid.conf \
      --name squid \
-     sameersbn/squid:latest
+     docker.io/sameersbn/squid:3.5.27-2
 fi
 
 ansible-playbook \
