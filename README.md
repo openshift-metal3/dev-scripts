@@ -18,7 +18,6 @@ other components of OpenShift via support for a baremetal platform type.
 - run as a user with passwordless sudo access
 - get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret
 - get a login token from https://api.ci.openshift.org
-- hostnames for masters and workers must be in the format XX-master-# (e.g. openshift-master-0), or XX-worker-# (e.g. openshift-worker-0)
 
 # Instructions
 
