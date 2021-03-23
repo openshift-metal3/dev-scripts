@@ -412,6 +412,13 @@ EOF
 
 }
 
+function add_local_certificate_as_trusted() {
+    REGISTRY_CONFIG="registry-config"  
+    oc create configmap ${REGISTRY_CONFIG} \
+      --from-file=${LOCAL_REGISTRY_DNS_NAME}..${LOCAL_REGISTRY_PORT}=${REGISTRY_DIR}/certs/${REGISTRY_CRT} -n openshift-config
+    oc patch image.config.openshift.io/cluster --patch "{\"spec\":{\"additionalTrustedCA\":{\"name\":\"${REGISTRY_CONFIG}\"}}}" --type=merge
+}
+
 function verify_pull_secret() {
   # Do some PULL_SECRET sanity checking
   if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.ci.openshift.org"* ]]; then
