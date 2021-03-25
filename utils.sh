@@ -251,6 +251,8 @@ function generate_auth_template {
         INSPECTOR_CREDS="$INSPECTOR_USER:$INSPECTOR_PASSWORD"
         CLUSTER_IRONIC_IP=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o jsonpath="{.items[0].status.hostIP}" || echo "")
 
+        # TODO(dtantsur): fetch the TLS public key, store it locally and link from clouds.yaml.
+
         if [ ! -z "${CLUSTER_IRONIC_IP}" ]; then
             go run metal3-templater.go "http_basic" -ironic-basic-auth="$IRONIC_CREDS" -inspector-basic-auth="$INSPECTOR_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_IRONIC_IP" > clouds.yaml
         else
