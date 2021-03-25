@@ -235,6 +235,7 @@ function sync_repo_and_patch {
 }
 
 function generate_auth_template {
+    set +x
     # clouds.yaml
     OCP_VERSIONS_NOAUTH="4.3 4.4 4.5"
 
@@ -275,6 +276,7 @@ function generate_auth_template {
     # which mounts a config dir into the ironic-client container
     mkdir -p _clouds_yaml
     ln -f clouds.yaml _clouds_yaml
+    set -x
 }
 
 function generate_metal3_config {
