@@ -85,6 +85,9 @@ set -x
 # Indicate number of extra VMs to create but not deploy
 #export NUM_EXTRA_WORKERS=0
 
+# Apply extra workers automatically if NUM_EXTRA_WORKERS is set
+#export APPLY_EXTRA_WORKERS=true
+
 # Indicate the online status of the NUM_EXTRA_WORKERS set in extra_host_manifests.yaml
 #export EXTRA_WORKERS_ONLINE_STATUS=true
 

@@ -36,4 +36,20 @@ if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
       --type merge --patch "{\"spec\":{\"samplesRegistry\":\"${LOCAL_REGISTRY_DNS_NAME}\"}}"
 fi
 
+if [[ -n "${APPLY_EXTRA_WORKERS}" ]]; then
+    if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_host_manifests.yaml" ]]; then
+        oc apply -f "${OCP_DIR}/extra_host_manifests.yaml"
+
+        for h in $(jq -r '.[].name' ${EXTRA_BAREMETALHOSTS_FILE}); do
+            while ! oc get baremetalhost -n openshift-machine-api $h 2>/dev/null; do
+                echo "Waiting for $h"
+                sleep 5
+            done
+            echo "$h is successfully applied"
+        done
+    else
+        echo "NUM_EXTRA_WORKERS should be set and extra_host_manifests.yaml should exist"
+    fi
+fi
+
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"
