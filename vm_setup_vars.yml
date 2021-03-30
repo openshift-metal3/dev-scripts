@@ -66,4 +66,4 @@ external_network:
         - domain: "apps.{{ cluster_domain }}"
           addr: "127.0.0.1"
 
-networks: "{{ (provisioning_network if lookup('env', 'PROVISIONING_NETWORK_PROFILE') != 'Disabled' else []) + external_network }}"
+networks: "{{ provisioning_network + external_network }}"
