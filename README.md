@@ -490,3 +490,17 @@ tears down the openshift namespace and cleans up the generated manifests.
 ./remote_nodes.sh setup mynamespace
 ./remote_nodes.sh cleanup mynamespace
 ```
+
+## How do I...
+
+### Use a custom installer?
+
+Check out your custom installer at `~/go/src/github.com/openshift/installer` and
+set `export KNI_INSTALL_FROM_GIT=true`, then run make to start the
+deployment. Note, if you dont have the golang compiler installed the deployment
+will timeout.
+
+### Deploy nodes with extra disks?
+
+Open `vm_setup_vars.yml` and modify the flavor you want to have extra disks, set
+`extradisks: true` and modify `extradisks_size` if necessary.
