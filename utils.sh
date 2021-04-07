@@ -101,10 +101,10 @@ function create_cluster() {
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
 
     # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1816904
-    wait_for_workers
+    wait_for_cluster
 }
 
-wait_for_workers() {
+wait_for_cluster() {
     TIMEOUT_MINUTES=30
     if ! timeout ${TIMEOUT_MINUTES}m bash <<EOF
 while (( $(oc get nodes -l node-role.kubernetes.io/worker='' -o name | wc -l) < $NUM_WORKERS )); do
@@ -122,6 +122,10 @@ EOF
         echo "$worker registered, waiting $TIMEOUT_MINUTES minutes for Ready condition ..."
         oc wait $worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
     done
+
+    # Wait for all the operators to come up to give the e2e tests a chance of succeeding.
+    echo "waiting for all operators to become Available"
+    oc wait clusteroperators --for=condition=Available --all --timeout=$[${TIMEOUT_MINUTES} * 60]s
 }
 
 function ipversion(){
