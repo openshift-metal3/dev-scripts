@@ -31,9 +31,6 @@ if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     # when local image stream is enabled. These are basically to run CI tests
     # depend on tools image.
     add_local_certificate_as_trusted
-    
-    oc patch configs.samples cluster \
-      --type merge --patch "{\"spec\":{\"samplesRegistry\":\"${LOCAL_REGISTRY_DNS_NAME}\"}}"
 fi
 
 if [[ -n "${APPLY_EXTRA_WORKERS}" ]]; then
