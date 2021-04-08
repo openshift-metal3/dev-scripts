@@ -107,7 +107,7 @@ function create_cluster() {
 wait_for_workers() {
     TIMEOUT_MINUTES=30
     if ! timeout ${TIMEOUT_MINUTES}m bash <<EOF
-while (( $(oc get nodes | grep "^worker" | wc -l) < $NUM_WORKERS )); do
+while (( $(oc get nodes -l node-role.kubernetes.io/worker='' -o name | wc -l) < $NUM_WORKERS )); do
   echo "Waiting for $NUM_WORKERS workers"
   sleep 5
 done
@@ -118,9 +118,9 @@ EOF
     fi
 
     TIMEOUT_MINUTES=15
-    for worker in $(oc get nodes -o json | jq -r ".items[].metadata.name" | grep ^worker); do
+    for worker in $(oc get nodes -l node-role.kubernetes.io/worker='' -o name); do
         echo "$worker registered, waiting $TIMEOUT_MINUTES minutes for Ready condition ..."
-        oc wait node/$worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
+        oc wait $worker --for=condition=Ready --timeout=$[${TIMEOUT_MINUTES} * 60]s
     done
 }
 
@@ -440,7 +440,7 @@ EOF
 }
 
 function add_local_certificate_as_trusted() {
-    REGISTRY_CONFIG="registry-config"  
+    REGISTRY_CONFIG="registry-config"
     oc create configmap ${REGISTRY_CONFIG} \
       --from-file=${LOCAL_REGISTRY_DNS_NAME}..${LOCAL_REGISTRY_PORT}=${REGISTRY_DIR}/certs/${REGISTRY_CRT} -n openshift-config
     oc patch image.config.openshift.io/cluster --patch "{\"spec\":{\"additionalTrustedCA\":{\"name\":\"${REGISTRY_CONFIG}\"}}}" --type=merge
