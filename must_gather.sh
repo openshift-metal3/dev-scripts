@@ -25,3 +25,7 @@ else
 fi
 
 oc --insecure-skip-tls-verify adm must-gather $MUST_GATHER_IMAGE --dest-dir "$MUST_GATHER_PATH" > "$MUST_GATHER_PATH/must-gather.log"
+
+# Gather audit logs
+mkdir -p $MUST_GATHER_PATH/audit-logs
+oc --insecure-skip-tls-verify adm must-gather $MUST_GATHER_IMAGE --dest-dir "$MUST_GATHER_PATH/audit-logs" -- /usr/bin/gather_audit_logs > "$MUST_GATHER_PATH/audit-logs.log"
