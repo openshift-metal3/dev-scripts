@@ -14,6 +14,17 @@ if [ ! -d $cbo_path ]; then
     exit 1
 fi
 
+# Make the TLS files available in the expected location on the present host
+mkdir -p /etc/cluster-baremetal-operator/tls
+
+oc get secret -n openshift-machine-api cluster-baremetal-operator-tls -o json \
+    | jq '.data."tls.crt"' -r \
+    | base64 -d > /etc/cluster-baremetal-operator/tls/tls.crt
+
+oc get secret -n openshift-machine-api cluster-baremetal-operator-tls -o json \
+    | jq '.data."tls.key"' -r \
+    | base64 -d > /etc/cluster-baremetal-operator/tls/tls.key
+
 # Run the operator
 cd $cbo_path
 
