@@ -61,7 +61,7 @@ Considering that this is a new install on a clean OS, the next tasks should be p
 
 Make a copy of the `config_example.sh` to `config_$USER.sh`.
 
-Go to https://api.ci.openshift.org, click on your name in the top
+Go to https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/, click on your name in the top
 right, copy the login command, extract the token from the command and
 use it to set `CI_TOKEN` in `config_$USER.sh`.
 
