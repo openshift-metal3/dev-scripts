@@ -220,6 +220,7 @@ else
   export METAL3_DEV_ENV_PATH="${METAL3_DEV_ENV}"
 fi
 export VM_SETUP_PATH="${METAL3_DEV_ENV_PATH}/vm-setup"
+export CONTAINER_RUNTIME="podman"
 
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"2"}
