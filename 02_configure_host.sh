@@ -63,7 +63,6 @@ ansible-playbook \
     -e "working_dir=$WORKING_DIR" \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$((NUM_WORKERS + NUM_EXTRA_WORKERS))" \
-    -e "extradisks=$VM_EXTRADISKS" \
     -e "libvirt_firmware=uefi" \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \

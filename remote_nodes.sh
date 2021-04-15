@@ -52,7 +52,6 @@ function playbook() {
 		-e "ironic_prefix=${REMOTE_CLUSTER_NAME}_" \
 		-e "cluster_name=${REMOTE_CLUSTER_NAME}" \
 		-e "working_dir=$WORKING_DIR" \
-		-e "extradisks=$VM_EXTRADISKS" \
 		-e "libvirt_firmware=uefi" \
 		-e "virthost=$HOSTNAME" \
 		-e "vm_platform=$NODES_PLATFORM" \

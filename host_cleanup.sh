@@ -24,7 +24,6 @@ ansible-playbook \
     -e "working_dir=$WORKING_DIR" \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$((NUM_WORKERS + NUM_EXTRA_WORKERS))" \
-    -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e "nodes_file=$NODES_FILE" \
