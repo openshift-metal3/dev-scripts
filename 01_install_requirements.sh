@@ -24,7 +24,12 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
 fi
 
 # Update to latest packages first
-sudo dnf -y upgrade
+# FIXME(stbenjam): Temporarily disabled. The latest CentOS release has a
+# conflict. This dnf upgrade updates us to gnutls 3.6.14-8.el8_3, but
+# there's not a corresponding update to gnutls-utils yet, it's still
+# stuck at -7. When the metal3-dev-env playbooks later on go to install
+# libvirt which requires gnutls-utils, it fails.
+# sudo dnf -y upgrade
 
 # Install additional repos as needed for each OS version
 # shellcheck disable=SC1091
