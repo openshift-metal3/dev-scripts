@@ -24,7 +24,13 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
 fi
 
 pushd ${METAL3_DEV_ENV_PATH}
+
+# Hack required to avoid pulling latest gnutls, since it conflicts
+# with libvirt installation requirements
+sed -i '/sudo dnf -y upgrade/d' ./centos_install_requirements.sh
+
 ./centos_install_requirements.sh
+
 ansible-galaxy install -r vm-setup/requirements.yml
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
