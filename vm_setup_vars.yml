@@ -9,6 +9,7 @@ ironic_prefix: "{{ ironic_prefix }}"
 # in metal3-dev-env
 num_masters: 3
 num_workers: 1
+extradisks_list: "{{ lookup('env', 'VM_EXTRADISKS_LIST').split(' ') | default(['vdb']) }}"
 flavors:
   master:
     memory: "{{ lookup('env', 'MASTER_MEMORY') | default('16384', true) }}"

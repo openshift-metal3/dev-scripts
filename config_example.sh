@@ -197,6 +197,13 @@ set -x
 #export WORKER_DISK=20
 #export WORKER_VCPU=4
 
+# Add extradisks to VMs
+# export VM_EXTRADISKS=true
+
+# Configure how many extra disks to add to VMs. Takes a string of disk
+# names delimited by spaces. Example "vdb vde"
+# export VM_EXTRADISKS_LIST="vdb vde"
+
 # Provide additional master/worker ignition configuration, will be
 # merged with the installer provided config, can be used to modify
 # the default nic configuration etc
