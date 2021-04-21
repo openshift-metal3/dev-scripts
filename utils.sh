@@ -417,7 +417,7 @@ EOF
 }
 
 function add_local_certificate_as_trusted() {
-    REGISTRY_CONFIG="registry-config"  
+    REGISTRY_CONFIG="registry-config"
     oc create configmap ${REGISTRY_CONFIG} \
       --from-file=${LOCAL_REGISTRY_DNS_NAME}..${LOCAL_REGISTRY_PORT}=${REGISTRY_DIR}/certs/${REGISTRY_CRT} -n openshift-config
     oc patch image.config.openshift.io/cluster --patch "{\"spec\":{\"additionalTrustedCA\":{\"name\":\"${REGISTRY_CONFIG}\"}}}" --type=merge
@@ -493,6 +493,17 @@ function bootstrap_ip {
 
 function image_for() {
     jq -r ".references.spec.tags[] | select(.name == \"$1\") | .from.name" ${OCP_DIR}/release_info.json
+}
+
+
+function wait_for_crd() {
+  echo "Waiting for CRD ($1) to be defined"
+
+  for i in {1..40}; do
+    oc get "crd/$1" && break || sleep 10
+  done
+
+  oc wait --for condition=established --timeout=60s "crd/$1" || exit 1
 }
 
 _tmpfiles=

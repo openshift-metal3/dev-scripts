@@ -219,7 +219,33 @@ set -x
 # Image reference for installing hive. See hive_install.sh.
 #export HIVE_DEPLOY_IMAGE="registry.ci.openshift.org/openshift/hive-v4.0:hive"
 
-# PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted 
-# certificate store. This trust bundle may also be used when a proxy has 
+# PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted
+# certificate store. This trust bundle may also be used when a proxy has
 # been configured.
 # export ADDITIONAL_TRUST_BUNDLE=/path/to/ca_file
+
+##
+## Assisted Deployment
+##
+
+# The following variables will allow for setting a custom image to use for each
+# of the components deployed by the Assisted Operator
+
+# export ASSISTED_SERVICE_IMAGE="quay.io/ocpmetal/assisted-service:latest"
+# export ASSISTED_INSTALLER_IMAGE="quay.io/ocpmetal/assisted-installer:latest"
+# export ASSISTED_AGENT_IMAGE="quay.io/ocpmetal/assisted-installer-agent:latest"
+# export ASSISTED_DATABASE_IMAGE="quay.io/ocpmetal/postgresql-12-centos7:latest"
+# export ASSISTED_CONTROLLER_IMAGE="quay.io/ocpmetal/assisted-installer-controller:latest"
+
+# Get the latest default versions from the assisted-service repo itself.
+# export ASSISTED_OPENSHIFT_VERSIONS=$(wget -qO- https://raw.githubusercontent.com/openshift/assisted-service/master/default_ocp_versions.json)
+
+# Operator's bundle index to use. This will allow for testing a custom Assisted operator build that has
+# not been published yet. For custom Assisted Service images it's enough to overwrite one of the images above.
+# Overwrite this image only if you are working on the operator itself.
+# export ASSISTED_OPERATOR_INDEX="quay.io/ocpmetal/assisted-service-index:latest"
+
+# The namespace to use for Assisted Service. Note that the assisted service also deploys Hive
+# and the Local Storage oeprator. Hive's subscription will be deployed on the `openshift-operators`
+# namespace and the Local Storage in the `openshift-local-storage` one.
+# export ASSISTED_NAMESPACE="assisted-installer"
