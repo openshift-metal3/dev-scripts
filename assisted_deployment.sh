@@ -182,7 +182,6 @@ $(subscription_config)
   name: assisted-service-operator
   source: assisted-service-catalog
   sourceNamespace: openshift-marketplace
-  startingCSV: assisted-service-operator.v0.0.1
 EOF
 
   wait_for_crd "agentserviceconfigs.agent-install.openshift.io"
