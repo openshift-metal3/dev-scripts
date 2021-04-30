@@ -236,6 +236,13 @@ function sync_repo_and_patch {
 
 function generate_auth_template {
     set +x
+
+    numPods=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o json | jq '.items | length')
+    if [ "$numPods" -eq '0' ]; then 
+      echo "Metal3 pod not found, skipping clouds.yaml generation"
+      return
+    fi
+
     # clouds.yaml
     OCP_VERSIONS_NOAUTH="4.3 4.4 4.5"
 
