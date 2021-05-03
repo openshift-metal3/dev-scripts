@@ -117,37 +117,29 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # the IP address here
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME} ] ; then
         if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
-            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nIPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=yes\nIPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
         else
-            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=yes\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
        fi
     fi
-    sudo ifdown ${PROVISIONING_NETWORK_NAME} || true
-    sudo ifup ${PROVISIONING_NETWORK_NAME}
 
     # Need to pass the provision interface for bare metal
     if [ "$PRO_IF" ]; then
-        echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${PROVISIONING_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
-        sudo ifdown $PRO_IF || true
-        sudo ifup $PRO_IF
-        # Need to ifup the provisioning bridge again because ifdown $PRO_IF
-        # will bring down the bridge as well.
-        sudo ifup ${PROVISIONING_NETWORK_NAME}
+        echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=yes\nBRIDGE=${PROVISIONING_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
     fi
+    sudo systemctl restart NetworkManager
 fi
 
 if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Create the baremetal bridge
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} ] ; then
-        echo -e "DEVICE=${BAREMETAL_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
+        echo -e "DEVICE=${BAREMETAL_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=yes${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
     fi
-    sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
-    sudo ifup ${BAREMETAL_NETWORK_NAME}
 
     # Add the internal interface to it if requests, this may also be the interface providing
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
-        echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+        echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=yes\nBRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
         if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
              grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
         else
@@ -155,14 +147,8 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
                grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
            fi
        fi
-        sudo systemctl restart network
     fi
-fi
-
-# If there were modifications to the /etc/sysconfig/network-scripts/ifcfg-*
-# files, it is required to enable the network service
-if [ "$MANAGE_INT_BRIDGE" == "y" ] || [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
-  sudo systemctl enable network
+    sudo systemctl restart NetworkManager
 fi
 
 # restart the libvirt network so it applies an ip to the bridge
