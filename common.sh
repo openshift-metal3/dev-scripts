@@ -262,6 +262,15 @@ export CI_TOKEN=${CI_TOKEN:-}
 set -x
 export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 
+# Ensure working dir is always different than script dir. If not, some
+# files may get overriden during deployment process.
+if [ "$(realpath ${WORKING_DIR})" == "$(realpath ${SCRIPTDIR})" ]; then
+  error "WORKING_DIR must not be the same as SCRIPTDIR, i.e. $(realpath ${WORKING_DIR})"
+  error "is used for both. Please change one of them to another directory."
+  error "WORKING_DIR will be created automatically if it does not exist."
+  exit 1
+fi
+
 if [ ! -d "$WORKING_DIR" ]; then
   error "Creating Working Dir"
   sudo mkdir -p "$WORKING_DIR"
