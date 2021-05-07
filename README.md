@@ -1,4 +1,4 @@
-xMetal³ Installer Dev Scripts
+xxMetal³ Installer Dev Scripts
 ============================
 
 This set of scripts configures some libvirt VMs and associated
