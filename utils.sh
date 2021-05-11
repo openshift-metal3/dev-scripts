@@ -14,6 +14,11 @@ function generate_assets() {
   done
 }
 
+function local_gateway_mode(){
+  ASSESTS_DIR=$1
+  cp assets/templates/cluster-network-00-gateway-mode.yaml.optional assets/generated/cluster-network-00-gateway-mode.yaml
+}
+
 function custom_ntp(){
   ASSESTS_DIR=$1
   # TODO - consider adding NTP server config to install-config.yaml instead
@@ -55,6 +60,9 @@ function create_cluster() {
     mkdir -p ${assets_dir}/openshift
     generate_assets
     custom_ntp ${assets_dir}/openshift
+    if [[ "${OVN_LOCAL_GATEWAY_MODE}" == "true" ]] && [[ "${NETWORK_TYPE}" == "OVNKubernetes" ]]; then
+      local_gateway_mode ${assets_dir}/openshift
+    fi
     generate_metal3_config
 
     find assets/generated -name '*.yaml' -exec cp -f {} ${assets_dir}/openshift \;

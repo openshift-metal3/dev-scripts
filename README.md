@@ -107,6 +107,8 @@ CLUSTER_NAME=clustername
 DNS_VIP="1.1.1.1"
 # Set your default network type, `OpenShiftSDN` or `OVNKubernetes`, defaults to `OpenShiftSDN`
 NETWORK_TYPE="OpenShiftSDN"
+# Boolean to use OVNKubernetes local gateway mode. defaults to `false` which is shared mode
+OVN_LOCAL_GATEWAY_MODE=false
 # Set to the subnet in use on the external (baremetal) network
 EXTERNAL_SUBNET_V4="192.168.111.0/24"
 # Provide additional master/worker ignition configuration, will be
