@@ -48,7 +48,7 @@ fi
 source $CONFIG
 
 export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
-
+export OVN_LOCAL_GATEWAY_MODE=true
 export PROVISIONING_NETWORK_PROFILE=${PROVISIONING_NETWORK_PROFILE:-"Managed"}
 
 # Network interface names can only be 15 characters long, so
