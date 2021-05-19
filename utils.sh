@@ -67,11 +67,9 @@ function create_cluster() {
 
     find assets/generated -name '*.yaml' -exec cp -f {} ${assets_dir}/openshift \;
 
-    if [[ "${IP_STACK}" == "v4v6" ]]; then
-        # The IPv6DualStack feature is not on by default, because it doesn't
-        # fully work yet.  If we're running a dual-stack test environment,
-        # we will turn on the IPv6DualStackNoUpgrade feature set for testing
-        # purposes.
+    if [[ "${IP_STACK}" == "v4v6" && "$OPENSHIFT_VERSION" =~ 4.[67] ]]; then
+        # The IPv6DualStack feature is not on by default in 4.6 and 4.7 and needs
+        # to be manually enabled
         cp assets/ipv6-dual-stack-no-upgrade.yaml ${assets_dir}/openshift/.
     fi
 
