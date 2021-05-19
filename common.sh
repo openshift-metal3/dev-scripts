@@ -207,6 +207,7 @@ export EXTRA_NODES_FILE=${EXTRA_NODES_FILE:-"${WORKING_DIR}/${CLUSTER_NAME}/extr
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 BAREMETALHOSTS_FILE=${BAREMETALHOSTS_FILE:-"${OCP_DIR}/baremetalhosts.json"}
 EXTRA_BAREMETALHOSTS_FILE=${EXTRA_BAREMETALHOSTS_FILE:-"${OCP_DIR}/extra_baremetalhosts.json"}
+export BMO_WATCH_ALL_NAMESPACES=${BMO_WATCH_ALL_NAMESPACES:-"false"}
 
 # Optionally set this to a path to use a local dev copy of
 # metal3-dev-env, otherwise it's cloned to $WORKING_DIR

@@ -88,6 +88,10 @@ function create_cluster() {
       cp -rf ${ASSETS_EXTRA_FOLDER}/*.yaml ${assets_dir}/openshift/
     fi
 
+    if [[ "$BMO_WATCH_ALL_NAMESPACES" == "true" ]]; then
+        sed -i s/"watchAllNamespaces: false"/"watchAllNamespaces: true"/ "${assets_dir}/openshift/99_baremetal-provisioning-config.yaml"
+    fi
+
     # Preserve the assets for debugging
     mkdir -p "${assets_dir}/saved-assets"
     cp -av "${assets_dir}/openshift" "${assets_dir}/saved-assets"
@@ -246,7 +250,7 @@ function generate_auth_template {
     set +x
 
     numPods=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o json | jq '.items | length')
-    if [ "$numPods" -eq '0' ]; then 
+    if [ "$numPods" -eq '0' ]; then
       echo "Metal3 pod not found, skipping clouds.yaml generation"
       return
     fi
