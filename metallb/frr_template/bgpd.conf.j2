@@ -1,0 +1,15 @@
+! -*- bgp -*-
+!
+! BGPd sample configuration file
+!
+! $Id: bgpd.conf.sample,v 1.1 2002/12/13 20:15:29 paul Exp $
+!
+hostname bgpd
+password zebra
+!enable password please-set-at-here
+!
+router bgp 64512
+ {% for i in nodes_ip %}neighbor {{ i }} remote-as 64512
+ neighbor {{ i }} next-hop-self
+ {% endfor %}!
+log stdout debugging

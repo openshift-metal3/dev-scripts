@@ -49,4 +49,25 @@ if [[ -n "${APPLY_EXTRA_WORKERS}" ]]; then
     fi
 fi
 
+if [[ ! -z "${ENABLE_METALLB_MODE}" ]]; then
+
+	if [[ -z ${METALLB_IMAGE_BASE} ]]; then
+		export METALLB_IMAGE_BASE=${OPENSHIFT_RELEASE_IMAGE}
+		export METALLB_IMAGE_TAG="metallb"
+	fi
+
+	if [[ ${ENABLE_METALLB_MODE} == "l2" ]]; then
+		pushd metallb
+		./metallb_l2.sh
+		popd
+	elif [[ ${ENABLE_METALLB_MODE} == "bgp" ]]; then
+		pushd metallb
+		./start_frr.sh
+		./metallb_bgp.sh
+		popd
+	else
+		echo "metallb is not configured because wrong ENABLE_METALLB_MODE set, ${ENABLE_METALLB_MODE}"
+	fi
+fi
+
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"

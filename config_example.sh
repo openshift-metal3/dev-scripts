@@ -231,6 +231,12 @@ set -x
 # Setting this variable to true will block multicast via ebtables for both IPv4 and IPv6.
 #export DISABLE_MULTICAST=false
 
+# Enable metallb ("l2" or "bgp" )
+#export ENABLE_METALLB_MODE="l2"
+# metallb container location (optional)
+#export METALLB_IMAGE_BASE=
+#export METALLB_IMAGE_TAG=
+
 ##
 ## Multi-cluster/Hive variables
 ##
