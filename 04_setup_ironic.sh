@@ -68,7 +68,7 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
                 git fetch origin pull/${IMAGE_PR}/head:pr${IMAGE_PR}
                 git checkout pr${IMAGE_PR}
         fi
-        
+
         # If we want to install extra packages, we set the path to a
         # file containing the packages (one per line) we want to install
         EXTRA_PKGS_FILE_PATH=${IMAGE_VAR/_LOCAL_IMAGE}_EXTRA_PACKAGES
@@ -86,7 +86,7 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         if [[ -n ${BASE_IMAGE_DIR:-} ]]; then
             sed -i "s/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g" ${IMAGE_DOCKERFILE}
         fi
-        
+
         sudo podman build --authfile $PULL_SECRET_FILE $BUILD_COMMAND_ARGS -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
         cd -
         sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
@@ -155,15 +155,19 @@ done
 CACHED_MACHINE_OS_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_IMAGE_NAME}"
 if [ ! -f "${CACHED_MACHINE_OS_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_IMAGE}" "${MACHINE_OS_IMAGE_URL}"
-  echo "${MACHINE_OS_IMAGE_SHA256} ${CACHED_MACHINE_OS_IMAGE}" | tee ${CACHED_MACHINE_OS_IMAGE}.sha256sum
+  echo "${MACHINE_OS_IMAGE_SHA256} $(basename ${CACHED_MACHINE_OS_IMAGE})" | tee ${CACHED_MACHINE_OS_IMAGE}.sha256sum
+  pushd $(dirname ${CACHED_MACHINE_OS_IMAGE})
   sha256sum --strict --check ${CACHED_MACHINE_OS_IMAGE}.sha256sum || ( rm -f "${CACHED_MACHINE_OS_IMAGE}" ; exit 1 )
-
+  popd
 fi
+
 CACHED_MACHINE_OS_BOOTSTRAP_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}"
 if [ ! -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" "${MACHINE_OS_BOOTSTRAP_IMAGE_URL}"
-  echo "${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256} ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" | tee ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum
+  pushd $(dirname ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE})
+  echo "${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256} $(basename ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE})" | tee ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum
   sha256sum --strict --check ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum || ( rm -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ; exit 1 )
+  popd
 fi
 
 # cached images to the bootstrap VM
