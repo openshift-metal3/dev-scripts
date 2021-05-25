@@ -66,6 +66,7 @@ ansible-playbook \
     -e "libvirt_firmware=uefi" \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
+    -e "sushy_ignore_boot_device=$REDFISH_EMULATOR_IGNORE_BOOT_DEVICE" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
     -e "nodes_file=$NODES_FILE" \
