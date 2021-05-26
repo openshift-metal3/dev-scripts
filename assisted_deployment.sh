@@ -60,12 +60,25 @@ spec:
   logLevel: Normal
   managementState: Managed
   storageClassDevices:
-    - devicePaths:
-        - /dev/sdb
-        - /dev/sdc
+$(storage_devices_config)
       storageClassName: assisted-service
       volumeMode: Filesystem
 EOCR
+}
+
+
+function storage_devices_config() {
+  if [ ! -z "${VM_EXTRADISKS_LIST}" ]; then
+cat <<EOF
+    - devicePaths:
+EOF
+  fi
+
+  for disk in ${VM_EXTRADISKS_LIST}; do
+cat <<EOF
+        - /dev/$disk
+EOF
+  done
 }
 
 
