@@ -131,7 +131,10 @@ set -x
 #export PROVISIONING_NETWORK=fd00:1101::0/64
 
 # Provisioning network profile, can be set to "Managed" or "Disabled"
-#PROVISIONING_NETWORK_PROFILE=Managed
+#export PROVISIONING_NETWORK_PROFILE=Managed
+
+# Instruct the redfish emulator to ignore any instructions to set the boot device
+#export REDFISH_EMULATOR_IGNORE_BOOT_DEVICE=False
 
 # External subnet
 #export EXTERNAL_SUBNET_V4="11.0.0.0/24"

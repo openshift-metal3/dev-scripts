@@ -239,6 +239,7 @@ export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
 export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
 export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
 export VBMC_MAX_PORT=$((VBMC_BASE_PORT + NUM_MASTERS + NUM_WORKERS + NUM_EXTRA_WORKERS - 1))
+export REDFISH_EMULATOR_IGNORE_BOOT_DEVICE="${REDFISH_EMULATOR_IGNORE_BOOT_DEVICE:-False}"
 
 # Which docker registry image should we use?
 export DOCKER_REGISTRY_IMAGE=${DOCKER_REGISTRY_IMAGE:-"quay.io/libpod/registry:2"}
