@@ -200,6 +200,12 @@ set -x
 #export WORKER_DISK=20
 #export WORKER_VCPU=4
 
+# Change VM resources for extra workers. If not supplied defaults to the
+# regular workers specs
+#export EXTRA_WORKER_MEMORY=8192
+#export EXTRA_WORKER_DISK=20
+#export EXTRA_WORKER_VCPU=4
+
 # Add extradisks to VMs
 # export VM_EXTRADISKS=true
 

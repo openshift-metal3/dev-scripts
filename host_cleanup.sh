@@ -23,7 +23,8 @@ ansible-playbook \
     -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
     -e "working_dir=$WORKING_DIR" \
     -e "num_masters=$NUM_MASTERS" \
-    -e "num_workers=$((NUM_WORKERS + NUM_EXTRA_WORKERS))" \
+    -e "num_workers=$NUM_WORKERS" \
+    -e "num_extraworkers=$NUM_EXTRA_WORKERS" \
     -e "virthost=$HOSTNAME" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e "nodes_file=$NODES_FILE" \
