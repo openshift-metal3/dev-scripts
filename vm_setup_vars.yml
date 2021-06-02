@@ -9,19 +9,26 @@ ironic_prefix: "{{ ironic_prefix }}"
 # in metal3-dev-env
 num_masters: 3
 num_workers: 1
+num_extraworkers: 0
 extradisks_list: "{{ lookup('env', 'VM_EXTRADISKS_LIST').split(' ') | default(['vdb']) }}"
 extradisks_size: "{{ lookup('env', 'VM_EXTRADISKS_SIZE') | default(['8G']) }}"
 flavors:
   master:
-    memory: "{{ lookup('env', 'MASTER_MEMORY') | default('16384', true) }}"
-    disk: "{{ lookup('env', 'MASTER_DISK') | default('30', true) }}"
-    vcpu: "{{ lookup('env', 'MASTER_VCPU') | default('8', true) }}"
+    memory: "{{ lookup('env', 'MASTER_MEMORY') }}"
+    disk: "{{ lookup('env', 'MASTER_DISK') }}"
+    vcpu: "{{ lookup('env', 'MASTER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
 
   worker:
-    memory: "{{ lookup('env', 'WORKER_MEMORY') | default('8192', true) }}"
-    disk: "{{ lookup('env', 'WORKER_DISK') | default('20', true) }}"
-    vcpu: "{{ lookup('env', 'WORKER_VCPU') | default('4', true) }}"
+    memory: "{{ lookup('env', 'WORKER_MEMORY') }}"
+    disk: "{{ lookup('env', 'WORKER_DISK') }}"
+    vcpu: "{{ lookup('env', 'WORKER_VCPU') }}"
+    extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
+
+  extraworker:
+    memory: "{{ lookup('env', 'EXTRA_WORKER_MEMORY') }}"
+    disk: "{{ lookup('env', 'EXTRA_WORKER_DISK') }}"
+    vcpu: "{{ lookup('env', 'EXTRA_WORKER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
 
 # For OpenShift we create some additional DNS records for the API/DNS VIPs
