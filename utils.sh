@@ -57,6 +57,10 @@ function create_cluster() {
 
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create manifests
 
+    # For CI and nightly releases we need to remove the channel property to
+    # prevent critical alerts.
+    sed -i '/^  channel:/d' "${assets_dir}/manifests/cvo-overrides.yaml"
+
     mkdir -p ${assets_dir}/openshift
     generate_assets
     custom_ntp ${assets_dir}/openshift
