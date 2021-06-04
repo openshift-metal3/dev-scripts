@@ -246,7 +246,13 @@ function deploy_assisted_operator() {
 function patch_extra_host_manifests() {
   if [ -f "${OCP_DIR}/extra_host_manifests.yaml" ]; then
     cp "${OCP_DIR}/extra_host_manifests.yaml" "${ASSETS_DIR}/06-extra-host-manifests.yaml"
-    sed -i s/"namespace: openshift-machine-api"/"namespace: ${ASSISTED_NAMESPACE}"/ "${ASSETS_DIR}/06-extra-host-manifests.yaml"
+
+    yq -i -Y '. | select(."kind" == "BareMetalHost") | .metadata += {"namespace":'\"${ASSISTED_NAMESPACE}\"'}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
+    yq -i -Y '. | select(."kind" == "BareMetalHost") | .metadata.labels += {"infraenvs.agent-install.openshift.io":"myinfraenv"}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
+    yq -i -Y '. | select(."kind" == "BareMetalHost") | .metadata.annotations += {"inspect.metal3.io":"disabled"}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
+    yq -i -Y '. | select(."kind" == "BareMetalHost") | .spec += {"automatedCleaningMode":"disabled"}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
+    echo "---" >> "${ASSETS_DIR}/06-extra-host-manifests.yaml"
+    yq -Y '. | select(."kind" == "Secret") | .metadata += {"namespace":'\"${ASSISTED_NAMESPACE}\"'}' "${OCP_DIR}/extra_host_manifests.yaml" >> "${ASSETS_DIR}/06-extra-host-manifests.yaml"
   fi
 }
 
