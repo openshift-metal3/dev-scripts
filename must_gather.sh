@@ -7,7 +7,7 @@ source common.sh
 source utils.sh
 source network.sh
 
-MUST_GATHER_PATH=${MUST_GATHER_PATH:-$LOGDIR/$CLUSTER_NAME/must-gather}
+MUST_GATHER_PATH=${MUST_GATHER_PATH:-$LOGDIR/$CLUSTER_NAME/must-gather-$(date +%F-%H%M%S)}
 if [ ! -d "$MUST_GATHER_PATH" ]; then
     mkdir -p "$MUST_GATHER_PATH"
 fi
