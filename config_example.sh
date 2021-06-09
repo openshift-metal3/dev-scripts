@@ -268,3 +268,9 @@ set -x
 # and the Local Storage oeprator. Hive's subscription will be deployed on the `openshift-operators`
 # namespace and the Local Storage in the `openshift-local-storage` one.
 # export ASSISTED_NAMESPACE="assisted-installer"
+
+# Uncomment the following line to have BareMetal Operator
+# watch the BareMetalHosts on all namespaces. Note that
+# setting this variable to true will require more RAM
+# More info here: https://github.com/openshift-metal3/dev-scripts/pull/1241#issuecomment-846067822
+# export BMO_WATCH_ALL_NAMESPACES="true"
