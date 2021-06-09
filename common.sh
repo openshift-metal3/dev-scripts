@@ -97,11 +97,11 @@ if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
     export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_VERSION%.*}
 fi
 
-# DNS resolution for openshift-release.svc.ci.openshift.org fails
+# DNS resolution for amd64.ocp.releases.ci.openshift.org fails
 # pretty regularly, so try a few times before giving up.
 function get_latest_ci_image() {
     for i in {1..3}; do
-        if curl -L https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest | grep -o 'registry.ci.openshift.org[^"]\+'; then
+        if curl -L https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest | grep -o 'registry.ci.openshift.org[^"]\+'; then
             return
         fi
         echo "Failed to get CI image" 1>&2
