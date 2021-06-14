@@ -118,6 +118,10 @@ if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
     LATEST_CI_IMAGE=$(curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OPENSHIFT_VERSION}/release.txt  | grep -o 'quay.io/openshift-release-dev/ocp-release[^"]\+')
   else
     LATEST_CI_IMAGE=$(get_latest_ci_image)
+    if [ -z "$LATEST_CI_IMAGE" ]; then
+      error "No release image found."
+      exit 1
+    fi
   fi
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
