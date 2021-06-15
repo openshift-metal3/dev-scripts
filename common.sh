@@ -30,6 +30,14 @@ function error () {
     echo $@ 1>&2
 }
 
+is_lower_version () {
+  if [[ $(echo "$1 $2" | tr " " "\n" | sort -V | head -n1) != $2 ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Get variables from the config file
 if [ -z "${CONFIG:-}" ]; then
     # See if there's a config_$USER.sh in the SCRIPTDIR
@@ -160,7 +168,10 @@ export MIRROR_LOG_FILE=${REGISTRY_DIR}/${CLUSTER_NAME}-image_mirror-${OPENSHIFT_
 # Switch Container Images to upstream, Installer defaults these to the openshift version
 if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
     export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:master"}
-    export IRONIC_INSPECTOR_LOCAL_IMAGE=${IRONIC_INSPECTOR_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
+# Starting from Openshift 4.9 the ironic-inspector container is not used anymore
+    if is_lower_version $OPENSHIFT_VERSION 4.9; then
+        export IRONIC_INSPECTOR_LOCAL_IMAGE=${IRONIC_INSPECTOR_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
+    fi
     export IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE=${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-ipa-downloader:master"}
     export IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE=${IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE:-"quay.io/metal3-io/static-ip-manager"}
     export BAREMETAL_OPERATOR_LOCAL_IMAGE=${BAREMETAL_OPERATOR_LOCAL_IMAGE:-"quay.io/metal3-io/baremetal-operator"}
