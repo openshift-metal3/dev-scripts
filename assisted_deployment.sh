@@ -116,6 +116,22 @@ function deploy_hive() {
   oc apply -f "${ASSETS_DIR}/03-hive.yaml"
 
   wait_for_crd "clusterdeployments.hive.openshift.io"
+  wait_for_crd "hiveconfigs.hive.openshift.io"
+
+  cat <<EOF | oc apply -f -
+apiVersion: hive.openshift.io/v1
+kind: HiveConfig
+metadata:
+  name: hive
+spec:
+  featureGates:
+    custom:
+      enabled:
+      - AlphaAgentInstallStrategy
+    featureSet: Custom
+  logLevel: debug
+  targetNamespace: hive
+EOF
 }
 
 
@@ -280,6 +296,7 @@ function delete_assisted() {
 }
 
 function delete_hive() {
+  oc delete hiveconfig -n hive  hive
   oc delete subscription -n openshift-operators hive-operator
 }
 
