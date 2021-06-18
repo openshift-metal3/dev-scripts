@@ -67,7 +67,7 @@ function create_cluster() {
 
     find assets/generated -name '*.yaml' -exec cp -f {} ${assets_dir}/openshift \;
 
-    if [[ "${IP_STACK}" == "v4v6" && "$OPENSHIFT_VERSION" =~ 4.[67] ]]; then
+    if [[ "${IP_STACK}" == "v4v6" && "$(openshift_version $OCP_DIR)" =~ 4.[67] ]]; then
         # The IPv6DualStack feature is not on by default in 4.6 and 4.7 and needs
         # to be manually enabled
         cp assets/ipv6-dual-stack-no-upgrade.yaml ${assets_dir}/openshift/.
@@ -302,7 +302,7 @@ function generate_metal3_config {
     mkdir -p ${OCP_DIR}/deploy
     go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
 
-    if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
+    if [[ "$(openshift_version $OCP_DIR)" == "4.3" ]]; then
       go run metal3-templater.go noauth -template-file=metal3-config.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > ${OCP_DIR}/deploy/metal3-config.yaml
       cp ${OCP_DIR}/deploy/metal3-config.yaml assets/generated/98_metal3-config.yaml
     else
