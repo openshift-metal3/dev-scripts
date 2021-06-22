@@ -5,12 +5,12 @@ set -o pipefail
 function retry_with_timeout() {
   retries=$1
   timeout_duration=$2
-  command=${@:3}
+  command=${*:3}
 
-  for i in $(seq $retries); do
+  for _ in $(seq "$retries"); do
     exit_code=0
-    timeout $timeout_duration bash -c "$command" || exit_code=$?
-    if (( $exit_code == 0 )); then
+    timeout "$timeout_duration" bash -c "$command" || exit_code=$?
+    if (( exit_code == 0 )); then
       return 0
     fi
   done
