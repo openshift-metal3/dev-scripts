@@ -2,6 +2,22 @@
 
 set -o pipefail
 
+function retry_with_timeout() {
+  retries=$1
+  timeout_duration=$2
+  command=${@:3}
+
+  for i in $(seq $retries); do
+    exit_code=0
+    timeout $timeout_duration bash -c "$command" || exit_code=$?
+    if (( $exit_code == 0 )); then
+      return 0
+    fi
+  done
+
+  return $(( exit_code ))
+}
+
 function generate_assets() {
   rm -rf assets/generated && mkdir assets/generated
   for file in $(find assets/templates/ -iname '*.yaml' -type f -printf "%P\n"); do
