@@ -4,7 +4,7 @@ default: requirements configure build_installer ironic install_config ocp_run be
 all: default
 
 # Deploy cluster with assisted deployment flow
-assisted: requirements configure assisted_deployment bell
+assisted: assisted_deployment bell
 
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
