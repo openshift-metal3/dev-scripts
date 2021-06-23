@@ -326,3 +326,6 @@ fi
 
 # Defaults the variable to enable testing a custom machine-api-operator image
 export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
+
+# Set to true to enable RHCOS Live Image based installs
+export RHCOS_LIVE_IMAGES=${RHCOS_LIVE_IMAGES:-false}
