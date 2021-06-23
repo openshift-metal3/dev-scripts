@@ -23,6 +23,8 @@ ASSETS_DIR="${OCP_DIR}/saved-assets/assisted-installer-manifests"
 
 
 function generate_local_storage() {
+  mkdir -p "${ASSETS_DIR}"
+
   cat >"${ASSETS_DIR}/01-local-storage-operator.yaml" <<EOF
 apiVersion: operators.coreos.com/v1alpha2
 kind: OperatorGroup
@@ -55,14 +57,14 @@ spec:
   logLevel: Normal
   managementState: Managed
   storageClassDevices:
-$(storage_devices_config)
+$(fill_local_storage)
       storageClassName: assisted-service
       volumeMode: Filesystem
 EOCR
 }
 
 
-function storage_devices_config() {
+function fill_local_storage() {
   if [ ! -z "${VM_EXTRADISKS_LIST}" ]; then
 cat <<EOF
     - devicePaths:
@@ -94,6 +96,8 @@ function deploy_local_storage() {
 
 
 function generate_hive() {
+  mkdir -p "${ASSETS_DIR}"
+
   cat >"${ASSETS_DIR}/03-hive.yaml" <<EOCR
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -135,7 +139,7 @@ EOF
 }
 
 
-function subscription_config() {
+function fill_assisted_operator() {
     if [ -n "${ASSISTED_SERVICE_IMAGE}" ]; then
 cat <<EOF
     - name: SERVICE_IMAGE
@@ -181,6 +185,8 @@ EOF
 
 
 function generate_assisted_operator() {
+  mkdir -p "${ASSETS_DIR}"
+
   cat >"${ASSETS_DIR}/04-assisted-service.yaml" <<EOF
 apiVersion: v1
 kind: Namespace
@@ -215,12 +221,16 @@ metadata:
 spec:
   config:
     env:
-$(subscription_config)
+$(fill_assisted_operator)
   installPlanApproval: Automatic
   name: assisted-service-operator
   source: assisted-service-catalog
   sourceNamespace: openshift-marketplace
 EOF
+}
+
+function generate_assisted_service_config() {
+  mkdir -p "${ASSETS_DIR}"
 
   cat >"${ASSETS_DIR}/05-assisted-service-config.yaml" <<EOF
 apiVersion: agent-install.openshift.io/v1beta1
@@ -255,11 +265,14 @@ function deploy_assisted_operator() {
   oc apply -f "${ASSETS_DIR}/04-assisted-service.yaml"
   wait_for_crd "agentserviceconfigs.agent-install.openshift.io"
 
+  generate_assisted_service_config
   oc apply -f "${ASSETS_DIR}/05-assisted-service-config.yaml"
 }
 
 
 function patch_extra_host_manifests() {
+  mkdir -p "${ASSETS_DIR}"
+
   if [ -f "${OCP_DIR}/extra_host_manifests.yaml" ]; then
     cp "${OCP_DIR}/extra_host_manifests.yaml" "${ASSETS_DIR}/06-extra-host-manifests.yaml"
 
@@ -273,26 +286,39 @@ function patch_extra_host_manifests() {
 }
 
 function install_assisted_service() {
- mkdir -p "${ASSETS_DIR}"
- patch_extra_host_manifests
- deploy_local_storage
- deploy_hive
- deploy_assisted_operator
+  install_prerequisites_assisted_service
+  deploy_assisted_operator
 
- oc wait -n "$ASSISTED_NAMESPACE" --for=condition=Ready pod -l app=assisted-service --timeout=90s
+  oc wait -n "$ASSISTED_NAMESPACE" --for=condition=Ready pod -l app=assisted-service --timeout=90s
 
- echo "Installation finished..."
- echo "For debugging purposes all the manifests have been saved in ${OCP_DIR}/saved-assets/assisted-installer-manifests"
- echo "Please remember to manually apply BareMetalHost manifest available in the directory above."
+  echo "Installation finished..."
+  echo "For debugging purposes all the manifests have been saved in ${ASSETS_DIR}"
+  echo "Please remember to manually apply BareMetalHost manifest available in the directory above. You can use the following command:"
+  echo "oc apply -f ${ASSETS_DIR}/06-extra-host-manifests.yaml"
 }
 
+# For a development workflow where we want to deploy the assisted service using operator-sdk it is
+# useful to have a process installing required dependencies, i.e. LSO and Hive as well as generating
+# AgentServiceConfig manifest that is required later on.
+function install_prerequisites_assisted_service() {
+  mkdir -p "${ASSETS_DIR}"
+  patch_extra_host_manifests
+  deploy_local_storage
+  deploy_hive
+  generate_assisted_service_config
+
+  echo "Local Storage Operator and Hive have been deployed. Useful manifests are available in ${OCP_DIR}/saved-assets/assisted-installer-manifests"
+}
+
+# Deleting resources with `oc` is not asynchronous so we are adding a timeout in case the cluster
+# or the node is under load and can't handle requests fast enough.
 function delete_assisted() {
-    oc delete -n $ASSISTED_NAMESPACE agentserviceconfig agent
-    oc delete -n $ASSISTED_NAMESPACE csv assisted-service-operator.v0.0.1
-    oc delete subscription -n $ASSISTED_NAMESPACE assisted-service-operator
-    oc delete -n $ASSISTED_NAMESPACE operatorgroup assisted-installer-group
-    oc delete -n openshift-marketplace catalogsource assisted-service-catalog
-    oc delete ns $ASSISTED_NAMESPACE
+  timeout 15 oc delete -n $ASSISTED_NAMESPACE agentserviceconfig --all
+  timeout 15 oc delete -n $ASSISTED_NAMESPACE csv --all
+  timeout 15 oc delete subscription -n $ASSISTED_NAMESPACE --all
+  timeout 15 oc delete -n $ASSISTED_NAMESPACE operatorgroup --all
+  timeout 15 oc delete -n openshift-marketplace catalogsource assisted-service-catalog
+  timeout 15 oc delete ns $ASSISTED_NAMESPACE
 }
 
 function delete_hive() {

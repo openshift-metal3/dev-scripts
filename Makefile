@@ -62,3 +62,6 @@ bell:
 
 assisted_deployment:
 	./assisted_deployment.sh install_assisted_service
+
+assisted_deployment_requirements:
+	./assisted_deployment.sh install_prerequisites_assisted_service
