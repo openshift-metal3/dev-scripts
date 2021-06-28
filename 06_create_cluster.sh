@@ -31,6 +31,10 @@ if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     # when local image stream is enabled. These are basically to run CI tests
     # depend on tools image.
     add_local_certificate_as_trusted
+
+    if [[ "$(openshift_version $OCP_DIR)" =~ 4.[67] ]]; then
+        sleep 120
+    fi
 fi
 
 if [[ -n "${APPLY_EXTRA_WORKERS}" ]]; then
