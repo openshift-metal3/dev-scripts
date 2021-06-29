@@ -132,8 +132,8 @@ EOF
 }
 
 function additional_trust_bundle() {
-  if [ ! -z "$ADDITIONAL_TRUST_BUNDLE" ]; then
-    if [ -z "${MIRROR_IMAGES}" && -z "${ENABLE_LOCAL_REGISTRY}" ]; then
+  if [[ ! -z "$ADDITIONAL_TRUST_BUNDLE" ]]; then
+    if [[ -z "${MIRROR_IMAGES}" && -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
       echo "additionalTrustBundle: |"
     fi
     awk '{ print " ", $0 }' "${ADDITIONAL_TRUST_BUNDLE}"
