@@ -29,6 +29,9 @@ set -x
 # For example:
 # export IRONIC_EXTRA_PACKAGES=ironic-extra-pkgs.txt
 
+# Uncomment this to build a custom base image for ironic images
+# export CUSTOM_BASE_IMAGE=true
+
 # Set this variable to point the custom base image to a different location
 # It can be an absolute path or a local path under the dev-scripts dir
 # export BASE_IMAGE_DIR=base-image
