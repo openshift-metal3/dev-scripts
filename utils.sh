@@ -35,6 +35,31 @@ function local_gateway_mode(){
   cp assets/templates/cluster-network-00-gateway-mode.yaml.optional assets/generated/cluster-network-00-gateway-mode.yaml
 }
 
+function ensure_line() {
+  file=$1
+  line=$2
+
+  grep -q "$line" $file || echo "$line" | sudo tee -a $file
+}
+
+function configure_chronyd() {
+  sudo dnf install chrony && sudo systemctl enable chronyd
+
+   ensure_line /etc/chrony.conf "allow ${EXTERNAL_SUBNET_V4}"
+   ensure_line /etc/chrony.conf "allow ${EXTERNAL_SUBNET_V6}"
+   ensure_line /etc/chrony.conf "allow ${PROVISIONING_NETWORK}"
+
+  sudo systemctl restart chronyd
+
+  if [ "$MANAGE_BR_BRIDGE" == "y" ];
+  then
+    sudo firewall-cmd --permanent --zone=libvirt --add-service=ntp
+  else
+    sudo firewall-cmd --permanent --add-service=ntp
+  fi
+  sudo firewall-cmd --reload
+}
+
 function custom_ntp(){
   ASSESTS_DIR=$1
   # TODO - consider adding NTP server config to install-config.yaml instead
@@ -75,7 +100,13 @@ function create_cluster() {
 
     mkdir -p ${assets_dir}/openshift
     generate_assets
+
+    if [ -z "${NTP_SERVERS}" ];
+    then
+      export NTP_SERVERS="$PROVISIONING_HOST_EXTERNAL_IP"
+    fi
     custom_ntp ${assets_dir}/openshift
+
     if [[ "${OVN_LOCAL_GATEWAY_MODE}" == "true" ]] && [[ "${NETWORK_TYPE}" == "OVNKubernetes" ]]; then
       local_gateway_mode ${assets_dir}/openshift
     fi
