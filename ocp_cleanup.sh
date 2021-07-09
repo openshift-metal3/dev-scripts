@@ -64,3 +64,7 @@ done
 if [ -d assets/generated ]; then
   rm -rf assets/generated
 fi
+
+# Cleanup chrony configuration
+sudo sed -ie '/^allow /d' /etc/chrony.conf
+

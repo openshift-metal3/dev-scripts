@@ -54,6 +54,11 @@ if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABL
     setup_local_registry
 fi
 
+# Configure an NTP server for use by the cluster, this is especially
+# important on IPv6 where the cluster doesn't have outbound internet
+# access.
+configure_chronyd
+
 ansible-playbook \
     -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
