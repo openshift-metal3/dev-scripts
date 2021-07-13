@@ -354,8 +354,9 @@ spec:
             secretKeyRef:
               name: memberlist
               key: secretkey
-        image: {{ metallb_image_base }}/speaker:{{ metallb_image_tag }}
+        image: {{ metallb_image_base }}:{{ metallb_image_tag }}
         name: speaker
+        command: ["/speaker"]
         ports:
         - containerPort: 7472
           name: monitoring
@@ -414,8 +415,9 @@ spec:
           value: memberlist
         - name: METALLB_DEPLOYMENT
           value: controller
-        image: {{ metallb_image_base }}/controller:{{ metallb_image_tag }}
+        image: {{ metallb_image_base }}:{{ metallb_image_tag }}
         name: controller
+        command: ["/controller"]
         ports:
         - containerPort: 7472
           name: monitoring
