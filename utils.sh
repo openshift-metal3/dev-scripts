@@ -54,10 +54,11 @@ function configure_chronyd() {
   if [ "$MANAGE_BR_BRIDGE" == "y" ];
   then
     sudo firewall-cmd --permanent --zone=libvirt --add-service=ntp
+    sudo firewall-cmd --zone=libvirt --add-service=ntp
   else
     sudo firewall-cmd --permanent --add-service=ntp
+    sudo firewall-cmd --add-service=ntp
   fi
-  sudo firewall-cmd --reload
 }
 
 function custom_ntp(){
