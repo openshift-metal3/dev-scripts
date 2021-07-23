@@ -29,11 +29,12 @@ DOCKERFILE=$(mktemp --tmpdir "release-update--XXXXXXXXXX")
 _tmpfiles="$_tmpfiles $DOCKERFILE"
 echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
 
-# To build custom images is highly recommended to build a base image first.
-# Build a base image if we set a custom repo file in the config file and
-# the file exists
-if [[ -n ${CUSTOM_REPO_FILE:-} ]]; then
-    ./build-base-image.sh ${BASE_IMAGE_DIR:-base-image} $CUSTOM_REPO_FILE
+# Build a custom base image for the ironic images.
+# This may be necessary in case we want to rebuild the base image from
+# scratch or can't for some reason get the base openshift image from the
+# openshift registry.
+if [ "${CUSTOM_BASE_IMAGE:-}" == "true" ]; then
+    ./build-base-image.sh ${BASE_IMAGE_DIR:-base-image} ${CUSTOM_REPO_FILE:-}
 fi
 
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
@@ -83,7 +84,7 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         # If we built a custom base image, we should use it as a new base in
         # the Dockerfile to prevent discrepancies between locally built images.
         # Replace all FROM entries with the base-image.
-        if [[ -n ${BASE_IMAGE_DIR:-} ]]; then
+        if [ "${CUSTOM_BASE_IMAGE:-}" == "true" ]; then
             sed -i "s/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g" ${IMAGE_DOCKERFILE}
         fi
 
