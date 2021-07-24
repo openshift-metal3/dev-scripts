@@ -587,6 +587,9 @@ function write_pull_secret() {
 }
 
 function switch_to_internal_dns() {
+  # Create backup of the current resolv.conf in case user is using a manual configuration. This
+  # file will be used in host_cleanup to revert the initial DNS configuration of the host.
+  cp /etc/resolv.conf /etc/resolv.conf.dev-scripts.backup
   sudo mkdir -p /etc/NetworkManager/conf.d/
   ansible localhost -b -m ini_file -a "path=/etc/NetworkManager/conf.d/dnsmasq.conf section=main option=dns value=dnsmasq"
   if [ "$ADDN_DNS" ] ; then

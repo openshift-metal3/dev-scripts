@@ -40,6 +40,7 @@ if systemctl is-active --quiet NetworkManager; then
 else
   sudo systemctl restart NetworkManager
 fi
+mv /etc/resolv.conf.dev-scripts.backup /etc/resolv.conf
 
 # There was a bug in this file, it may need to be recreated.
 # delete the interface as it can cause issues when not rebooting
