@@ -518,7 +518,7 @@ function write_pull_secret() {
     # Get a current pull secret for registry.ci.openshift.org using the token
     tmpkubeconfig=$(mktemp --tmpdir "kubeconfig--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpkubeconfig"
-    oc login https://api.ci.l2s4.p1.openshiftapps.com:6443 --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
+    oc login https://${CI_SERVER}:6443 --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
     tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmppullsecret"
     oc registry login --kubeconfig=$tmpkubeconfig --to=$tmppullsecret

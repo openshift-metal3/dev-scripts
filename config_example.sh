@@ -7,6 +7,10 @@ set +x
 export CI_TOKEN=''
 set -x
 
+# When testing e.g cluster-bot builds, you must change CI_TOKEN to one
+# from a different cluster, in which case this should be updated
+#export CI_SERVER=api.ci.l2s4.p1.openshiftapps.com
+
 # Select a different release stream from which to pull the latest image, if the
 # image name is not specified
 #export OPENSHIFT_RELEASE_STREAM=4.8
