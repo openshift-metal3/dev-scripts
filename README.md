@@ -17,7 +17,7 @@ other components of OpenShift via support for a baremetal platform type.
 - ideally on a bare metal host with at least 64G of RAM
 - run as a user with passwordless sudo access
 - get a valid pull secret (json string) from https://cloud.redhat.com/openshift/install/pull-secret
-- get a login token from https://api.ci.openshift.org
+- get a login token from console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com
 
 # Instructions
 

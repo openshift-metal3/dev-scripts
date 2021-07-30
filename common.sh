@@ -277,6 +277,7 @@ export PULL_SECRET_FILE=${PULL_SECRET_FILE:-$WORKING_DIR/pull_secret.json}
 set +x
 export CI_TOKEN=${CI_TOKEN:-}
 set -x
+export CI_SERVER=${CI_SERVER:-api.ci.l2s4.p1.openshiftapps.com}
 export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 
 # Ensure working dir is always different than script dir. If not, some
