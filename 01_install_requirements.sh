@@ -12,14 +12,14 @@ early_deploy_validation true
 
 if [ -z "${METAL3_DEV_ENV}" ]; then
   export REPO_PATH=${WORKING_DIR}
-  sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
+  sync_repo_and_patch metal3-dev-env https://github.com/stbenjam/metal3-dev-env.git
   pushd ${METAL3_DEV_ENV_PATH}
   # Pin to a specific metal3-dev-env commit to ensure we catch breaking
   # changes before they're used by everyone and CI.
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset 8908da5241d52e25a7e1b2e60d6d604cf797f890 --hard
+  git reset 21d6273f482c0a0ecd0ce8892f88d55d0df4d09d --hard
   popd
 fi
 
