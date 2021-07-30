@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 
+## foo
 
 source logging.sh
 source common.sh
