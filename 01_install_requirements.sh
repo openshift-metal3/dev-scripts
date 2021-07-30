@@ -32,14 +32,16 @@ source /etc/os-release
 export DISTRO="${ID}${VERSION_ID%.*}"
 if [[ $DISTRO == "centos8" ]]; then
     sudo dnf -y install epel-release dnf --enablerepo=extras
-elif [[ $DISTRO == "rhel8" ]]; then
-    sudo subscription-manager repos --enable=ansible-2-for-rhel-8-x86_64-rpms
+    # Advanced virt repo provides newer libvirt with NATv6 support
+    sudo dnf -y install centos-release-advanced-virtualization
 fi
+
 
 # Install ansible, other packages are installed via
 # vm-setup/install-package-playbook.yml
-sudo dnf -y install python3 ansible
+sudo dnf -y install python3 python3-pip
 sudo alternatives --set python /usr/bin/python3
+pip3 install --user ansible=="${ANSIBLE_VERSION}"
 
 pushd ${METAL3_DEV_ENV_PATH}
 ansible-galaxy install -r vm-setup/requirements.yml

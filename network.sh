@@ -4,12 +4,14 @@ function nth_ip() {
   network=$1
   idx=$2
 
-  python -c "from ansible.plugins.filter import ipaddr; print(ipaddr.nthhost('"$network"', $idx))"
+  python -c "from ansible_collections.ansible.netcommon.plugins.filter import ipaddr; print(ipaddr.nthhost('"$network"', $idx))"
 }
 
 
 export IP_STACK=${IP_STACK:-"v6"}
 export HOST_IP_STACK=${HOST_IP_STACK:-${IP_STACK}}
+
+export ENABLE_NATV6=${ENABLE_NATV6:-false}
 
 EXTERNAL_SUBNET=${EXTERNAL_SUBNET:-""}
 EXTERNAL_SUBNET_V4=${EXTERNAL_SUBNET_V4:-""}

@@ -79,6 +79,7 @@ ansible-playbook \
     -e "virtualbmc_base_port=$VBMC_BASE_PORT" \
     -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
     -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
+    -e "enable_natv6=$ENABLE_NATV6" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 

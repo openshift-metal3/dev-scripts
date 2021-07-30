@@ -22,6 +22,8 @@ export GOTRACEBACK=crash
 #      https://github.com/moby/moby/issues/39859
 export MOBY_DISABLE_PIGZ=true
 
+export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"4.3.0"}
+
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=`whoami`
 GROUP=`id -gn`
