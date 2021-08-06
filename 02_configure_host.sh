@@ -57,7 +57,7 @@ fi
 # Configure an NTP server for use by the cluster, this is especially
 # important on IPv6 where the cluster doesn't have outbound internet
 # access.
-if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+if [[ -n "${MIRROR_IMAGES}" ]]; then
   configure_chronyd
 fi
 

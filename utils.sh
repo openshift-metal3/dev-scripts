@@ -102,7 +102,7 @@ function create_cluster() {
     mkdir -p ${assets_dir}/openshift
     generate_assets
 
-    if [[ ! -z "${MIRROR_IMAGES}" && -z "${NTP_SERVERS}" ]];
+    if [[ -n "${MIRROR_IMAGES}" && -z "${NTP_SERVERS}" ]];
     then
       export NTP_SERVERS="$PROVISIONING_HOST_EXTERNAL_IP"
     fi
