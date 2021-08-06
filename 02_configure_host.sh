@@ -57,7 +57,9 @@ fi
 # Configure an NTP server for use by the cluster, this is especially
 # important on IPv6 where the cluster doesn't have outbound internet
 # access.
-configure_chronyd
+if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+  configure_chronyd
+fi
 
 ansible-playbook \
     -e @vm_setup_vars.yml \
