@@ -54,6 +54,8 @@ if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABL
     setup_local_registry
 fi
 
+sudo systemctl enable --now firewalld
+
 # Configure an NTP server for use by the cluster, this is especially
 # important on IPv6 where the cluster doesn't have outbound internet
 # access.
@@ -91,7 +93,6 @@ if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
 fi
 
 ZONE="\nZONE=libvirt"
-sudo systemctl enable --now firewalld
 
 # Allow local non-root-user access to libvirt
 # Restart libvirtd service to get the new group membership loaded
