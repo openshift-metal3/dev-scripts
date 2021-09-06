@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/apparentlymart/go-cidr/cidr"
-	"github.com/openshift/installer/pkg/ipnet"
 	"net"
 	"net/url"
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/openshift/installer/pkg/ipnet"
 )
 
 type templater struct {
@@ -143,8 +144,8 @@ func main() {
 		// ProvisioningIP
 		size, _ := ipnet.IPNet.Mask.Size()
 		templateData.ProvisioningIP = fmt.Sprintf("%s/%d", clusterIP, size)
-		templateData.ClusterIronicURL = fmt.Sprintf("http://%s", net.JoinHostPort(clusterIP, "6385"))
-		templateData.ClusterInspectorURL = fmt.Sprintf("http://%s", net.JoinHostPort(clusterIP, "5050"))
+		templateData.ClusterIronicURL = fmt.Sprintf("https://%s", net.JoinHostPort(clusterIP, "6385"))
+		templateData.ClusterInspectorURL = fmt.Sprintf("https://%s", net.JoinHostPort(clusterIP, "5050"))
 
 		// URL Host
 		if strings.Contains(clusterIP, ":") {
