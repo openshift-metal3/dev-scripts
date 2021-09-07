@@ -214,6 +214,8 @@ MANAGE_INT_BRIDGE=${MANAGE_INT_BRIDGE:-y}
 INT_IF=${INT_IF:-}
 #Root disk to deploy coreOS - use /dev/sda on BM
 ROOT_DISK_NAME=${ROOT_DISK_NAME-"/dev/sda"}
+# Length of DHCP leases
+export DHCP_LEASE_EXPIRY=${DHCP_LEASE_EXPIRY:-60}
 
 FILESYSTEM=${FILESYSTEM:="/"}
 

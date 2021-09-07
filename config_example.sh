@@ -248,6 +248,9 @@ set -x
 #export METALLB_IMAGE_BASE=
 #export METALLB_IMAGE_TAG=
 
+# Set the DHCP lease time
+#export DHCP_LEASE_EXPIRY=60
+
 ##
 ## Multi-cluster/Hive variables
 ##

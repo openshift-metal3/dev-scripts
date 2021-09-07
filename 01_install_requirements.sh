@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset 8908da5241d52e25a7e1b2e60d6d604cf797f890 --hard
+  git reset 184d0afaab77424872f0441c9e11e23a620e5b57 --hard
   popd
 fi
 
@@ -43,7 +43,7 @@ sudo alternatives --set python /usr/bin/python3
 
 pushd ${METAL3_DEV_ENV_PATH}
 ansible-galaxy install -r vm-setup/requirements.yml
-ansible-galaxy collection install ansible.netcommon ansible.posix
+ansible-galaxy collection install ansible.netcommon ansible.posix community.general
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \

@@ -548,12 +548,18 @@ function bootstrap_ip {
     pref_ip=ipv4
   fi
 
-  sudo virsh net-dhcp-leases ${BAREMETAL_NETWORK_NAME} \
+  # TODO(bnemec): Remove this logic once we have libvirt 7.0 or higher.
+  # Older versions fail on infinite leases.
+  if [ "$DHCP_LEASE_EXPIRY" -ne "0" ]; then
+    sudo virsh net-dhcp-leases ${BAREMETAL_NETWORK_NAME} \
                       | grep -v master \
                       | grep "${pref_ip}" \
                       | tail -n1 \
                       | awk '{print $5}' \
                       | sed -e 's/\(.*\)\/.*/\1/'
+  else
+    echo "Unable to retrieve bootstrap IP with infinite leases enabled." 1>&2
+  fi
 }
 
 function image_for() {
