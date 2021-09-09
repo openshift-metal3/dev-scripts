@@ -237,7 +237,16 @@ This approach uses xinetd instead of iptables to allow IPv4 to IPv6 forwarding.
 
 3. Edit the config file
 
-    - The values can be found at `dev-scripts/ocp/ostest/.openshift_install_state.json`
+    - The values can be found at `dev-scripts/ocp/ostest/.openshift_install_state.json`:
+      - `IPv4_Host_IP`: your hosts IPv4 address
+      - `IPv6_API_Address`: 
+         ```
+         jq '.["*installconfig.InstallConfig"].config.platform.baremetal.apiVIP' dev-scripts/ocp/ostest/.openshift_install_state.json
+         ```
+      - `IPv6_Ingress_Address`: 
+        ```
+        jq '.["*installconfig.InstallConfig"].config.platform.baremetal.ingressVIP' dev-scripts/ocp/ostest/.openshift_install_state.json
+        ```
 
     ```
     sudo vim /etc/xinetd.d/openshift
