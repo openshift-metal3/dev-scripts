@@ -154,14 +154,14 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} connection.zone ${ZONE}
     sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} connection.autoconnect TRUE
     sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} connection.autoconnect-slaves 1
-    sudo nmcli con modity ${BAREMETAL_NETWORK_NAME} 802-3-ethernet.mtu ${BAREMETAL_NIC_MTU}
+    sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} 802-3-ethernet.mtu ${BAREMETAL_NIC_MTU}
 
     # Add the internal interface to it if requests, this may also be the interface providing
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
 	sudo nmcli con add type ethernet slave-type bridge con-name ${BAREMETAL_NETWORK_NAME}-port0 ifname $INT_IF master ${BAREMETAL_NETWORK_NAME}
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 connection.autoconnect yes
-	sudo nmcli con modity ${BAREMETAL_NETWORK_NAME}-port0 802-3-ethernet.mtu ${BAREMETAL_NIC_MTU}
+	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 802-3-ethernet.mtu ${BAREMETAL_NIC_MTU}
         if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
              sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 ipv6.method auto
              sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 ipv6.addr-gen-mode stable-privacy
