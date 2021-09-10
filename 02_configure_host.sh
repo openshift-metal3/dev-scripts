@@ -130,7 +130,8 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} connection.autoconnect-slaves 1
         if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
 	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.address $PROVISIONING_HOST_IP/64
-	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.addr-gen-mode stable-privacy
+	    # a /0 route will create a static route for that address, hopefully not messing with the rest of the system
+	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.routes $PROVISIONING_HOST_IP/0
 	    # manual should be specified after the address
 	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.method manual
         else
@@ -142,6 +143,7 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Need to pass the provision interface for bare metal
     if [ "$PRO_IF" ]; then
 	sudo nmcli con add type ethernet slave-type bridge con-name ${PROVISIONING_NETWORK_NAME}-port0 ifname $PRO_IF master ${PROVISIONING_NETWORK_NAME}
+	sudo nmcli con modify ${PROVISIONING_NETWORK_NAME}-port0 connection.zone ${ZONE}
 	sudo nmcli con modify ${PROVISIONING_NETWORK_NAME}-port0 connection.autoconnect yes
     fi
     # Only "up" the device once.This brings up the nic and bridge
@@ -160,11 +162,11 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
 	sudo nmcli con add type ethernet slave-type bridge con-name ${BAREMETAL_NETWORK_NAME}-port0 ifname $INT_IF master ${BAREMETAL_NETWORK_NAME}
+	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 connection.zone ${ZONE}
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 connection.autoconnect yes
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 802-3-ethernet.mtu ${BAREMETAL_NIC_MTU}
         if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
              sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 ipv6.method auto
-             sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 ipv6.addr-gen-mode stable-privacy
         else
            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
 	       # Since there is a dhcp server out there, let NetworkManager find it
@@ -177,11 +179,6 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
 fi
 
 
-# restart the libvirt network so it applies an ip to the bridge
-if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
-    sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
-    sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
-fi
 
 IPTABLES=iptables
 if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
