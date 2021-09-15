@@ -148,7 +148,7 @@ cat <<EOF
   clusterNetwork:
   - cidr: ${CLUSTER_SUBNET_V4}
     hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
-  clusterNetworkMTU: $((${BAREMETAL_NIC_MTU} - 100))
+  clusterNetworkMTU: $((${BAREMETAL_NIC_MTU} - ${OVERLAY_OVERHEAD}))
   serviceNetwork:
   - ${SERVICE_SUBNET_V4}
 EOF
@@ -159,7 +159,7 @@ cat <<EOF
   clusterNetwork:
   - cidr: ${CLUSTER_SUBNET_V6}
     hostPrefix: ${CLUSTER_HOST_PREFIX_V6}
-  clusterNetworkMTU: $((${BAREMETAL_NIC_MTU} - 100))
+  clusterNetworkMTU: $((${BAREMETAL_NIC_MTU} - ${OVERLAY_OVERHEAD}))
   serviceNetwork:
   - ${SERVICE_SUBNET_V6}
 EOF
@@ -173,7 +173,7 @@ cat <<EOF
     hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
   - cidr: ${CLUSTER_SUBNET_V6}
     hostPrefix: ${CLUSTER_HOST_PREFIX_V6}
-  clusterNetworkMTU: $((${BAREMETAL_NIC_MTU} - 100))
+  clusterNetworkMTU: $((${BAREMETAL_NIC_MTU} - ${OVERLAY_OVERHEAD}))
   serviceNetwork:
   - ${SERVICE_SUBNET_V4}
   - ${SERVICE_SUBNET_V6}

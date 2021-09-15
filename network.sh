@@ -124,6 +124,12 @@ else
   export DNS_VIP=${DNS_VIP:-$(nth_ip $EXTERNAL_SUBNET_V4 2)}
 fi
 
+if [[ "${NETWORK_TYPE}" = "OVNKubernetes" ]]; then
+	export OVERLAY_OVERHEAD=100
+else
+	export OVERLAY_OVERHEAD=50
+fi
+
 # Provisioning network information
 export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
 export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
