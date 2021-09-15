@@ -126,6 +126,7 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     sudo nmcli con add type bridge con-name ${PROVISIONING_NETWORK_NAME} ifname ${PROVISIONING_NETWORK_NAME}
     sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} connection.zone ${ZONE}
     sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} connection.autoconnect TRUE
+    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} 802-3-ethernet.mtu 1500
     # This setting will bring the bridge ports up when the bridge itself is brought up.
     sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} connection.autoconnect-slaves 1
         if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
@@ -144,6 +145,7 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     if [ "$PRO_IF" ]; then
 	sudo nmcli con add type ethernet slave-type bridge con-name ${PROVISIONING_NETWORK_NAME}-port0 ifname $PRO_IF master ${PROVISIONING_NETWORK_NAME}
 	sudo nmcli con modify ${PROVISIONING_NETWORK_NAME}-port0 connection.zone ${ZONE}
+	sudo nmcli con modify ${PROVISIONING_NETWORK_NAME}-port0 802-3-ethernet.mtu 1500
 	sudo nmcli con modify ${PROVISIONING_NETWORK_NAME}-port0 connection.autoconnect yes
     fi
     # Only "up" the device once.This brings up the nic and bridge
