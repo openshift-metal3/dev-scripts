@@ -132,7 +132,7 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
         if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
 	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.address $PROVISIONING_HOST_IP/64
 	    # a /0 route will create a static route for that address, hopefully not messing with the rest of the system
-	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.routes $PROVISIONING_HOST_IP/0
+	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.routes $PROVISIONING_NETWORK
 	    # manual should be specified after the address
 	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.method manual
         else
