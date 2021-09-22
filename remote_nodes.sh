@@ -7,35 +7,56 @@ source ocp_install_env.sh
 
 ACTION=${1:-setup}
 NS=${2:-openshift-machine-api}
-TEARDOWN_PLAYBOOK=/tmp/${REMOTE_CLUSTER_NAME}-teardown-playbook.yml
 IPTABLES=iptables
 
-REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME:-${CLUSTER_NAME}${NS}}
+APPLY_REMOTE_NODES=${APPLY_REMOTE_NODES:-"true"}
+REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME:-"${CLUSTER_NAME}spoke"}
 REMOTE_CLUSTER_NUM_MASTERS=${REMOTE_CLUSTER_NUM_MASTERS:-1}
 REMOTE_CLUSTER_NUM_WORKERS=${REMOTE_CLUSTER_NUM_WORKERS:-0}
+REMOTE_IP_STACK=${REMOTE_IP_STACK:-$IP_STACK}
 REMOTE_CLUSTER_SUBNET_V4=${REMOTE_CLUSTER_SUBNET_V4:-"192.168.133.0/24"}
 REMOTE_CLUSTER_SUBNET_V6=${REMOTE_CLUSTER_SUBNET_V6:-"fd2e:6f44:5dd8:c960::/120"}
 REMOTE_NODE_BMC_DRIVER=redfish-virtualmedia
 REMOTE_NODES_FILE=${REMOTE_NODES_FILE:-"${WORKING_DIR}/${CLUSTER_NAME}/remote_nodes.json"}
 REMOTE_BAREMETALHOSTS_FILE=${REMOTE_BAREMETALHOSTS_FILE:-"${OCP_DIR}/remote_baremetalhosts.json"}
 REMOTE_CLUSTER_DOMAIN="${NS}.${BASE_DOMAIN}"
+REMOTE_MASTER_MEMORY=${REMOTE_MASTER_MEMORY:-$MASTER_MEMORY}
+REMOTE_MASTER_DISK=${REMOTE_MASTER_DISK:-$MASTER_DISK}
+REMOTE_MASTER_VCPU=${REMOTE_MASTER_VCPU:-$MASTER_VCPU}
+REMOTE_WORKER_MEMORY=${REMOTE_WORKER_MEMORY:-$WORKER_MEMORY}
+REMOTE_WORKER_DISK=${REMOTE_WORKER_DISK:-$WORKER_DISK}
+REMOTE_WORKER_VCPU=${REMOTE_WORKER_VCPU:-$WORKER_VCPU}
+REMOTE_EXTRA_WORKER_MEMORY=${REMOTE_EXTRA_WORKER_MEMORY:-$EXTRA_WORKER_MEMORY}
+REMOTE_EXTRA_WORKER_DISK=${REMOTE_EXTRA_WORKER_DISK:-$EXTRA_WORKER_DISK}
+REMOTE_EXTRA_WORKER_VCPU=${REMOTE_EXTRA_WORKER_VCPU:-$EXTRA_WORKER_VCPU}
+REMOTE_VM_EXTRADISKS=${REMOTE_VM_EXTRADISKS:-$VM_EXTRADISKS}
+REMOTE_VM_EXTRADISKS_LIST=${REMOTE_VM_EXTRADISKS_LIST:-$VM_EXTRADISKS_LIST}
+REMOTE_VM_EXTRADISKS_SIZE=${REMOTE_VM_EXTRADISKS_SIZE:-$VM_EXTRADISKS_SIZE}
 PROVISIONING_NETWORK_PROFILE=Disabled
 VBMC_BASE_PORT=6250
+TEARDOWN_PLAYBOOK=/tmp/${REMOTE_CLUSTER_NAME}-teardown-playbook.yml
 
-if [[ "$IP_STACK" = "v4" ]]
+if [[ "$REMOTE_IP_STACK" = "v4" ]]
 then
 	REMOTE_CLUSTER_SUBNET_V4=${REMOTE_CLUSTER_SUBNET_V4:-"192.168.133.0/24"}
 	REMOTE_CLUSTER_SUBNET_V6=""
-elif [[ "$IP_STACK" = "v6" ]]; then
+elif [[ "$REMOTE_IP_STACK" = "v6" ]]; then
 	REMOTE_CLUSTER_SUBNET_V4=""
 	REMOTE_CLUSTER_SUBNET_V6=${REMOTE_CLUSTER_SUBNET_V6:-"fd2e:6f44:5dd8:c960::/120"}
-elif [[ "$IP_STACK" = "v4v6" ]]; then
+elif [[ "$REMOTE_IP_STACK" = "v4v6" ]]; then
 	REMOTE_CLUSTER_SUBNET_V4=${REMOTE_CLUSTER_SUBNET_V4:-"192.168.133.0/24"}
 	REMOTE_CLUSTER_SUBNET_V6=${REMOTE_CLUSTER_SUBNET_V6:-"fd2e:6f44:5dd8:c960::/120"}
 else
-	echo "Unexpected setting for IP_STACK: '${IP_STACK}'"
+	echo "Unexpected setting for REMOTE_IP_STACK: '${REMOTE_IP_STACK}'"
 	exit 1
 fi
+
+function is_ocp_protected_namespace() {
+  # Potential TODO(lranjbar): Add a check if the namespace is in an array. 
+  # If we find an ocp protected namespace that doesn't start with openshift.
+  # At the moment all of them seem to start with "openshift-"
+  [[ $1 =~ ^openshift ]]
+}
 
 function playbook() {
 	PLAYBOOK=${VM_SETUP_PATH}/setup-playbook.yml
@@ -91,13 +112,24 @@ function setup_remote_cluster() {
 	sudo $IPTABLES -I FORWARD 1 -o ${REMOTE_CLUSTER_NAME} -i ${BAREMETAL_NETWORK_NAME} -j ACCEPT
 
 	# Create the NS and apply the manifests
-	oc create ns ${NS}
-	oc apply -f ${OCP_DIR}/remote_host_manifests.yaml
+	if [[ $APPLY_REMOTE_NODES = "true" ]]
+	then
+		# The default of $NS openshift-machine-api is a protected namespace
+		if !(is_ocp_protected_namespace $NS)
+		then
+			oc create ns ${NS}
+		fi
+		oc apply -f ${OCP_DIR}/remote_host_manifests.yaml
+	fi
+
 }
 
 function cleanup_remote_cluster() {
-	# Remove ns
-	oc delete ns ${NS}
+	# The default of $NS openshift-machine-api is a protected namespace
+	if !(is_ocp_protected_namespace $NS)
+	then
+		oc delete ns ${NS}
+	fi
 
 	# Remove manifests
 	rm -f ${OCP_DIR}/remote_host_manifests.yaml ${OCP_DIR}/${REMOTE_BAREMETALHOSTS_FILE} ${REMOTE_NODES_FILE}
