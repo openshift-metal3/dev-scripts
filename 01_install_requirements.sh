@@ -47,7 +47,7 @@ ansible-galaxy collection install ansible.netcommon ansible.posix community.gene
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
-  -e "go_version=1.14.4" \
+  -e "go_version=1.17.1" \
   -i vm-setup/inventory.ini \
   -b -vvv vm-setup/install-package-playbook.yml
 popd
