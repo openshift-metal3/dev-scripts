@@ -245,8 +245,21 @@ $(os_images)
     ingressVIP: ${INGRESS_VIP}
 $(dnsvip)
     hosts:
+EOF
+
+  if [ -z "${HOSTS_SWAP_DEFINITION:-}" ]; then
+    cat >> "${outdir}/install-config.yaml" << EOF
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 $(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
+EOF
+  else
+    cat >> "${outdir}/install-config.yaml" << EOF
+$(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
+$(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
+EOF
+  fi
+
+    cat >> "${outdir}/install-config.yaml" << EOF
 $(image_mirror_config)
 $(additional_trust_bundle)
 pullSecret: |
