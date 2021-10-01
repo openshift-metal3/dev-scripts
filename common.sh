@@ -56,11 +56,22 @@ export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 
 export PROVISIONING_NETWORK_PROFILE=${PROVISIONING_NETWORK_PROFILE:-"Managed"}
 
+# Set to 1 if you want dev scripts to configure static IPs for your deployment.
+export STATIC_IPS=${STATIC_IPS:-""}
+# Set to false to disable DHCP on all networks.
+export DHCP_ENABLED=${DHCP_ENABLED:-"true"}
+
 # Network interface names can only be 15 characters long, so
 # abbreviate provisioning and baremetal and add them as suffixes to
 # the cluster name.
 export PROVISIONING_NETWORK_NAME=${PROVISIONING_NETWORK_NAME:-${CLUSTER_NAME}pr}
 export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-${CLUSTER_NAME}bm}
+
+if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
+    export PROVISIONING_NETWORK_INTERFACE="enp2s1"
+else
+    export PROVISIONING_NETWORK_INTERFACE="enp2s0"
+fi
 
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
@@ -157,7 +168,7 @@ else
   export BMC_DRIVER=${BMC_DRIVER:-mixed}
 fi
 
-if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
+if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" || -n "$STATIC_IPS" ]]; then
   export BMC_DRIVER="redfish-virtualmedia"
 fi
 
