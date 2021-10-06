@@ -19,9 +19,13 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset 184d0afaab77424872f0441c9e11e23a620e5b57 --hard
+  git reset 67afcb3315b44e2c68121493a819819966e588a2 --hard
   popd
 fi
+
+# This must be aligned with the metal3-dev-env pinned version above, see
+# https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
+export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"4.6.0"}
 
 # Update to latest packages first
 sudo dnf -y upgrade
@@ -33,17 +37,26 @@ export DISTRO="${ID}${VERSION_ID%.*}"
 if [[ $DISTRO == "centos8" ]]; then
     sudo dnf -y install epel-release dnf --enablerepo=extras
 elif [[ $DISTRO == "rhel8" ]]; then
-    sudo subscription-manager repos --enable=ansible-2-for-rhel-8-x86_64-rpms
+    # The packaged 2.x ansible is too old for compatibility with metal3-dev-env
+    sudo dnf erase -y ansible
+    sudo subscription-manager repos --disable=ansible-2-for-rhel-8-x86_64-rpms
 fi
 
 # Install ansible, other packages are installed via
 # vm-setup/install-package-playbook.yml
-sudo dnf -y install python3 ansible
-sudo alternatives --set python /usr/bin/python3
+# Note recent ansible needs python >= 3.8 so we install 3.9 here
+sudo dnf -y install python39
+sudo alternatives --set python /usr/bin/python3.9
+sudo alternatives --set python3 /usr/bin/python3.9
+sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
+sudo pip3 install ansible=="${ANSIBLE_VERSION}"
+# Also need the 3.9 version of netaddr for ansible.netcommon
+# and lxml for the pyxpath script
+sudo pip3 install netaddr lxml
 
 pushd ${METAL3_DEV_ENV_PATH}
 ansible-galaxy install -r vm-setup/requirements.yml
-ansible-galaxy collection install ansible.netcommon ansible.posix community.general
+ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix community.general
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
