@@ -162,7 +162,7 @@ function create_cluster() {
     fi
 
     trap auth_template_and_removetmp EXIT
-    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster 2>&1 | grep --line-buffered -v 'password\|X-Auth-Token\|UserData:'
 }
 
 function ipversion(){
