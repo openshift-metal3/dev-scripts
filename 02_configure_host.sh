@@ -168,7 +168,7 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 connection.autoconnect yes
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 802-3-ethernet.mtu ${BAREMETAL_NIC_MTU}
         if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-             sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} ipv6.routes $BAREMETAL_NETWORK
+             sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} ipv6.routes $EXTERNAL_SUBNET_V6
              sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 ipv6.method auto
         else
            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
