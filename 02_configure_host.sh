@@ -221,6 +221,7 @@ echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a
 rm -f ${REGISTRY_CREDS}
 if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     # create authfile for local registry
+    ip route get ${PROVISIONING_HOST_EXTERNAL_IP}
     sudo podman login --authfile ${REGISTRY_CREDS} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
         ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
