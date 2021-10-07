@@ -168,8 +168,7 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 connection.autoconnect yes
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 802-3-ethernet.mtu ${BAREMETAL_NIC_MTU}
         if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-             sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} ipv6.routes $EXTERNAL_SUBNET_V6
-             sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 ipv6.method auto
+             sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} ipv6.method auto
         else
            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
 	       # Since there is a dhcp server out there, let NetworkManager find it
@@ -221,7 +220,6 @@ echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a
 rm -f ${REGISTRY_CREDS}
 if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     # create authfile for local registry
-    ip route get ${PROVISIONING_HOST_EXTERNAL_IP}
     sudo podman login --authfile ${REGISTRY_CREDS} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
         ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
