@@ -142,7 +142,7 @@ export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshi
 export OPENSHIFT_CI=${OPENSHIFT_CI:-""}
 export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-""}
 if [[ -z "$OPENSHIFT_CI" ]]; then
-  export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]]\.[[:digit:]]\).*/\1/")}
+  export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]]\.[[:digit:]]*\).*/\1/")}
 fi
 
 export OPENSHIFT_RELEASE_TAG=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -E 's/[[:alnum:]\/.-]*(release|okd).*://')
