@@ -215,9 +215,9 @@ fi
 sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
 echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
 ip route get ${PROVISIONING_HOST_EXTERNAL_IP}
-ping -6 -c 3 ${PROVISIONING_HOST_EXTERNAL_IP}
 nmcli con show
 ip addr
+ping -6 -c 3 ${PROVISIONING_HOST_EXTERNAL_IP}
 
 # Remove any previous file, or podman login panics when reading the
 # blank authfile with a "assignment to entry in nil map" error
