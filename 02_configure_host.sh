@@ -177,7 +177,7 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
        fi
     fi
     # Only "up" the device once.This brings up the nic and bridge
-    sudo nmcli con up ${BAREMETAL_NETWORK_NAME}
+    sudo nmcli con up ${BAREMETAL_NETWORK_NAME}-port0
 fi
 
 
@@ -215,9 +215,8 @@ fi
 sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
 echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
 ip route get ${PROVISIONING_HOST_EXTERNAL_IP}
-nmcli con show
-ip addr
-ping -6 -c 3 ${PROVISIONING_HOST_EXTERNAL_IP}
+ip addr show dev ${BAREMETAL_NETWORK_NAME}-port0
+ip addr show dev ${BAREMETAL_NETWORK_NAME}
 
 # Remove any previous file, or podman login panics when reading the
 # blank authfile with a "assignment to entry in nil map" error

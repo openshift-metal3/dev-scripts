@@ -535,7 +535,7 @@ function switch_to_internal_dns() {
     echo "server=$ADDN_DNS" | sudo tee /etc/NetworkManager/dnsmasq.d/upstream.conf
   fi
   # pickup the new dns config
-  sudo systemctl reload NetworkManager
+  sudo systemctl reload NetworkManager.service
 }
 
 function bootstrap_ip {
