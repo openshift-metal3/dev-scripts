@@ -177,7 +177,7 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
        fi
     fi
     # Only "up" the device once.This brings up the nic and bridge
-    sudo nmcli con up ${BAREMETAL_NETWORK_NAME}-port0
+    sudo nmcli con up ${BAREMETAL_NETWORK_NAME}
 fi
 
 
