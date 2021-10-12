@@ -130,15 +130,15 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # This setting will bring the bridge ports up when the bridge itself is brought up.
     sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} connection.autoconnect-slaves 1
         if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
-	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.address $PROVISIONING_HOST_IP/64
-	    # a /0 route will create a static route for that address, hopefully not messing with the rest of the system
-	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.routes $PROVISIONING_NETWORK
-	    # manual should be specified after the address
-	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.method manual
+	        sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.address $PROVISIONING_HOST_IP/64
+	        # a /0 route will create a static route for that address, hopefully not messing with the rest of the system
+	        sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.routes $PROVISIONING_NETWORK
+	        # manual should be specified after the address
+	        sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv6.method manual
         else
-	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv4.address $PROVISIONING_HOST_IP/24
-	    # manual should be specified after the address
-	    sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv4.method manual
+	        sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv4.address $PROVISIONING_HOST_IP/24
+	        # manual should be specified after the address
+	        sudo nmcli con modify ${PROVISIONING_NETWORK_NAME} ipv4.method manual
        fi
 
     # Need to pass the provision interface for bare metal
@@ -168,7 +168,7 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 connection.autoconnect yes
 	sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 802-3-ethernet.mtu ${BAREMETAL_NIC_MTU}
         if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-             sudo nmcli con modify ${BAREMETAL_NETWORK_NAME} ipv6.method auto
+             sudo nmcli con modify ${BAREMETAL_NETWORK_NAME}-port0 ipv6.method auto
         else
            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
 	       # Since there is a dhcp server out there, let NetworkManager find it
@@ -214,6 +214,10 @@ fi
 # Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME
 sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
 echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
+ip route get ${PROVISIONING_HOST_EXTERNAL_IP}
+ping -6 -c 3 ${PROVISIONING_HOST_EXTERNAL_IP}
+nmcli con show
+ip addr
 
 # Remove any previous file, or podman login panics when reading the
 # blank authfile with a "assignment to entry in nil map" error
