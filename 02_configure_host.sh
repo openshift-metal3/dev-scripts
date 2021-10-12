@@ -185,6 +185,9 @@ fi
 IPTABLES=iptables
 if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
     IPTABLES=ip6tables
+    ci_ping = ping -6
+else
+    ci_ping = ping -4
 fi
 
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -215,7 +218,7 @@ fi
 sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
 echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
 ip route get ${PROVISIONING_HOST_EXTERNAL_IP}
-ping -6 -c 3 ${PROVISIONING_HOST_EXTERNAL_IP}
+ci_ping -c 3 ${PROVISIONING_HOST_EXTERNAL_IP}
 nmcli con show
 ip addr
 
