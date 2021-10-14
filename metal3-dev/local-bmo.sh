@@ -99,9 +99,9 @@ get_creds ironic-inspector
 # Run the operator
 cd $BMO_PATH
 
-# Use our local verison of the CRD, in case it is newer than the one
+# Use our local verison of the CRDs, in case they are newer than the ones
 # in the cluster now.
-oc apply -f config/crd/bases/metal3.io_baremetalhosts.yaml
+oc apply -f config/crd/bases/
 
 export RUN_NAMESPACE=openshift-machine-api
 export GOPATH
