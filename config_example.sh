@@ -227,6 +227,9 @@ set -x
 # Configure size of extra disks added to VMs
 # export VM_EXTRADISKS_SIZE="10G"
 
+# Add TPM2.0 emulator to VMs
+# export VM_TPM_EMULATOR=true
+
 # Provide additional master/worker ignition configuration, will be
 # merged with the installer provided config, can be used to modify
 # the default nic configuration etc
