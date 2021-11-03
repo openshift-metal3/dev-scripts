@@ -33,6 +33,15 @@ if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     add_local_certificate_as_trusted
 fi
 
+# Marketplace operators could not pull their images via internet
+# and stays degraded in disconnected.
+# This is the suggested way in
+# https://docs.openshift.com/container-platform/4.9/operators/admin/olm-managing-custom-catalogs.html#olm-restricted-networks-operatorhub_olm-managing-custom-catalogs
+if [[ -n "${MIRROR_IMAGES}" ]]; then
+  oc patch OperatorHub cluster --type json \
+      -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
+fi
+
 if [[ -n "${APPLY_EXTRA_WORKERS}" ]]; then
     if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_host_manifests.yaml" ]]; then
         oc apply -f "${OCP_DIR}/extra_host_manifests.yaml"
