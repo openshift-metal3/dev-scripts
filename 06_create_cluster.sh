@@ -66,16 +66,15 @@ if [[ ! -z "${ENABLE_METALLB_MODE}" ]]; then
 		export METALLB_IMAGE_TAG="metallb"
 	fi
 
-	if [[ ${ENABLE_METALLB_MODE} == "l2" ]]; then
-		pushd metallb
-		./metallb_l2.sh
-		popd
-	elif [[ ${ENABLE_METALLB_MODE} == "bgp" ]]; then
+	pushd metallb
+	./configure_metallb.sh
+	popd
+
+	if [[ ${ENABLE_METALLB_MODE} == "bgp" ]]; then
 		pushd metallb
 		./start_frr.sh
-		./metallb_bgp.sh
 		popd
-	else
+	elif [[ ${ENABLE_METALLB_MODE} != "l2" ]]; then
 		echo "metallb is not configured because wrong ENABLE_METALLB_MODE set, ${ENABLE_METALLB_MODE}"
 	fi
 fi
