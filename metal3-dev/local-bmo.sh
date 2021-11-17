@@ -36,6 +36,10 @@ if oc get pod -o name -n openshift-machine-api | egrep -v 'metal3-(development|i
     oc wait --for=delete -n openshift-machine-api $metal3pods || true
 fi
 
+# Delete validatingwebhookconfiguration if exist. Because on local runs,
+# baremetal operator validatingwebhook API is disabled by default
+oc delete validatingwebhookconfiguration/baremetal-operator-validating-webhook-configuration --ignore-not-found=true
+
 # Save a copy of the full deployment as input
 oc get deployment -n openshift-machine-api -o yaml metal3 > $OUTDIR/bmo-deployment-full.yaml
 
