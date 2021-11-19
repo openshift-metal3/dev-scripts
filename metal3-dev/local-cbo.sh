@@ -8,9 +8,9 @@ source $SCRIPTDIR/logging.sh
 source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/utils.sh
 
-cbo_path=$GOPATH/src/github.com/openshift/cluster-baremetal-operator
-if [ ! -d $cbo_path ]; then
-    echo "Did not find $cbo_path" 1>&2
+CBO_PATH=${CBO_PATH:-$GOPATH/src/github.com/openshift/cluster-baremetal-operator}
+if [ ! -d $CBO_PATH ]; then
+    echo "Did not find $CBO_PATH" 1>&2
     exit 1
 fi
 
@@ -26,7 +26,7 @@ oc get secret -n openshift-machine-api cluster-baremetal-operator-tls -o json \
     | base64 -d > /etc/cluster-baremetal-operator/tls/tls.key
 
 # Run the operator
-cd $cbo_path
+cd $CBO_PATH
 
 export IMAGES_JSON=${SCRIPTDIR}/${OCP_DIR}/cbo-images.json
 export RUN_NAMESPACE=openshift-machine-api
