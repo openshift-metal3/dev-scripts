@@ -19,13 +19,13 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset 67afcb3315b44e2c68121493a819819966e588a2 --hard
+  git reset ee1b2fec44e22700c8d250d5e0e371e3fd0aba17 --hard
   popd
 fi
 
 # This must be aligned with the metal3-dev-env pinned version above, see
 # https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
-export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"4.6.0"}
+export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"4.8.0"}
 
 # Update to latest packages first
 sudo dnf -y upgrade
