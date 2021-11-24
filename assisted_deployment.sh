@@ -22,76 +22,9 @@ ASSISTED_OPERATOR_INDEX="${ASSISTED_OPERATOR_INDEX:-quay.io/ocpmetal/assisted-se
 ASSETS_DIR="${OCP_DIR}/saved-assets/assisted-installer-manifests"
 
 
-function generate_local_storage() {
-  mkdir -p "${ASSETS_DIR}"
-
-  cat >"${ASSETS_DIR}/01-local-storage-operator.yaml" <<EOF
-apiVersion: operators.coreos.com/v1alpha2
-kind: OperatorGroup
-metadata:
-  name: local-operator-group
-  namespace: openshift-local-storage
-spec:
-  targetNamespaces:
-    - openshift-local-storage
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: local-storage-operator
-  namespace: openshift-local-storage
-spec:
-  installPlanApproval: Automatic
-  name: local-storage-operator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-EOF
-
-  cat >"${ASSETS_DIR}/02-local-volume.yaml" <<EOCR
-apiVersion: local.storage.openshift.io/v1
-kind: LocalVolume
-metadata:
-  name: assisted-service
-  namespace: openshift-local-storage
-spec:
-  logLevel: Normal
-  managementState: Managed
-  storageClassDevices:
-$(fill_local_storage)
-      storageClassName: assisted-service
-      volumeMode: Filesystem
-EOCR
-}
-
-
-function fill_local_storage() {
-  if [ ! -z "${VM_EXTRADISKS_LIST}" ]; then
-cat <<EOF
-    - devicePaths:
-EOF
-  fi
-
-  for disk in ${VM_EXTRADISKS_LIST}; do
-cat <<EOF
-        - /dev/$disk
-EOF
-  done
-}
-
-
 function deploy_local_storage() {
-  oc adm new-project openshift-local-storage || true
-
-  oc annotate project openshift-local-storage openshift.io/node-selector=''
-
-  generate_local_storage
-
-  echo "Creating local storage operator group and subscription..."
-  oc apply -f "${ASSETS_DIR}/01-local-storage-operator.yaml"
-  wait_for_crd "localvolumes.local.storage.openshift.io"
-
-  echo "Creating local volume and storage class..."
-  oc apply -f "${ASSETS_DIR}/02-local-volume.yaml"
+  export STORAGE_CLASS_NAME="assisted-service"
+  ${SCRIPTDIR}/enable_local_storage.sh
 }
 
 
