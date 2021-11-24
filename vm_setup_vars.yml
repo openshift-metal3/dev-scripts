@@ -10,7 +10,7 @@ ironic_prefix: "{{ ironic_prefix }}"
 num_masters: 3
 num_workers: 1
 num_extraworkers: 0
-extradisks_list: "{{ lookup('env', 'VM_EXTRADISKS_LIST').split(' ') | default(['vdb']) }}"
+extradisks_list: "{{ lookup('env', 'VM_EXTRADISKS_LIST').split(' ') | default(['vda']) }}"
 extradisks_size: "{{ lookup('env', 'VM_EXTRADISKS_SIZE') | default(['8G']) }}"
 flavors:
   master:
