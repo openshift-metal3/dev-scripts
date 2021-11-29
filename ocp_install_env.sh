@@ -283,14 +283,17 @@ function generate_ocp_host_manifest() {
     mkdir -p "${outdir}"
     rm -f "${outdir}/extra_hosts.yaml"
 
+    mkdir -p "${outdir}/extras"
+    rm -f "${outdir}/extras/*"
+
+    worker_index=0
     jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address' $host_input \
        | while read name mac username password address ; do
 
         encoded_username=$(echo -n "$username" | base64)
         encoded_password=$(echo -n "$password" | base64)
 
-    cat >> "${outdir}/${host_output}" << EOF
----
+        secret="---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -300,8 +303,8 @@ type: Opaque
 data:
   username: $encoded_username
   password: $encoded_password
-
----
+"
+        bmh="---
 apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
 metadata:
@@ -312,8 +315,13 @@ spec:
   bootMACAddress: $mac
   bmc:
     address: $address
-    credentialsName: ${name}-bmc-secret
-EOF
+    credentialsName: ${name}-bmc-secret"
 
+        echo "${secret}${bmh}" >> "${outdir}/${host_output}"
+
+        # Extra files will be used later to generate a secret used by e2e tests
+        echo "${secret}" >> "${outdir}/extras/extraworker-${worker_index}-secret"
+        echo "${bmh}" >> "${outdir}/extras/extraworker-${worker_index}-bmh"
+        ((worker_index+=1))
     done
 }

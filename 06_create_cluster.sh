@@ -58,6 +58,11 @@ if [[ -n "${APPLY_EXTRA_WORKERS}" ]]; then
     fi
 fi
 
+# Create a secret containing extraworkers info for the e2e tests
+if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -d "${OCP_DIR}/extras" ]]; then
+    oc create secret generic extraworkers-secret --from-file="${OCP_DIR}/extras/" -n openshift-machine-api
+fi
+
 if [[ ! -z "${ENABLE_METALLB}" ]]; then
 
 	if [[ -z ${METALLB_IMAGE_BASE} ]]; then
