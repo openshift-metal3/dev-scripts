@@ -37,6 +37,9 @@ export DISTRO="${ID}${VERSION_ID%.*}"
 if [[ $DISTRO == "centos8" ]]; then
     sudo dnf -y install epel-release dnf --enablerepo=extras
 elif [[ $DISTRO == "rhel8" ]]; then
+    # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
+    sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
     # The packaged 2.x ansible is too old for compatibility with metal3-dev-env
     sudo dnf erase -y ansible
     sudo subscription-manager repos --disable=ansible-2-for-rhel-8-x86_64-rpms
