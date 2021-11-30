@@ -87,7 +87,7 @@ function build_installer() {
   cd $OPENSHIFT_INSTALL_PATH
   TAGS="libvirt baremetal" hack/build.sh
   popd
-  cp "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" "$OCP_DIR"
+  "$OPENSHIFT_INSTALL_PATH/bin/openshift-install" coreos print-stream-json >"$OCP_DIR/rhcos.json" || cp "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" "$OCP_DIR"
 }
 
 function baremetal_network_configuration() {
