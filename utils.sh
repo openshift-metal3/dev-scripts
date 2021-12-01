@@ -526,6 +526,7 @@ function write_pull_secret() {
     _tmpfiles="$_tmpfiles $tmpkubeconfig"
     oc login https://${CI_SERVER}:6443 --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
     tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
+    echo '{}' >$tmppullsecret
     _tmpfiles="$_tmpfiles $tmppullsecret"
     oc registry login --kubeconfig=$tmpkubeconfig --to=$tmppullsecret
 
