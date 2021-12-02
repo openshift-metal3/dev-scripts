@@ -17,7 +17,9 @@ sudo firewall-cmd --zone=libvirt --add-port=179/tcp
 sudo firewall-cmd --zone=libvirt --permanent --add-port=180/tcp
 sudo firewall-cmd --zone=libvirt --add-port=180/tcp
 
-SKIP="none"
+# need to skip L2 metrics test because the pod that's running the tests is not in the
+# same subnet of the cluster nodes, so the arp request that's done in the test won't work.
+SKIP="\"L2 metrics\""
 if [ "${IP_STACK}" = "v4" ]; then
 	SKIP="$SKIP\|IPV6\|DUALSTACK"
 	export PROVISIONING_HOST_EXTERNAL_IPV4=${PROVISIONING_HOST_EXTERNAL_IP}
