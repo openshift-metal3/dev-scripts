@@ -87,7 +87,14 @@ function build_installer() {
   cd $OPENSHIFT_INSTALL_PATH
   TAGS="libvirt baremetal" hack/build.sh
   popd
-  cp "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" "$OCP_DIR"
+  # This is only needed in rhcos.sh for old versions which lack the
+  # openshift-install coreos-print-stream-json option
+  # That landed in 4.8, and in 4.10 this file moved, so just
+  # skip copying it if it's not in the "old" location ref
+  # https://github.com/openshift/installer/pull/5252
+  if [ -f "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" ]; then
+    cp "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" "$OCP_DIR"
+  fi
 }
 
 function baremetal_network_configuration() {
