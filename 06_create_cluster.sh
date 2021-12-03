@@ -69,6 +69,7 @@ if [[ ! -z "${ENABLE_METALLB}" ]]; then
 		export METALLB_IMAGE_BASE=$(\
 			jq -r .references.spec.tags[0].from.name ${OCP_DIR}/release_info.json | sed -e 's/@.*$//g')
 		export METALLB_IMAGE_TAG="metallb"
+		export FRR_IMAGE_TAG="metallb-frr"
 	fi
 
 	pushd metallb
