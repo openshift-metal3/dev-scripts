@@ -3,7 +3,7 @@
 metallb_dir="$(dirname $(readlink -f $0))"
 source ${metallb_dir}/metallb_common.sh
 
-export METALLB_REPO=${METALLB_REPO:-https://github.com/metallb/metallb.git}
+export METALLB_REPO=${METALLB_REPO:-https://github.com/openshift/metallb.git}
 [[ -d /usr/local/go ]] && export PATH=${PATH}:/usr/local/go/bin
 
 if [ ! -d ./metallb ]; then
