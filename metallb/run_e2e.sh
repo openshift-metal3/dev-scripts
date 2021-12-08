@@ -46,4 +46,4 @@ export RUN_FRR_CONTAINER_ON_HOST_NETWORK=true
 inv e2etest --kubeconfig=$(readlink -f ../../ocp/ostest/auth/kubeconfig) \
 	--service-pod-port=8080 --system-namespaces="metallb-system" --skip-docker \
 	--ipv4-service-range=192.168.10.0/24 --ipv6-service-range=fc00:f853:0ccd:e799::/124 \
-	--skip="${SKIP}" -e "${TESTS_REPORTS_PATH}"
+	--skip="${SKIP}" --use-operator -e "${TESTS_REPORTS_PATH}"
