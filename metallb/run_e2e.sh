@@ -3,8 +3,6 @@
 metallb_dir="$(dirname $(readlink -f $0))"
 source ${metallb_dir}/metallb_common.sh
 
-TESTS_REPORTS_PATH="${TESTS_REPORTS_PATH:-/logs/artifacts/}"
-
 export METALLB_REPO=${METALLB_REPO:-https://github.com/metallb/metallb.git}
 [[ -d /usr/local/go ]] && export PATH=${PATH}:/usr/local/go/bin
 
@@ -18,8 +16,6 @@ sudo firewall-cmd --zone=libvirt --permanent --add-port=179/tcp
 sudo firewall-cmd --zone=libvirt --add-port=179/tcp
 sudo firewall-cmd --zone=libvirt --permanent --add-port=180/tcp
 sudo firewall-cmd --zone=libvirt --add-port=180/tcp
-
-mkdir -p "${TESTS_REPORTS_PATH}"
 
 # need to skip L2 metrics test because the pod that's running the tests is not in the
 # same subnet of the cluster nodes, so the arp request that's done in the test won't work.
@@ -46,4 +42,4 @@ export RUN_FRR_CONTAINER_ON_HOST_NETWORK=true
 inv e2etest --kubeconfig=$(readlink -f ../../ocp/ostest/auth/kubeconfig) \
 	--service-pod-port=8080 --system-namespaces="metallb-system" --skip-docker \
 	--ipv4-service-range=192.168.10.0/24 --ipv6-service-range=fc00:f853:0ccd:e799::/124 \
-	--skip="${SKIP}" --use-operator -e "${TESTS_REPORTS_PATH}"
+	--skip="${SKIP}" --use-operator
