@@ -4,10 +4,14 @@ metallb_dir="$(dirname $(readlink -f $0))"
 source ${metallb_dir}/metallb_common.sh
 
 export METALLB_REPO=${METALLB_REPO:-https://github.com/metallb/metallb.git}
+METALLB_BRANCH=${METALLB_BRANCH:-"main"}
 [[ -d /usr/local/go ]] && export PATH=${PATH}:/usr/local/go/bin
 
 if [ ! -d ./metallb ]; then
 	git clone $METALLB_REPO
+	cd metallb
+	git checkout "${METALLB_BRANCH}"
+	cd -
 fi
 cd metallb
 
