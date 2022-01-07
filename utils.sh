@@ -371,6 +371,11 @@ function generate_metal3_config {
     ln -f clouds.yaml _clouds_yaml/clouds.yaml
 }
 
+function pullspec_registry {
+    PULLSPEC="${1}"
+    echo "${PULLSPEC%%/*}"  # strip the first slash and everything after it
+}
+
 function image_mirror_config {
     if [[ ! -z "${MIRROR_IMAGES}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
         INDENTED_CERT=$( cat $REGISTRY_DIR/certs/$REGISTRY_CRT | awk '{ print " ", $0 }' )
@@ -378,25 +383,19 @@ function image_mirror_config {
             . /tmp/mirrored_release_image
             TAGGED=$(echo $MIRRORED_RELEASE_IMAGE | sed -e 's/release://')
             RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.ci.openshift.org[^":\@]\+')
-            cat << EOF
-imageContentSources:
-- mirrors:
-    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
-  source: ${RELEASE}
-- mirrors:
-    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
-  source: ${TAGGED}
-additionalTrustBundle: |
-${INDENTED_CERT}
-EOF
+            CANONICAL_REGISTRIES="$(printf "%s\n%s\n" "${RELEASE}" "${TAGGED}" | while read PULLSPEC; do pullspec_registry "${PULLSPEC}"; done | sort | uniq)"
+            echo imageContentSources:
+            echo "${CANONICAL_REGISTRIES}" | while read REGISTRY; do
+                printf -- "- mirrors:\n  - %s:\n  source: %s\n" "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image" "${REGISTRY}"
+            done
         else
             cat ${MIRROR_LOG_FILE} | sed -n '/To use the new mirrored repository to install/,/To use the new mirrored repository for upgrades/p' |\
                 sed -e '/^$/d' -e '/To use the new mirrored repository/d'
-            cat << EOF
+        fi
+        cat << EOF
 additionalTrustBundle: |
 ${INDENTED_CERT}
 EOF
-        fi
     fi
 }
 
