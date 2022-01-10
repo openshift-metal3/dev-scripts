@@ -384,6 +384,7 @@ function image_mirror_config {
             TAGGED=$(echo $MIRRORED_RELEASE_IMAGE | sed -e 's/release://')
             RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.ci.openshift.org[^":\@]\+')
             CANONICAL_REGISTRIES="$(printf "%s\n%s\n" "${RELEASE}" "${TAGGED}" | while read PULLSPEC; do pullspec_registry "${PULLSPEC}"; done | sort | uniq)"
+            echo "setting up imageContentSources for ${CANONICAL_REGISTRIES}" >&2
             echo imageContentSources:
             echo "${CANONICAL_REGISTRIES}" | while read REGISTRY; do
                 printf -- "- mirrors:\n  - %s:\n  source: %s\n" "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image" "${REGISTRY}"
