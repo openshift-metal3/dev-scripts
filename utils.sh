@@ -374,18 +374,14 @@ function generate_metal3_config {
 function image_mirror_config {
     if [[ ! -z "${MIRROR_IMAGES}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
         INDENTED_CERT=$( cat $REGISTRY_DIR/certs/$REGISTRY_CRT | awk '{ print " ", $0 }' )
-        if [[ ! -z "${MIRROR_IMAGES}" && ! -s ${MIRROR_LOG_FILE} ]]; then
+        if [[ -n "${MIRROR_IMAGES}" ]] && [[ "${OPENSHIFT_CI}" == true || ! -s ${MIRROR_LOG_FILE} ]]; then
             . /tmp/mirrored_release_image
-            TAGGED=$(echo $MIRRORED_RELEASE_IMAGE | sed -e 's/release://')
-            RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.ci.openshift.org[^":\@]\+')
+            RELEASE=$(echo ${MIRRORED_RELEASE_IMAGE} | sed -e 's/\/.*//')
             cat << EOF
 imageContentSources:
 - mirrors:
     - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
   source: ${RELEASE}
-- mirrors:
-    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
-  source: ${TAGGED}
 additionalTrustBundle: |
 ${INDENTED_CERT}
 EOF
