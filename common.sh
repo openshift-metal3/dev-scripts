@@ -375,3 +375,7 @@ fi
 
 # Defaults the variable to enable testing a custom machine-api-operator image
 export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
+
+# Set to configure bootstrap VM baremetal network with static IP
+# (Currently this just expects a non-empty value, the IP is fixed to .9)
+export ENABLE_BOOTSTRAP_STATIC_IP=${ENABLE_BOOTSTRAP_STATIC_IP:-}
