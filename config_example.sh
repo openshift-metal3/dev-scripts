@@ -535,6 +535,11 @@ set -x
 #export MIRROR_OLM=kubernetes-nmstate-operator
 
 ################################################################################
+# Configure a static IP for the bootstrap VM external NIC
+# (Currently this just expects a non-empty value, the IP is fixed to .9)
+# export ENABLE_BOOTSTRAP_STATIC_IP=true
+
+##
 ## Multi-cluster/Hive variables
 ##
 

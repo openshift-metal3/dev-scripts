@@ -61,6 +61,40 @@ function configure_chronyd() {
   fi
 }
 
+function bootstrap_static_ip_ignition(){
+  ASSESTS_DIR=$1
+if [[ "${IP_STACK}" = "v6" ]]; then
+  BOOTSTRAP_IP=$(nth_ip $EXTERNAL_SUBNET_V6 $((idx + 9)))
+  BOOTSTRAP_PREFIX=$(ipcalc --prefix $EXTERNAL_SUBNET_V6 | cut -d= -f2)
+  BOOTSTRAP_PROTOCOL="ipv6"
+else
+  # Note we assume v4 for dual-stack v4v6 since it's the primary network
+  BOOTSTRAP_IP=$(nth_ip $EXTERNAL_SUBNET_V4 $((idx + 9)))
+  BOOTSTRAP_PREFIX=$(ipcalc --prefix $EXTERNAL_SUBNET_V4 | cut -d= -f2)
+  BOOTSTRAP_PROTOCOL="ipv4"
+fi
+  BOOTSTRAP_CONFIG="[connection]
+type=ethernet
+interface-name=ens3
+[ethernet]
+[${BOOTSTRAP_PROTOCOL}]
+method=manual
+addresses=${BOOTSTRAP_IP}/${BOOTSTRAP_PREFIX}
+gateway=${PROVISIONING_HOST_EXTERNAL_IP}
+dns=${PROVISIONING_HOST_EXTERNAL_IP}"
+  # Note the mode is specified as decimal, not octal
+  # https://coreos.github.io/ignition/configuration-v3_2/
+  cat > ${ASSESTS_DIR}/bootstrap_network_config.ign << EOF
+      {
+        "path": "/etc/NetworkManager/system-connections/ens3.nmconnection",
+        "mode": 384,
+        "contents": {
+        "source": "data:text/plain;charset=utf-8;base64,$(echo "${BOOTSTRAP_CONFIG}" | base64 -w 0)"
+        }
+      }
+EOF
+}
+
 function custom_ntp(){
   ASSESTS_DIR=$1
   # TODO - consider adding NTP server config to install-config.yaml instead
@@ -149,8 +183,17 @@ function create_cluster() {
     cp -av "${assets_dir}/openshift" "${assets_dir}/saved-assets"
     cp -av "${assets_dir}/manifests" "${assets_dir}/saved-assets"
 
-    if [ ! -z "${IGNITION_EXTRA:-}" ]; then
+    if [ -n "${IGNITION_EXTRA:-}" -a -n "${ENABLE_BOOTSTRAP_STATIC_IP}" ]; then
+      # IGNITION_EXTRA causes the bootstrap.ign to get recreated by the installer
+      # which means it overwrites the config injected via ENABLE_BOOTSTRAP_STATIC_IP
+      echo "Error - can't set IGNITION_EXTRA and ENABLE_BOOTSTRAP_STATIC_IP at the same time"
+      exit 1
+    fi
+
+    if [ -n "${IGNITION_EXTRA:-}" -o -n "${ENABLE_BOOTSTRAP_STATIC_IP}" ]; then
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
+    fi
+    if [ -n "${IGNITION_EXTRA:-}" ]; then
       if ! jq . ${IGNITION_EXTRA}; then
         echo "Error ${IGNITION_EXTRA} not valid json"
         exit 1
@@ -159,6 +202,12 @@ function create_cluster() {
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/master.ign.orig | tee ${assets_dir}/master.ign
       mv ${assets_dir}/worker.ign ${assets_dir}/worker.ign.orig
       jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/worker.ign.orig | tee ${assets_dir}/worker.ign
+    fi
+
+    if [ -n "${ENABLE_BOOTSTRAP_STATIC_IP}" ]; then
+      bootstrap_static_ip_ignition ${assets_dir}
+      mv ${assets_dir}/bootstrap.ign ${assets_dir}/bootstrap.ign.orig
+      jq '.storage.files += $input' ${assets_dir}/bootstrap.ign.orig --slurpfile input ${assets_dir}/bootstrap_network_config.ign > ${assets_dir}/bootstrap.ign
     fi
 
     trap auth_template_and_removetmp EXIT
