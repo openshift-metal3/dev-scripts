@@ -188,6 +188,14 @@ EOF
   fi
 }
 
+function cluster_os_image() {
+  if is_lower_version $OPENSHIFT_VERSION 4.10; then
+cat <<EOF
+    clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
+EOF
+  fi
+}
+
 function generate_ocp_install_config() {
     local outdir
 
@@ -233,7 +241,7 @@ $(libvirturi)
 $(baremetal_network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
-    clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
+$(cluster_os_image)
     apiVIP: ${API_VIP}
     ingressVIP: ${INGRESS_VIP}
 $(dnsvip)
