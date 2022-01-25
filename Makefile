@@ -1,4 +1,4 @@
-.PHONY: default all requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup workingdir_cleanup podman_cleanup bell
+.PHONY: default all requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
 default: requirements configure build_installer ironic install_config ocp_run bell
 
 all: default
@@ -29,7 +29,7 @@ ocp_run:
 gather:
 	./must_gather.sh
 
-clean: ocp_cleanup ironic_cleanup host_cleanup assisted_deployment_cleanup
+clean: ocp_cleanup ironic_cleanup proxy_cleanup host_cleanup assisted_deployment_cleanup
 
 assisted_deployment_cleanup:
 	./assisted_deployment.sh delete_all
@@ -56,6 +56,9 @@ workingdir_cleanup:
 
 podman_cleanup:
 	./podman_cleanup.sh
+
+proxy_cleanup:
+	./proxy_cleanup.sh
 
 bell:
 	@echo "Done!" $$'\a'

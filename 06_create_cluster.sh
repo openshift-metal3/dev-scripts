@@ -12,6 +12,12 @@ source validation.sh
 
 early_deploy_validation
 
+if [[ ! -z "$INSTALLER_PROXY" ]]; then
+  export HTTP_PROXY=${HTTP_PROXY}
+  export HTTPS_PROXY=${HTTPS_PROXY}
+  export NO_PROXY=${NO_PROXY}
+fi
+
 # Call openshift-installer to deploy the bootstrap node and masters
 create_cluster ${OCP_DIR}
 

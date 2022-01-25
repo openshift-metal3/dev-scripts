@@ -266,6 +266,10 @@ set -x
 # been configured.
 # export ADDITIONAL_TRUST_BUNDLE=/path/to/ca_file
 
+# Configures the installer to use a proxy running on the local host
+# and blocks all outgoing traffic
+# export INSTALLER_PROXY=true
+
 ##
 ## Assisted Deployment
 ##

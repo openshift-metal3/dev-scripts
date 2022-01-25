@@ -165,22 +165,6 @@ function create_cluster() {
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster 2>&1 | grep --line-buffered -v 'password\|X-Auth-Token\|UserData:'
 }
 
-function ipversion(){
-    if [[ $1 =~ : ]] ; then
-        echo 6
-        exit
-    fi
-    echo 4
-}
-
-function wrap_if_ipv6(){
-    if [ $(ipversion $1) == 6 ] ; then
-        echo "[$1]"
-        exit
-    fi
-    echo "$1"
-}
-
 function network_ip() {
     local network
     local rc
@@ -582,6 +566,21 @@ function wait_for_crd() {
   done
 
   oc wait --for condition=established --timeout=60s "crd/$1" || exit 1
+}
+
+function generate_proxy_conf() {
+  if [[ "$PROVISIONING_NETWORK_PROFILE" != "Disabled" ]]; then
+    echo "acl all src ${PROVISIONING_NETWORK}"
+  fi
+
+  cat <<EOF
+acl all src ${EXT_SUBNET}
+http_access allow all
+http_port ${INSTALLER_PROXY_PORT}
+debug_options ALL,2
+dns_v4_first on
+coredump_dir /var/spool/squid
+EOF
 }
 
 _tmpfiles=
