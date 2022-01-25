@@ -32,17 +32,17 @@ sudo firewall-cmd --zone=libvirt --add-port=4784/udp
 
 # need to skip L2 metrics test because the pod that's running the tests is not in the
 # same subnet of the cluster nodes, so the arp request that's done in the test won't work.
-SKIP="\"L2 metrics\""
+SKIP="L2 metrics"
 if [ "${IP_STACK}" = "v4" ]; then
-	SKIP="$SKIP\|IPV6\|DUALSTACK"
+	SKIP="$SKIP|IPV6|DUALSTACK"
 	export PROVISIONING_HOST_EXTERNAL_IPV4=${PROVISIONING_HOST_EXTERNAL_IP}
 	export PROVISIONING_HOST_EXTERNAL_IPV6=1111:1:1::1
 elif [ "${IP_STACK}" = "v6" ]; then
-	SKIP="$SKIP\|IPV4\|DUALSTACK"
+	SKIP="$SKIP|IPV4|DUALSTACK"
 	export PROVISIONING_HOST_EXTERNAL_IPV6=${PROVISIONING_HOST_EXTERNAL_IP}
 	export PROVISIONING_HOST_EXTERNAL_IPV4=1.1.1.1
 elif [ "${IP_STACK}" = "v4v6" ]; then
-	SKIP="$SKIP\|IPV6"
+	SKIP="$SKIP|IPV6"
 	export PROVISIONING_HOST_EXTERNAL_IPV4=${PROVISIONING_HOST_EXTERNAL_IP}
 	export PROVISIONING_HOST_EXTERNAL_IPV6=1111:1:1::1
 fi
