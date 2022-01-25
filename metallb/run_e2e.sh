@@ -52,6 +52,8 @@ pip3 install --user -r ./dev-env/requirements.txt
 export PATH=${PATH}:${HOME}/.local/bin
 export CONTAINER_RUNTIME=podman
 export RUN_FRR_CONTAINER_ON_HOST_NETWORK=true
+export CONTROLLER_SELECTOR="component=controller"
+export SPEAKER_SELECTOR="component=speaker"
 inv e2etest --kubeconfig=$(readlink -f ../../ocp/ostest/auth/kubeconfig) \
 	--service-pod-port=8080 --system-namespaces="metallb-system" --skip-docker \
 	--ipv4-service-range=192.168.10.0/24 --ipv6-service-range=fc00:f853:0ccd:e799::/124 \
