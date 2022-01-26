@@ -79,6 +79,20 @@ if [[ $(uname -m) == "aarch64" ]]; then
 fi
 
 
+> $VM_SETUP_PATH/vm_setup_extrahosts.yml
+# If running with static IPs nodes need to get an IP with reverse DNS lookup
+if [ -n "${STATIC_IPS}" ]; then
+    for x in $(seq 0 $(( $NUM_MASTERS + $NUM_WORKERS + $NUM_EXTRA_WORKERS - 1 )) ) ; do
+        _HOSTNAME=master-$x
+        if [ $x -ge $NUM_MASTERS ] ; then
+            _HOSTNAME=worker-$(( $x - $NUM_MASTERS ))
+        fi
+        echo "- {ip: \"{{ baremetal_network_cidr | nthhost($(( $STATIC_IP_CIDR_OFFSET + $x )) ) }}\", hostnames: [\"$_HOSTNAME\"]}" >> $VM_SETUP_PATH/vm_setup_extrahosts.yml
+    done
+else
+    echo '[]' > $VM_SETUP_PATH/vm_setup_extrahosts.yml
+fi
+
 ansible-playbook \
     -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \

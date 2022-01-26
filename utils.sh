@@ -275,6 +275,44 @@ function node_map_to_install_config_hosts() {
         bootMACAddress: ${mac}
         bootMode: ${boot_mode}
 EOF
+      if [ -n "${STATIC_IPS}" ]; then
+        cat << EOF
+        networkConfig:
+          routes:
+            config:
+            - destination: 0.0.0.0/0
+              next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
+              next-hop-interface: ${EXTERNAL_NETWORK_INTERFACE}
+          dns-resolver:
+            config:
+              search:
+              - ostest.test.metalkube.org
+              server:
+              - ${PROVISIONING_HOST_EXTERNAL_IP}
+          interfaces:
+          - name: ${EXTERNAL_NETWORK_INTERFACE}
+            type: ethernet
+            state: up
+EOF
+        if [[ "$IP_STACK" = "v4" || "$IP_STACK" = "v4v6" ]]; then
+          cat << EOF
+            ipv4:
+              address:
+              - ip: $(nth_ip $EXTERNAL_SUBNET_V4 $((idx + $STATIC_IP_CIDR_OFFSET )))
+                prefix-length: $(ipcalc --prefix $EXTERNAL_SUBNET_V4 | cut -d= -f2)
+              enabled: true
+EOF
+        fi
+        if [[ "$IP_STACK" = "v6" || "$IP_STACK" = "v4v6" ]]; then
+          cat << EOF
+            ipv6:
+              address:
+              - ip: $(nth_ip $EXTERNAL_SUBNET_V6 $((idx + $STATIC_IP_CIDR_OFFSET )))
+                prefix-length: $(ipcalc --prefix $EXTERNAL_SUBNET_V6 | cut -d= -f2)
+              enabled: true
+EOF
+        fi
+      fi
 
         # FIXME(stbenjam) Worker code in installer should accept
         # "default" as well -- currently the mapping doesn't work,

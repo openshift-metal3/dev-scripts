@@ -61,11 +61,25 @@ export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 
 export PROVISIONING_NETWORK_PROFILE=${PROVISIONING_NETWORK_PROFILE:-"Managed"}
 
+# Set to configure static ips accross all nodes on the external network.
+# (Currently this just expects a non-empty value)
+export STATIC_IPS=${STATIC_IPS:-""}
+export STATIC_IP_CIDR_OFFSET=${STATIC_IP_CIDR_OFFSET:-10}
+# Set to configure bootstrap VM baremetal network with static IP
+# (Currently this just expects a non-empty value, the IP is fixed to .9)
+export ENABLE_BOOTSTRAP_STATIC_IP=${ENABLE_BOOTSTRAP_STATIC_IP:-$STATIC_IPS}
+
 # Network interface names can only be 15 characters long, so
 # abbreviate provisioning and baremetal and add them as suffixes to
 # the cluster name.
 export PROVISIONING_NETWORK_NAME=${PROVISIONING_NETWORK_NAME:-${CLUSTER_NAME}pr}
 export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-${CLUSTER_NAME}bm}
+
+if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
+    export EXTERNAL_NETWORK_INTERFACE="enp2s1"
+else
+    export EXTERNAL_NETWORK_INTERFACE="enp2s0"
+fi
 
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"

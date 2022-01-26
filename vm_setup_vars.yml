@@ -45,6 +45,7 @@ dns_extrahosts:
   - ip: "{{ baremetal_network_cidr | nthhost(1) }}"
     hostnames:
       - "virthost"
+dns_extrahosts_nodes: "{{ lookup('template', 'vm_setup_extrahosts.yml') | from_yaml }}"
 
 provisioning_network:
   - name: "{{ provisioning_network_name  }}"
@@ -59,19 +60,15 @@ external_network:
     netmask_v4: "{{ baremetal_network_cidr_v4|ipaddr('netmask') }}"
     address_v6: "{{ baremetal_network_cidr_v6|nthhost(1)|default('', true) }}"
     prefix_v6: "{{ baremetal_network_cidr_v6|ipaddr('prefix') }}"
-    dhcp_range_v4:
-      - "{{ baremetal_network_cidr_v4|nthhost(20) }}"
-      - "{{ baremetal_network_cidr_v4|nthhost(60) }}"
-    dhcp_range_v6:
-      - "{{ baremetal_network_cidr_v6|nthhost(20) }}"
-      - "{{ baremetal_network_cidr_v6|nthhost(60) }}"
+    dhcp_range_v4: "{{ [ baremetal_network_cidr_v4|nthhost(20), baremetal_network_cidr_v4|nthhost(60) ] if lookup('env', 'STATIC_IPS') == '' else [] }}"
+    dhcp_range_v6: "{{ [ baremetal_network_cidr_v6|nthhost(20), baremetal_network_cidr_v6|nthhost(60) ] if lookup('env', 'STATIC_IPS') == '' else [] }}"
     lease_expiry: "{{ lookup('env', 'DHCP_LEASE_EXPIRY') }}"
     nat_port_range:
       - 1024
       - 65535
     domain: "{{ cluster_domain }}"
     dns:
-      hosts: "{{dns_extrahosts | default([])}}"
+      hosts: "{{dns_extrahosts + dns_extrahosts_nodes | default([])}}"
       forwarders:
         - domain: "apps.{{ cluster_domain }}"
           addr: "127.0.0.1"
