@@ -73,6 +73,12 @@ sudo systemctl enable --now firewalld
 # access.
 configure_chronyd
 
+export VNC_CONSOLE=true
+if [[ $(uname -m) == "aarch64" ]]; then
+   VNC_CONSOLE=false
+fi
+
+
 ansible-playbook \
     -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
@@ -93,6 +99,8 @@ ansible-playbook \
     -e "virtualbmc_base_port=$VBMC_BASE_PORT" \
     -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
     -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
+    -e "libvirt_arch=$(uname -m)" \
+    -e "enable_vnc_console=$VNC_CONSOLE" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 

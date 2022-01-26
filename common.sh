@@ -97,7 +97,7 @@ export REGISTRY_CRT=registry.2.crt
 # Set this variable to build the installer from source
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 
-export OPENSHIFT_CLIENT_TOOLS_URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz
+export OPENSHIFT_CLIENT_TOOLS_URL=https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/stable/openshift-client-linux.tar.gz
 
 export OPENSHIFT_RELEASE_TYPE=${OPENSHIFT_RELEASE_TYPE:-nightly}
 export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.11}
@@ -137,7 +137,7 @@ if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
   fi
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
-export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
+export OPENSHIFT_INSTALL_PATH="${OPENSHIFT_INSTALL_PATH:-$GOPATH/src/github.com/openshift/installer}"
 
 # Override the image to use for installing hive
 export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshift/hive-v4.0:hive}"
@@ -265,7 +265,7 @@ export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
 export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
 
 # Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
-export IRONIC_IMAGE="quay.io/metal3-io/ironic:main"
+export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:main"}
 export IRONIC_DATA_DIR="${WORKING_DIR}/ironic"
 export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 

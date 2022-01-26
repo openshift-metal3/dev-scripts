@@ -1,19 +1,19 @@
 if $OPENSHIFT_INSTALLER coreos print-stream-json >/dev/null 2>&1; then
     $OPENSHIFT_INSTALLER coreos print-stream-json > $OCP_DIR/rhcos.json
-    export MACHINE_OS_INSTALLER_IMAGE_URL=$(jq -r '.architectures.x86_64.artifacts.openstack.formats["qcow2.gz"].disk.location' $OCP_DIR/rhcos.json)
-    export MACHINE_OS_INSTALLER_IMAGE_SHA256=$(jq -r '.architectures.x86_64.artifacts.openstack.formats["qcow2.gz"].disk["sha256"]' $OCP_DIR/rhcos.json)
+    export MACHINE_OS_INSTALLER_IMAGE_URL=$(jq -r .architectures.$(uname -m).artifacts.openstack.formats[\"qcow2.gz\"].disk.location $OCP_DIR/rhcos.json)
+    export MACHINE_OS_INSTALLER_IMAGE_SHA256=$(jq -r .architectures.$(uname -m).artifacts.openstack.formats[\"qcow2.gz\"].disk[\"sha256\"] $OCP_DIR/rhcos.json)
     export MACHINE_OS_IMAGE_URL=${MACHINE_OS_IMAGE_URL:-${MACHINE_OS_INSTALLER_IMAGE_URL}}
     export MACHINE_OS_IMAGE_NAME=$(basename ${MACHINE_OS_IMAGE_URL})
     export MACHINE_OS_IMAGE_SHA256=${MACHINE_OS_IMAGE_SHA256:-${MACHINE_OS_INSTALLER_IMAGE_SHA256}}
 
-    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL=$(jq -r '.architectures.x86_64.artifacts.qemu.formats["qcow2.gz"].disk.location' $OCP_DIR/rhcos.json)
-    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256=$(jq -r '.architectures.x86_64.artifacts.qemu.formats["qcow2.gz"].disk["sha256"]' $OCP_DIR/rhcos.json)
+    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL=$(jq -r .architectures.$(uname -m).artifacts.qemu.formats[\"qcow2.gz\"].disk.location $OCP_DIR/rhcos.json)
+    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256=$(jq -r .architectures.$(uname -m).artifacts.qemu.formats[\"qcow2.gz\"].disk[\"sha256\"] $OCP_DIR/rhcos.json)
     export MACHINE_OS_BOOTSTRAP_IMAGE_URL=${MACHINE_OS_BOOTSTRAP_IMAGE_URL:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL}}
     export MACHINE_OS_BOOTSTRAP_IMAGE_NAME=$(basename ${MACHINE_OS_BOOTSTRAP_IMAGE_URL})
     export MACHINE_OS_BOOTSTRAP_IMAGE_URL=${MACHINE_OS_BOOTSTRAP_IMAGE_URL:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL}}
     export MACHINE_OS_BOOTSTRAP_IMAGE_SHA256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256}}
 
-    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=$(jq -r '.architectures.x86_64.artifacts.qemu.formats["qcow2.gz"].disk["uncompressed-sha256"]' $OCP_DIR/rhcos.json)
+    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=$(jq -r .architectures.$(uname -m).artifacts.qemu.formats[\"qcow2.gz\"].disk[\"uncompressed-sha256\"] $OCP_DIR/rhcos.json)
     export MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}}
 else
   if [[ ! -f "$OCP_DIR/rhcos.json" ]]; then
