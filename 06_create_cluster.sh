@@ -78,3 +78,12 @@ if [[ ! -z "${ENABLE_METALLB}" ]]; then
 fi
 
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"
+
+echo "WIP/POC: Running ovnk ex-gw e2e"
+pushd ovnk
+if [[ "${NETWORK_TYPE}" == "OVNKubernetes" ]]; then
+    ./run_ex_gw_e2e.sh
+fi
+popd
+
+echo "Done"
