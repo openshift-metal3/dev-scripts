@@ -27,9 +27,6 @@ fi
 # https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
 export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"4.8.0"}
 
-# Update to latest packages first
-sudo dnf -y upgrade
-
 # Install additional repos as needed for each OS version
 # shellcheck disable=SC1091
 source /etc/os-release
@@ -37,6 +34,9 @@ export DISTRO="${ID}${VERSION_ID%.*}"
 if [[ $DISTRO == "centos8" ]]; then
     sudo dnf -y install epel-release dnf --enablerepo=extras
 elif [[ $DISTRO == "rhel8" ]]; then
+    # Update to latest packages first
+    sudo dnf -y upgrade
+
     # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
     sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
