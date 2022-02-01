@@ -35,6 +35,13 @@ sudo dnf -y upgrade
 source /etc/os-release
 export DISTRO="${ID}${VERSION_ID%.*}"
 if [[ $DISTRO == "centos8" ]]; then
+    if [ "$NAME" != "CentOS Stream" -a ! -e /etc/yum.repos.d/centos-vault.repo ] ; then
+        # Centos8 is EOL
+        mv /etc/yum.repos.d /etc/yum.repos.d_$(date +%s)
+        mkdir /etc/yum.repos.d
+        echo -e '[base]\nname=base\nbaseurl=https://vault.centos.org/8.4.2105/BaseOS/x86_64/os/\ngpgcheck=0\nenabled=1\n[apps]\nname=apps\nbaseurl=https://vault.centos.org/8.4.2105/AppStream/x86_64/os/\ngpgcheck=0\nenabled=1\n[extras]\nname=extras\nbaseurl=https://vault.centos.org/8.4.2105/extras/x86_64/os/\ngpgcheck=0\nenabled=1' > /etc/yum.repos.d/centos-vault.repo
+    fi
+
     sudo dnf -y install epel-release dnf --enablerepo=extras
 elif [[ $DISTRO == "rhel8" ]]; then
     # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
