@@ -34,8 +34,10 @@ Considering that this is a new install on a clean OS, the next tasks should be p
 2. In case of RHEL, invoke `subscription-manager` in order to `register` and `attach` the subscription
 
 3. Install new packages
-
+- Note: CentOS 8 went EOL at the end of December 2021. The correct and easy way to migrate from CentOS Linux 8 to CentOS Stream 8 is to run:
     ```bash
+    sudo dnf --disablerepo '*' --enablerepo=extras swap centos-linux-repos centos-stream-repos
+    sudo dnf distro-sync
     sudo dnf upgrade -y
     sudo dnf install -y git make wget jq
     ```
