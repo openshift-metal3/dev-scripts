@@ -16,7 +16,7 @@ function early_either_validation() {
     fi
 
     # Check OS
-    if [[ ! $(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"') =~ ^(centos|rhel)$ ]]; then
+    if [[ ! $(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"') =~ ^(centos|rhel|almalinux|rocky)$ ]]; then
         error "Unsupported OS"
         exit 1
     fi

@@ -119,6 +119,7 @@ ansible-playbook \
     -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
     -e "libvirt_arch=$(uname -m)" \
     -e "enable_vnc_console=$VNC_CONSOLE" \
+    $ALMA_PYTHON_OVERRIDE \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 
@@ -249,6 +250,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "baremetal_interface=$BAREMETAL_NETWORK_NAME" \
     -e "{provisioning_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000, ${INSTALLER_PROXY_PORT}]}" \
     -e "vbmc_port_range=$VBMC_BASE_PORT:$VBMC_MAX_PORT" \
+    $ALMA_PYTHON_OVERRIDE \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/firewall.yml
 

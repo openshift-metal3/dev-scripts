@@ -379,3 +379,12 @@ export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
 # Set to configure bootstrap VM baremetal network with static IP
 # (Currently this just expects a non-empty value, the IP is fixed to .9)
 export ENABLE_BOOTSTRAP_STATIC_IP=${ENABLE_BOOTSTRAP_STATIC_IP:-}
+
+# TODO(bnemec): Once https://github.com/ansible/ansible/pull/75537 merges this
+# can be removed.
+ALMA_PYTHON_OVERRIDE=
+source /etc/os-release
+export DISTRO="${ID}${VERSION_ID%.*}"
+if [[ $DISTRO == "almalinux8" || $DISTRO == "rocky8" ]]; then
+    ALMA_PYTHON_OVERRIDE="-e ansible_python_interpreter=/usr/libexec/platform-python"
+fi

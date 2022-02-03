@@ -51,6 +51,8 @@ case $DISTRO in
     sudo dnf install -y network-scripts
     if [[ $DISTRO == "centos8" ]]; then
       echo "CentOS is not supported anymore. Please switch to CentOS Stream / RHEL / Rocky Linux"
+    fi
+    if [[ $DISTRO == "centos8" || $DISTRO == "almalinux8" || $DISTRO == "rocky8" ]]; then
       sudo dnf -y install epel-release dnf --enablerepo=extras
     elif [[ $DISTRO == "rhel8" ]]; then
       # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
@@ -104,6 +106,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "virthost=$HOSTNAME" \
   -e "go_version=1.18.3" \
   -e "GOARCH=$GOARCH" \
+  $ALMA_PYTHON_OVERRIDE \
   -i vm-setup/inventory.ini \
   -b -vvv vm-setup/install-package-playbook.yml
 popd
