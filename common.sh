@@ -169,6 +169,7 @@ export MIRROR_LOG_FILE=${REGISTRY_DIR}/${CLUSTER_NAME}-image_mirror-${OPENSHIFT_
 if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
     export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:master"}
 # Starting from Openshift 4.9 the ironic-inspector container is not used anymore
+    # FIXME: $OPENSHIFT_VERSION is not defined in CI
     if is_lower_version $OPENSHIFT_VERSION 4.9; then
         export IRONIC_INSPECTOR_LOCAL_IMAGE=${IRONIC_INSPECTOR_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
     fi

@@ -189,7 +189,7 @@ EOF
 }
 
 function cluster_os_image() {
-  if is_lower_version $OPENSHIFT_VERSION 4.10; then
+  if is_lower_version $(openshift_version) 4.10; then
 cat <<EOF
     clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
 EOF
