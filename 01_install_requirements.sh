@@ -42,10 +42,13 @@ if [[ $DISTRO == "centos8" ]]; then
         echo -e '[base]\nname=base\nbaseurl=https://vault.centos.org/8.4.2105/BaseOS/x86_64/os/\ngpgcheck=0\nenabled=1\n[apps]\nname=apps\nbaseurl=https://vault.centos.org/8.4.2105/AppStream/x86_64/os/\ngpgcheck=0\nenabled=1\n[extras]\nname=extras\nbaseurl=https://vault.centos.org/8.4.2105/extras/x86_64/os/\ngpgcheck=0\nenabled=1' > /etc/yum.repos.d/centos-vault.repo
     fi
 
-    sudo dnf -y install epel-release dnf --enablerepo=extras
+    sudo dnf install -y dnf-plugins-core
+    sudo dnf config-manager --set-enabled powertools
+    sudo dnf install -y epel-release epel-next-release
 elif [[ $DISTRO == "rhel8" ]]; then
     # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
-    sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms
+    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
     # The packaged 2.x ansible is too old for compatibility with metal3-dev-env
     sudo dnf erase -y ansible
