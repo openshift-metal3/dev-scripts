@@ -134,6 +134,30 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     IRONIC_RELEASE_IMAGE=$(image_for ironic | cut -d '@' -f2)
     LOCAL_REGISTRY_PREFIX="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image"
     IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"${LOCAL_REGISTRY_PREFIX}@${IRONIC_RELEASE_IMAGE}"}
+
+    if [ -n "${MIRROR_OLM:-}" ]; then
+        echo "Installing OPM client"
+        VERSION="$(openshift_version ${OCP_DIR})"
+        OLM_DIR=$(mktemp --tmpdir -d "mirror-olm--XXXXXXXXXX")
+        _tmpfiles="$_tmpfiles $OLM_DIR"
+
+        pushd $OLM_DIR
+        curl -O https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/${VERSION}.0/opm-linux.tar.gz
+        tar xf opm-linux.tar.gz
+        sudo mv -f opm /usr/local/bin
+        popd
+
+        echo "Mirroring OLM operator(s): ${MIRROR_OLM}"
+        REGISTRY_AUTH_FILE=${PULL_SECRET_FILE} opm index prune -f registry.redhat.io/redhat/redhat-operator-index:v${VERSION} -p ${MIRROR_OLM} -t ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/redhat-operator-index:v${VERSION}
+
+        podman push --authfile ${PULL_SECRET_FILE} ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/redhat-operator-index:v${VERSION}
+
+        oc adm catalog mirror ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/redhat-operator-index:v${VERSION} ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/olm -a $PULL_SECRET_FILE --to-manifests=${OLM_DIR}
+
+        mkdir -p ${OCP_DIR}/manifests
+        cp -a ${OLM_DIR}/catalogSource.yaml ${OCP_DIR}/manifests
+        cp -a ${OLM_DIR}/imageContentSourcePolicy.yaml ${OCP_DIR}/manifests
+    fi
 fi
 
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader; do

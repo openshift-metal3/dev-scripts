@@ -76,6 +76,12 @@ set -x
 # for an IPv4 install.
 #export MIRROR_IMAGES=true
 
+# Comma-separated list of OLM operators to mirror into the local registry. This
+# has no effect if MIRROR_IMAGES is false.
+# This will not work for releases that have not yet shipped. The content for
+# the release must have been published in order for mirroring to work.
+#export MIRROR_OLM=kubernetes-nmstate-operator
+
 # Ensure that the local registry will be available
 #export ENABLE_LOCAL_REGISTRY=true
 
