@@ -7,6 +7,21 @@ function nth_ip() {
   python -c "from ansible_collections.ansible.netcommon.plugins.filter import ipaddr; print(ipaddr.nthhost('"$network"', $idx))"
 }
 
+function ipversion(){
+    if [[ $1 =~ : ]] ; then
+        echo 6
+        exit
+    fi
+    echo 4
+}
+
+function wrap_if_ipv6(){
+    if [ $(ipversion $1) == 6 ] ; then
+        echo "[$1]"
+        exit
+    fi
+    echo "$1"
+}
 
 export IP_STACK=${IP_STACK:-"v6"}
 export HOST_IP_STACK=${HOST_IP_STACK:-${IP_STACK}}
@@ -150,4 +165,20 @@ if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
 else
   export BOOTSTRAP_PROVISIONING_IP=${BOOTSTRAP_PROVISIONING_IP:-$(nth_ip $PROVISIONING_NETWORK 2)}
   export CLUSTER_PROVISIONING_IP=${CLUSTER_PROVISIONING_IP:-$(nth_ip $PROVISIONING_NETWORK 3)}
+fi
+
+# Proxy related configuration
+if  [[ ! -z "$INSTALLER_PROXY" ]]; then
+  export EXT_SUBNET=${EXTERNAL_SUBNET_V6}
+  if [[ "$IP_STACK" = "v4" ]]; then
+    EXT_SUBNET=${EXTERNAL_SUBNET_V4}
+  fi
+
+  HTTP_PROXY=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${INSTALLER_PROXY_PORT}
+  HTTPS_PROXY=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${INSTALLER_PROXY_PORT}
+  NO_PROXY=${PROVISIONING_NETWORK},9999,${EXT_SUBNET}
+
+  if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
+    NO_PROXY=${EXT_SUBNET},9999
+  fi
 fi

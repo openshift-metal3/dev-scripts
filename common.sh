@@ -69,6 +69,10 @@ export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
+# Setup up a local proxy for installation
+export INSTALLER_PROXY=${INSTALLER_PROXY:-}
+export INSTALLER_PROXY_PORT=${INSTALLER_PROXY_PORT:-8215}
+
 # Hypervisor details
 export REMOTE_LIBVIRT=${REMOTE_LIBVIRT:-0}
 export PROVISIONING_HOST_USER=${PROVISIONING_HOST_USER:-$USER}

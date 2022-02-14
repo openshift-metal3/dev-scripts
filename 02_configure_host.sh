@@ -54,6 +54,18 @@ if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABL
     setup_local_registry
 fi
 
+# Configure a local proxy to be used for the installation
+if [[ ! -z "${INSTALLER_PROXY}" ]]; then
+  generate_proxy_conf > ${WORKING_DIR}/squid.conf
+
+  sudo podman run -d --rm \
+     --net host \
+     --volume ${WORKING_DIR}/squid.conf:/etc/squid/squid.conf \
+     --name ds-squid \
+     --dns 127.0.0.1 \
+     quay.io/sameersbn/squid:latest
+fi
+
 sudo systemctl enable --now firewalld
 
 # Configure an NTP server for use by the cluster, this is especially
@@ -191,7 +203,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "{use_firewalld: True}" \
     -e "provisioning_interface=$PROVISIONING_NETWORK_NAME" \
     -e "baremetal_interface=$BAREMETAL_NETWORK_NAME" \
-    -e "{provisioning_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000]}" \
+    -e "{provisioning_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000, ${INSTALLER_PROXY_PORT}]}" \
     -e "vbmc_port_range=$VBMC_BASE_PORT:$VBMC_MAX_PORT" \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/firewall.yml

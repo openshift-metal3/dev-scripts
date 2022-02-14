@@ -54,7 +54,7 @@ provisioning_network:
 external_network:
   - name: "{{ baremetal_network_name }}"
     bridge: "{{ baremetal_network_name }}"
-    forward_mode: "{{ 'bridge' if lookup('env', 'MANAGE_BR_BRIDGE') == 'n' else 'nat' }}"
+    forward_mode: "{{ 'bridge' if lookup('env', 'MANAGE_BR_BRIDGE') == 'n' else 'nat' if not lookup('env', 'INSTALLER_PROXY') else 'route'}}"
     address_v4: "{{ baremetal_network_cidr_v4|nthhost(1)|default('', true) }}"
     netmask_v4: "{{ baremetal_network_cidr_v4|ipaddr('netmask') }}"
     address_v6: "{{ baremetal_network_cidr_v6|nthhost(1)|default('', true) }}"

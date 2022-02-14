@@ -270,6 +270,16 @@ sshKey: |
 fips: ${FIPS_MODE:-false}
 EOF
 
+  if [[ ! -z "$INSTALLER_PROXY" ]]; then
+
+    cat >> "${outdir}/install-config.yaml" << EOF
+proxy:
+  httpProxy: ${HTTP_PROXY}
+  httpsProxy: ${HTTPS_PROXY}
+  noProxy: ${NO_PROXY}
+EOF
+  fi
+
     cp "${outdir}/install-config.yaml" "${outdir}/install-config.yaml.save"
 }
 
