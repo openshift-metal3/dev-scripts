@@ -15,3 +15,7 @@ assets/templates/99_master-chronyd-redhat.yaml
 assets/templates/99_worker-chronyd-redhat.yaml
 
 pull_secret.json
+tools/metal-support/node_modules/
+tools/metal-support/pkg/commands/build/
+tools/metal-support/metal-support
+tools/metal-support/.metal-wall-cache

@@ -68,3 +68,6 @@ assisted_deployment:
 
 assisted_deployment_requirements:
 	./assisted_deployment.sh install_prerequisites_assisted_service
+
+metal_wall:
+	./run_metal_wall.sh
