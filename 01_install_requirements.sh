@@ -62,7 +62,13 @@ sudo pip3 install netaddr lxml
 
 pushd ${METAL3_DEV_ENV_PATH}
 ansible-galaxy install -r vm-setup/requirements.yml
-ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix community.general
+# NOTE(elfosardo): ansible.netcommon v2.6.0 broke compatibility with filters
+# redirection from builtin.
+# The root cause seems to be the commit:
+# https://github.com/ansible-collections/ansible.netcommon/commit/db4920ebf6bae6476ff8829e2cf475f19f83a990
+# temporarily capping it until the issue is fixed
+ansible-galaxy collection install 'ansible.netcommon:<2.6.0'
+ansible-galaxy collection install --upgrade ansible.posix community.general
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
