@@ -181,4 +181,9 @@ if  [[ ! -z "$INSTALLER_PROXY" ]]; then
   if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
     NO_PROXY=${EXT_SUBNET},9999
   fi
+
+  # When a local registry is enabled (usually in disconnected environments), let's add it to the no proxy list
+  if [[ ! -z "${MIRROR_IMAGES}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+    NO_PROXY=$NO_PROXY,$LOCAL_REGISTRY_DNS_NAME
+  fi
 fi
