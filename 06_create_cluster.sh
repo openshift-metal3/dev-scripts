@@ -83,4 +83,8 @@ if [[ ! -z "${ENABLE_METALLB}" ]]; then
 	popd
 fi
 
+if [[ ! -z "${ENABLE_VIRTUAL_MEDIA_VIA_EXTERNAL_NETWORK}" ]]; then
+    oc patch provisioning provisioning-configuration --type merge -p "{\"spec\":{\"virtualMediaViaExternalNetwork\":true}}"
+fi
+
 echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"

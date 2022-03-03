@@ -169,6 +169,11 @@ set -x
 #export SERVICE_SUBNET_V4="172.30.0.0/16"
 #export SERVICE_SUBNET_V6="fd02::/112"
 
+# Enable virtualMediaViaExternalNetwork in provisioning
+# configuration.
+# More info: https://github.com/openshift/cluster-baremetal-operator/blob/master/api/v1alpha1/provisioning_types.go#L163-L171
+#export ENABLE_VIRTUAL_MEDIA_VIA_EXTERNAL_NETWORK=true
+
 # Enable testing of custom machine-api-operator-image
 #export TEST_CUSTOM_MAO=true
 
