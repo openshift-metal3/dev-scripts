@@ -8,13 +8,15 @@ the Assisted Service documentation for more information about its architecture a
 Pre-requisites
 ==
 
-2 disks need to be created and added to the worker nodes. This can be done either using
-`virt-manager` or libvirt directly. The disks should be of, at least, 10GB each and they should be
-attached to the `/dev/sdb` and `/dev/sdc` devices respectively. Please update
-`assisted_deployment.sh` if this is not the case.
+2 disks need to be created and added to the worker nodes. The disks should be
+of, at least, 10GB each. Set the following variables in your `config.sh`
+before configuring the development environment:
 
-Note that there is work in progress to automate the disk creations and the device name
-configuration. More info in [this issue](https://github.com/openshift-metal3/dev-scripts/issues/1228)
+```bash
+export VM_EXTRADISKS=true
+export VM_EXTRADISKS_LIST="vda vdb"
+export VM_EXTRADISKS_SIZE="10G"
+```
 
 Assisted in dev script
 ==
