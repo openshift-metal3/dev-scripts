@@ -68,3 +68,11 @@ assisted_deployment:
 
 assisted_deployment_requirements:
 	./assisted_deployment.sh install_prerequisites_assisted_service
+
+fleeting: fleeting_configure requirements configure fleeting_deploy_iso bell
+
+fleeting_configure:
+	./fleeting_configure.sh
+
+fleeting_deploy_iso:
+	./fleeting_deploy_iso.sh

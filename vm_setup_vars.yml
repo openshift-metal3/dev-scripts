@@ -10,6 +10,7 @@ ironic_prefix: "{{ ironic_prefix }}"
 num_masters: 3
 num_workers: 1
 num_extraworkers: 0
+num_fleetings: 0
 extradisks_list: "{{ lookup('env', 'VM_EXTRADISKS_LIST').split(' ') | default(['vdb']) }}"
 extradisks_size: "{{ lookup('env', 'VM_EXTRADISKS_SIZE') | default(['8G']) }}"
 flavors:
@@ -30,7 +31,12 @@ flavors:
     disk: "{{ lookup('env', 'EXTRA_WORKER_DISK') }}"
     vcpu: "{{ lookup('env', 'EXTRA_WORKER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
-
+  
+  fleeting:
+    memory: "{{ lookup('env', 'FLEETING_MEMORY') }}"
+    disk: "{{ lookup('env', 'FLEETING_DISK') }}"
+    vcpu: "{{ lookup('env', 'FLEETING_VCPU') }}"
+    
 # For OpenShift we create some additional DNS records for the API/DNS VIPs
 baremetal_network_cidr_v4: "{{ lookup('env', 'EXTERNAL_SUBNET_V4') }}"
 baremetal_network_cidr_v6: "{{ lookup('env', 'EXTERNAL_SUBNET_V6') }}"

@@ -83,6 +83,7 @@ ansible-playbook \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$NUM_WORKERS" \
     -e "num_extraworkers=$NUM_EXTRA_WORKERS" \
+    -e "num_fleetings=$NUM_FLEETINGS" \
     -e "libvirt_firmware=uefi" \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
