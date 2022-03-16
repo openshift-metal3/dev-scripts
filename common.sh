@@ -1,20 +1,27 @@
 #!/bin/bash
 
-export PATH="/usr/local/go/bin:$HOME/.local/bin:$PATH"
+if ! [[ "PATH" =~ "$(systemd-path user-binaries)" ]]; then
+    PATH="$(systemd-path user-binaries):$PATH"
+fi
+if ! [[ "PATH" =~ "/usr/local/go/bin" ]]; then
+    PATH="/usr/local/go/bin:$PATH"
+fi
+export PATH
 
 # Set a PS4 value which logs the script name and line #.
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-eval "$(go env)"
-
-export PATH="${GOPATH}/bin:$PATH"
-
-# Ensure if a go program crashes we get a coredump
-#
-# To get the dump, use coredumpctl:
-#   coredumpctl -o oc.coredump dump /usr/local/bin/oc
-#
-export GOTRACEBACK=crash
+if command -v go; then
+    eval "$(go env)"
+    export PATH="${GOPATH}/bin:$PATH"
+    # Ensure if a go program crashes we get a coredump
+    #
+    # To get the dump, use coredumpctl:
+    #   coredumpctl -o oc.coredump dump /usr/local/bin/oc
+    #
+    export GOTRACEBACK=crash
+    export OPENSHIFT_INSTALL_PATH="$GOPATH/src/github.com/openshift/installer"
+fi
 
 # Do not use pigz due to race condition in vendored docker code
 # that oc uses.
@@ -38,12 +45,17 @@ is_lower_version () {
   fi
 }
 
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$(systemd-path user-configuration)}
+
 # Get variables from the config file
 if [ -z "${CONFIG:-}" ]; then
     # See if there's a config_$USER.sh in the SCRIPTDIR
     if [ -f ${SCRIPTDIR}/config_${USER}.sh ]; then
         echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh" 1>&2
         CONFIG="${SCRIPTDIR}/config_${USER}.sh"
+    elif [[ -f "${XDG_CONFIG_HOME}/dev-scripts/config" ]]; then
+        echo "Using CONFIG ${XDG_CONFIG_HOME}/dev-scripts/config" 1>&2
+        CONFIG="${XDG_CONFIG_HOME}/dev-scripts/config"
     else
         error "Please run with a configuration environment set."
         error "eg CONFIG=config_example.sh ./01_all_in_one.sh"

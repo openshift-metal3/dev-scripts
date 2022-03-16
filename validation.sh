@@ -4,7 +4,7 @@ set -o pipefail
 
 # Perform some validation steps that we always want done.
 function early_either_validation() {
-    if [ "$USER" != "root" -a "${XDG_RUNTIME_DIR:-}" == "/run/user/0" ] ; then
+    if [ "$USER" != "root" -a "$(systemd-path user-runtime)" == "/run/user/0" ] ; then
         error "Please use a non-root user, WITH a login shell (e.g. su - USER)"
         exit 1
     fi
@@ -16,7 +16,7 @@ function early_either_validation() {
     fi
 
     # Check OS
-    if [[ ! $(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"') =~ ^(centos|rhel)$ ]]; then
+    if ! (source /etc/os-release; [[ "$ID" =~ ^(centos|rhel)$ || "$ID_LIKE" =~ (centos|rhel) ]]); then
         error "Unsupported OS"
         exit 1
     fi

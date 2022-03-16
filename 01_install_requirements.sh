@@ -69,6 +69,12 @@ ansible-galaxy install -r vm-setup/requirements.yml
 # temporarily capping it until the issue is fixed
 ansible-galaxy collection install 'ansible.netcommon:<2.6.0'
 ansible-galaxy collection install --upgrade ansible.posix community.general
+
+if ! python -c 'import selinux'; then
+   dnf copr enable -y apuimedo/libselinux-py39
+   sudo dnf install -y python39-libselinux
+fi
+
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
