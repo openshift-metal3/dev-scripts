@@ -157,15 +157,33 @@ EOF
     virsh pool-autostart default
 fi
 
+# shellcheck disable=SC1091
+source /etc/os-release
+export DISTRO="${ID}${VERSION_ID%.*}"
+
+case $DISTRO in
+  "centos8"|"rhel8")
+    NMC="NM_CONTROLLED=no\n"
+    NET_SERVICE="network"
+    ;;
+"centos9"|"rhel9")
+    NMC=""
+    NET_SERVICE="NetworkManager"
+    ;;
+  *)
+    echo "Operating System not supported"
+    exit 1
+esac
+
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Adding an IP address in the libvirt definition for this network results in
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME} ]; then
         if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
-            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nIPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\n${NMC}IPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
         else
-            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\n${NMC}BOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
         fi
     fi
     sudo ifdown ${PROVISIONING_NETWORK_NAME} || true
@@ -173,7 +191,7 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
 
     # Need to pass the provision interface for bare metal
     if [ "$PRO_IF" ]; then
-        echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${PROVISIONING_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
+        echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\n${NMC}BRIDGE=${PROVISIONING_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
         sudo ifdown $PRO_IF || true
         sudo ifup $PRO_IF
         # Need to ifup the provisioning bridge again because ifdown $PRO_IF
@@ -185,7 +203,7 @@ fi
 if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Create the baremetal bridge
     if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} ] ; then
-        echo -e "DEVICE=${BAREMETAL_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
+        echo -e "DEVICE=${BAREMETAL_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\n${NMC}${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
     fi
     sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
     sudo ifup ${BAREMETAL_NETWORK_NAME}
@@ -193,22 +211,22 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Add the internal interface to it if requests, this may also be the interface providing
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
-      echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
-      if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-        grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
-      else
-        if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-          grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
-        fi
+        echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\n${NMC}BRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+        if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+            grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
+        else
+          if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
+              grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
+          fi
       fi
-      sudo systemctl restart network
+      sudo systemctl restart $NET_SERVICE
     fi
 fi
 
 # If there were modifications to the /etc/sysconfig/network-scripts/ifcfg-*
 # files, it is required to enable the network service
 if [ "$MANAGE_INT_BRIDGE" == "y" ] || [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
-  sudo systemctl enable network
+  sudo systemctl enable $NET_SERVICE
 fi
 
 # restart the libvirt network so it applies an ip to the bridge
