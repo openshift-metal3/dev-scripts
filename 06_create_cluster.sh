@@ -71,4 +71,4 @@ if [[ ! -z "${ENABLE_METALLB_MODE}" ]]; then
 	fi
 fi
 
-echo "Cluster up, you can interact with it via oc --config ${KUBECONFIG} <command>"
+echo "Cluster up, you can interact with it via oc --kubeconfig ${KUBECONFIG} <command>"
