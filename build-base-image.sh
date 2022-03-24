@@ -19,4 +19,4 @@ if [[ -n ${BASE_IMAGE_FROM:-} ]]; then
     BUILD_COMMAND_ARGS+=" --build-arg REMOVE_OLD_REPOS=no"
 fi
 
-sudo podman build --tag ${BASE_IMAGE_DIR} ${BUILD_COMMAND_ARGS} -f "${BASE_IMAGE_DIR}/Dockerfile"
+sudo podman build --network host --tag ${BASE_IMAGE_DIR} ${BUILD_COMMAND_ARGS} -f "${BASE_IMAGE_DIR}/Dockerfile"

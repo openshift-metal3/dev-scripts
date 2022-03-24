@@ -130,7 +130,7 @@ function create_cluster() {
     if [[  ! -z "${ENABLE_CBO_TEST}" ]]; then
       # Create an empty image to be used by the CBO test deployment
       EMPTY_IMAGE=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/empty:latest
-      echo -e "FROM quay.io/quay/busybox\nCMD [\"sleep\", \"infinity\"]" | sudo podman build -t ${EMPTY_IMAGE} -f - .
+      echo -e "FROM quay.io/quay/busybox\nCMD [\"sleep\", \"infinity\"]" | sudo podman build --network host -t ${EMPTY_IMAGE} -f - .
       sudo podman push --tls-verify=false --authfile ${REGISTRY_CREDS} ${EMPTY_IMAGE} ${EMPTY_IMAGE}
 
       cp assets/metal3-cbo-deployment.yaml ${assets_dir}/openshift/.
