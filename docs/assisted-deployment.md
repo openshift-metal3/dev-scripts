@@ -9,7 +9,7 @@ Pre-requisites
 ==
 
 2 disks need to be created and added to the worker nodes. The disks should be
-of, at least, 10GB each. Set the following variables in your `config.sh`
+of, at least, 10GB each. Set the following variables in your `config_$USER.sh`
 before configuring the development environment:
 
 ```bash
