@@ -54,11 +54,10 @@ fi
 sudo dnf -y install python39
 sudo alternatives --set python /usr/bin/python3.9
 sudo alternatives --set python3 /usr/bin/python3.9
-sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
-sudo pip3 install ansible=="${ANSIBLE_VERSION}"
+sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
 # Also need the 3.9 version of netaddr for ansible.netcommon
-# and lxml for the pyxpath script
-sudo pip3 install netaddr lxml
+# and lxml for the pyxpath script, as well as selinux
+sudo python -m pip install netaddr lxml selinux
 
 pushd ${METAL3_DEV_ENV_PATH}
 ansible-galaxy install -r vm-setup/requirements.yml
@@ -79,7 +78,7 @@ popd
 
 # We use yq in a few places for processing YAML but it isn't packaged
 # for CentOS/RHEL so we have to install from pip.
-pip3 install --user 'yq>=2.10.0'
+python -m pip install --user 'yq>=2.10.0'
 
 # needed if we are using locally built images
 # We stop any systemd service so we can run in a container, since

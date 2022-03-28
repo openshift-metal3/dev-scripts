@@ -10,7 +10,7 @@ source $SCRIPTDIR/utils.sh
 
 if ! which yq 2>&1 >/dev/null ; then
     echo "Did not find yq" 1>&2
-    echo "Install with: pip3 install --user yq" 1>&2
+    echo "Install with: python -m pip --user yq" 1>&2
     exit 1
 fi
 
