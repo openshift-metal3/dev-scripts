@@ -1,4 +1,4 @@
-.PHONY: default all requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
+.PHONY: default all agent agent_cleanup agent_deployment requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
 default: requirements configure build_installer ironic install_config ocp_run bell
 
 all: default
@@ -11,6 +11,9 @@ agent: requirements configure agent_deployment
 
 agent_deployment:
 	./agent/03_agent_deployment.sh
+
+agent_cleanup:
+	./agent/cleanup.sh
 
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
@@ -35,7 +38,7 @@ ocp_run:
 gather:
 	./must_gather.sh
 
-clean: ocp_cleanup ironic_cleanup proxy_cleanup host_cleanup assisted_deployment_cleanup
+clean: ocp_cleanup ironic_cleanup proxy_cleanup host_cleanup assisted_deployment_cleanup agent_cleanup
 
 assisted_deployment_cleanup:
 	./assisted_deployment.sh delete_all

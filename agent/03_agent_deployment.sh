@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -xe
+set -euxo pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
@@ -9,25 +9,11 @@ source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/network.sh
 source $SCRIPTDIR/utils.sh
 source $SCRIPTDIR/validation.sh
-
-### Recommended configuration (compact scenario):
-### export IP_STACK=v4
-### export NETWORK_TYPE=OpenShiftSDN
-### export NUM_WORKERS=0
-### export MASTER_DISK=120
-### export MASTER_MEMORY=16384
+source $SCRIPTDIR/agent/common.sh
 
 early_deploy_validation
 
-export FLEETING_PATH=${FLEETING_PATH:-$WORKING_DIR/fleeting}
-export FLEETING_ISO=${FLEETING_ISO:-$FLEETING_PATH/output/fleeting.iso}
-
-node0=${CLUSTER_NAME}_master_0
-node0_ip=$(nth_ip $EXTERNAL_SUBNET_V4 20)
-
 function generate_fleeting_manifests() {
-
-    FLEETING_MANIFESTS_PATH="${FLEETING_PATH}/manifests"
 
     mkdir -p ${FLEETING_MANIFESTS_PATH}
 
@@ -103,7 +89,6 @@ spec:
   pullSecretRef:
     name: pull-secret
   sshAuthorizedKey: ${SSH_PUB_KEY}
-  ignitionConfigOverride: '{"ignition": {"version": "3.1.0"}, "storage": {"files": [{"path": "/etc/someconfig", "contents": {"source": "data:text/plain;base64,aGVscGltdHJhcHBlZGluYXN3YWdnZXJzcGVj"}}]}}'
   nmStateConfigLabelSelector:
     matchLabels:
       cluster0-nmstate-label-name: cluster0-nmstate-label-value
@@ -156,6 +141,8 @@ function attach_fleeting_iso() {
 }
 
 write_pull_secret
+
+node0_ip=$(nth_ip $EXTERNAL_SUBNET_V4 20)
 generate_fleeting_iso ${node0_ip}
 
 attach_fleeting_iso master $NUM_MASTERS
