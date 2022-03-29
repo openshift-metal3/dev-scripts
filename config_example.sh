@@ -312,3 +312,15 @@ set -x
 # setting this variable to true will require more RAM
 # More info here: https://github.com/openshift-metal3/dev-scripts/pull/1241#issuecomment-846067822
 # export BMO_WATCH_ALL_NAMESPACES="true"
+
+##
+## Agent Deployment
+##
+
+# To use a local checkout of the fleeting repo, instead of fetching the remote
+# main branch
+# export FLEETING_PATH=~/go/src/github.com/openshift-agent-team/fleeting
+
+# When set, the changes associated to the specified pull request (for the fleeting repo)
+# are fetched, instead of using the main branch
+# export FLEETING_PR=12

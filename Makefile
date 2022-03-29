@@ -6,6 +6,12 @@ all: default
 # Deploy cluster with assisted deployment flow
 assisted: assisted_deployment bell
 
+# Deploy cluster with agent installer flow
+agent: requirements configure agent_deployment
+
+agent_deployment:
+	./agent/03_agent_deployment.sh
+
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
 requirements:
