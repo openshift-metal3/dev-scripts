@@ -112,15 +112,7 @@ EOF
 
 function generate_fleeting_iso() {
     export REPO_PATH=${WORKING_DIR}
-    sync_repo_and_patch fleeting https://github.com/openshift-agent-team/fleeting
-
-    # If set, use the configured fleeting PR
-    if [[ -n ${FLEETING_PR:-} ]]; then
-      pushd ${FLEETING_PATH}
-      git fetch origin pull/${FLEETING_PR}/head:pr${FLEETING_PR}
-      git checkout pr${FLEETING_PR}
-      popd
-    fi
+    sync_repo_and_patch fleeting https://github.com/openshift-agent-team/fleeting ${FLEETING_PR}
 
     generate_fleeting_manifests ${FLEETING_PATH}
     
