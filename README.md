@@ -105,7 +105,12 @@ BASE_DOMAIN=your.valid.domain.com
 CLUSTER_NAME=clustername
 # Set your valid DNS VIP, such as 1.1.1.1 for 'ns1.example.com'
 DNS_VIP="1.1.1.1"
-# Set your default network type, `OpenShiftSDN` or `OVNKubernetes`, defaults to `OpenShiftSDN`
+# Set your IP Network stack family, determines the IP address family of the cluster, defaults
+# to `v6`
+IP_STACK="v4"
+# Set your default network type, `OpenShiftSDN` or `OVNKubernetes`. For IPv4 deployments, this
+# defaults to `OpenShiftSDN`. IPv6 and DualStack only work with OVNKubernetes, hence this
+# parameter defaults to `OVNKubernetes` for IPv6 and DualStack deployments (see IP_STACK).
 NETWORK_TYPE="OpenShiftSDN"
 # Boolean to use OVNKubernetes local gateway mode. defaults to `false` which is shared mode
 OVN_LOCAL_GATEWAY_MODE=false
