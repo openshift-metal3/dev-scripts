@@ -127,7 +127,7 @@ function create_cluster() {
         cp assets/ipv6-dual-stack-no-upgrade.yaml ${assets_dir}/openshift/.
     fi
 
-    if [[  ! -z "${ENABLE_CBO_TEST}" ]]; then
+    if [[  ! -z "${ENABLE_CBO_TEST:-}" ]]; then
       # Create an empty image to be used by the CBO test deployment
       EMPTY_IMAGE=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/empty:latest
       echo -e "FROM quay.io/quay/busybox\nCMD [\"sleep\", \"infinity\"]" | sudo podman build --network host -t ${EMPTY_IMAGE} -f - .
