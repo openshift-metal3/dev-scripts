@@ -171,7 +171,7 @@ export MIRROR_LOG_FILE=${REGISTRY_DIR}/${CLUSTER_NAME}-image_mirror-${OPENSHIFT_
 
 # Switch Container Images to upstream, Installer defaults these to the openshift version
 if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
-    export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:master"}
+    export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:main"}
 # Starting from Openshift 4.9 the ironic-inspector container is not used anymore
     # FIXME: $OPENSHIFT_VERSION is not defined in CI
     if is_lower_version $OPENSHIFT_VERSION 4.9; then
@@ -265,7 +265,7 @@ export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
 export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
 
 # Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
-export IRONIC_IMAGE="quay.io/metal3-io/ironic:master"
+export IRONIC_IMAGE="quay.io/metal3-io/ironic:main"
 export IRONIC_DATA_DIR="${WORKING_DIR}/ironic"
 export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 
