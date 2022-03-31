@@ -9,7 +9,9 @@ source validation.sh
 
 early_cleanup_validation
 
-sudo systemctl stop fix_certs.timer
+if sudo systemctl is-active fix_certs.timer; then
+  sudo systemctl stop fix_certs.timer
+fi
 
 if [ -d ${OCP_DIR} ]; then
     ${OCP_DIR}/openshift-install --dir ${OCP_DIR} --log-level=debug destroy bootstrap
@@ -56,10 +58,14 @@ if [ -d /var/lib/libvirt/openshift-images ]; then
   sudo rm -fr /var/lib/libvirt/openshift-images/${CLUSTER_NAME}-*
 fi
 
-VOLS=$(sudo virsh vol-list --pool default | awk '{print $1}' | grep -e "^${CLUSTER_NAME}.*bootstrap" -e "^configdrive-" -e "^boot-.*-iso-")
-for v in $VOLS; do
-  sudo virsh vol-delete $v --pool default
-done
+VOLS=$(sudo virsh vol-list --pool default | awk '{print $1}' | grep -e "^${CLUSTER_NAME}.*bootstrap" -e "^configdrive-" -e "^boot-.*-iso-") || true
+
+if [ -n $VOLS ]; then
+  for v in $VOLS; do
+    sudo virsh vol-delete $v --pool default
+  done
+fi
+
 
 if [ -d assets/generated ]; then
   rm -rf assets/generated
