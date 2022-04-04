@@ -267,9 +267,9 @@ function sync_repo_and_patch {
     pushd $DEST
 
     git am --abort || true
-    git checkout master || git checkout main
+    git checkout master --quiet || git checkout main
     git fetch origin
-    git rebase origin/master || git rebase origin/main
+    git rebase origin/master --quiet || git rebase origin/main
     if test "$#" -gt "2" ; then
         git branch -D metalkube || true
         git checkout -b metalkube
