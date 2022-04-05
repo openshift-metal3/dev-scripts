@@ -270,15 +270,15 @@ function sync_repo_and_patch {
     git checkout master || git checkout main
     git fetch origin
     git rebase origin/master || git rebase origin/main
+    
+    # If set, use the specified PR number
     if test "$#" -gt "2" ; then
-        git branch -D metalkube || true
-        git checkout -b metalkube
-
-        shift; shift;
-        for arg in "$@"; do
-            curl -L $arg | git am
-        done
+      REPO_PR=$3
+      echo "Fetching PR ${REPO_PR}"
+      git fetch origin pull/${REPO_PR}/head:pr${REPO_PR}
+      git checkout pr${REPO_PR}
     fi
+
     popd
 }
 
