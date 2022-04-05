@@ -266,11 +266,13 @@ function sync_repo_and_patch {
 
     pushd $DEST
 
+    DEFAULT_BRANCH=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
+
     git am --abort || true
-    git checkout master || git checkout main
+    git checkout ${DEFAULT_BRANCH}
     git fetch origin
-    git rebase origin/master || git rebase origin/main
-    
+    git rebase origin/${DEFAULT_BRANCH}
+
     # If set, use the specified PR number
     if test "$#" -gt "2" ; then
       REPO_PR=$3
