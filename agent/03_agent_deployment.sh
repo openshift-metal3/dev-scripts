@@ -34,10 +34,10 @@ metadata:
   name: test-agent-cluster-install
   namespace: cluster0
 spec:
-  apiVIP: 192.168.111.10
-  ingressVIP: 192.168.111.11
+  apiVIP: ${API_VIP}
+  ingressVIP: ${INGRESS_VIP}
   clusterDeploymentRef:
-    name: compact-cluster
+    name: ${CLUSTER_NAME}
   imageSetRef:
     name: openshift-v4.10.0
   networking:
@@ -55,16 +55,16 @@ EOF
 apiVersion: hive.openshift.io/v1
 kind: ClusterDeployment
 metadata:
-  name: compact-cluster
+  name: ${CLUSTER_NAME}
   namespace: cluster0
 spec:
-  baseDomain: agent.example.com
+  baseDomain: ${BASE_DOMAIN}
   clusterInstallRef:
     group: extensions.hive.openshift.io
     kind: AgentClusterInstall
     name: test-agent-cluster-install
     version: v1beta1
-  clusterName: compact-cluster
+  clusterName: ${CLUSTER_NAME}
   controlPlaneConfig:
     servingCertificates: {}
   platform:
@@ -84,7 +84,7 @@ metadata:
   namespace: cluster0
 spec:
   clusterRef:
-    name: compact-cluster  
+    name: ${CLUSTER_NAME}
     namespace: cluster0
   pullSecretRef:
     name: pull-secret
@@ -135,6 +135,8 @@ function attach_fleeting_iso() {
 write_pull_secret
 
 node0_ip=$(nth_ip $EXTERNAL_SUBNET_V4 20)
+set_api_and_ingress_vip
+
 generate_fleeting_iso ${node0_ip}
 
 attach_fleeting_iso master $NUM_MASTERS
