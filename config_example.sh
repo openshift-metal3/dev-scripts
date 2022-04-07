@@ -324,3 +324,6 @@ set -x
 # When set, the changes associated to the specified pull request (for the fleeting repo)
 # are fetched, instead of using the main branch
 # export FLEETING_PR=12
+
+# Set whether static IPs will be used for all nodes or only Node0
+# export FLEETING_STATIC_IP_NODE0_ONLY="true"

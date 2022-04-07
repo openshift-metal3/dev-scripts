@@ -13,6 +13,49 @@ source $SCRIPTDIR/agent/common.sh
 
 early_deploy_validation
 
+function get_static_ips_and_macs() {
+
+    FLEETING_NODES_IPS=()
+    FLEETING_NODES_MACS=()
+    FLEETING_NODES_HOSTNAMES=()
+
+    if [[ "$FLEETING_STATIC_IP_NODE0_ONLY" = "true" ]]; then
+        static_ips=1
+    else
+        static_ips=$NUM_MASTERS+$NUM_WORKERS
+    fi
+
+    if [[ "$IP_STACK" = "v4" ]]; then
+        external_subnet=$EXTERNAL_SUBNET_V4
+    else
+        external_subnet=$EXTERNAL_SUBNET_V6
+    fi
+
+    # Set outside the range used for dhcp
+    base_ip=80
+
+    for (( i=0; i<${static_ips}; i++ ))
+    do
+        ip=${base_ip}+${i}
+        FLEETING_NODES_IPS+=($(nth_ip ${external_subnet} ${ip}))
+
+        if [[ $i < $NUM_MASTERS ]]; then
+            FLEETING_NODES_HOSTNAMES+=($(printf ${MASTER_HOSTNAME_FORMAT} ${i}))
+            cluster_name=${CLUSTER_NAME}_master_${i}
+        else
+            worker_num=${i}-$NUM_MASTERS
+            FLEETING_NODES_HOSTNAMES+=($(printf ${WORKER_HOSTNAME_FORMAT} ${worker_num}))
+            cluster_name=${CLUSTER_NAME}_worker_${worker_num}
+        fi
+
+        # Add a DNS entry for this hostname
+        sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${FLEETING_NODES_IPS[i]}'> <hostname>${FLEETING_NODES_HOSTNAMES[i]}</hostname> </host>"  --live --config
+
+        # Get the generated mac addresses
+        FLEETING_NODES_MACS+=($(sudo virsh dumpxml $cluster_name | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -))
+    done
+}
+
 function generate_fleeting_manifests() {
 
     mkdir -p ${FLEETING_MANIFESTS_PATH}
@@ -107,17 +150,61 @@ stringData:
   .dockerconfigjson: '${pull_secret}'
 
 EOF
+
+    num_ips=${#FLEETING_NODES_IPS[@]}
+
+    # Create a yaml for each host in nmstateconfig.yaml
+    for (( i=0; i<$num_ips; i++ ))
+    do
+        cat >> "${FLEETING_MANIFESTS_PATH}/nmstateconfig.yaml" << EOF
+apiVersion: agent-install.openshift.io/v1beta1
+kind: NMStateConfig
+metadata:
+  name: ${FLEETING_NODES_HOSTNAMES[i]}
+  namespace: openshift-machine-api
+  labels:
+    cluster0-nmstate-label-name: cluster0-nmstate-label-value
+spec:
+  config:
+    interfaces:
+      - name: eth0
+        type: ethernet
+        state: up
+        mac-address: ${FLEETING_NODES_MACS[i]}
+        ipv4:
+          enabled: true
+          address:
+            - ip: ${FLEETING_NODES_IPS[i]}
+              prefix-length: ${CLUSTER_HOST_PREFIX}
+          dhcp: false
+    dns-resolver:
+      config:
+        server:
+          - ${PROVISIONING_HOST_EXTERNAL_IP}
+    routes:
+      config:
+        - destination: 0.0.0.0/0
+          next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
+          next-hop-interface: eth0
+          table-id: 254
+  interfaces:
+    - name: "eth0"
+      macAddress: ${FLEETING_NODES_MACS[i]}
+---
+EOF
+    done
+
     set -x
 }
 
 function generate_fleeting_iso() {
     export REPO_PATH=${WORKING_DIR}
+
     sync_repo_and_patch fleeting https://github.com/openshift-agent-team/fleeting ${FLEETING_PR}
 
-    generate_fleeting_manifests ${FLEETING_PATH}
-    
+    generate_fleeting_manifests
+
     pushd ${FLEETING_PATH}
-    export NODE_ZERO_IP=$1
     make iso 
     popd
 }
@@ -134,10 +221,15 @@ function attach_fleeting_iso() {
 
 write_pull_secret
 
-node0_ip=$(nth_ip $EXTERNAL_SUBNET_V4 20)
+# needed for assisted-service to run nmstatectl
+# This is temporary and will go away when https://github.com/nmstate/nmstate is used
+sudo yum install -y nmstate
+
+get_static_ips_and_macs
+
 set_api_and_ingress_vip
 
-generate_fleeting_iso ${node0_ip}
+generate_fleeting_iso
 
 attach_fleeting_iso master $NUM_MASTERS
 attach_fleeting_iso worker $NUM_WORKERS
