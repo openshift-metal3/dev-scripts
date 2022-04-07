@@ -38,12 +38,17 @@ is_lower_version () {
   fi
 }
 
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$(systemd-path user-configuration)}
+
 # Get variables from the config file
 if [ -z "${CONFIG:-}" ]; then
     # See if there's a config_$USER.sh in the SCRIPTDIR
     if [ -f ${SCRIPTDIR}/config_${USER}.sh ]; then
         echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh" 1>&2
         CONFIG="${SCRIPTDIR}/config_${USER}.sh"
+    elif [[ -f "${XDG_CONFIG_HOME}/dev-scripts/config" ]]; then
+        echo "Using CONFIG ${XDG_CONFIG_HOME}/dev-scripts/config" 1>&2
+        CONFIG="${XDG_CONFIG_HOME}/dev-scripts/config"
     else
         error "Please run with a configuration environment set."
         error "eg CONFIG=config_example.sh ./01_all_in_one.sh"
