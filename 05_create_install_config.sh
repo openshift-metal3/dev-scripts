@@ -14,7 +14,7 @@ early_deploy_validation
 
 # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
-    if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
+    if [[ -z "${EXTERNAL_SUBNET_V4}" || ${IP_STACK} = "v6" ]]; then
         API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
         INGRESS_VIP=$(nth_ip $EXTERNAL_SUBNET_V6 4)
     else
@@ -31,13 +31,20 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
 
     sudo systemctl reload NetworkManager
 else
-    if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
+    if [[ -z "${EXTERNAL_SUBNET_V4}" || ${IP_STACK} = "v6" ]]; then
         API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
     else
         API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
     fi
     INGRESS_VIP=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
 fi
+
+
+if [[ -z ${API_VIP} || -z ${INGRESS_VIP} ]]; then
+    echo "API_VIP: ${API_VIP} or INGRESS_VIP: ${INGRESS_VIP} is blank"
+    exit 1
+fi
+
 
 if [ ! -f ${OCP_DIR}/install-config.yaml ]; then
     # Validate there are enough nodes to avoid confusing errors later..

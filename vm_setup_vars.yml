@@ -44,7 +44,17 @@ dns_extrahosts:
       - "ns1"
   - ip: "{{ baremetal_network_cidr | nthhost(1) }}"
     hostnames:
+     - "virthost"
+  - ip: "{{ baremetal_network_cidr_v6 | nthhost(5) }}"
+    hostnames:
+      - "api"
+  - ip: "{{ baremetal_network_cidr_v6 | nthhost(2) }}"
+    hostnames:
+      - "ns1"
+  - ip: "{{ baremetal_network_cidr_v6 | nthhost(1) }}"
+    hostnames:
       - "virthost"
+
 
 provisioning_network:
   - name: "{{ provisioning_network_name  }}"
