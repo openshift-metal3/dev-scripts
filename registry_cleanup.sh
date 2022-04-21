@@ -7,7 +7,9 @@ source validation.sh
 
 early_cleanup_validation
 
-sudo podman kill registry
-sudo podman rm registry
+if sudo podman container exists registry; then
+  sudo podman kill registry
+  sudo podman rm registry
+fi
 
 sudo rm -rf $WORKING_DIR/registry
