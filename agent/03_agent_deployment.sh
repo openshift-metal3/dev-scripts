@@ -91,6 +91,7 @@ spec:
     - ${SERVICE_NETWORK}
   provisionRequirements:
     controlPlaneAgents: ${NUM_MASTERS}
+    workerAgents: ${NUM_WORKERS}
   sshPublicKey: ${SSH_PUB_KEY}
 EOF
 
