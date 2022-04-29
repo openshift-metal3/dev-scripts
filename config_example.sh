@@ -317,13 +317,10 @@ set -x
 ## Agent Deployment
 ##
 
-# To use a local checkout of the fleeting repo, instead of fetching the remote
-# main branch
-# export FLEETING_PATH=~/go/src/github.com/openshift-agent-team/fleeting
-
-# When set, the changes associated to the specified pull request (for the fleeting repo)
-# are fetched, instead of using the main branch
-# export FLEETING_PR=12
+# When set, the changes associated to the specified pull request (for the
+# installer repo) are fetched, instead of using the current repo status or the
+# agent-installer branch (if the repo does not exist)
+# export INSTALLER_PR=5852
 
 # Set whether static IPs will be used for all nodes or only Node0
 # export FLEETING_STATIC_IP_NODE0_ONLY="true"

@@ -198,15 +198,47 @@ EOF
     set -x
 }
 
+function sync_installer() {
+    local DEST="${OPENSHIFT_INSTALL_PATH}"
+    if [ ! -d "${DEST}" ]; then
+        echo "Syncing $DEST"
+
+        mkdir -p "${DEST}"
+        git clone https://github.com/openshift/installer.git "${DEST}"
+
+        pushd "${DEST}"
+
+        DEFAULT_BRANCH=agent-installer
+
+        git am --abort || true
+        git checkout "${DEFAULT_BRANCH}"
+        git fetch origin
+        git rebase "origin/${DEFAULT_BRANCH}"
+    else
+        pushd "${DEST}"
+    fi
+
+    # If set, use the specified PR number
+    if [ -n "${INSTALLER_PR}" ]; then
+      echo "Fetching PR ${INSTALLER_PR}"
+      git fetch origin "pull/${INSTALLER_PR}/head"
+      git checkout FETCH_HEAD
+    fi
+
+    popd
+}
+
+function build_installer() {
+    sync_installer
+
+    pushd "${OPENSHIFT_INSTALL_PATH}"
+    ./hack/build.sh
+    popd
+}
+
 function generate_fleeting_iso() {
-    export REPO_PATH=${WORKING_DIR}
-
-    sync_repo_and_patch fleeting https://github.com/openshift-agent-team/fleeting ${FLEETING_PR}
-
-    generate_fleeting_manifests
-
-    pushd ${FLEETING_PATH}
-    make iso 
+    pushd "${WORKING_DIR}"
+    "${OPENSHIFT_INSTALL_PATH}/bin/openshift-install" agent create image
     popd
 }
 
@@ -230,9 +262,9 @@ get_static_ips_and_macs
 
 set_api_and_ingress_vip
 
+build_installer
+generate_fleeting_manifests
 generate_fleeting_iso
 
 attach_fleeting_iso master $NUM_MASTERS
 attach_fleeting_iso worker $NUM_WORKERS
-
-
