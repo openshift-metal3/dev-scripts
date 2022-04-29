@@ -43,7 +43,7 @@ function get_static_ips_and_macs() {
             FLEETING_NODES_HOSTNAMES+=($(printf ${MASTER_HOSTNAME_FORMAT} ${i}))
             cluster_name=${CLUSTER_NAME}_master_${i}
         else
-            worker_num=${i}-$NUM_MASTERS
+	    worker_num=$((${i}-$NUM_MASTERS))
             FLEETING_NODES_HOSTNAMES+=($(printf ${WORKER_HOSTNAME_FORMAT} ${worker_num}))
             cluster_name=${CLUSTER_NAME}_worker_${worker_num}
         fi
