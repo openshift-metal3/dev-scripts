@@ -7,7 +7,10 @@ all: default
 assisted: assisted_deployment bell
 
 # Deploy cluster with agent installer flow
-agent: requirements configure agent_build_installer agent_configure agent_create_cluster
+agent: agent_requirements requirements configure agent_build_installer agent_configure agent_create_cluster
+
+agent_requirements:
+	./agent/01_agent_requirements.sh
 
 agent_build_installer:
 	./agent/03_agent_build_installer.sh
