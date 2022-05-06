@@ -23,6 +23,9 @@ function wrap_if_ipv6(){
     echo "$1"
 }
 
+export STRINGS_SEPARATOR=","
+export PATH_CONF_DNSMASQ="/etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf"
+
 export IP_STACK=${IP_STACK:-"v6"}
 export HOST_IP_STACK=${HOST_IP_STACK:-${IP_STACK}}
 
@@ -193,26 +196,88 @@ if [ -n "${NETWORK_CONFIG_FOLDER:-}" ]; then
   NETWORK_CONFIG_FOLDER="$(readlink -m $NETWORK_CONFIG_FOLDER)"
 fi
 
-function set_api_and_ingress_vip() {
+function is_varset_add_comma() {
+    # Arguments:
+    #     First argument: the var to be checked if is already set
+    #     Second argument: new value to be assigned to the var
+    #
+    # Description:
+    #     Adds comma as separator in case var is already set. Useful for multiple API_VIP or INGRESS_VIP
+    #     Example: 192.168.111.5,fd2e:6f44:5dd8:c956::14
+    #
+    # Returns:
+    #     Print the string using comma
+
+    # if string is *NOT* NULL/empty
+    if [[ -n "${1}" ]]; then
+        echo "$1,$2"
+    else
+        echo "$2"
+    fi
+}
+
+function get_vips() {
+    # Arguments:
+    #     None
+    #
+    # Description:
+    #     Gets the INGRESS VIP and API VIP addresses (ipv4 and ipv6)
+    #
+    # Returns:
+    #     None
+    #
+    if [[ -n "${EXTERNAL_SUBNET_V4}" ]]; then
+        API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
+        INGRESS_VIP=$(nth_ip $EXTERNAL_SUBNET_V4 4)
+    fi
+
+    if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+        API_VIP=$(is_varset_add_comma "${API_VIP}" $(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}'))
+        INGRESS_VIP=$(is_varset_add_comma "${INGRESS_VIP}" $(nth_ip $EXTERNAL_SUBNET_V6 4))
+    fi
+}
+
+
+function add_dnsmasq_multi_entry() {
+    # Arguments:
+    #     First argument: the type of entry to be added in openshift-${CLUSTER_NAME}.conf
+    #     Types available: apivip OR ingressvip
+    #
+    #     Second argument: The list (or single entry) of apivip or ingressvip
+    #
+    # Description:
+    #     Add entries into openshift-${CLUSTERNAME}.conf for dnsmasq
+    #
+    # Returns:
+    #     None
+    for i in ${2//${STRINGS_SEPARATOR}/ }; do
+        if [ "${1}" = "apivip" ] ; then
+            echo "address=/api.${CLUSTER_DOMAIN}/${i}" | sudo tee "${PATH_CONF_DNSMASQ}"
+        fi
+
+        if [ "${1}" = "ingressvip" ] ; then
+            echo "address=/.apps.${CLUSTER_DOMAIN}/${i}" | sudo tee -a "${PATH_CONF_DNSMASQ}"
+        fi
+    done
+}
+
+set_api_and_ingress_vip() {
   # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
   if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
-      if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
-          API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
-          INGRESS_VIP=$(nth_ip $EXTERNAL_SUBNET_V6 4)
-      else
-          API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
-          INGRESS_VIP=$(nth_ip $EXTERNAL_SUBNET_V4 4)
-      fi
-      echo "address=/api.${CLUSTER_DOMAIN}/${API_VIP}" | sudo tee /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
-      echo "address=/.apps.${CLUSTER_DOMAIN}/${INGRESS_VIP}" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
-      echo "listen-address=::1" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
+      get_vips
+
+      add_dnsmasq_multi_entry "apivip" "${API_VIP}"
+      add_dnsmasq_multi_entry "ingressvip" "${INGRESS_VIP}"
+
+      echo "listen-address=::1" | sudo tee -a "${PATH_CONF_DNSMASQ}"
 
       # Risk reduction for CVE-2020-25684, CVE-2020-25685, and CVE-2020-25686
       # See: https://access.redhat.com/security/vulnerabilities/RHSB-2021-001
-      echo "cache-size=0" | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
+      echo "cache-size=0" | sudo tee -a "${PATH_CONF_DNSMASQ}"
 
       sudo systemctl reload NetworkManager
   else
+      # Specific for users *NOT* using devscript with KVM (virsh) for deploy. (Reads: baremetal)
       if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
           API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
       else
