@@ -69,20 +69,6 @@ if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -d "${OCP_DIR}/extras" ]]; then
     oc create secret generic extraworkers-secret --from-file="${OCP_DIR}/extras/" -n openshift-machine-api
 fi
 
-if [[ ! -z "${ENABLE_METALLB}" ]]; then
-
-	if [[ -z ${METALLB_IMAGE_BASE} ]]; then
-		export METALLB_IMAGE_BASE=$(\
-			jq -r .references.spec.tags[0].from.name ${OCP_DIR}/release_info.json | sed -e 's/@.*$//g')
-		export METALLB_IMAGE_TAG="metallb"
-		export FRR_IMAGE_TAG="metallb-frr"
-	fi
-
-	pushd metallb
-	./configure_metallb.sh
-	popd
-fi
-
 if [[ ! -z "${ENABLE_VIRTUAL_MEDIA_VIA_EXTERNAL_NETWORK}" ]]; then
     oc patch provisioning provisioning-configuration --type merge -p "{\"spec\":{\"virtualMediaViaExternalNetwork\":true}}"
 fi
