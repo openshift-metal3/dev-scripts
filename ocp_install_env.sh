@@ -1,5 +1,17 @@
 eval "$(go env)"
 
+function get_arch() {
+    ARCH=$(uname -m)
+    if [[ $ARCH == "aarch64" ]]; then
+        ARCH="arm64"
+    elif [[ $ARCH == "x86_64" ]]; then
+        if [[ "$1" == "install_config" ]]; then
+	    ARCH="amd64"
+        fi
+    fi
+    echo $ARCH
+}
+
 function extract_command() {
     local release_image
     local cmd
@@ -85,7 +97,7 @@ function build_installer() {
   # Build installer
   pushd .
   cd $OPENSHIFT_INSTALL_PATH
-  TAGS="libvirt baremetal" hack/build.sh
+  TAGS="libvirt baremetal" DEFAULT_ARCH=$(get_arch) hack/build.sh
   popd
   # This is only needed in rhcos.sh for old versions which lack the
   # openshift-install coreos-print-stream-json option
@@ -230,9 +242,11 @@ metadata:
 compute:
 - name: worker
   replicas: $NUM_WORKERS
+  architecture: $(get_arch install_config)
 controlPlane:
   name: master
   replicas: ${NUM_MASTERS}
+  architecture: $(get_arch install_config)
   platform:
     baremetal: {}
 platform:
