@@ -266,16 +266,19 @@ function sync_repo_and_patch {
 
     pushd $DEST
 
-    DEFAULT_BRANCH=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
+    REPO_NAME=$(basename "$1" .git | tr "a-z" "A-Z" | tr "-" "_")
+    REPO_BRANCH_VAR="${REPO_NAME}_REPO_BRANCH"
+    REPO_BRANCH=${!REPO_BRANCH_VAR:-$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')}
 
     git am --abort || true
-    git checkout ${DEFAULT_BRANCH}
+    git checkout ${REPO_BRANCH}
     git fetch origin
-    git rebase origin/${DEFAULT_BRANCH}
+    git rebase origin/${REPO_BRANCH}
 
     # If set, use the specified PR number
-    if test "$#" -gt "2" ; then
-      REPO_PR=$3
+    REPO_PR_VAR="${REPO_NAME}_REPO_PR"
+    REPO_PR=${!REPO_PR_VAR:-}
+    if [[ ! -z "${REPO_PR}" ]] ; then
       echo "Fetching PR ${REPO_PR}"
       git fetch origin pull/${REPO_PR}/head:pr${REPO_PR}
       git checkout pr${REPO_PR}
