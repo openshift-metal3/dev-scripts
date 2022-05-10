@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+DEVSCRIPTS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-LOGDIR=${SCRIPTDIR}/logs
-source $SCRIPTDIR/logging.sh
-source $SCRIPTDIR/common.sh
-source $SCRIPTDIR/network.sh
-source $SCRIPTDIR/utils.sh
-source $SCRIPTDIR/validation.sh
-source $SCRIPTDIR/agent/common.sh
+LOGDIR=${DEVSCRIPTS_SCRIPT_DIR}/logs
+source $DEVSCRIPTS_SCRIPT_DIR/logging.sh
+source $DEVSCRIPTS_SCRIPT_DIR/common.sh
+source $DEVSCRIPTS_SCRIPT_DIR/network.sh
+source $DEVSCRIPTS_SCRIPT_DIR/utils.sh
+source $DEVSCRIPTS_SCRIPT_DIR/validation.sh
+source $DEVSCRIPTS_SCRIPT_DIR/agent/common.sh
 
 early_deploy_validation
 
@@ -45,10 +45,10 @@ function wait_for_cluster_ready() {
   node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
   ssh_opts=(-o 'StrictHostKeyChecking=no' -q core@${node0_ip})
 
-  until ssh "${ssh_opts[@]}" "[[ -f /var/lib/kubelet/kubeconfig ]]" 
-  do 
+  until ssh "${ssh_opts[@]}" "[[ -f /var/lib/kubelet/kubeconfig ]]"
+  do
     echo "Waiting for bootstrap... "
-    sleep 1m; 
+    sleep 1m;
   done
 
   sleep 5m
@@ -67,7 +67,7 @@ attach_agent_iso master $NUM_MASTERS
 attach_agent_iso worker $NUM_WORKERS
 
 wait_for_cluster_ready
-# Temporary fix for the CI. To be removed once we'll 
+# Temporary fix for the CI. To be removed once we'll
 # be able to generate the cluster credentials
 if [ "${OPENSHIFT_CI}" == true ]; then
   auth_dir=${OCP_DIR}/auth

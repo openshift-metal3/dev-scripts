@@ -1,0 +1,16 @@
+FROM python:3.9
+
+# Install ansible amd ansible-test requirements
+RUN pip3 install ansible mock pytest pytest-mock pytest-xdist pytest-forked pyyaml pytest-sugar netaddr
+
+# Set up ansible collections directories for agente2e
+RUN mkdir -p /code/ansible_collections/devscripts/agente2e
+ENV ANSIBLE_COLLECTIONS_PATH=/code
+COPY ./agent /code/ansible_collections/devscripts/agente2e
+RUN chmod -R 775 /code/ansible_collections/devscripts/agente2e
+WORKDIR /code/ansible_collections/devscripts/agente2e
+
+# Create files for playbook dry run integration tests.
+COPY ./scratch-test/id_rsa.pub /root/.ssh/id_rsa.pub
+COPY ./scratch-test/pull_secret.json /opt/dev-scripts/pull_secret.json
+COPY ./agent/tests/unit/plugins/modules/data/ironic_nodes.json /opt/dev-scripts/ostest/ironic_nodes.json

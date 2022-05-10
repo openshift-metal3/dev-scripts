@@ -1,0 +1,26 @@
+- name: Test manifests role
+  hosts: localhost
+  remote_user: root
+  collections:
+   - devscripts.agente2e
+  gather_facts: yes
+  roles:
+    - role: devscripts.agente2e.manifests
+      vars:
+        ci_token: test
+        working_dir: /opt/dev-scripts
+        openshift_release_stream: 4.11
+        openshift_release_type: nightly
+        openshift_version: ""
+        cluster_name: ostest
+        base_domain: test.metalkube.org
+        # Cluster variables
+        cluster_topology: ha
+        resource_profile: minimal
+        extra_workers_profile: none
+        # Network variables
+        ip_stack: v4
+        host_ip_stack: ""
+        provisioning_network_profile: Managed
+        # Agent variables
+        agent_static_ip_node0_only: False

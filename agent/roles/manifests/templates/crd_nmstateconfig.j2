@@ -1,0 +1,36 @@
+{% for node in ironic_nodes['nodes'] %}
+apiVersion: agent-install.openshift.io/v1beta1
+kind: NMStateConfig
+metadata:
+  name: {{ node['name'] }}
+  namespace: openshift-machine-api
+  labels:
+    {{ ansible_facts['devscripts']['cluster_name'] }}-nmstate-label-name: {{ ansible_facts['devscripts']['cluster_name'] }}-nmstate-label-value
+spec:
+  config:
+    interfaces:
+      - name: eth0
+        type: ethernet
+        state: up
+        mac-address: {{ node['ports'][0]['address'] }}
+        ipv4:
+          enabled: true
+          address:
+            - ip: {{ ansible_facts['devscripts']['cluster_network'] | ansible.utils.nthhost(80+loop.index0) }}
+              prefix-length: {{ ansible_facts['devscripts']['cluster_host_prefix'] }}
+          dhcp: false
+    dns-resolver:
+      config:
+        server:
+          - {{ ansible_facts['devscripts']['cluster_network'] | ansible.utils.nthhost(1) }}
+    routes:
+      config:
+        - destination: 0.0.0.0/0
+          next-hop-address: {{ ansible_facts['devscripts']['cluster_network'] | ansible.utils.nthhost(1) }}
+          next-hop-interface: eth0
+          table-id: 254
+  interfaces:
+    - name: "eth0"
+      macAddress: {{ node['ports'][0]['address'] }}
+---
+{% endfor %}

@@ -1,28 +1,12 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -ex
 
 AGENT_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-DEVSCRIPTS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}/.." )" && pwd )"
-
-LOGDIR=${DEVSCRIPTS_SCRIPT_DIR}/logs
-source $DEVSCRIPTS_SCRIPT_DIR/logging.sh
-source $DEVSCRIPTS_SCRIPT_DIR/common.sh
-source $DEVSCRIPTS_SCRIPT_DIR/network.sh
-source $DEVSCRIPTS_SCRIPT_DIR/utils.sh
-source $DEVSCRIPTS_SCRIPT_DIR/validation.sh
-source $DEVSCRIPTS_SCRIPT_DIR/agent/common.sh
-
-early_deploy_validation
-
-# This allows us to test this makefile target in isolation
-if [ ! -f $WORKING_DIR/ironic_nodes.json ]
-  sudo cp $AGENT_SCRIPT_DIR/tests/unit/plugins/modules/data/ironic_nodes.json $WORKING_DIR/ironic_nodes.json
-fi
 
 if [ -z ${OPENSHIFT_CI+x} ]; then
-  ansible-playbook $AGENT_SCRIPT_DIR/playbooks/generate_manifests.yml
+  ansible-playbook $AGENT_SCRIPT_DIR/playbooks/generate_config.yml
 else
-  ansible-playbook $AGENT_SCRIPT_DIR/playbooks/generate_manifests.yml \
+  ansible-playbook $AGENT_SCRIPT_DIR/playbooks/generate_config.yml \
   -e "ci_token=${CI_TOKEN}" \
   -e "working_dir=${WORKING_DIR}" \
   -e "openshift_release_stream=${OPENSHIFT_RELEASE_STREAM}" \

@@ -1,0 +1,85 @@
+- name: Generate config_$USER.sh for devscripts
+  hosts: localhost
+  collections:
+    - ansible.utils
+    - devscripts.agente2e
+  gather_facts: yes
+
+  vars_prompt:
+    - name: input_ci_token
+      prompt: Enter your ci_token
+      private: yes
+    - name: input_working_dir
+      prompt: Enter your working_dir
+      default: /opt/dev-scripts
+      private: no
+    - name: input_openshift_release_stream
+      prompt: Enter the openshift_release_stream
+      default: 4.11
+      private: no
+    - name: input_openshift_release_type
+      prompt: Enter the openshift_release_type
+      default: nightly
+      private: no
+    - name: input_openshift_version
+      prompt: Enter the openshift_version
+      default: null
+      private: no
+    - name: input_cluster_name
+      prompt: Enter the cluster_name
+      default: ostest
+      private: no
+    - name: input_base_domain
+      prompt: Enter the base_domain
+      default: test.metalkube.org
+      private: no
+    - name: input_cluster_topology
+      prompt: Enter the cluster_topology
+      default: ha
+      private: no
+    - name: input_resource_profile
+      prompt: Enter the resource_profile
+      default: minimal
+      private: no
+    - name: input_extra_workers_profile
+      prompt: Enter the extra_workers_profile
+      default: none
+      private: no
+    - name: input_ip_stack
+      prompt: Enter the ip_stack
+      default: v6
+      private: no
+    - name: input_host_ip_stack
+      prompt: Enter the host_ip_stack
+      default: null
+      private: no
+    - name: input_provisioning_network_profile
+      prompt: Enter the provisioning_network_profile
+      default: Managed
+      private: no
+    - name: input_agent_static_ip_node0_only
+      prompt: Enter the agent_static_ip_node0_only
+      default: false
+      private: no
+
+  roles:
+    - role: devscripts.agente2e.presets
+      vars:
+        # Base dev-scripts variables
+        - ci_token: "{{ input_ci_token }}"
+        - working_dir: "{{ input_working_dir }}"
+        - openshift_release_stream: "{{ input_openshift_release_stream }}"
+        - openshift_release_type: "{{ input_openshift_release_type }}"
+        - openshift_version: "{{ input_openshift_version }}"
+        - cluster_name: "{{ input_cluster_name }}"
+        - base_domain: "{{ input_base_domain }}"
+        # Cluster variables
+        - cluster_topology: "{{ input_cluster_topology }}"
+        - resource_profile: "{{ input_resource_profile }}"
+        - extra_workers_profile: "{{ input_extra_workers_profile }}"
+        # Network variables
+        - ip_stack: "{{ input_ip_stack }}"
+        - host_ip_stack: "{{ input_host_ip_stack }}"
+        - provisioning_network_profile: "{{ input_provisioning_network_profile }}"
+        # Agent variables
+        - agent_static_ip_node0_only: "{{ input_agent_static_ip_node0_only }}"

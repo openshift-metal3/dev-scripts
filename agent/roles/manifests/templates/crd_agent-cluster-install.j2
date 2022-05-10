@@ -1,0 +1,22 @@
+apiVersion: extensions.hive.openshift.io/v1beta1
+kind: AgentClusterInstall
+metadata:
+  name: {{ ansible_facts['devscripts']['cluster_name'] }}-agent-cluster-install
+  namespace: {{ ansible_facts['devscripts']['cluster_name'] }}
+spec:
+  apiVIP: {{ ansible_facts['devscripts']['external_network'] | ansible.utils.nthhost(5) }}
+  ingressVIP: {{ ansible_facts['devscripts']['external_network'] | ansible.utils.nthhost(4) }}
+  clusterDeploymentRef:
+    name: {{ ansible_facts['devscripts']['cluster_name'] }}
+  imageSetRef:
+    name: openshift-v{{ ansible_facts['devscripts']['openshift_version'] }}
+  networking:
+    clusterNetwork:
+    - cidr: {{ ansible_facts['devscripts']['cluster_network' ]}}
+      hostPrefix: {{ ansible_facts['devscripts']['cluster_host_prefix'] }}
+    serviceNetwork:
+    - {{ ansible_facts['devscripts']['cluster_host_prefix'] }}
+  provisionRequirements:
+    controlPlaneAgents: {{ ansible_facts['devscripts']['num_masters'] }}
+    workerAgents:{{ ansible_facts['devscripts']['num_workers'] }}
+  sshPublicKey: {{ ansible_facts['devscripts']['ssh_pub_key'] }}

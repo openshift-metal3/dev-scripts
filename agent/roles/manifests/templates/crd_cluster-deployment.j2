@@ -1,0 +1,22 @@
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  name: {{ ansible_facts['devscripts']['cluster_name'] }}
+  namespace: {{ ansible_facts['devscripts']['cluster_name'] }}
+spec:
+  baseDomain: {{ ansible_facts['devscripts']['base_domain'] }}
+  clusterInstallRef:
+    group: extensions.hive.openshift.io
+    kind: AgentClusterInstall
+    name: {{ ansible_facts['devscripts']['cluster_name'] }}-agent-cluster-install
+    version: v1beta1
+  clusterName: {{ ansible_facts['devscripts']['cluster_name'] }}
+  controlPlaneConfig:
+    servingCertificates: {}
+  platform:
+    agentBareMetal:
+      agentSelector:
+        matchLabels:
+          bla: aaa
+  pullSecretRef:
+    name: {{ ansible_facts['devscripts']['cluster_name'] }}-pull-secret

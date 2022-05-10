@@ -9,6 +9,15 @@ assisted: assisted_deployment bell
 # Deploy cluster with agent installer flow
 agent: requirements configure agent_build_installer agent_configure agent_create_cluster
 
+agent_requirements:
+	./agent/00_agent_install_requirements.sh
+
+agent_generate_config: agent_requirements
+	./agent/01_agent_generate_config.sh
+
+agent_run_devscripts:
+	./agent/02_agent_run_devscripts.sh
+
 agent_build_installer:
 	./agent/03_agent_build_installer.sh
 
@@ -20,6 +29,15 @@ agent_create_cluster:
 
 agent_cleanup:
 	./agent/cleanup.sh
+
+agente2e: agent_requirements agent_generate_config agent_run_devscripts agent_build_installer agent_configure agent_create_cluster
+
+agente2e_tests:
+	./agent/agente2e_tests.sh
+
+agente2e_generate_manifests_test: agent_requirements
+	sudo cp ./agent/tests/unit/plugins/modules/data/ironic_nodes.json /opt/dev-scripts/ironic_nodes.json
+	ansible-playbook ./agent/playbooks/generate_manifests.yml
 
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 

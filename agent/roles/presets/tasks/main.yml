@@ -1,0 +1,39 @@
+---
+- name: Create directory for backup preset configs
+  file:
+    path: "../../scratch"
+    state: directory
+
+- name: Check to see if config_$USER.sh exists
+  local_action: "stat path=../../config_{{ ansible_facts['user_id'] }}.sh"
+  register: config_user
+
+- name: Create backup of current config_$USER.sh
+  copy: "src=../../config_{{ ansible_facts['user_id'] }}.sh dest=../../scratch/config_{{ ansible_facts['user_id'] }}_{{ ansible_date_time.iso8601 }}.sh"
+  when: config_user.stat.exists
+
+- name: Get preset_config facts
+  devscripts.agente2e.preset_config:
+    ci_token: "{{ ci_token }}"
+    working_dir: "{{ working_dir }}"
+    openshift_release_stream: "{{ openshift_release_stream }}"
+    openshift_release_type: "{{ openshift_release_type }}"
+    openshift_version: "{{ openshift_version | default(openshift_release_stream) }}"
+    cluster_name: "{{ cluster_name }}"
+    base_domain: "{{ base_domain }}"
+    cluster_topology: "{{ cluster_topology }}"
+    resource_profile: "{{ resource_profile }}"
+    extra_workers_profile: "{{ extra_workers_profile }}"
+    ip_stack: "{{ ip_stack }}"
+    host_ip_stack: "{{ host_ip_stack | default(ip_stack) }}"
+    provisioning_network_profile: "{{ provisioning_network_profile }}"
+    agent_static_ip_node0_only: "{{ agent_static_ip_node0_only }}"
+
+- name: Print ansible_facts.devscripts
+  debug:
+    var: ansible_facts.devscripts
+
+- name: Write config_user.sh
+  template:
+    src: "sh_config.j2"
+    dest: "../../config_{{ ansible_facts['user_id'] }}.sh"

@@ -1,0 +1,142 @@
+{
+  "nodes": [
+    {
+      "name": "ostest-master-0",
+      "driver": "redfish-virtualmedia",
+      "resource_class": "baremetal",
+      "driver_info": {
+        "username": "admin",
+        "password": "password",
+        "port": "8000",
+        "address": "redfish-virtualmedia+http://192.168.111.1:8000/redfish/v1/Systems/5692b513-1025-401a-a028-6bf593df37d5",
+        "deploy_kernel": "http:///images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http:///images/ironic-python-agent.initramfs"
+      },
+      "ports": [
+        {
+          "address": "00:84:70:de:91:e3",
+          "pxe_enabled": true
+        }
+      ],
+      "properties": {
+        "local_gb": "30",
+        "cpu_arch": "x86_64"
+      }
+    },
+    {
+      "name": "ostest-master-1",
+      "driver": "redfish-virtualmedia",
+      "resource_class": "baremetal",
+      "driver_info": {
+        "username": "admin",
+        "password": "password",
+        "port": "8000",
+        "address": "redfish-virtualmedia+http://192.168.111.1:8000/redfish/v1/Systems/16fb8a0f-ffc7-4377-ac72-155407bc0a6b",
+        "deploy_kernel": "http:///images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http:///images/ironic-python-agent.initramfs"
+      },
+      "ports": [
+        {
+          "address": "00:84:70:de:91:e7",
+          "pxe_enabled": true
+        }
+      ],
+      "properties": {
+        "local_gb": "30",
+        "cpu_arch": "x86_64"
+      }
+    },
+    {
+      "name": "ostest-master-2",
+      "driver": "redfish-virtualmedia",
+      "resource_class": "baremetal",
+      "driver_info": {
+        "username": "admin",
+        "password": "password",
+        "port": "8000",
+        "address": "redfish-virtualmedia+http://192.168.111.1:8000/redfish/v1/Systems/ddbb932a-e42f-4a14-ae91-6dad9bed66be",
+        "deploy_kernel": "http:///images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http:///images/ironic-python-agent.initramfs"
+      },
+      "ports": [
+        {
+          "address": "00:84:70:de:91:eb",
+          "pxe_enabled": true
+        }
+      ],
+      "properties": {
+        "local_gb": "30",
+        "cpu_arch": "x86_64"
+      }
+    },
+    {
+      "name": "ostest-worker-0",
+      "driver": "redfish-virtualmedia",
+      "resource_class": "baremetal",
+      "driver_info": {
+        "username": "admin",
+        "password": "password",
+        "port": "8000",
+        "address": "redfish-virtualmedia+http://192.168.111.1:8000/redfish/v1/Systems/ae256199-89bb-401a-8e40-f19ac6cfdf26",
+        "deploy_kernel": "http:///images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http:///images/ironic-python-agent.initramfs"
+      },
+      "ports": [
+        {
+          "address": "00:84:70:de:91:ef",
+          "pxe_enabled": true
+        }
+      ],
+      "properties": {
+        "local_gb": "30",
+        "cpu_arch": "x86_64"
+      }
+    },
+    {
+      "name": "ostest-worker-1",
+      "driver": "redfish-virtualmedia",
+      "resource_class": "baremetal",
+      "driver_info": {
+        "username": "admin",
+        "password": "password",
+        "port": "8000",
+        "address": "redfish-virtualmedia+http://192.168.111.1:8000/redfish/v1/Systems/760e9230-1f35-4ce7-bbe2-522778127931",
+        "deploy_kernel": "http:///images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http:///images/ironic-python-agent.initramfs"
+      },
+      "ports": [
+        {
+          "address": "00:84:70:de:91:f3",
+          "pxe_enabled": true
+        }
+      ],
+      "properties": {
+        "local_gb": "30",
+        "cpu_arch": "x86_64"
+      }
+    },
+    {
+      "name": "ostest-worker-2",
+      "driver": "redfish-virtualmedia",
+      "resource_class": "baremetal",
+      "driver_info": {
+        "username": "admin",
+        "password": "password",
+        "port": "8000",
+        "address": "redfish-virtualmedia+http://192.168.111.1:8000/redfish/v1/Systems/f27106c6-9df0-4f97-98b0-b6118daf932a",
+        "deploy_kernel": "http:///images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http:///images/ironic-python-agent.initramfs"
+      },
+      "ports": [
+        {
+          "address": "00:84:70:de:91:f7",
+          "pxe_enabled": true
+        }
+      ],
+      "properties": {
+        "local_gb": "30",
+        "cpu_arch": "x86_64"
+      }
+    }
+  ]
+}

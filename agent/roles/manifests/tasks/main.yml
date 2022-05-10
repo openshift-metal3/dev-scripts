@@ -1,0 +1,40 @@
+---
+# tasks file for manifests
+- name: Create directory for manifests
+  file:
+    path: "{{ ansible_facts['devscripts']['manifests_dir'] }}"
+    state: directory
+
+- name: Print ironic_nodes
+  debug:
+    var: ironic_nodes
+
+- name: Write agent-cluster-install.yaml
+  template:
+    src: "crd_agent-cluster-install.j2"
+    dest: "{{ ansible_facts['devscripts']['manifests_dir'] }}/agent-cluster-install.yaml"
+
+- name: Write cluster-deployment.yaml
+  template:
+    src: "crd_cluster-deployment.j2"
+    dest: "{{ ansible_facts['devscripts']['manifests_dir'] }}/cluster-deployment.yaml"
+
+- name: Write cluster-image-set.yaml
+  template:
+    src: "crd_cluster-image-set.j2"
+    dest: "{{ ansible_facts['devscripts']['manifests_dir'] }}/cluster-image-set.yaml"
+
+- name: Write infraenv.yaml
+  template:
+    src: "crd_infraenv.j2"
+    dest: "{{ ansible_facts['devscripts']['manifests_dir'] }}/infraenv.yaml"
+
+- name: Write nmstateconfig.yaml
+  template:
+    src: "crd_nmstateconfig.j2"
+    dest: "{{ ansible_facts['devscripts']['manifests_dir'] }}/nmstateconfig.yaml"
+
+- name: Write pull-secret.yaml
+  template:
+    src: "crd_pull-secret.j2"
+    dest: "{{ ansible_facts['devscripts']['manifests_dir'] }}/pull-secret.yaml"

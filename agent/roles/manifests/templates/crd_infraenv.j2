@@ -1,0 +1,15 @@
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: {{ ansible_facts['devscripts']['cluster_name'] }}-infraenv
+  namespace: {{ ansible_facts['devscripts']['cluster_name'] }}
+spec:
+  clusterRef:
+    name: {{ ansible_facts['devscripts']['cluster_name'] }}
+    namespace: {{ ansible_facts['devscripts']['cluster_name'] }}
+  pullSecretRef:
+    name: pull-secret
+  sshAuthorizedKey: {{ ansible_facts['devscripts']['ssh_pub_key'] }}
+  nmStateConfigLabelSelector:
+    matchLabels:
+      {{ ansible_facts['devscripts']['cluster_name'] }}-nmstate-label-name: {{ ansible_facts['devscripts']['cluster_name'] }}-nmstate-label-value

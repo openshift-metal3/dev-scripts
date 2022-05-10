@@ -1,0 +1,30 @@
+# See https://docs.ansible.com/ansible/latest/dev_guide/collections_galaxy_meta.html
+
+namespace: devscripts
+name: agente2e
+version: 0.0.1
+readme: README.md
+authors:
+  - Lisa Ranjbar (@lranjbar)
+description:
+ - Agent Installer team's modules and plugins for working with openshift-metal3/dev-scripts
+license_file: LICENSE
+tags:
+  - openshift
+  - installer
+  - agent
+  - assisted
+  - ipi
+  - baremetal
+  - e2e
+dependencies:
+  "ansible.utils": "*"
+  "community.general": "*"
+repository: https://github.com/openshift-metal3/dev-scripts/agent
+documentation: https://github.com/openshift-metal3/dev-scripts/agent/docs
+homepage: https://github.com/openshift-metal3/dev-scripts/agent
+issues: https://github.com/openshift-metal3/dev-scripts/issues
+build_ignore:
+# https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html#ignoring-files-and-folders
+  - .gitignore
+  - changelogs/.plugin-cache.yaml

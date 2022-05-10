@@ -1,0 +1,6 @@
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: openshift-v{{ ansible_facts['devscripts']['openshift_version'] }}
+spec:
+  releaseImage: quay.io/openshift-release-dev/ocp-release:4.10.10-x86_64
