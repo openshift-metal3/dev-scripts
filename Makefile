@@ -1,4 +1,4 @@
-.PHONY: default all agent agent_cleanup agent_deployment requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
+.PHONY: default all agent agent_cleanup agent_build_installer agent_configure agent_create_cluster requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
 default: requirements configure build_installer ironic install_config ocp_run bell
 
 all: default
@@ -7,10 +7,16 @@ all: default
 assisted: assisted_deployment bell
 
 # Deploy cluster with agent installer flow
-agent: requirements configure agent_deployment
+agent: requirements configure agent_build_installer agent_configure agent_create_cluster
 
-agent_deployment:
-	./agent/03_agent_deployment.sh
+agent_build_installer:
+	./agent/03_agent_build_installer.sh
+
+agent_configure:
+	./agent/04_agent_configure.sh
+
+agent_create_cluster:
+	./agent/05_agent_create_cluster.sh
 
 agent_cleanup:
 	./agent/cleanup.sh

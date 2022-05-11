@@ -13,13 +13,14 @@ source $SCRIPTDIR/agent/common.sh
 
 early_deploy_validation
 
+
 function get_static_ips_and_macs() {
 
-    FLEETING_NODES_IPS=()
-    FLEETING_NODES_MACS=()
-    FLEETING_NODES_HOSTNAMES=()
+    AGENT_NODES_IPS=()
+    AGENT_NODES_MACS=()
+    AGENT_NODES_HOSTNAMES=()
 
-    if [[ "$FLEETING_STATIC_IP_NODE0_ONLY" = "true" ]]; then
+    if [[ "$AGENT_STATIC_IP_NODE0_ONLY" = "true" ]]; then
         static_ips=1
     else
         static_ips=$NUM_MASTERS+$NUM_WORKERS
@@ -37,40 +38,45 @@ function get_static_ips_and_macs() {
     for (( i=0; i<${static_ips}; i++ ))
     do
         ip=${base_ip}+${i}
-        FLEETING_NODES_IPS+=($(nth_ip ${external_subnet} ${ip}))
+        AGENT_NODES_IPS+=($(nth_ip ${external_subnet} ${ip}))
 
         if [[ $i < $NUM_MASTERS ]]; then
-            FLEETING_NODES_HOSTNAMES+=($(printf ${MASTER_HOSTNAME_FORMAT} ${i}))
+            AGENT_NODES_HOSTNAMES+=($(printf ${MASTER_HOSTNAME_FORMAT} ${i}))
             cluster_name=${CLUSTER_NAME}_master_${i}
         else
 	    worker_num=$((${i}-$NUM_MASTERS))
-            FLEETING_NODES_HOSTNAMES+=($(printf ${WORKER_HOSTNAME_FORMAT} ${worker_num}))
+            AGENT_NODES_HOSTNAMES+=($(printf ${WORKER_HOSTNAME_FORMAT} ${worker_num}))
             cluster_name=${CLUSTER_NAME}_worker_${worker_num}
         fi
 
-        # Add a DNS entry for this hostname
-        sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${FLEETING_NODES_IPS[i]}'> <hostname>${FLEETING_NODES_HOSTNAMES[i]}</hostname> </host>"  --live --config
+        # Add a DNS entry for this hostname if it's not already defined
+        if ! $(sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath "//dns/host[@ip = '${AGENT_NODES_IPS[i]}']" - &> /dev/null); then
+          sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${AGENT_NODES_IPS[i]}'> <hostname>${AGENT_NODES_HOSTNAMES[i]}</hostname> </host>"  --live --config
+        fi
 
         # Get the generated mac addresses
-        FLEETING_NODES_MACS+=($(sudo virsh dumpxml $cluster_name | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -))
+        AGENT_NODES_MACS+=($(sudo virsh dumpxml $cluster_name | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -))
     done
 }
 
-function generate_fleeting_manifests() {
+function generate_cluster_manifests() {
 
-    mkdir -p ${FLEETING_MANIFESTS_PATH}
+  # To be change in ${OCP_DIR}/cluster-manifests
+  MANIFESTS_PATH="${OCP_DIR}/manifests"
 
-    if [[ "$IP_STACK" = "v4" ]]; then
-      CLUSTER_NETWORK=${CLUSTER_SUBNET_V4}
-      SERVICE_NETWORK=${SERVICE_SUBNET_V4}
-      CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V4}
-    elif [[ "$IP_STACK" = "v6" ]]; then
-      CLUSTER_NETWORK=${CLUSTER_SUBNET_V6}
-      SERVICE_NETWORK=${SERVICE_SUBNET_V6}
-      CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V6}
-    fi
+  mkdir -p ${MANIFESTS_PATH}
+  
+  if [[ "$IP_STACK" = "v4" ]]; then
+    CLUSTER_NETWORK=${CLUSTER_SUBNET_V4}
+    SERVICE_NETWORK=${SERVICE_SUBNET_V4}
+    CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V4}
+  elif [[ "$IP_STACK" = "v6" ]]; then
+    CLUSTER_NETWORK=${CLUSTER_SUBNET_V6}
+    SERVICE_NETWORK=${SERVICE_SUBNET_V6}
+    CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V6}
+  fi
 
-    cat > "${FLEETING_MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
+    cat > "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
 apiVersion: extensions.hive.openshift.io/v1beta1
 kind: AgentClusterInstall
 metadata:
@@ -95,7 +101,7 @@ spec:
   sshPublicKey: ${SSH_PUB_KEY}
 EOF
 
-    cat > "${FLEETING_MANIFESTS_PATH}/cluster-deployment.yaml" << EOF
+    cat > "${MANIFESTS_PATH}/cluster-deployment.yaml" << EOF
 apiVersion: hive.openshift.io/v1
 kind: ClusterDeployment
 metadata:
@@ -120,7 +126,7 @@ spec:
     name: pull-secret
 EOF
 
-    cat > "${FLEETING_MANIFESTS_PATH}/cluster-image-set.yaml" << EOF
+    cat > "${MANIFESTS_PATH}/cluster-image-set.yaml" << EOF
 apiVersion: hive.openshift.io/v1
 kind: ClusterImageSet
 metadata:
@@ -129,7 +135,7 @@ spec:
   releaseImage: quay.io/openshift-release-dev/ocp-release:4.10.10-x86_64
 EOF
 
-    cat > "${FLEETING_MANIFESTS_PATH}/infraenv.yaml" << EOF
+    cat > "${MANIFESTS_PATH}/infraenv.yaml" << EOF
 apiVersion: agent-install.openshift.io/v1beta1
 kind: InfraEnv
 metadata:
@@ -149,7 +155,7 @@ EOF
 
     set +x
     pull_secret=$(cat $PULL_SECRET_FILE)
-    cat > "${FLEETING_MANIFESTS_PATH}/pull-secret.yaml" << EOF
+    cat > "${MANIFESTS_PATH}/pull-secret.yaml" << EOF
 apiVersion: v1
 kind: Secret
 type: kubernetes.io/dockerconfigjson
@@ -161,16 +167,16 @@ stringData:
 
 EOF
 
-    num_ips=${#FLEETING_NODES_IPS[@]}
+    num_ips=${#AGENT_NODES_IPS[@]}
 
     # Create a yaml for each host in nmstateconfig.yaml
     for (( i=0; i<$num_ips; i++ ))
     do
-        cat >> "${FLEETING_MANIFESTS_PATH}/nmstateconfig.yaml" << EOF
+        cat >> "${MANIFESTS_PATH}/nmstateconfig.yaml" << EOF
 apiVersion: agent-install.openshift.io/v1beta1
 kind: NMStateConfig
 metadata:
-  name: ${FLEETING_NODES_HOSTNAMES[i]}
+  name: ${AGENT_NODES_HOSTNAMES[i]}
   namespace: openshift-machine-api
   labels:
     cluster0-nmstate-label-name: cluster0-nmstate-label-value
@@ -180,11 +186,11 @@ spec:
       - name: eth0
         type: ethernet
         state: up
-        mac-address: ${FLEETING_NODES_MACS[i]}
+        mac-address: ${AGENT_NODES_MACS[i]}
         ipv4:
           enabled: true
           address:
-            - ip: ${FLEETING_NODES_IPS[i]}
+            - ip: ${AGENT_NODES_IPS[i]}
               prefix-length: ${CLUSTER_HOST_PREFIX}
           dhcp: false
     dns-resolver:
@@ -199,34 +205,12 @@ spec:
           table-id: 254
   interfaces:
     - name: "eth0"
-      macAddress: ${FLEETING_NODES_MACS[i]}
+      macAddress: ${AGENT_NODES_MACS[i]}
 ---
 EOF
     done
 
     set -x
-}
-
-function generate_fleeting_iso() {
-    export REPO_PATH=${WORKING_DIR}
-
-    sync_repo_and_patch fleeting https://github.com/openshift-agent-team/fleeting ${FLEETING_PR}
-
-    generate_fleeting_manifests
-
-    pushd ${FLEETING_PATH}
-    make iso 
-    popd
-}
-
-function attach_fleeting_iso() {
-    for (( n=0; n<${2}; n++ ))
-    do
-        name=${CLUSTER_NAME}_${1}_${n}
-        sudo virt-xml ${name} --add-device --disk ${FLEETING_ISO},device=cdrom,target.dev=sdc
-        sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
-        sudo virt-xml ${name} --edit target=sdc --disk="boot_order=2" --start
-    done
 }
 
 write_pull_secret
@@ -239,9 +223,5 @@ get_static_ips_and_macs
 
 set_api_and_ingress_vip
 
-generate_fleeting_iso
-
-attach_fleeting_iso master $NUM_MASTERS
-attach_fleeting_iso worker $NUM_WORKERS
-
+generate_cluster_manifests
 
