@@ -120,6 +120,15 @@ spec:
     name: pull-secret
 EOF
 
+    cat > "${FLEETING_MANIFESTS_PATH}/cluster-image-set.yaml" << EOF
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: openshift-v4.10.0
+spec:
+  releaseImage: quay.io/openshift-release-dev/ocp-release:4.10.10-x86_64
+EOF
+
     cat > "${FLEETING_MANIFESTS_PATH}/infraenv.yaml" << EOF
 apiVersion: agent-install.openshift.io/v1beta1
 kind: InfraEnv
