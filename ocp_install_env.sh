@@ -38,16 +38,6 @@ function extract_oc() {
     sudo mv "${extract_dir}/oc" /usr/local/bin
 }
 
-function extract_installer() {
-    local release_image
-    local outdir
-
-    release_image="$1"
-    outdir="$2"
-
-    extract_command openshift-baremetal-install "$1" "$2"
-}
-
 function save_release_info() {
     local release_image
     local outdir
@@ -84,29 +74,6 @@ function extract_rhcos_json() {
     podman cp "$baremetal_container":/var/cache/rhcos.json "$outdir" || true
 
     podman rm -f "$baremetal_container"
-}
-
-function clone_installer() {
-  # Clone repo, if not already present
-  if [[ ! -d $OPENSHIFT_INSTALL_PATH ]]; then
-    sync_repo_and_patch go/src/github.com/openshift/installer https://github.com/openshift/installer.git
-  fi
-}
-
-function build_installer() {
-  # Build installer
-  pushd .
-  cd $OPENSHIFT_INSTALL_PATH
-  TAGS="libvirt baremetal" DEFAULT_ARCH=$(get_arch) hack/build.sh
-  popd
-  # This is only needed in rhcos.sh for old versions which lack the
-  # openshift-install coreos-print-stream-json option
-  # That landed in 4.8, and in 4.10 this file moved, so just
-  # skip copying it if it's not in the "old" location ref
-  # https://github.com/openshift/installer/pull/5252
-  if [ -f "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" ]; then
-    cp "$OPENSHIFT_INSTALL_PATH/data/data/rhcos.json" "$OCP_DIR"
-  fi
 }
 
 function baremetal_network_configuration() {
