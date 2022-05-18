@@ -6,7 +6,7 @@ ENV HOME /output
 RUN INSTALL_PKGS="ansible python-pip nss_wrapper" && \
     yum install -y $INSTALL_PKGS && \
     pip install packet-python && \
-    ansible-galaxy collection install community.general && \
+    ansible-galaxy collection install "community.general:4.8.1" && \
     yum clean all && \
     rm -rf /var/cache/yum/* && \
     chmod -R g+rwx /output && \
