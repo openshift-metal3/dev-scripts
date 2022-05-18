@@ -24,6 +24,12 @@ function create_image() {
 }
 
 function attach_agent_iso() {
+
+    # This is required to allow qemu opening the disk image
+    if [ "${OPENSHIFT_CI}" == true ]; then
+      setfacl -m u:qemu:rx /root
+    fi
+
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
@@ -61,3 +67,12 @@ attach_agent_iso master $NUM_MASTERS
 attach_agent_iso worker $NUM_WORKERS
 
 wait_for_cluster_ready
+# Temporary fix for the CI. To be removed once we'll 
+# be able to generate the cluster credentials
+if [ "${OPENSHIFT_CI}" == true ]; then
+  auth_dir=${OCP_DIR}/auth
+  mkdir -p ${auth_dir}
+  touch ${auth_dir}/kubeconfig
+  touch ${auth_dir}/kubeadmin-password
+fi
+
