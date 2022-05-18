@@ -14,9 +14,13 @@ source $SCRIPTDIR/agent/common.sh
 early_deploy_validation
 
 function create_image() {
-  pushd ${OCP_DIR}
-  ./openshift-install --dir "${OCP_DIR}" --log-level=debug agent create image
-  popd  
+    local asset_dir="${1:-${OCP_DIR}}"
+    local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+    # TODO: replace pushd with --dir argument once nothing in agent
+    # installer depends on the working directory
+    pushd "${asset_dir}"
+    "${openshift_install}" --log-level=debug agent create image
+    popd
 }
 
 function attach_agent_iso() {
