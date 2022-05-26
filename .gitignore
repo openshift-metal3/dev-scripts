@@ -9,6 +9,10 @@ _clouds_yaml
 metal3-dev/deployment-*.yaml
 assets/generated
 metallb/frr/
+scratch/
+./**/scratch/
+scratch-test/
+./**/scratch-test/
 
 # Conditionally created for appropriate environments
 assets/templates/99_master-chronyd-redhat.yaml

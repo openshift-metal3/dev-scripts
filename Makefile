@@ -21,6 +21,9 @@ agent_create_cluster:
 agent_cleanup:
 	./agent/cleanup.sh
 
+agent_tests:
+	./agent/agent_tests.sh
+
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
 requirements:
