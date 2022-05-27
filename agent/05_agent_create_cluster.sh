@@ -33,7 +33,7 @@ function attach_agent_iso() {
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
-        sudo virt-xml ${name} --add-device --disk "${OCP_DIR}/output/agent.iso",device=cdrom,target.dev=sdc
+        sudo virt-xml ${name} --add-device --disk "${OCP_DIR}/agent.iso",device=cdrom,target.dev=sdc
         sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
         sudo virt-xml ${name} --edit target=sdc --disk="boot_order=2" --start
     done
