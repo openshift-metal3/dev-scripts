@@ -19,13 +19,13 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset 37c2f30b84776841f24a59ed23c040fcb3b4aaa2 --hard
+  git reset 6a8fb0d5543970b5d628e1204a3b3d3f9f70a63f --hard
   popd
 fi
 
 # This must be aligned with the metal3-dev-env pinned version above, see
 # https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
-export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"4.8.0"}
+export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"5.9.0"}
 
 # Update to latest packages first
 sudo dnf -y upgrade
@@ -48,6 +48,16 @@ elif [[ $DISTRO == "rhel8" ]]; then
     fi
 fi
 
+# NOTE(elfosardo): Hacks required for legacy and missing things due to bump in
+#metal3-dev-env commit hash.
+# All of those are needed because we're still behind for OS support.
+# passlib needs to be installed as system dependency
+if [[ -x "/usr/libexec/platform-python" ]]; then
+  sudo /usr/libexec/platform-python -m pip install passlib
+fi
+# install network-scripts package to be able to use legacy network commands
+sudo dnf install -y network-scripts
+
 # Install ansible, other packages are installed via
 # vm-setup/install-package-playbook.yml
 # Note recent ansible needs python >= 3.8 so we install 3.9 here
@@ -56,10 +66,9 @@ sudo alternatives --set python /usr/bin/python3.9
 sudo alternatives --set python3 /usr/bin/python3.9
 sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
 sudo pip3 install ansible=="${ANSIBLE_VERSION}"
-# Also need the 3.9 version of netaddr for ansible.netcommon
+# Also need the 3.9 version of netaddr for ansible.netcommon,
 # and lxml for the pyxpath script
 sudo pip3 install netaddr lxml
-
 
 GOARCH=$(uname -m)
 if [[ $GOARCH == "aarch64" ]]; then
@@ -70,13 +79,7 @@ fi
 
 pushd ${METAL3_DEV_ENV_PATH}
 ansible-galaxy install -r vm-setup/requirements.yml
-# NOTE(elfosardo): ansible.netcommon v2.6.0 broke compatibility with filters
-# redirection from builtin.
-# The root cause seems to be the commit:
-# https://github.com/ansible-collections/ansible.netcommon/commit/db4920ebf6bae6476ff8829e2cf475f19f83a990
-# temporarily capping it until the issue is fixed
-ansible-galaxy collection install 'ansible.netcommon:<2.6.0'
-ansible-galaxy collection install --upgrade ansible.posix community.general
+ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
