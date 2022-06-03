@@ -87,7 +87,7 @@ spec:
   clusterDeploymentRef:
     name: ${CLUSTER_NAME}
   imageSetRef:
-    name: openshift-${OPENSHIFT_RELEASE_STREAM}
+    name: openshift-v4.10.0
   networking:
     clusterNetwork:
     - cidr: ${CLUSTER_NETWORK}
@@ -129,9 +129,9 @@ EOF
 apiVersion: hive.openshift.io/v1
 kind: ClusterImageSet
 metadata:
-  name: openshift-${OPENSHIFT_RELEASE_STREAM}
+  name: openshift-v4.10.0
 spec:
-  releaseImage: ${OPENSHIFT_RELEASE_IMAGE}
+  releaseImage: quay.io/openshift-release-dev/ocp-release:4.10.10-x86_64
 EOF
 
     cat > "${MANIFESTS_PATH}/infraenv.yaml" << EOF
