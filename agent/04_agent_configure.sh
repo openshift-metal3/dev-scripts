@@ -61,8 +61,7 @@ function get_static_ips_and_macs() {
 
 function generate_cluster_manifests() {
 
-  # To be change in ${OCP_DIR}/cluster-manifests
-  MANIFESTS_PATH="${OCP_DIR}/manifests"
+  MANIFESTS_PATH="${OCP_DIR}/cluster-manifests"
 
   mkdir -p ${MANIFESTS_PATH}
   
@@ -225,3 +224,9 @@ set_api_and_ingress_vip
 
 generate_cluster_manifests
 
+
+# TODO: remove this once installer reads from cluster-manifests directory
+ln -s cluster-manifests ${OCP_DIR}/manifests
+
+# TODO: remove this once installer writes to the working directory
+ln -s output/agent.iso ${OCP_DIR}/agent.iso
