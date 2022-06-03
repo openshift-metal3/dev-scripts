@@ -82,8 +82,14 @@ metadata:
   name: test-agent-cluster-install
   namespace: cluster0
 spec:
+EOF
+if [[ "${NUM_MASTERS}" > "1" ]]; then
+cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
   apiVIP: ${API_VIP}
   ingressVIP: ${INGRESS_VIP}
+EOF
+fi
+cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
   clusterDeploymentRef:
     name: ${CLUSTER_NAME}
   imageSetRef:
@@ -220,7 +226,9 @@ sudo yum install -y nmstate
 
 get_static_ips_and_macs
 
-set_api_and_ingress_vip
+if [[ "${NUM_MASTERS}" > "1" ]]; then
+  set_api_and_ingress_vip
+fi
 
 generate_cluster_manifests
 
