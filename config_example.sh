@@ -595,3 +595,10 @@ set -x
 
 # Set whether static IPs will be used for all nodes or only Node0
 # export AGENT_STATIC_IP_NODE0_ONLY="true"
+
+# To deploy SNO cluster, set
+# export NUM_WORKERS=0
+# export NUM_MASTERS=1
+# export MASTER_VCPU=8
+# export MASTER_MEMORY=32768
+# export MASTER_DISK=120
