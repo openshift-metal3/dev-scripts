@@ -86,6 +86,11 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -b -vvv vm-setup/install-package-playbook.yml
 popd
 
+if [ -n "${KNI_INSTALL_FROM_GIT}" ]; then
+    # zip is required for building the installer from source
+    sudo dnf -y install zip
+fi
+
 # We use yq in a few places for processing YAML but it isn't packaged
 # for CentOS/RHEL so we have to install from pip.
 pip3 install --user 'yq>=2.10.0'
