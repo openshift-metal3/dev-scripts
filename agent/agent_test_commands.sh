@@ -3,4 +3,4 @@ set -euxo pipefail
 
 # Ansible collection unit tests
 echo "### (UNIT_TEST): Running Ansible collection unit tests"
-ansible-test units --local
+ansible-test units -v

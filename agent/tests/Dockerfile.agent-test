@@ -5,10 +5,13 @@ RUN pip3 install ansible mock pytest pytest-mock pytest-xdist pytest-forked pyya
 
 # Set up ansible collections directories for agent
 RUN mkdir -p /code/ansible_collections/devscripts/agent
-ENV ANSIBLE_COLLECTIONS_PATH=/code
 COPY ./agent /code/ansible_collections/devscripts/agent
 RUN chmod -R 775 /code/ansible_collections/devscripts/agent
 WORKDIR /code/ansible_collections/devscripts/agent
+ENV ANSIBLE_COLLECTIONS_PATH=/code
+
+# Copy pytest.ini to control pytest output
+COPY ./agent/tests/pytest.ini /usr/local/lib/python3.9/site-packages/ansible_test/_data/pytest.ini
 
 # Create files for playbook dry run integration tests.
 COPY ./agent/tests/unit/plugins/modules/data/test_id_rsa.pub /root/.ssh/id_rsa.pub
