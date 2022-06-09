@@ -382,7 +382,7 @@ set -x
 # Whether the installation is on baremetal or not
 # Default is unset.
 #
-#export NODES_PLATFORM=BM
+#export NODES_PLATFORM=baremetal
 
 # MASTER_HOSTNAME_FORMAT -
 # Set a custom hostname format for masters. This is a format string that should

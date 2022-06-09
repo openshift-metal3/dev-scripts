@@ -36,6 +36,24 @@ if [ ! -z "${VM_NODES_FILE}" ]; then
   exit 1
 fi
 
+# If deploying to a real baremetal environment, we need to make
+# sure all nodes are powered down
+if [[ "${NODES_PLATFORM}" == "baremetal" ]] && [ -n "$NODES_FILE" ] ; then
+    set +x
+    cat $NODES_FILE | jq -r '.nodes[].driver_info | ( .address + " " + .username + " " + .password ) ' |
+    while read ADDRESS USER PASSWORD ; do
+        if [[ $ADDRESS =~ ^ipmi://([^:]*)(:([0-9]+))?$ ]] ; then
+            IPMIIP=${BASH_REMATCH[1]}
+            IPMIPORT=${BASH_REMATCH[3]:-623}
+            ipmitool -I lanplus -H $IPMIIP -p $IPMIPORT -U $USER -P $PASSWORD power off || echo "WARNING($?): Skipping power down of $ADDRESS"
+        else
+            # TODO: Add support for other protocols
+            echo "WARNING: Skipping power down of $ADDRESS"
+        fi
+    done
+    set -x
+fi
+
 if [[ "${HOST_IP_STACK}" != "v4" ]]; then
   # TODO - move this to metal3-dev-env.
   # This is to address the following error:
