@@ -231,10 +231,3 @@ if [[ "${NUM_MASTERS}" > "1" ]]; then
 fi
 
 generate_cluster_manifests
-
-
-# TODO: remove this once installer reads from cluster-manifests directory
-ln -s cluster-manifests ${OCP_DIR}/manifests
-
-# TODO: remove this once installer writes to the working directory
-ln -s output/agent.iso ${OCP_DIR}/agent.iso
