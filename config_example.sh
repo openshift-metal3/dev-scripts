@@ -174,17 +174,6 @@ set -x
 #
 #export DISABLE_MULTICAST=false
 
-# ENABLE_METALLB_MODE -
-# Enable metallb
-# Default is unset.
-# Choices: "l2", "bgp"
-#
-#export ENABLE_METALLB_MODE="l2"
-#
-# metallb container location (optional)
-#export METALLB_IMAGE_BASE=
-#export METALLB_IMAGE_TAG=
-
 ################################################################################
 ## Network Settings
 ##
