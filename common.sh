@@ -5,7 +5,7 @@ export PATH="/usr/local/go/bin:$HOME/.local/bin:$PATH"
 # Set a PS4 value which logs the script name and line #.
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-export E2E_TEST_SCENARIO=${E2E_TEST_SCENARIO:-}
+export AGENT_E2E_TEST_SCENARIO=${AGENT_E2E_TEST_SCENARIO:-}
 
 eval "$(go env)"
 
@@ -271,9 +271,9 @@ export EXTRA_WORKER_MEMORY=${EXTRA_WORKER_MEMORY:-${WORKER_MEMORY}}
 export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
 export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
 
-if [[ ! -z ${E2E_TEST_SCENARIO} ]]; then
-  export IP_STACK=${E2E_TEST_SCENARIO##*_IP}
-  SCENARIO=${E2E_TEST_SCENARIO%%_*}
+if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
+  export IP_STACK=${AGENT_E2E_TEST_SCENARIO##*_IP}
+  SCENARIO=${AGENT_E2E_TEST_SCENARIO%%_*}
 
   shopt -s nocasematch
   case "$SCENARIO" in
@@ -301,7 +301,7 @@ if [[ ! -z ${E2E_TEST_SCENARIO} ]]; then
           export NUM_WORKERS=0
           ;;
       *)
-        echo "Invalid value for E2E_TEST_SCENARIO. Supported values: COMPACT_IPV4, COMPACT_IPV6, HA_IPV4, HA_IPV6, SNO_IPV4, SNO_IPV6."
+        echo "Invalid value for AGENT_E2E_TEST_SCENARIO. Supported values: COMPACT_IPV4, COMPACT_IPV6, HA_IPV4, HA_IPV6, SNO_IPV4, SNO_IPV6."
         exit 1
   esac
 fi
