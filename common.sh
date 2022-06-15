@@ -5,6 +5,8 @@ export PATH="/usr/local/go/bin:$HOME/.local/bin:$PATH"
 # Set a PS4 value which logs the script name and line #.
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
+export AGENT_E2E_TEST_SCENARIO=${AGENT_E2E_TEST_SCENARIO:-}
+
 eval "$(go env)"
 
 export PATH="${GOPATH}/bin:$PATH"
@@ -268,6 +270,41 @@ export WORKER_VCPU=${WORKER_VCPU:-4}
 export EXTRA_WORKER_MEMORY=${EXTRA_WORKER_MEMORY:-${WORKER_MEMORY}}
 export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
 export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
+
+if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
+  export IP_STACK=${AGENT_E2E_TEST_SCENARIO##*_IP}
+  SCENARIO=${AGENT_E2E_TEST_SCENARIO%%_*}
+
+  shopt -s nocasematch
+  case "$SCENARIO" in
+      "COMPACT" )
+          export NUM_MASTERS=3
+          export MASTER_VCPU=4
+          export MASTER_DISK=120
+          export MASTER_MEMORY=16384
+          export NUM_WORKERS=0
+          ;;
+      "HA" )
+          export NUM_MASTERS=3
+          export MASTER_VCPU=4
+          export MASTER_DISK=120
+          export MASTER_MEMORY=16384
+          export NUM_WORKERS=2
+          export WORKER_VCPU=4
+          export WORKER_MEMORY=9000
+          ;;
+      "SNO" )
+          export NUM_MASTERS=1
+          export MASTER_VCPU=8
+          export MASTER_DISK=120
+          export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          ;;
+      *)
+        echo "Invalid value for AGENT_E2E_TEST_SCENARIO. Supported values: COMPACT_IPV4, COMPACT_IPV6, HA_IPV4, HA_IPV6, SNO_IPV4, SNO_IPV6."
+        exit 1
+  esac
+fi
 
 # Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:main"}
