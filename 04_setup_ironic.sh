@@ -102,30 +102,7 @@ done
 
 if [ ! -z "${MIRROR_IMAGES}" ]; then
 
-    # combine global and local secrets
-    # pull from one registry and push to local one
-    # hence credentials are different
-
-    EXTRACT_DIR=$(mktemp --tmpdir -d "mirror-installer--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $EXTRACT_DIR"
-
-    oc adm release mirror \
-       --insecure=true \
-        -a ${PULL_SECRET_FILE}  \
-        --from ${OPENSHIFT_RELEASE_IMAGE} \
-        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
-        --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
-    echo "export MIRRORED_RELEASE_IMAGE=$OPENSHIFT_RELEASE_IMAGE" > /tmp/mirrored_release_image
-
-    #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
-    #you must extract the installation program from the mirrored content:
-    if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-      oc adm release extract --registry-config "${PULL_SECRET_FILE}" \
-        --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
-        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
-
-      mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ${OCP_DIR}
-    fi
+    setup_release_mirror
 
     # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
     sudo podman image build --authfile $PULL_SECRET_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
