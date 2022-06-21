@@ -43,7 +43,7 @@ function wait_for_cluster_ready() {
 
   node0_name=$(printf ${MASTER_HOSTNAME_FORMAT} 0)
   node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
-  ssh_opts=(-o 'StrictHostKeyChecking=no' -q core@${node0_ip})
+  ssh_opts=(-o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q core@${node0_ip})
 
   until ssh "${ssh_opts[@]}" "[[ -f /var/lib/kubelet/kubeconfig ]]" 
   do 
@@ -54,7 +54,7 @@ function wait_for_cluster_ready() {
   sleep 5m
 
   echo "Waiting for cluster ready... "
-  if ssh "${ssh_opts[@]}" "sudo  oc wait --for=condition=Ready nodes --all --timeout=60m --kubeconfig=/var/lib/kubelet/kubeconfig"; then
+  if oc wait --for=condition=Ready nodes --all --timeout=60m --kubeconfig=${OCP_DIR}/auth/kubeconfig; then
     echo "Cluster is ready!"
   else
     exit 1
@@ -70,9 +70,6 @@ wait_for_cluster_ready
 # Temporary fix for the CI. To be removed once we'll 
 # be able to generate the cluster credentials
 if [ "${OPENSHIFT_CI}" == true ]; then
-  auth_dir=${OCP_DIR}/auth
-  mkdir -p ${auth_dir}
-  touch ${auth_dir}/kubeconfig
-  touch ${auth_dir}/kubeadmin-password
+  touch ${OCP_DIR}/auth/kubeadmin-password
 fi
 
