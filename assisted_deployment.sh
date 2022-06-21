@@ -17,7 +17,7 @@ ASSISTED_CONTROLLER_IMAGE="${ASSISTED_CONTROLLER_IMAGE:-}"
 ASSISTED_OPENSHIFT_VERSIONS="${ASSISTED_OPENSHIFT_VERSIONS:-}"
 
 ASSISTED_NAMESPACE="${ASSISTED_NAMESPACE:-assisted-installer}"
-ASSISTED_OPERATOR_INDEX="${ASSISTED_OPERATOR_INDEX:-quay.io/ocpmetal/assisted-service-index:latest}"
+ASSISTED_OPERATOR_INDEX="${ASSISTED_OPERATOR_INDEX:-quay.io/edge-infrastructure/assisted-service-index:latest}"
 
 ASSETS_DIR="${OCP_DIR}/saved-assets/assisted-installer-manifests"
 
