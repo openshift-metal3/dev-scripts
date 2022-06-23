@@ -10,6 +10,7 @@ source $SCRIPTDIR/network.sh
 source $SCRIPTDIR/utils.sh
 source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/agent/common.sh
+source $SCRIPTDIR/ocp_install_env.sh
 
 early_deploy_validation
 
@@ -63,6 +64,9 @@ function generate_cluster_manifests() {
 
   MANIFESTS_PATH="${OCP_DIR}/cluster-manifests"
 
+  # Fetch current OpenShift version from the release payload
+  VERSION="$(openshift_version ${OCP_DIR})"
+
   mkdir -p ${MANIFESTS_PATH}
   
   if [[ "$IP_STACK" = "v4" ]]; then
@@ -93,7 +97,7 @@ cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
   clusterDeploymentRef:
     name: ${CLUSTER_NAME}
   imageSetRef:
-    name: openshift-${OPENSHIFT_RELEASE_STREAM}
+    name: openshift-${VERSION}
   networking:
     clusterNetwork:
     - cidr: ${CLUSTER_NETWORK}
@@ -135,7 +139,7 @@ EOF
 apiVersion: hive.openshift.io/v1
 kind: ClusterImageSet
 metadata:
-  name: openshift-${OPENSHIFT_RELEASE_STREAM}
+  name: openshift-${VERSION}
 spec:
   releaseImage: ${OPENSHIFT_RELEASE_IMAGE}
 EOF
