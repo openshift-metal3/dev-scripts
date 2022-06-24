@@ -226,6 +226,12 @@ function node_map_to_install_config_hosts() {
         bootMACAddress: ${mac}
         bootMode: ${boot_mode}
 EOF
+        if [ -n "$NETWORK_CONFIG_FOLDER" ]; then
+            node_network_config="${NETWORK_CONFIG_FOLDER}/${name}.yaml"
+            if [ -e "$node_network_config" ]; then
+                cat "$node_network_config" | sed "s/\(.*\)/        \1/"
+            fi
+        fi
 
         # FIXME(stbenjam) Worker code in installer should accept
         # "default" as well -- currently the mapping doesn't work,
