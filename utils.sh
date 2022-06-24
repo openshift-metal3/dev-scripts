@@ -406,14 +406,16 @@ function setup_release_mirror {
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
     #you must extract the installation program from the mirrored content:
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
+      local installer="${OPENSHIFT_INSTALLER_CMD:-openshift-baremetal-install}"
+
       EXTRACT_DIR=$(mktemp --tmpdir -d "mirror-installer--XXXXXXXXXX")
       _tmpfiles="$_tmpfiles $EXTRACT_DIR"
 
       oc adm release extract --registry-config "${PULL_SECRET_FILE}" \
-        --command=openshift-baremetal-install --to "${EXTRACT_DIR}" \
+        --command=$installer --to "${EXTRACT_DIR}" \
         "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
 
-      mv -f "${EXTRACT_DIR}/openshift-baremetal-install" ${OCP_DIR}
+      mv -f "${EXTRACT_DIR}/$installer" ${OCP_DIR}
     fi
 }
 

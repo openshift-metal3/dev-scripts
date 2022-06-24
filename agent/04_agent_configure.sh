@@ -141,7 +141,7 @@ EOF
 
     local releaseImage=${OPENSHIFT_RELEASE_IMAGE}
     if [ ! -z "${MIRROR_IMAGES}" ]; then
-        releaseImage="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
+        releaseImage="${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}"
     fi
 
     cat > "${MANIFESTS_PATH}/cluster-image-set.yaml" << EOF
