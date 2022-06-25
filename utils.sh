@@ -594,6 +594,7 @@ function removetmp(){
 }
 
 function auth_template_and_removetmp(){
+    echo $? > "$LOGDIR"/installer-status.txt
     generate_auth_template
     removetmp
 }
