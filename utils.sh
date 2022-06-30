@@ -552,7 +552,7 @@ function bootstrap_ip {
                       | grep "${pref_ip}" \
                       | tail -n1 \
                       | awk '{print $5}' \
-                      | sed -e 's/\(.*\)\/.*/\1/'
+                      | sed -e 's/\(.*\)\/.*/\1/' || true
   else
     echo "Unable to retrieve bootstrap IP with infinite leases enabled." 1>&2
   fi
