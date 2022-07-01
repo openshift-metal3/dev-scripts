@@ -291,6 +291,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_MEMORY=16384
           export NUM_WORKERS=2
           export WORKER_VCPU=4
+          export WORKER_DISK=120
           export WORKER_MEMORY=9000
           ;;
       "SNO" )
