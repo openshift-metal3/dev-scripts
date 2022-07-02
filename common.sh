@@ -272,10 +272,9 @@ export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
 export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
 
 if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
-  export IP_STACK=${AGENT_E2E_TEST_SCENARIO##*_IP}
+  export IP_STACK=$(echo ${AGENT_E2E_TEST_SCENARIO##*_IP} | tr V v)
   SCENARIO=${AGENT_E2E_TEST_SCENARIO%%_*}
 
-  shopt -s nocasematch
   case "$SCENARIO" in
       "COMPACT" )
           export NUM_MASTERS=3
