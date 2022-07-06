@@ -91,6 +91,10 @@ if [ -n "${KNI_INSTALL_FROM_GIT}" ]; then
     sudo dnf -y install zip
 fi
 
+if [[ "${NODES_PLATFORM}" == "baremetal" ]] ; then
+    sudo dnf -y install ipmitool
+fi
+
 # We use yq in a few places for processing YAML but it isn't packaged
 # for CentOS/RHEL so we have to install from pip.
 pip3 install --user 'yq>=2.10.0'
