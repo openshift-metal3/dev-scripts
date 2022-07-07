@@ -18,9 +18,6 @@ export INSTALLER_REPO_BRANCH=agent-installer
 # Override build tags
 export OPENSHIFT_INSTALLER_BUILD_TAGS=" "
 
-# Override command name in case of extraction
-export OPENSHIFT_INSTALLER_CMD="openshift-install"
-
 source $SCRIPTDIR/03_build_installer.sh
 
 # Writes the currently used openshift version in the installer binary,
@@ -40,5 +37,6 @@ function patch_openshift_install_version() {
 # Copy install binary if built from src
 if [ ! -z "$KNI_INSTALL_FROM_GIT" -a -f "$OPENSHIFT_INSTALL_PATH/bin/openshift-install" ]; then
     cp "$OPENSHIFT_INSTALL_PATH/bin/openshift-install" "$OCP_DIR"
+
     patch_openshift_install_version
 fi

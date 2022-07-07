@@ -63,11 +63,15 @@ function get_static_ips_and_macs() {
 function generate_cluster_manifests() {
 
   MANIFESTS_PATH="${OCP_DIR}/cluster-manifests"
+  MIRROR_PATH="${OCP_DIR}/mirror"
 
   # Fetch current OpenShift version from the release payload
   VERSION="$(openshift_version ${OCP_DIR})"
 
   mkdir -p ${MANIFESTS_PATH}
+  if [ ! -z "${MIRROR_IMAGES}" ]; then
+    mkdir -p ${MIRROR_PATH}
+  fi
   
   if [[ "$IP_STACK" = "v4" ]]; then
     CLUSTER_NETWORK=${CLUSTER_SUBNET_V4}
@@ -135,14 +139,44 @@ spec:
     name: pull-secret
 EOF
 
+    local releaseImage=${OPENSHIFT_RELEASE_IMAGE}
+    if [ ! -z "${MIRROR_IMAGES}" ]; then
+        releaseImage="${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}"
+    fi
+
     cat > "${MANIFESTS_PATH}/cluster-image-set.yaml" << EOF
 apiVersion: hive.openshift.io/v1
 kind: ClusterImageSet
 metadata:
   name: openshift-${VERSION}
 spec:
-  releaseImage: ${OPENSHIFT_RELEASE_IMAGE}
+  releaseImage: $releaseImage
 EOF
+
+if [ ! -z "${MIRROR_IMAGES}" ]; then
+# TODO - get the mirror registry info from output of 'oc adm release mirror'
+
+    cat > "${MIRROR_PATH}/registries.conf" << EOF
+[[registry]]
+prefix = ""
+location = "registry.ci.openshift.org/ocp/release"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image"
+
+[[registry]]
+prefix = ""
+location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image"
+EOF
+
+cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
+
+fi
 
     cat > "${MANIFESTS_PATH}/infraenv.yaml" << EOF
 apiVersion: agent-install.openshift.io/v1beta1
@@ -229,6 +263,15 @@ write_pull_secret
 sudo yum install -y nmstate
 
 get_static_ips_and_macs
+
+
+if [ ! -z "${MIRROR_IMAGES}" ]; then
+
+  setup_local_registry
+
+  setup_release_mirror
+
+fi
 
 if [[ "${NUM_MASTERS}" > "1" ]]; then
   set_api_and_ingress_vip
