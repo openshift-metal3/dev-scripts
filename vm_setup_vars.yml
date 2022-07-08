@@ -79,3 +79,5 @@ external_network:
       forwarders:
         - domain: "apps.{{ cluster_domain }}"
           addr: "127.0.0.1"
+
+networks: "{{ provisioning_network + external_network + (extra_networks | default([])) if not lookup('env', 'BOND_PRIMARY_INTERFACE') else provisioning_network + external_network + external_network + (extra_networks | default([])) }}"
