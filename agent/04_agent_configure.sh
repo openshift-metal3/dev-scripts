@@ -128,13 +128,6 @@ spec:
     name: test-agent-cluster-install
     version: v1beta1
   clusterName: ${CLUSTER_NAME}
-  controlPlaneConfig:
-    servingCertificates: {}
-  platform:
-    agentBareMetal:
-      agentSelector:
-        matchLabels:
-          bla: aaa
   pullSecretRef:
     name: pull-secret
 EOF
