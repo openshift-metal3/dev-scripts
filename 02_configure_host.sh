@@ -68,7 +68,7 @@ fi
 
 export ANSIBLE_FORCE_COLOR=true
 
-if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     setup_local_registry
 fi
 
@@ -77,11 +77,11 @@ if [[ ! -z "${INSTALLER_PROXY}" ]]; then
   generate_proxy_conf > ${WORKING_DIR}/squid.conf
 
   sudo podman run -d --rm \
-     --net host \
-     --volume ${WORKING_DIR}/squid.conf:/etc/squid/squid.conf \
-     --name ds-squid \
-     --dns 127.0.0.1 \
-     quay.io/sameersbn/squid:latest
+    --net host \
+    --volume ${WORKING_DIR}/squid.conf:/etc/squid/squid.conf \
+    --name ds-squid \
+    --dns 127.0.0.1 \
+    quay.io/sameersbn/squid:latest
 fi
 
 sudo systemctl enable --now firewalld
@@ -93,7 +93,7 @@ configure_chronyd
 
 export VNC_CONSOLE=true
 if [[ $(uname -m) == "aarch64" ]]; then
-   VNC_CONSOLE=false
+  VNC_CONSOLE=false
 fi
 
 
@@ -112,7 +112,7 @@ ansible-playbook \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "sushy_ignore_boot_device=$REDFISH_EMULATOR_IGNORE_BOOT_DEVICE" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
-    -e "provisioning_url_host=$PROVISIONING_URL_HOST" \
+    -e "provisioning_url_host=${PROVISIONING_URL_HOST:-}" \
     -e "nodes_file=$NODES_FILE" \
     -e "virtualbmc_base_port=$VBMC_BASE_PORT" \
     -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
@@ -161,12 +161,12 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Adding an IP address in the libvirt definition for this network results in
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
-    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME} ] ; then
+    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME} ]; then
         if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
             echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nIPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
         else
             echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\nNM_CONTROLLED=no\nBOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
-       fi
+        fi
     fi
     sudo ifdown ${PROVISIONING_NETWORK_NAME} || true
     sudo ifup ${PROVISIONING_NETWORK_NAME}
@@ -193,15 +193,15 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Add the internal interface to it if requests, this may also be the interface providing
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
-        echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
-        if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-             grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
-        else
-           if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-               grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
-           fi
-       fi
-        sudo systemctl restart network
+      echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\nNM_CONTROLLED=no\nBRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+      if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+        grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
+      else
+        if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
+          grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
+        fi
+      fi
+      sudo systemctl restart network
     fi
 fi
 
@@ -256,7 +256,7 @@ echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a
 # Remove any previous file, or podman login panics when reading the
 # blank authfile with a "assignment to entry in nil map" error
 rm -f ${REGISTRY_CREDS}
-if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     # create authfile for local registry
     sudo podman login --authfile ${REGISTRY_CREDS} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \

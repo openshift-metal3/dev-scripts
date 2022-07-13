@@ -4,7 +4,7 @@ function nth_ip() {
   network=$1
   idx=$2
 
-  python -c "from ansible_collections.ansible.netcommon.plugins.filter import ipaddr; print(ipaddr.nthhost('"$network"', $idx))"
+  python -c "from ansible_collections.ansible.utils.plugins.filter import nthhost; print(nthhost.nthhost('"$network"', $idx))"
 }
 
 function ipversion(){
@@ -168,7 +168,7 @@ else
 fi
 
 # Proxy related configuration
-if  [[ ! -z "$INSTALLER_PROXY" ]]; then
+if  [[ ! -z "${INSTALLER_PROXY:-}" ]]; then
   export EXT_SUBNET=${EXTERNAL_SUBNET_V6}
   if [[ "$IP_STACK" = "v4" ]]; then
     EXT_SUBNET=${EXTERNAL_SUBNET_V4}
