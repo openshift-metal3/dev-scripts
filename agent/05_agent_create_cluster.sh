@@ -39,6 +39,32 @@ function attach_agent_iso() {
     done
 }
 
+function force_mirror_disconnect() {
+
+  # Set a bogus entry in /etc/hosts on all masters to force the local mirror to be used
+  node0_name=$(printf ${MASTER_HOSTNAME_FORMAT} 0)
+  node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
+  ssh_opts=(-o 'StrictHostKeyChecking=no' -q core@${node0_ip})
+
+  for (( n=0; n<${NUM_MASTERS}; n++ ))
+  do
+     node_name=$(printf ${MASTER_HOSTNAME_FORMAT} $n)
+     node_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node_name}']/../@ip)" -)
+     ssh_opts=(-o 'StrictHostKeyChecking=no' -q core@${node_ip})
+
+     until ssh "${ssh_opts[@]}" "[[ -f /etc/hosts ]]"
+     do
+       echo "Waiting for $node_name to set remote host disconnect "
+       sleep 30s;
+     done
+
+     # Set a bogus entry in /etc/hosts to break remote access
+     ssh "${ssh_opts[@]}" "echo '125.12.15.15 quay.io' | sudo tee -a /etc/hosts "
+     ssh "${ssh_opts[@]}" "echo '125.12.15.16 registry.ci.openshift.org' | sudo tee -a /etc/hosts "
+  done
+
+}
+
 function wait_for_cluster_ready() {
 
   node0_name=$(printf ${MASTER_HOSTNAME_FORMAT} 0)
@@ -65,6 +91,10 @@ create_image
 
 attach_agent_iso master $NUM_MASTERS
 attach_agent_iso worker $NUM_WORKERS
+
+if [ ! -z "${MIRROR_IMAGES}" ]; then
+  force_mirror_disconnect
+fi
 
 wait_for_cluster_ready
 # Temporary fix for the CI. To be removed once we'll 
