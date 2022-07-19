@@ -342,6 +342,11 @@ set -x
 #export EXTERNAL_SUBNET_V4="11.0.0.0/24"
 #export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/120"
 
+# ENABLE_BOOTSTRAP_STATIC_IP -
+# Configure a static IP for the bootstrap VM external NIC
+# (Currently this just expects a non-empty value, the IP is fixed to .9)
+# export ENABLE_BOOTSTRAP_STATIC_IP=true
+
 ################################################################################
 ## VM Settings
 ##

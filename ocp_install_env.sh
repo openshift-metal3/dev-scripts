@@ -98,6 +98,19 @@ cat <<EOF
     provisioningNetworkInterface: $CLUSTER_PRO_IF
 EOF
   fi
+
+  if [ -n "${ENABLE_BOOTSTRAP_STATIC_IP}" ]; then
+    if [[ "${IP_STACK}" = "v6" ]]; then
+      BOOTSTRAP_IP=$(nth_ip $EXTERNAL_SUBNET_V6 $((idx + 9)))
+    else
+      # Note we assume v4 for dual-stack v4v6 since it's the primary network
+      BOOTSTRAP_IP=$(nth_ip $EXTERNAL_SUBNET_V4 $((idx + 9)))
+    fi
+cat <<EOF
+    bootstrapExternalStaticIP: "${BOOTSTRAP_IP}"
+    bootstrapExternalStaticGateway: "${PROVISIONING_HOST_EXTERNAL_IP}"
+EOF
+  fi
 }
 
 function dnsvip() {
