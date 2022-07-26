@@ -34,41 +34,60 @@ sudo dnf -y upgrade
 # shellcheck disable=SC1091
 source /etc/os-release
 export DISTRO="${ID}${VERSION_ID%.*}"
-if [[ $DISTRO == "centos8" ]]; then
-    echo "CentOS is not supported anymore. Please switch to CentOS Stream / RHEL / Rocky Linux"
-    sudo dnf -y install epel-release dnf --enablerepo=extras
-elif [[ $DISTRO == "rhel8" ]]; then
-    # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
-    sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-
-    if sudo subscription-manager repos --list-enabled 2>&1 | grep "ansible-2-for-rhel-8-$(uname -m)-rpms"; then
-      # The packaged 2.x ansible is too old for compatibility with metal3-dev-env
-      sudo dnf erase -y ansible
-      sudo subscription-manager repos --disable=ansible-2-for-rhel-8-$(uname -m)-rpms
-    fi
-fi
 
 # NOTE(elfosardo): Hacks required for legacy and missing things due to bump in
 #metal3-dev-env commit hash.
 # All of those are needed because we're still behind for OS support.
 # passlib needs to be installed as system dependency
 if [[ -x "/usr/libexec/platform-python" ]]; then
-  sudo /usr/libexec/platform-python -m pip install passlib
+  sudo /usr/libexec/platform-python -m pip install passlib || sudo dnf -y install python3-pip && sudo /usr/libexec/platform-python -m pip install passlib
 fi
-# install network-scripts package to be able to use legacy network commands
-sudo dnf install -y network-scripts
 
 # Install ansible, other packages are installed via
 # vm-setup/install-package-playbook.yml
-# Note recent ansible needs python >= 3.8 so we install 3.9 here
-sudo dnf -y install python39
-sudo alternatives --set python /usr/bin/python3.9
-sudo alternatives --set python3 /usr/bin/python3.9
-sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
-sudo pip3 install ansible=="${ANSIBLE_VERSION}"
-# Also need the 3.9 version of netaddr for ansible.netcommon,
+case $DISTRO in
+  "centos8"|"rhel8")
+    # install network-scripts package to be able to use legacy network commands
+    sudo dnf install -y network-scripts
+    if [[ $DISTRO == "centos8" ]]; then
+      echo "CentOS is not supported anymore. Please switch to CentOS Stream / RHEL / Rocky Linux"
+      sudo dnf -y install epel-release dnf --enablerepo=extras
+    elif [[ $DISTRO == "rhel8" ]]; then
+      # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
+      sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+      if sudo subscription-manager repos --list-enabled 2>&1 | grep "ansible-2-for-rhel-8-x86_64-rpms"; then
+        # The packaged 2.x ansible is too old for compatibility with metal3-dev-env
+        sudo dnf erase -y ansible
+        sudo subscription-manager repos --disable=ansible-2-for-rhel-8-x86_64-rpms
+      fi
+    fi
+    # Note recent ansible needs python >= 3.8 so we install 3.9 here
+    sudo dnf -y install python39
+    sudo alternatives --set python /usr/bin/python3.9
+    sudo alternatives --set python3 /usr/bin/python3.9
+    sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
+    ;;
+  "centos9"|"rhel9")
+    sudo dnf -y install python3-pip
+    if [[ $DISTRO == "centos9" ]]; then
+      sudo dnf config-manager --set-enabled crb
+      sudo dnf -y install epel-release
+    elif [[ $DISTRO == "rhel9" ]]; then
+      sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+    fi
+    sudo ln -s /usr/bin/python3 /usr/bin/python || true
+    ;;
+  *)
+    echo -n "CentOS or RHEL version not supported"
+    exit 1
+    ;;
+esac
+
+sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
+
+# Also need the 3.9 version of netaddr for ansible.netcommon
 # and lxml for the pyxpath script
-sudo pip3 install netaddr lxml
+sudo python -m pip install netaddr lxml
 
 GOARCH=$(uname -m)
 if [[ $GOARCH == "aarch64" ]]; then
@@ -100,7 +119,7 @@ fi
 
 # We use yq in a few places for processing YAML but it isn't packaged
 # for CentOS/RHEL so we have to install from pip.
-sudo pip3 install 'yq>=2.10.0'
+sudo python -m pip install 'yq>=2.10.0'
 
 # needed if we are using locally built images
 # We stop any systemd service so we can run in a container, since

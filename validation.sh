@@ -23,8 +23,8 @@ function early_either_validation() {
 
     # Check CentOS version
     VER=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
-    if [[ ${VER} -ne 8 ]]; then
-        error "CentOS 8 or RHEL 8 are required."
+    if [[ ${VER} -lt 8 ]]; then
+        error "CentOS 8/9 or RHEL 8/9 are required."
         exit 1
     fi
 
