@@ -67,13 +67,10 @@ function wait_for_cluster_ready() {
   node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
   ssh_opts=(-o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q core@${node0_ip})
 
-  until ssh "${ssh_opts[@]}" "[[ -f /var/lib/kubelet/kubeconfig ]]" 
-  do 
-    echo "Waiting for bootstrap... "
-    sleep 1m; 
-  done
-
-  sleep 5m
+  local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+  if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for bootstrap-complete; then
+      exit 1
+  fi
 
   echo "Waiting for cluster ready... "
   if oc wait --for=condition=Ready nodes --all --timeout=60m --kubeconfig=${OCP_DIR}/auth/kubeconfig; then
