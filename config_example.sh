@@ -347,6 +347,25 @@ set -x
 # (Currently this just expects a non-empty value, the IP is fixed to .9)
 # export ENABLE_BOOTSTRAP_STATIC_IP=true
 
+# NETWORK_CONFIG_FOLDER -
+# Set this to the location of a folder containing networkConfigs for the nodes
+# in the deployment. The filenames correspond to the name of the host. For
+# example, to provide a networkConfig for master-0 in a default dev-scripts
+# deployment, create a file named `ostest-master-0.yaml` in the specified
+# folder that contains the networkConfig (including the key "networkConfig").
+#
+# This folder may also contain a file named `hosts.yaml` which is a list of
+# additional DNS entries to configure in the libvirt DNS. This should be a
+# list of entries with the following format:
+# - ip: 192.168.111.110
+#   hostnames:
+#     - "master-0"
+
+# BOND_PRIMARY_INTERFACE -
+# When set to any value this will cause dev-scripts to include duplicate nics
+# on the primary network. This is intended for testing bonded network configs
+# and may not work without a bond config.
+
 ################################################################################
 ## VM Settings
 ##
