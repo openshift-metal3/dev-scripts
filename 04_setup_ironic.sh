@@ -138,8 +138,8 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 fi
 
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader; do
-    sudo podman ps | grep -w "$name$" && sudo podman kill $name
-    sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
+    sudo podman ps | grep -w " $name$" && sudo podman kill $name
+    sudo podman ps --all | grep -w " $name$" && sudo podman rm $name -f
 done
 
 # Remove existing pod
