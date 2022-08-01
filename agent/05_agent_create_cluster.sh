@@ -35,11 +35,16 @@ function attach_agent_iso() {
     done
 }
 
+function get_node0_ip() {
+  node0_name=$(printf ${MASTER_HOSTNAME_FORMAT} 0)
+  node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
+  echo "${node0_ip}"
+}
+
 function force_mirror_disconnect() {
 
   # Set a bogus entry in /etc/hosts on all masters to force the local mirror to be used
-  node0_name=$(printf ${MASTER_HOSTNAME_FORMAT} 0)
-  node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
+  node0_ip=$(get_node0_ip)
   ssh_opts=(-o 'StrictHostKeyChecking=no' -q core@${node0_ip})
 
   for (( n=0; n<${NUM_MASTERS}; n++ ))
@@ -61,10 +66,22 @@ function force_mirror_disconnect() {
 
 }
 
+function enable_assisted_service_ui() {
+  node0_ip=$(get_node0_ip)
+  ssh_opts=(-o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q core@${node0_ip})
+
+  until ssh "${ssh_opts[@]}" "[[ -f /run/assisted-service-pod.pod-id ]]"
+  do
+    echo "Waiting for node0"
+    sleep 5s;
+  done
+
+  ssh "${ssh_opts[@]}" "sudo /usr/bin/podman run -d --name=assisted-ui --pod-id-file=/run/assisted-service-pod.pod-id quay.io/edge-infrastructure/assisted-installer-ui:latest"
+}
+
 function wait_for_cluster_ready() {
 
-  node0_name=$(printf ${MASTER_HOSTNAME_FORMAT} 0)
-  node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
+  node0_ip=$(get_node0_ip)
   ssh_opts=(-o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q core@${node0_ip})
 
   local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
@@ -88,6 +105,11 @@ attach_agent_iso worker $NUM_WORKERS
 if [ ! -z "${MIRROR_IMAGES}" ]; then
   force_mirror_disconnect
 fi
+
+if [ ! -z "${AGENT_ENABLE_GUI:-}" ]; then
+  enable_assisted_service_ui
+fi
+
 
 wait_for_cluster_ready
 # Temporary fix for the CI. To be removed once we'll 
