@@ -50,7 +50,7 @@ ocp_run:
 gather:
 	./must_gather.sh
 
-clean: ocp_cleanup ironic_cleanup proxy_cleanup host_cleanup assisted_deployment_cleanup agent_cleanup
+clean: ocp_cleanup ironic_cleanup proxy_cleanup host_cleanup assisted_deployment_cleanup agent_cleanup oc_mirror_cleanup
 
 assisted_deployment_cleanup:
 	./assisted_deployment.sh delete_all
@@ -80,6 +80,9 @@ podman_cleanup:
 
 proxy_cleanup:
 	./proxy_cleanup.sh
+
+oc_mirror_cleanup:
+	./oc_mirror_cleanup.sh
 
 bell:
 	@echo "Done!" $$'\a'

@@ -11,6 +11,7 @@ source $SCRIPTDIR/utils.sh
 source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/ocp_install_env.sh
+source $SCRIPTDIR/oc_mirror.sh
 
 early_deploy_validation
 
@@ -272,16 +273,18 @@ spec:
 EOF
 
 if [ ! -z "${MIRROR_IMAGES}" ]; then
-# TODO - get the mirror registry info from output of 'oc adm release mirror'
 
-    cat > "${MIRROR_PATH}/registries.conf" << EOF
+   # Set up registries.conf and ca-bundle.crt for mirroring
+   if [[ -z "${OC_MIRROR}" ]] ; then
+
+      cat > "${MIRROR_PATH}/registries.conf" << EOF
 [[registry]]
 prefix = ""
 location = "registry.ci.openshift.org/ocp/release"
 mirror-by-digest-only = false
 
 [[registry.mirror]]
-location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image"
+location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${MIRROR_IMAGE_URL_SUFFIX}"
 
 [[registry]]
 prefix = ""
@@ -289,11 +292,43 @@ location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
 mirror-by-digest-only = false
 
 [[registry.mirror]]
-location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image"
+location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${MIRROR_IMAGE_URL_SUFFIX}"
 EOF
+   else
 
-cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
+      cat > "${MIRROR_PATH}/registries.conf" << EOF
+[[registry]]
+prefix = ""
+location = "quay.io/openshift-release-dev/ocp-release"
+mirror-by-digest-only = false
 
+[[registry.mirror]]
+location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/openshift/release-images"
+
+[[registry]]
+prefix = ""
+location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/openshift/release"
+
+[[registry]]
+prefix = ""
+location = "registry.redhat.io/ubi8"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/ubi8"
+EOF
+   fi
+
+   # Store the certs for registry
+   if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+      cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
+   else
+      cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem ${MIRROR_PATH}/ca-bundle.crt
+   fi
 fi
 
     cat > "${MANIFESTS_PATH}/infraenv.yaml" << EOF
@@ -481,9 +516,9 @@ get_static_ips_and_macs
 
 if [ ! -z "${MIRROR_IMAGES}" ]; then
 
-  setup_local_registry
+     setup_local_registry
 
-  setup_release_mirror
+     setup_release_mirror
 
 fi
 

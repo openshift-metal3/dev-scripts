@@ -74,6 +74,12 @@ export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
+# use oc-mirror command to mirror images
+export OC_MIRROR=${OC_MIRROR:-}
+
+# file containing auths for oc-mirror
+export DOCKER_CONFIG_FILE=${DOCKER_CONFIG_FILE:-$HOME/.docker/config.json}
+
 # Setup up a local proxy for installation
 export INSTALLER_PROXY=${INSTALLER_PROXY:-}
 export INSTALLER_PROXY_PORT=${INSTALLER_PROXY_PORT:-8215}
@@ -98,6 +104,10 @@ export REGISTRY_PASS=${REGISTRY_PASS:-ocp-pass}
 export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
 export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror-${CLUSTER_NAME}.json}
 export REGISTRY_CRT=registry.2.crt
+export REGISTRY_BACKEND=${REGISTRY_BACKEND:-"podman"}
+if [[ ${REGISTRY_BACKEND} = "quay" ]]; then
+    export LOCAL_REGISTRY_PORT=8443
+fi
 
 # Set this variable to build the installer from source
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
@@ -203,9 +213,14 @@ if env | grep -q "_LOCAL_IMAGE=" ; then
     export MIRROR_IMAGES=true
 fi
 
-if [ -n "$MIRROR_IMAGES" ]; then
-    # We're going to be using a locally modified release image
-    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
+if [[ ! -z "${OC_MIRROR}" ]] && [[ "${OC_MIRROR}" == "true" ]]; then
+    export MIRROR_IMAGES=true
+
+    if [[ -x "/usr/local/bin/oc-mirror" ]]; then
+       # set up the channel using the most recent candidate release
+       release_candidate=`oc-mirror list releases --channel=candidate-${OPENSHIFT_RELEASE_STREAM} | tail -1`
+       export OPENSHIFT_RELEASE_TAG="${release_candidate}-x86_64"
+    fi
 fi
 
 # Set variables
@@ -428,3 +443,8 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   fi
 fi
 
+# For IPv6 (default case) mirror images are used since quay doesn't support IPv6
+if [[ -n "$MIRROR_IMAGES" || -z "$IP_STACK" || "$IP_STACK" = "v6" ]]; then
+   # We're going to be using a locally modified release image
+   export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
+fi
