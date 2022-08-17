@@ -80,21 +80,16 @@ function enable_assisted_service_ui() {
 }
 
 function wait_for_cluster_ready() {
-
-  node0_ip=$(get_node0_ip)
-  ssh_opts=(-o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q core@${node0_ip})
-
   local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
   if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for bootstrap-complete; then
       exit 1
   fi
 
   echo "Waiting for cluster ready... "
-  if oc wait --for=condition=Ready nodes --all --timeout=60m --kubeconfig=${OCP_DIR}/auth/kubeconfig; then
-    echo "Cluster is ready!"
-  else
-    exit 1
+  if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for install-complete; then
+      exit 1
   fi
+  echo "Cluster is ready!"
 }
 
 create_image
