@@ -44,19 +44,13 @@ fi
 # There was a bug in this file, it may need to be recreated.
 # delete the interface as it can cause issues when not rebooting
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
-    sudo ifdown ${PROVISIONING_NETWORK_NAME} || true
-    sudo ip link delete ${PROVISIONING_NETWORK_NAME} || true
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+  sudo nmcli con del ${PROVISIONING_NETWORK_NAME}
 fi
+
 # Leaving this around causes issues when the host is rebooted
 # delete the interface as it can cause issues when not rebooting
 if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
-    sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
-    sudo ip link delete ${BAREMETAL_NETWORK_NAME} || true
-    if [[ -d /sys/class/net/bm-ipv6-dummy ]]; then
-       sudo ip link delete bm-ipv6-dummy || true
-    fi
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
+  sudo nmcli con del ${BAREMETAL_NETWORK_NAME}
 fi
 
 # Drop all ebtables rules

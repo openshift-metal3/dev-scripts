@@ -47,8 +47,6 @@ fi
 # vm-setup/install-package-playbook.yml
 case $DISTRO in
   "centos8"|"rhel8"|"almalinux8"|"rocky8")
-    # install network-scripts package to be able to use legacy network commands
-    sudo dnf install -y network-scripts
     if [[ $DISTRO == "centos8" ]] && [[ "$NAME" != *"Stream"* ]]; then
         echo "CentOS is not supported, please switch to CentOS Stream / RHEL / Rocky / Alma"
         exit 1
