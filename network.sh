@@ -188,6 +188,11 @@ if  [[ ! -z "${INSTALLER_PROXY:-}" ]]; then
   fi
 fi
 
+if [ -n "${NETWORK_CONFIG_FOLDER:-}" ]; then
+  # We need an absolute path to this location
+  NETWORK_CONFIG_FOLDER="$(readlink -m $NETWORK_CONFIG_FOLDER)"
+fi
+
 function set_api_and_ingress_vip() {
   # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
   if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
