@@ -238,6 +238,12 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     fi
 fi
 
+# The IPv6 bridge interface will remain in DOWN state with NO-CARRIER unless an interface is added,
+# so add a dummy interface to ensure the bridge comes up
+if [[ -n "${EXTERNAL_SUBNET_V6}" ]] && [ ! "$INT_IF" ]; then
+    sudo ip link add name ${BAREMETAL_NETWORK_NAME}-dummy up master ${BAREMETAL_NETWORK_NAME} type dummy
+fi
+
 IPTABLES=iptables
 if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
     IPTABLES=ip6tables
