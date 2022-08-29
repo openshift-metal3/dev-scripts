@@ -163,7 +163,7 @@ source /etc/os-release
 export DISTRO="${ID}${VERSION_ID%.*}"
 
 case $DISTRO in
-  "centos8"|"rhel8")
+  "centos8"|"rhel8"|"almalinux8"|"rocky8")
     NMC="NM_CONTROLLED=no\n"
     NET_SERVICE="network"
     ;;
