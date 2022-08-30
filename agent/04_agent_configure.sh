@@ -207,6 +207,14 @@ EOF
 
     num_ips=${#AGENT_NODES_IPS[@]}
 
+    if [[ "$IP_STACK" = "v4" ]]; then
+       interface_type="ipv4"
+       route_dest="0.0.0.0/0"
+    else
+       interface_type="ipv6"
+       route_dest="::/0"
+    fi
+
     # Create a yaml for each host in nmstateconfig.yaml
     for (( i=0; i<$num_ips; i++ ))
     do
@@ -225,7 +233,7 @@ spec:
         type: ethernet
         state: up
         mac-address: ${AGENT_NODES_MACS[i]}
-        ipv4:
+        ${interface_type}:
           enabled: true
           address:
             - ip: ${AGENT_NODES_IPS[i]}
@@ -237,7 +245,7 @@ spec:
           - ${PROVISIONING_HOST_EXTERNAL_IP}
     routes:
       config:
-        - destination: 0.0.0.0/0
+        - destination: ${route_dest}
           next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
           next-hop-interface: eth0
           table-id: 254

@@ -67,6 +67,10 @@ function force_mirror_disconnect() {
 }
 
 function enable_assisted_service_ui() {
+  if [[ "${IP_STACK}" = "v6" ]]; then
+       echo "In a disconnected environment the assisted-installer GUI cannot be enabled"
+       return
+  fi
   node0_ip=$(get_node0_ip)
   ssh_opts=(-o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q core@${node0_ip})
 
