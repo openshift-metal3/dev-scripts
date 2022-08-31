@@ -269,6 +269,11 @@ export EXTRA_WORKER_MEMORY=${EXTRA_WORKER_MEMORY:-${WORKER_MEMORY}}
 export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
 export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
 
+
+
+
+
+
 # Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:main"}
 export IRONIC_DATA_DIR="${WORKING_DIR}/ironic"
@@ -354,8 +359,14 @@ fi
 
 # Agent specific configuration 
 
+function invalidAgentValue() {
+  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. \nSupported values: \nCOMPACT_IPV4\nCOMPACT_IPV6\nDHCP_COMPACT_IPV4\nDHCP_COMPACT_IPV6\nHA_IPV4\nHA_IPV6\nDHCP_HA_IPV4\nDHCP_HA_IPV6\nSNO_IPV4\nSNO_IPV6\nDHCP_SNO_IPV4\nDHCP_SNO_IPV6\n"
+  exit 1
+}
+
 # Agent test scenario
 export AGENT_E2E_TEST_SCENARIO=${AGENT_E2E_TEST_SCENARIO:-}
+export NETWORKING_MODE=${NETWORKING_MODE:-}
 
 # Enable MCE deployment
 export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
@@ -363,7 +374,20 @@ export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
 
 if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   export IP_STACK=$(echo ${AGENT_E2E_TEST_SCENARIO##*_IP} | tr V v)
-  SCENARIO=${AGENT_E2E_TEST_SCENARIO%%_*}
+
+  delimiterCount=$(echo "$AGENT_E2E_TEST_SCENARIO" | tr -cd '_' | wc -c)
+  if [[ "$delimiterCount" == "1" ]]; then
+    SCENARIO=${AGENT_E2E_TEST_SCENARIO%%_*}
+  elif [[ "$delimiterCount" == "2" ]]; then
+    export NETWORKING_MODE=${AGENT_E2E_TEST_SCENARIO%%_*}
+    if [[ $NETWORKING_MODE != "DHCP" ]]; then
+      invalidAgentValue
+    fi
+    SCENARIO=${AGENT_E2E_TEST_SCENARIO#*_}
+    SCENARIO=${SCENARIO%_*}
+  else
+      invalidAgentValue
+  fi
 
   case "$SCENARIO" in
       "COMPACT" )
@@ -391,8 +415,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_WORKERS=0
           ;;
       *)
-        echo "Invalid value for AGENT_E2E_TEST_SCENARIO. Supported values: COMPACT_IPV4, COMPACT_IPV6, HA_IPV4, HA_IPV6, SNO_IPV4, SNO_IPV6."
-        exit 1
+        invalidAgentValue
   esac
 
   if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then

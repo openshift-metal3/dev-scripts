@@ -14,6 +14,7 @@ source $SCRIPTDIR/ocp_install_env.sh
 
 early_deploy_validation
 
+CLUSTER_NAMESPACE=cluster0
 
 function get_static_ips_and_macs() {
 
@@ -33,8 +34,12 @@ function get_static_ips_and_macs() {
         external_subnet=$EXTERNAL_SUBNET_V6
     fi
 
-    # Set outside the range used for dhcp
-    base_ip=80
+    if [[ $NETWORKING_MODE == "DHCP" ]]; then
+      base_ip=20
+    else
+      # Set outside the range used for dhcp
+      base_ip=80
+    fi
 
     for (( i=0; i<${static_ips}; i++ ))
     do
@@ -60,6 +65,20 @@ function get_static_ips_and_macs() {
     done
 }
 
+function setNetworkingVars() {
+   if [[ "$IP_STACK" = "v4" ]]; then
+    CLUSTER_NETWORK=${CLUSTER_SUBNET_V4}
+    SERVICE_NETWORK=${SERVICE_SUBNET_V4}
+    MACHINE_NETWORK=${EXTERNAL_SUBNET_V4}
+    CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V4}
+  elif [[ "$IP_STACK" = "v6" ]]; then
+    CLUSTER_NETWORK=${CLUSTER_SUBNET_V6}
+    SERVICE_NETWORK=${SERVICE_SUBNET_V6}
+    MACHINE_NETWORK=${EXTERNAL_SUBNET_V6}
+    CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V6}
+  fi
+}
+
 function generate_cluster_manifests() {
 
   MANIFESTS_PATH="${OCP_DIR}/cluster-manifests"
@@ -72,23 +91,15 @@ function generate_cluster_manifests() {
   if [ ! -z "${MIRROR_IMAGES}" ]; then
     mkdir -p ${MIRROR_PATH}
   fi
-  
-  if [[ "$IP_STACK" = "v4" ]]; then
-    CLUSTER_NETWORK=${CLUSTER_SUBNET_V4}
-    SERVICE_NETWORK=${SERVICE_SUBNET_V4}
-    CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V4}
-  elif [[ "$IP_STACK" = "v6" ]]; then
-    CLUSTER_NETWORK=${CLUSTER_SUBNET_V6}
-    SERVICE_NETWORK=${SERVICE_SUBNET_V6}
-    CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V6}
-  fi
+
+  setNetworkingVars
 
     cat > "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
 apiVersion: extensions.hive.openshift.io/v1beta1
 kind: AgentClusterInstall
 metadata:
   name: test-agent-cluster-install
-  namespace: cluster0
+  namespace: ${CLUSTER_NAMESPACE}
 spec:
 EOF
 if [[ "${NUM_MASTERS}" > "1" ]]; then
@@ -120,7 +131,7 @@ apiVersion: hive.openshift.io/v1
 kind: ClusterDeployment
 metadata:
   name: ${CLUSTER_NAME}
-  namespace: cluster0
+  namespace: ${CLUSTER_NAMESPACE}
 spec:
   baseDomain: ${BASE_DOMAIN}
   clusterInstallRef:
@@ -172,17 +183,17 @@ apiVersion: agent-install.openshift.io/v1beta1
 kind: InfraEnv
 metadata:
   name: myinfraenv
-  namespace: cluster0
+  namespace: ${CLUSTER_NAMESPACE}
 spec:
   clusterRef:
     name: ${CLUSTER_NAME}
-    namespace: cluster0
+    namespace: ${CLUSTER_NAMESPACE}
   pullSecretRef:
     name: pull-secret
   sshAuthorizedKey: ${SSH_PUB_KEY}
   nmStateConfigLabelSelector:
     matchLabels:
-      cluster0-nmstate-label-name: cluster0-nmstate-label-value
+      ${CLUSTER_NAMESPACE}-nmstate-label-name: ${CLUSTER_NAMESPACE}-nmstate-label-value
 EOF
 
     set +x
@@ -193,7 +204,7 @@ kind: Secret
 type: kubernetes.io/dockerconfigjson
 metadata:
   name: pull-secret
-  namespace: cluster0
+  namespace: ${CLUSTER_NAMESPACE}
 stringData:
   .dockerconfigjson: '${pull_secret}'
 
@@ -219,7 +230,7 @@ metadata:
   name: ${AGENT_NODES_HOSTNAMES[i]}
   namespace: openshift-machine-api
   labels:
-    cluster0-nmstate-label-name: cluster0-nmstate-label-value
+    ${CLUSTER_NAMESPACE}-nmstate-label-name: ${CLUSTER_NAMESPACE}-nmstate-label-value
 spec:
   config:
     interfaces:
@@ -273,6 +284,79 @@ EOF
   fi
 }
 
+function generate_install_config_agent_config() {
+
+  MANIFESTS_PATH="${OCP_DIR}"
+  mkdir -p ${MANIFESTS_PATH}
+  
+  setNetworkingVars
+
+    cat > "${MANIFESTS_PATH}/agent-config.yaml" << EOF
+apiVersion: v1alpha1
+metadata:
+  name: ${CLUSTER_NAME}
+  namespace: ${CLUSTER_NAMESPACE}
+rendezvousIP: ${AGENT_NODES_IPS[0]}
+EOF
+    pull_secret=$(cat $PULL_SECRET_FILE)
+    cat > "${MANIFESTS_PATH}/install-config.yaml" << EOF
+apiVersion: v1
+baseDomain: ${BASE_DOMAIN}
+compute: 
+- hyperthreading: Enabled 
+  name: worker
+  replicas: ${NUM_WORKERS}
+controlPlane: 
+  hyperthreading: Enabled 
+  name: master
+  replicas: ${NUM_MASTERS} 
+metadata:
+  name: ${CLUSTER_NAME}
+  namespace: ${CLUSTER_NAMESPACE}
+networking:
+  clusterNetwork:
+  - cidr: ${CLUSTER_NETWORK}
+    hostPrefix: ${CLUSTER_HOST_PREFIX}
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: ${MACHINE_NETWORK}
+  serviceNetwork: 
+  - ${SERVICE_NETWORK}
+platform:
+EOF
+# The assumption here is if number of masters is one
+# we want to generate an install config for none platform
+# to create a SNO cluster.
+if [[ "${NUM_MASTERS}" == "1" ]]; then
+cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
+  none: {}
+EOF
+else
+cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
+    baremetal:
+      apiVips: 
+        - ${API_VIP}
+      ingressVips: 
+        - ${INGRESS_VIP}
+      hosts:
+EOF
+ num_ips=${#AGENT_NODES_IPS[@]}
+ for (( i=0; i<$num_ips; i++ ))
+    do
+      cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
+          - name: host${i}
+            bootMACAddress: ${AGENT_NODES_MACS[i]}
+EOF
+    done
+fi
+cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
+fips: false 
+sshKey: ${SSH_PUB_KEY}
+pullSecret:  '${pull_secret}'
+EOF
+    set -x
+}
+
 write_pull_secret
 
 # needed for assisted-service to run nmstatectl
@@ -290,9 +374,13 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 
 fi
 
-if [[ "${NUM_MASTERS}" > "1" ]]; then
-  set_api_and_ingress_vip
-fi
+ if [[ "${NUM_MASTERS}" > "1" ]]; then
+    set_api_and_ingress_vip
+  fi
 
-generate_cluster_manifests
-generate_extra_cluster_manifests
+if [[ $NETWORKING_MODE == "DHCP" ]]; then
+  generate_install_config_agent_config
+else
+  generate_cluster_manifests
+  generate_extra_cluster_manifests
+fi

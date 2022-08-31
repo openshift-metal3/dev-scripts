@@ -622,11 +622,23 @@ set -x
 
 # Set a single config variable AGENT_E2E_TEST_SCENARIO to create a cluster for the different scenarios 
 # i.e. Single Node Openshift(SNO), Highly Available (HA) or Compact cluster.
-# The only supported values for AGENT_E2E_TEST_SCENARIO are COMPACT_IPV4, COMPACT_IPV6, HA_IPV4, HA_IPV6, SNO_IPV4 and SNO_IPV6.
+# The only supported values for AGENT_E2E_TEST_SCENARIO are 
+# - COMPACT_IPV4
+# - COMPACT_IPV6
+# - DHCP_COMPACT_IPV4
+# - DHCP_COMPACT_IPV6
+# - HA_IPV4
+# - HA_IPV6
+# - DHCP_HA_IPV4
+# - DHCP_HA_IPV6 
+# - SNO_IPV4
+# - SNO_IPV6
+# - DHCP_SNO_IPV4
+# - DHCP_SNO_IPV6
 # When set, the code internally sets other low level details such as disk size, memory, number of masters and workers,
 # cpu and ip stack.
 # This config variable is used only by the agent based installer and is required.
-# export AGENT_E2E_TEST_SCENARIO=HA_IPV4
+# export AGENT_E2E_TEST_SCENARIO=DHCP_COMPACT_IPV4
 
 # Uncomment the following line to deploy the MCE operator, and to automatically import the current cluster as the hub cluster
 # export AGENT_DEPLOY_MCE=true
