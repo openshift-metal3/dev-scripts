@@ -110,6 +110,7 @@ cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
       hostPrefix: ${CLUSTER_HOST_PREFIX}
     serviceNetwork:
     - ${SERVICE_NETWORK}
+    networkType: ${NETWORK_TYPE}
   provisionRequirements:
     controlPlaneAgents: ${NUM_MASTERS}
     workerAgents: ${NUM_WORKERS}
