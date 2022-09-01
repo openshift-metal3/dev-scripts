@@ -107,9 +107,9 @@ fi
 
 
 wait_for_cluster_ready
+
 # Temporary fix for the CI. To be removed once we'll 
 # be able to generate the cluster credentials
-if [ "${OPENSHIFT_CI}" == true ]; then
-  touch ${OCP_DIR}/auth/kubeadmin-password
+if [ ! -f "${OCP_DIR}/auth/kubeadmin-password" ]; then
+    oc patch --kubeconfig="${OCP_DIR}/auth/kubeconfig" secret -n kube-system kubeadmin --type json -p '[{"op": "replace", "path": "/data/kubeadmin", "value": "'"$(openssl rand -base64 18 | tr -d '\n' | tee "${OCP_DIR}/auth/kubeadmin-password" | htpasswd -nBi -C 10 "" | tr -d ':\n' | sed -e 's/\$2y\$/$2a$/' | base64 -w 0 -)"'"}]'
 fi
-
