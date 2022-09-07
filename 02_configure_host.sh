@@ -242,7 +242,7 @@ fi
 # The IPv6 bridge interface will remain in DOWN state with NO-CARRIER unless an interface is added,
 # so add a dummy interface to ensure the bridge comes up
 if [[ -n "${EXTERNAL_SUBNET_V6}" ]] && [ ! "$INT_IF" ]; then
-    sudo ip link add name ${BAREMETAL_NETWORK_NAME}-dummy up master ${BAREMETAL_NETWORK_NAME} type dummy
+    sudo ip link add name bm-ipv6-dummy up master ${BAREMETAL_NETWORK_NAME} type dummy || true
 fi
 
 IPTABLES=iptables
