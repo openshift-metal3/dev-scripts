@@ -63,7 +63,6 @@ function get_static_ips_and_macs() {
 function generate_cluster_manifests() {
 
   MANIFESTS_PATH="${OCP_DIR}/cluster-manifests"
-  EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
   MIRROR_PATH="${OCP_DIR}/mirror"
 
   # Fetch current OpenShift version from the release payload
@@ -73,7 +72,6 @@ function generate_cluster_manifests() {
   if [ ! -z "${MIRROR_IMAGES}" ]; then
     mkdir -p ${MIRROR_PATH}
   fi
-  mkdir -p ${EXTRA_MANIFESTS_PATH}
   
   if [[ "$IP_STACK" = "v4" ]]; then
     CLUSTER_NETWORK=${CLUSTER_SUBNET_V4}
@@ -260,8 +258,17 @@ spec:
       macAddress: ${AGENT_NODES_MACS[i]}
 ---
 EOF
+    done
 
- cat > "${EXTRA_MANIFESTS_PATH}/agent-test.yaml" << EOF
+    set -x
+}
+
+function generate_extra_cluster_manifests() {
+
+  EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
+  mkdir -p ${EXTRA_MANIFESTS_PATH}
+
+cat > "${EXTRA_MANIFESTS_PATH}/agent-test.yaml" << EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -271,9 +278,9 @@ data:
   value: agent-test
 EOF
 
-    done
-
-    set -x
+  if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
+    cp ${SCRIPTDIR}/agent/assets/mce/agent_mce_0_*.yaml ${EXTRA_MANIFESTS_PATH}
+  fi
 }
 
 write_pull_secret
@@ -298,3 +305,4 @@ if [[ "${NUM_MASTERS}" > "1" ]]; then
 fi
 
 generate_cluster_manifests
+generate_extra_cluster_manifests

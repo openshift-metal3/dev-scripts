@@ -609,6 +609,19 @@ function wait_for_crd() {
   oc wait --for condition=established --timeout=60s "crd/$1" || exit 1
 }
 
+function apply_manifest() {
+    local manifest=$1
+    while ! oc apply -f $manifest
+    do
+        ((i++))
+        if [[ $i -eq 10 ]]; then
+            echo "Unable to apply manifest $manifest"
+            exit 1
+        fi
+        sleep 30s
+    done
+}
+
 function generate_proxy_conf() {
   if [[ "$PROVISIONING_NETWORK_PROFILE" != "Disabled" ]]; then
     echo "acl all src ${PROVISIONING_NETWORK}"
