@@ -53,8 +53,8 @@ fi
 if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
     sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
     sudo ip link delete ${BAREMETAL_NETWORK_NAME} || true
-    if [[ -d /sys/class/net/${BAREMETAL_NETWORK_NAME}-dummy ]]; then
-       sudo ip link delete ${BAREMETAL_NETWORK_NAME}-dummy || true
+    if [[ -d /sys/class/net/bm-ipv6-dummy ]]; then
+       sudo ip link delete bm-ipv6-dummy || true
     fi
     sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
 fi
