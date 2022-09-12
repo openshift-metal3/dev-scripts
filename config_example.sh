@@ -627,3 +627,6 @@ set -x
 # cpu and ip stack.
 # This config variable is used only by the agent based installer and is required.
 # export AGENT_E2E_TEST_SCENARIO=HA_IPV4
+
+# Uncomment the following line to deploy the MCE operator, and to automatically import the current cluster as the hub cluster
+# export AGENT_DEPLOY_MCE=true
