@@ -1,15 +1,6 @@
-# TBD: Template the release image
-
 apiVersion: hive.openshift.io/v1
 kind: ClusterImageSet
 metadata:
-  name: "4.10"
+  name: "<version>"
 spec:
-  releaseImage: quay.io/openshift-release-dev/ocp-release:4.10.18-x86_64
----
-apiVersion: hive.openshift.io/v1
-kind: ClusterImageSet
-metadata:
-  name: "4.11"
-spec:
-  releaseImage: quay.io/openshift-release-dev/ocp-release:4.11.0-fc.0-x86_64
+  releaseImage: <releaseImage>

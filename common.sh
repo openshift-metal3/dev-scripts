@@ -400,6 +400,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     export VM_EXTRADISKS=true
     export VM_EXTRADISKS_LIST="vda vdb"
     export VM_EXTRADISKS_SIZE="10G"
+
+    export MASTER_VCPU=8
+    export MASTER_MEMORY=32768
   fi
 
 fi
