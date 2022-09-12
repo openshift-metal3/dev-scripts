@@ -9,12 +9,6 @@ source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/ocp_install_env.sh
 source $SCRIPTDIR/agent/common.sh
 
-# Use the development branch for building the openshift installer.
-# Used only when KNI_INSTALL_FROM_GIT is set and OPENSHIFT_INSTALL_PATH
-# does not exists. This setting will be removed once the development
-# branch will be merged in the installer main
-export INSTALLER_REPO_BRANCH=agent-installer
-
 # Override build tags
 export OPENSHIFT_INSTALLER_BUILD_TAGS=" "
 
