@@ -136,10 +136,8 @@ spec:
 EOF
 
     local releaseImage=${OPENSHIFT_RELEASE_IMAGE}
-    if [ ! -z "${MIRROR_IMAGES}" ]; then
-        releaseImage="${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}"
     # If not installing from src, let's use the current version from the binary
-    elif [ -z "$KNI_INSTALL_FROM_GIT" ]; then
+    if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
       releaseImage=$("${openshift_install}" --dir="${OCP_DIR}" version | grep "release image" | cut -d " " -f 3)
       echo "Setting release image to ${releaseImage}"
