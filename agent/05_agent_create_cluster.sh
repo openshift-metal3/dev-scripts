@@ -9,6 +9,7 @@ source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/network.sh
 source $SCRIPTDIR/utils.sh
 source $SCRIPTDIR/validation.sh
+source $SCRIPTDIR/ocp_install_env.sh
 source $SCRIPTDIR/agent/common.sh
 
 early_deploy_validation
@@ -96,6 +97,51 @@ function wait_for_cluster_ready() {
   echo "Cluster is ready!"
 }
 
+function mce_prepare_postinstallation_manifests() {
+  local mceManifests=$1
+
+  # Copy all the manifests required after the installation completed
+  cp ${SCRIPTDIR}/agent/assets/mce/agent_mce_1*.yaml ${mceManifests}
+
+  # Render the cluster image set template
+  local clusterImageSetTemplate=${mceManifests}/agent_mce_1_04_clusterimageset.yaml
+  local version="$(openshift_version ${OCP_DIR})"
+  local releaseImage=$(getReleaseImage)
+
+  sed -i "s/<version>/${version}/g" ${clusterImageSetTemplate}
+  sed -i "s/<releaseImage>/${releaseImage//\//\\/}/g" ${clusterImageSetTemplate}
+}
+
+function mce_apply_postinstallation_manifests() {
+  local mceManifests=$1
+
+  wait_for_crd "localvolumes.local.storage.openshift.io"
+  apply_manifest "$mceManifests/agent_mce_1_01_localvolumes.yaml"
+  oc wait localvolume -n openshift-local-storage assisted-service --for condition=Available --timeout 10m || exit 1
+
+  wait_for_crd "multiclusterengines.multicluster.openshift.io"
+  apply_manifest "$mceManifests/agent_mce_1_02_mce.yaml"
+
+  wait_for_crd "agentserviceconfigs.agent-install.openshift.io"
+  apply_manifest "$mceManifests/agent_mce_1_03_agentserviceconfig.yaml"
+
+  wait_for_crd "clusterimagesets.hive.openshift.io"
+  apply_manifest "$mceManifests/agent_mce_1_04_clusterimageset.yaml"
+
+  apply_manifest "$mceManifests/agent_mce_1_05_autoimport.yaml"
+  oc wait -n multicluster-engine managedclusters local-cluster --for condition=ManagedClusterJoined=True --timeout 10m || exit 1
+
+  echo "MCE deployment completed"
+}
+
+function mce_complete_deployment() {
+  local mceManifests="${OCP_DIR}/mce"
+  mkdir -p ${mceManifests}
+
+  mce_prepare_postinstallation_manifests ${mceManifests}
+  mce_apply_postinstallation_manifests ${mceManifests}
+}
+
 create_image
 
 attach_agent_iso master $NUM_MASTERS
@@ -109,7 +155,6 @@ if [ ! -z "${AGENT_ENABLE_GUI:-}" ]; then
   enable_assisted_service_ui
 fi
 
-
 wait_for_cluster_ready
 
 # Temporary fix for the CI. To be removed once we'll 
@@ -117,3 +162,8 @@ wait_for_cluster_ready
 if [ ! -f "${OCP_DIR}/auth/kubeadmin-password" ]; then
     oc patch --kubeconfig="${OCP_DIR}/auth/kubeconfig" secret -n kube-system kubeadmin --type json -p '[{"op": "replace", "path": "/data/kubeadmin", "value": "'"$(openssl rand -base64 18 | tr -d '\n' | tee "${OCP_DIR}/auth/kubeadmin-password" | htpasswd -nBi -C 10 "" | tr -d ':\n' | sed -e 's/\$2y\$/$2a$/' | base64 -w 0 -)"'"}]'
 fi
+
+if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
+  mce_complete_deployment
+fi
+

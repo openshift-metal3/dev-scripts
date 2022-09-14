@@ -1,0 +1,14 @@
+apiVersion: local.storage.openshift.io/v1
+kind: LocalVolume
+metadata:
+  name: assisted-service
+  namespace: openshift-local-storage
+spec:
+  logLevel: Normal
+  managementState: Managed
+  storageClassDevices:
+    - devicePaths:
+        - /dev/vda
+        - /dev/vdb
+      storageClassName: assisted-service
+      volumeMode: Filesystem

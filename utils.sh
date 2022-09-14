@@ -603,10 +603,23 @@ function wait_for_crd() {
   echo "Waiting for CRD ($1) to be defined"
 
   for i in {1..40}; do
-    oc get "crd/$1" && break || sleep 10
+    oc get "crd/$1" --kubeconfig ${KUBECONFIG} && break || sleep 10
   done
 
-  oc wait --for condition=established --timeout=60s "crd/$1" || exit 1
+  oc wait --for condition=established --timeout=60s --kubeconfig ${KUBECONFIG} "crd/$1" || exit 1
+}
+
+function apply_manifest() {
+    local manifest=$1
+    while ! oc apply -f $manifest
+    do
+        ((i++))
+        if [[ $i -eq 10 ]]; then
+            echo "Unable to apply manifest $manifest"
+            exit 1
+        fi
+        sleep 30s
+    done
 }
 
 function generate_proxy_conf() {
