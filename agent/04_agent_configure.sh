@@ -16,9 +16,97 @@ early_deploy_validation
 
 CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
+function get_nmstate_interface_block {
+
+index="$1"
+
+if [[ "$IP_STACK" = "v4" ]]; then
+  echo "ipv4:
+          enabled: true
+          address:
+            - ip: ${AGENT_NODES_IPS[index]}
+              prefix-length: ${CLUSTER_HOST_PREFIX_V4}
+          dhcp: false"
+elif [[ "$IP_STACK" = "v6" ]]; then
+  echo "ipv6:
+          enabled: true
+          address:
+            - ip: ${AGENT_NODES_IPSV6[index]}
+              prefix-length: ${CLUSTER_HOST_PREFIX_V6}
+          dhcp: false"
+else
+       # v4v6
+  echo "ipv4:
+          enabled: true
+          address:
+            - ip: ${AGENT_NODES_IPS[index]}
+              prefix-length: ${CLUSTER_HOST_PREFIX_V4}
+          dhcp: false
+        ipv6:
+          enabled: true
+          address:
+            - ip: ${AGENT_NODES_IPSV6[index]}
+              prefix-length: ${CLUSTER_HOST_PREFIX_V6}
+          dhcp: false"
+fi
+
+}
+
+function get_nmstate_dns_block {
+
+if [[ "$IP_STACK" != "v4v6" ]]; then
+  echo "server:
+          - ${PROVISIONING_HOST_EXTERNAL_IP}"
+
+else
+  provisioning_host_external_ipv6=$(nth_ip $EXTERNAL_SUBNET_V6 1)
+  echo "server:
+          - ${PROVISIONING_HOST_EXTERNAL_IP}
+          - ${provisioning_host_external_ipv6}"
+fi
+
+}
+
+function get_nmstate_route_block {
+
+if [[ "$IP_STACK" = "v4" ]]; then
+  echo "- destination: 0.0.0.0/0
+          next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
+          next-hop-interface: eth0
+          table-id: 254"
+elif [[ "$IP_STACK" = "v6" ]]; then
+  echo "- destination: ::/0
+          next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
+          next-hop-interface: eth0
+          table-id: 254"
+else
+  provisioning_host_external_ipv6=$(nth_ip $EXTERNAL_SUBNET_V6 1)
+  echo "- destination: 0.0.0.0/0
+          next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
+          next-hop-interface: eth0
+          table-id: 254
+        - destination: ::/0
+          next-hop-address: ${provisioning_host_external_ipv6}
+          next-hop-interface: eth0
+          table-id: 254"
+fi
+
+}
+
+function add_dns_entry {
+    ip=${1}
+    hostname=${2}
+
+    # Add a DNS entry for this hostname if it's not already defined
+    if ! $(sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath "//dns/host[@ip = '${ip}']" - &> /dev/null); then
+      sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${ip}'> <hostname>${hostname}</hostname> </host>"  --live --config
+    fi
+}
+
 function get_static_ips_and_macs() {
 
     AGENT_NODES_IPS=()
+    AGENT_NODES_IPSV6=()
     AGENT_NODES_MACS=()
     AGENT_NODES_HOSTNAMES=()
 
@@ -26,12 +114,6 @@ function get_static_ips_and_macs() {
         static_ips=1
     else
         static_ips=$NUM_MASTERS+$NUM_WORKERS
-    fi
-
-    if [[ "$IP_STACK" = "v4" ]]; then
-        external_subnet=$EXTERNAL_SUBNET_V4
-    else
-        external_subnet=$EXTERNAL_SUBNET_V6
     fi
 
     if [[ $NETWORKING_MODE == "DHCP" ]]; then
@@ -43,9 +125,6 @@ function get_static_ips_and_macs() {
 
     for (( i=0; i<${static_ips}; i++ ))
     do
-        ip=${base_ip}+${i}
-        AGENT_NODES_IPS+=($(nth_ip ${external_subnet} ${ip}))
-
         if [[ $i < $NUM_MASTERS ]]; then
             AGENT_NODES_HOSTNAMES+=($(printf ${MASTER_HOSTNAME_FORMAT} ${i}))
             cluster_name=${CLUSTER_NAME}_master_${i}
@@ -55,9 +134,19 @@ function get_static_ips_and_macs() {
             cluster_name=${CLUSTER_NAME}_worker_${worker_num}
         fi
 
-        # Add a DNS entry for this hostname if it's not already defined
-        if ! $(sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath "//dns/host[@ip = '${AGENT_NODES_IPS[i]}']" - &> /dev/null); then
-          sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${AGENT_NODES_IPS[i]}'> <hostname>${AGENT_NODES_HOSTNAMES[i]}</hostname> </host>"  --live --config
+        ip=${base_ip}+${i}
+        if [[ "$IP_STACK" = "v4" ]]; then
+            AGENT_NODES_IPS+=($(nth_ip ${EXTERNAL_SUBNET_V4} ${ip}))
+	    add_dns_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
+        elif [[ "$IP_STACK" = "v6" ]]; then
+            AGENT_NODES_IPSV6+=($(nth_ip ${EXTERNAL_SUBNET_V6} ${ip}))
+	    add_dns_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
+        else
+	    # v4v6
+            AGENT_NODES_IPS+=($(nth_ip ${EXTERNAL_SUBNET_V4} ${ip}))
+            AGENT_NODES_IPSV6+=($(nth_ip $EXTERNAL_SUBNET_V6 ${ip}))
+	    add_dns_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
+	    add_dns_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
         fi
 
         # Get the generated mac addresses
@@ -108,6 +197,8 @@ cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
   ingressVIP: ${INGRESS_VIP}
 EOF
 fi
+
+if [[ "$IP_STACK" != "v4v6" ]]; then
 cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
   clusterDeploymentRef:
     name: ${CLUSTER_NAME}
@@ -119,12 +210,39 @@ cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
       hostPrefix: ${cluster_host_prefix}
     serviceNetwork:
     - ${service_network}
+    machineNetwork:
+    - cidr: ${machine_network}
     networkType: ${NETWORK_TYPE}
   provisionRequirements:
     controlPlaneAgents: ${NUM_MASTERS}
     workerAgents: ${NUM_WORKERS}
   sshPublicKey: ${SSH_PUB_KEY}
 EOF
+else
+cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
+  clusterDeploymentRef:
+    name: ${CLUSTER_NAME}
+  imageSetRef:
+    name: openshift-${VERSION}
+  networking:
+    clusterNetwork:
+    - cidr: ${CLUSTER_SUBNET_V4}
+      hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
+    - cidr: ${CLUSTER_SUBNET_V6}
+      hostPrefix: ${CLUSTER_HOST_PREFIX_V6}
+    serviceNetwork:
+    - ${SERVICE_SUBNET_V4}
+    - ${SERVICE_SUBNET_V6}
+    machineNetwork:
+    - cidr: ${EXTERNAL_SUBNET_V4}
+    - cidr: ${EXTERNAL_SUBNET_V6}
+    networkType: ${NETWORK_TYPE}
+  provisionRequirements:
+    controlPlaneAgents: ${NUM_MASTERS}
+    workerAgents: ${NUM_WORKERS}
+  sshPublicKey: ${SSH_PUB_KEY}
+EOF
+fi
 
     cat > "${MANIFESTS_PATH}/cluster-deployment.yaml" << EOF
 apiVersion: hive.openshift.io/v1
@@ -210,14 +328,10 @@ stringData:
 
 EOF
 
-    num_ips=${#AGENT_NODES_IPS[@]}
-
     if [[ "$IP_STACK" = "v4" ]]; then
-       interface_type="ipv4"
-       route_dest="0.0.0.0/0"
+       num_ips=${#AGENT_NODES_IPS[@]}
     else
-       interface_type="ipv6"
-       route_dest="::/0"
+       num_ips=${#AGENT_NODES_IPSV6[@]}
     fi
 
     # Create a yaml for each host in nmstateconfig.yaml
@@ -238,22 +352,13 @@ spec:
         type: ethernet
         state: up
         mac-address: ${AGENT_NODES_MACS[i]}
-        ${interface_type}:
-          enabled: true
-          address:
-            - ip: ${AGENT_NODES_IPS[i]}
-              prefix-length: ${cluster_host_prefix}
-          dhcp: false
+        $(get_nmstate_interface_block i)
     dns-resolver:
       config:
-        server:
-          - ${PROVISIONING_HOST_EXTERNAL_IP}
+        $(get_nmstate_dns_block)
     routes:
       config:
-        - destination: ${route_dest}
-          next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
-          next-hop-interface: eth0
-          table-id: 254
+        $(get_nmstate_route_block)
   interfaces:
     - name: "eth0"
       macAddress: ${AGENT_NODES_MACS[i]}

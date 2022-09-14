@@ -6,6 +6,10 @@ export AGENT_STATIC_IP_NODE0_ONLY=${AGENT_STATIC_IP_NODE0_ONLY:-"false"}
 # Override command name in case of extraction
 export OPENSHIFT_INSTALLER_CMD="openshift-install"
 
+# Override to consistently use the proper subnet
+export CLUSTER_HOST_PREFIX_V4="24"
+export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/64"
+
 if [ -n "$MIRROR_IMAGES" ]; then
     # We're going to be using a locally modified release image
     export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
