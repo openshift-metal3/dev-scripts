@@ -19,6 +19,9 @@ compact cluster:
     # In compact scenario, no workers are required
     export NUM_WORKERS=0
 
+    # Configure e2e test scenario
+    export AGENT_E2E_TEST_SCENARIO=COMPACT_IPV4
+
 Then run the `agent` target:
 
     $ make agent
