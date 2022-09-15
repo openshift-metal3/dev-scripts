@@ -87,12 +87,16 @@ function enable_assisted_service_ui() {
 function wait_for_cluster_ready() {
   local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
   if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for bootstrap-complete; then
+    if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for bootstrap-complete; then
       exit 1
+    fi
   fi
 
   echo "Waiting for cluster ready... "
   if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for install-complete; then
+    if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for install-complete; then
       exit 1
+    fi
   fi
   echo "Cluster is ready!"
 }
