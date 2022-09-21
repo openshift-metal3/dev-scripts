@@ -1,0 +1,18 @@
+networkConfig: &BOND
+  interfaces:
+  - name: bond0
+    type: bond
+    state: up
+    ipv4:
+      dhcp: true
+      enabled: true
+      auto-dns: true
+      auto-gateway: true
+      auto-routes: true
+    link-aggregation:
+      mode: active-backup
+      options:
+        miimon: '100'
+      port:
+      - enp2s0
+      - enp3s0
