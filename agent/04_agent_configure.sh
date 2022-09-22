@@ -14,7 +14,7 @@ source $SCRIPTDIR/ocp_install_env.sh
 
 early_deploy_validation
 
-CLUSTER_NAMESPACE=cluster0
+CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
 function get_static_ips_and_macs() {
 
@@ -67,15 +67,15 @@ function get_static_ips_and_macs() {
 
 function setNetworkingVars() {
    if [[ "$IP_STACK" = "v4" ]]; then
-    CLUSTER_NETWORK=${CLUSTER_SUBNET_V4}
-    SERVICE_NETWORK=${SERVICE_SUBNET_V4}
-    MACHINE_NETWORK=${EXTERNAL_SUBNET_V4}
-    CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V4}
+    cluster_network=${CLUSTER_SUBNET_V4}
+    service_network=${SERVICE_SUBNET_V4}
+    machine_network=${EXTERNAL_SUBNET_V4}
+    cluster_host_prefix=${CLUSTER_HOST_PREFIX_V4}
   elif [[ "$IP_STACK" = "v6" ]]; then
-    CLUSTER_NETWORK=${CLUSTER_SUBNET_V6}
-    SERVICE_NETWORK=${SERVICE_SUBNET_V6}
-    MACHINE_NETWORK=${EXTERNAL_SUBNET_V6}
-    CLUSTER_HOST_PREFIX=${CLUSTER_HOST_PREFIX_V6}
+    cluster_network=${CLUSTER_SUBNET_V6}
+    service_network=${SERVICE_SUBNET_V6}
+    machine_network=${EXTERNAL_SUBNET_V6}
+    cluster_host_prefix=${CLUSTER_HOST_PREFIX_V6}
   fi
 }
 
@@ -115,10 +115,10 @@ cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
     name: openshift-${VERSION}
   networking:
     clusterNetwork:
-    - cidr: ${CLUSTER_NETWORK}
-      hostPrefix: ${CLUSTER_HOST_PREFIX}
+    - cidr: ${cluster_network}
+      hostPrefix: ${cluster_host_prefix}
     serviceNetwork:
-    - ${SERVICE_NETWORK}
+    - ${service_network}
     networkType: ${NETWORK_TYPE}
   provisionRequirements:
     controlPlaneAgents: ${NUM_MASTERS}
@@ -242,7 +242,7 @@ spec:
           enabled: true
           address:
             - ip: ${AGENT_NODES_IPS[i]}
-              prefix-length: ${CLUSTER_HOST_PREFIX}
+              prefix-length: ${cluster_host_prefix}
           dhcp: false
     dns-resolver:
       config:
@@ -315,13 +315,13 @@ metadata:
   namespace: ${CLUSTER_NAMESPACE}
 networking:
   clusterNetwork:
-  - cidr: ${CLUSTER_NETWORK}
-    hostPrefix: ${CLUSTER_HOST_PREFIX}
+  - cidr: ${cluster_network}
+    hostPrefix: ${cluster_host_prefix}
   networkType: OpenShiftSDN
   machineNetwork:
-  - cidr: ${MACHINE_NETWORK}
+  - cidr: ${machine_network}
   serviceNetwork: 
-  - ${SERVICE_NETWORK}
+  - ${service_network}
 platform:
 EOF
 # The assumption here is if number of masters is one
