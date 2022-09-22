@@ -298,6 +298,7 @@ metadata:
   namespace: ${CLUSTER_NAMESPACE}
 rendezvousIP: ${AGENT_NODES_IPS[0]}
 EOF
+    set +x
     pull_secret=$(cat $PULL_SECRET_FILE)
     cat > "${MANIFESTS_PATH}/install-config.yaml" << EOF
 apiVersion: v1
@@ -382,5 +383,6 @@ if [[ $NETWORKING_MODE == "DHCP" ]]; then
   generate_install_config_agent_config
 else
   generate_cluster_manifests
-  generate_extra_cluster_manifests
 fi
+
+generate_extra_cluster_manifests
