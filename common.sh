@@ -413,6 +413,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_DISK=120
           export MASTER_MEMORY=32768
           export NUM_WORKERS=0
+          export NETWORK_TYPE="OVNKubernetes"
           ;;
       *)
         invalidAgentValue

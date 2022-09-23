@@ -325,7 +325,7 @@ networking:
   clusterNetwork:
   - cidr: ${cluster_network}
     hostPrefix: ${cluster_host_prefix}
-  networkType: OpenShiftSDN
+  networkType: ${NETWORK_TYPE}
   machineNetwork:
   - cidr: ${machine_network}
   serviceNetwork: 
