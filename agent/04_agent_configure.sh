@@ -284,13 +284,11 @@ EOF
   fi
 }
 
-function generate_install_config_agent_config() {
+function generate_agent_config() {
 
   MANIFESTS_PATH="${OCP_DIR}"
   mkdir -p ${MANIFESTS_PATH}
   
-  setNetworkingVars
-
     cat > "${MANIFESTS_PATH}/agent-config.yaml" << EOF
 apiVersion: v1alpha1
 metadata:
@@ -298,8 +296,17 @@ metadata:
   namespace: ${CLUSTER_NAMESPACE}
 rendezvousIP: ${AGENT_NODES_IPS[0]}
 EOF
-    set +x
-    pull_secret=$(cat $PULL_SECRET_FILE)
+}
+
+function generate_install_config() {
+
+  MANIFESTS_PATH="${OCP_DIR}"
+  mkdir -p ${MANIFESTS_PATH}
+  
+  setNetworkingVars
+
+  set +x
+  pull_secret=$(cat $PULL_SECRET_FILE)
     cat > "${MANIFESTS_PATH}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
@@ -380,7 +387,8 @@ fi
   fi
 
 if [[ $NETWORKING_MODE == "DHCP" ]]; then
-  generate_install_config_agent_config
+  generate_agent_config
+  generate_install_config
 else
   generate_cluster_manifests
 fi
