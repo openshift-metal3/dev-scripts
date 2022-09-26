@@ -269,11 +269,6 @@ export EXTRA_WORKER_MEMORY=${EXTRA_WORKER_MEMORY:-${WORKER_MEMORY}}
 export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
 export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
 
-
-
-
-
-
 # Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:main"}
 export IRONIC_DATA_DIR="${WORKING_DIR}/ironic"
@@ -373,20 +368,19 @@ export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
 
 
 if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
-  export IP_STACK=$(echo ${AGENT_E2E_TEST_SCENARIO##*_IP} | tr V v)
-
+  IFS='_'
+  read -a arr <<<"$AGENT_E2E_TEST_SCENARIO"
   delimiterCount=$(echo "$AGENT_E2E_TEST_SCENARIO" | tr -cd '_' | wc -c)
-  if [[ "$delimiterCount" == "1" ]]; then
-    SCENARIO=${AGENT_E2E_TEST_SCENARIO%%_*}
-  elif [[ "$delimiterCount" == "2" ]]; then
-    export NETWORKING_MODE=${AGENT_E2E_TEST_SCENARIO%%_*}
+  unset IFS
+
+  SCENARIO=${arr[0]}
+  export IP_STACK=$(echo ${arr[1]##*IP} | tr V v)
+  
+  if [[ "$delimiterCount" == "2" ]]; then
+    export NETWORKING_MODE=${arr[2]}
     if [[ $NETWORKING_MODE != "DHCP" ]]; then
       invalidAgentValue
     fi
-    SCENARIO=${AGENT_E2E_TEST_SCENARIO#*_}
-    SCENARIO=${SCENARIO%_*}
-  else
-      invalidAgentValue
   fi
 
   case "$SCENARIO" in
