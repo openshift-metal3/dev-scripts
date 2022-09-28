@@ -355,7 +355,7 @@ fi
 # Agent specific configuration 
 
 function invalidAgentValue() {
-  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. \nSupported values: \nCOMPACT_IPV4\nCOMPACT_IPV6\nDHCP_COMPACT_IPV4\nDHCP_COMPACT_IPV6\nHA_IPV4\nHA_IPV6\nDHCP_HA_IPV4\nDHCP_HA_IPV6\nSNO_IPV4\nSNO_IPV6\nDHCP_SNO_IPV4\nDHCP_SNO_IPV6\n"
+  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', or 'SNO_IPXX', where XX is 'V4', 'V6', or 'V4V6'"
   exit 1
 }
 
@@ -365,7 +365,6 @@ export NETWORKING_MODE=${NETWORKING_MODE:-}
 
 # Enable MCE deployment
 export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
-
 
 if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   IFS='_'
@@ -423,5 +422,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     export MASTER_MEMORY=32768
   fi
 
+  if [[ $IP_STACK != 'v4' ]] && [[ $IP_STACK != 'v6' ]] && [[ $IP_STACK != 'v4v6' ]]; then
+    echo "Invalid value $IP_STACK for IP stack, use 'V4', 'V6', or 'V4V6'."
+    exit 1
+  fi
 fi
 
