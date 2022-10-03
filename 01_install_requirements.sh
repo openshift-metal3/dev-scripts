@@ -49,8 +49,9 @@ case $DISTRO in
   "centos8"|"rhel8"|"almalinux8"|"rocky8")
     # install network-scripts package to be able to use legacy network commands
     sudo dnf install -y network-scripts
-    if [[ $DISTRO == "centos8" ]]; then
-      echo "CentOS is not supported anymore. Please switch to CentOS Stream / RHEL / Rocky Linux"
+    if [[ $DISTRO == "centos8" ]] && [[ "$NAME" != *"Stream"* ]]; then
+        echo "CentOS is not supported, please switch to CentOS Stream / RHEL / Rocky / Alma"
+        exit 1
     fi
     if [[ $DISTRO == "centos8" || $DISTRO == "almalinux8" || $DISTRO == "rocky8" ]]; then
       sudo dnf -y install epel-release dnf --enablerepo=extras
