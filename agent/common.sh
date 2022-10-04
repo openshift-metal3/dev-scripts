@@ -11,8 +11,14 @@ export CLUSTER_HOST_PREFIX_V4="24"
 export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/64"
 
 if [ -n "$MIRROR_IMAGES" ]; then
-    # We're going to be using a locally modified release image
-    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
+
+    export MIRROR_IMAGE_URL_SUFFIX="localimages/local-release-image"
+
+    if [ "${OC_MIRROR}" == true ]; then
+        export MIRROR_IMAGE_URL_SUFFIX="openshift/release-images"
+    fi
+
+    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${MIRROR_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG}"
 fi
 
 function getReleaseImage() {

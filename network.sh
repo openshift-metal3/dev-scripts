@@ -119,7 +119,6 @@ elif [[ "$IP_STACK" = "v6" ]]; then
   export SERVICE_SUBNET_V6=${SERVICE_SUBNET_V6:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
   export MIRROR_IMAGES=true
-  export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:latest"
 elif [[ "$IP_STACK" = "v4v6" ]]; then
   export CLUSTER_SUBNET_V4=${CLUSTER_SUBNET_V4:-"10.128.0.0/14"}
   export CLUSTER_SUBNET_V6=${CLUSTER_SUBNET_V6:-"fd01::/48"}

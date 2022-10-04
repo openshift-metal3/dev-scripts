@@ -513,6 +513,15 @@ set -x
 #
 #export ENABLE_LOCAL_REGISTRY=true
 
+# REGISTRY_BACKEND
+# Define the local registry to use when ENABLE_LOCAL_REGISTRY=true
+# The default (legacy) registry is started by podman
+# The other available backend is quay which is installed by the
+# mirror-registry application
+# Default: podman
+# Choices: podman, quay
+# export REGISTRY_BACKEND=podman
+
 # LOCAL_REGISTRY_DNS_NAME -
 # Local image registry DNS name.
 # Default: "virthost.$CLUSTER_NAME.test.metalkube.org"
@@ -549,6 +558,19 @@ set -x
 # Default: true
 #
 #export MIRROR_IMAGES=true
+
+# OC_MIRROR -
+# When MIRROR_IMAGES is true, use the 'mirror-registry' command to create the
+# registry and the 'oc mirror' command to do the mirroring.
+# Note, this is currently only supported for the Agent implementation.
+# Default: false
+#export OC_MIRROR=false
+
+# When using OC_MIRROR the auths for the mirror will be added to DOCKER_CONFIG_FILE
+# or an UNAUTHORIZED error will result when attempting to use it. An example entry
+# in this file is:
+# "virthost.ostest.test.metalkube.org:8443": { "auth": "c3RhY2s6cXVheXBhc3N3b3Jk" },
+#export DOCKER_CONFIG_FILE=$HOME/.docker/config.json
 
 # MIRROR_OLM -
 # Comma-separated list of OLM operators to mirror into the local registry. This

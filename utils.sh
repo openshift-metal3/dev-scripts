@@ -397,6 +397,15 @@ EOF
 
 function setup_release_mirror {
 
+  if [[ -z "${OC_MIRROR}" ]] || [[ ! "${OC_MIRROR}" == true ]]; then
+     setup_legacy_release_mirror
+  else
+     setup_oc_mirror
+  fi
+
+}
+
+function setup_legacy_release_mirror {
     # combine global and local secrets
     # pull from one registry and push to local one
     # hence credentials are different
@@ -425,7 +434,7 @@ function setup_release_mirror {
     fi
 }
 
-function setup_local_registry() {
+function setup_podman_mirror_registry() {
 
     # httpd-tools provides htpasswd utility
     sudo yum install -y httpd-tools
@@ -510,6 +519,15 @@ EOF
             ${DOCKER_REGISTRY_IMAGE}
     fi
 
+}
+
+function setup_local_registry() {
+
+    if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+        setup_podman_mirror_registry
+    else
+        setup_quay_mirror_registry
+    fi
 }
 
 function add_local_certificate_as_trusted() {
@@ -646,6 +664,17 @@ function auth_template_and_removetmp(){
     echo $? > "$LOGDIR"/installer-status.txt
     generate_auth_template
     removetmp
+}
+
+use_podman_registry() {
+  # return true if using the local registry and the backend is podman
+  if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+     if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+        return 0
+     fi
+  fi
+
+  return 1
 }
 
 trap removetmp EXIT
