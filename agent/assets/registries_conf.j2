@@ -1,0 +1,69 @@
+{# base oc mirror registries.conf #}
+{% if oc_mirror == "true" %}
+[[registry]]
+prefix = ""
+location = "quay.io/openshift-release-dev/ocp-release"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/openshift/release-images"
+
+[[registry]]
+prefix = ""
+location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/openshift/release"
+
+[[registry]]
+prefix = ""
+location = "registry.redhat.io/ubi8"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/ubi8"
+{# oc mirror registries.conf with MCE #}
+{% if mirror_mce == "true" %}
+[[registry]]
+prefix = ""
+location = "registry.redhat.io/multicluster-engine"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/multicluster-engine"
+
+[[registry]]
+prefix = ""
+location = "registry.redhat.io/rhel8"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/rhel8"
+
+[[registry]]
+prefix = ""
+location = "registry.redhat.io/redhat"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/redhat"
+{% endif %}
+{# legacy mirror registries.conf #}
+{% elif mirror_images == "true" %}
+[[registry]]
+prefix = ""
+location = "registry.ci.openshift.org/ocp/release"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ mirror_image_url_suffix }}"
+
+[[registry]]
+prefix = ""
+location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+mirror-by-digest-only = false
+
+[[registry.mirror]]
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ mirror_image_url_suffix }}"
+{% endif %}
