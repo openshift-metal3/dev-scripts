@@ -44,10 +44,4 @@ if [[ ! -z "${OC_MIRROR}" ]] && [[ "${OC_MIRROR}" == true ]]; then
       sudo mv -f ${oc_mirror_exec} /usr/local/bin
       rm -f ${oc_mirror_file}
    fi
-
-   # set up the channel using the most recent candidate release
-   release_candidate=`oc mirror list releases --channel=candidate-${OPENSHIFT_RELEASE_STREAM} | tail -1`
-   export OPENSHIFT_RELEASE_TAG="${release_candidate}-x86_64"
-   export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${MIRROR_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG}"
-
 fi

@@ -376,10 +376,10 @@ function image_mirror_config {
             cat << EOF
 imageContentSources:
 - mirrors:
-    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
+    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}
   source: ${RELEASE}
 - mirrors:
-    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
+    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}
   source: ${TAGGED}
 additionalTrustBundle: |
 ${INDENTED_CERT}
@@ -414,8 +414,8 @@ function setup_legacy_release_mirror {
        --insecure=true \
         -a ${PULL_SECRET_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
-        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
-        --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
+        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG} \
+        --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX} 2>&1 | tee ${MIRROR_LOG_FILE}
     echo "export MIRRORED_RELEASE_IMAGE=$OPENSHIFT_RELEASE_IMAGE" > /tmp/mirrored_release_image
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
@@ -428,7 +428,7 @@ function setup_legacy_release_mirror {
 
       oc adm release extract --registry-config "${PULL_SECRET_FILE}" \
         --command=$installer --to "${EXTRACT_DIR}" \
-        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
+        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG}"
 
       mv -f "${EXTRACT_DIR}/$installer" ${OCP_DIR}
     fi
