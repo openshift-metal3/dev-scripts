@@ -1,0 +1,19 @@
+- name: Create registries.conf for Agent Installer
+  hosts: localhost
+  collections:
+   - community.general
+  gather_facts: no
+  vars:
+    - mirror_images: "{{ lookup('env', 'MIRROR_IMAGES') }}"
+    - oc_mirror: "{{ lookup('env', 'OC_MIRROR') }}"
+    - mirror_path: "{{ lookup('env', 'MIRROR_PATH') }}"
+    - local_registry_dns_name: "{{ lookup('env', 'LOCAL_REGISTRY_DNS_NAME') }}"
+    - local_registry_port: "{{ lookup('env', 'LOCAL_REGISTRY_PORT') }}"
+    - mirror_image_url_suffix: "{{ lookup('env', 'MIRROR_IMAGE_URL_SUFFIX') }}"
+    - mirror_mce: "{{ lookup('env', 'MIRROR_MCE') }}"
+
+  tasks:
+  - name: write the registries.conf
+    template:
+      src: "registries_conf.j2"
+      dest: "{{ mirror_path }}/registries.conf"

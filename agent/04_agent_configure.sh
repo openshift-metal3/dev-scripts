@@ -272,56 +272,9 @@ spec:
   releaseImage: $(getReleaseImage)
 EOF
 
-if [ ! -z "${MIRROR_IMAGES}" ]; then
-
+if [[ ! -z "${MIRROR_IMAGES}" ]] || [[ ! -z "${OC_MIRROR}" ]]; then
    # Set up registries.conf and ca-bundle.crt for mirroring
-   if [[ -z "${OC_MIRROR}" ]] ; then
-
-      cat > "${MIRROR_PATH}/registries.conf" << EOF
-[[registry]]
-prefix = ""
-location = "registry.ci.openshift.org/ocp/release"
-mirror-by-digest-only = false
-
-[[registry.mirror]]
-location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${MIRROR_IMAGE_URL_SUFFIX}"
-
-[[registry]]
-prefix = ""
-location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
-mirror-by-digest-only = false
-
-[[registry.mirror]]
-location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${MIRROR_IMAGE_URL_SUFFIX}"
-EOF
-   else
-
-      cat > "${MIRROR_PATH}/registries.conf" << EOF
-[[registry]]
-prefix = ""
-location = "quay.io/openshift-release-dev/ocp-release"
-mirror-by-digest-only = false
-
-[[registry.mirror]]
-location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/openshift/release-images"
-
-[[registry]]
-prefix = ""
-location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
-mirror-by-digest-only = false
-
-[[registry.mirror]]
-location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/openshift/release"
-
-[[registry]]
-prefix = ""
-location = "registry.redhat.io/ubi8"
-mirror-by-digest-only = false
-
-[[registry.mirror]]
-location = "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/ubi8"
-EOF
-   fi
+  ansible-playbook "${SCRIPTDIR}/agent/assets/agent-create-registries-conf-playbook.yaml"
 
    # Store the certs for registry
    if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
@@ -428,7 +381,7 @@ function generate_agent_config() {
 
   MANIFESTS_PATH="${OCP_DIR}"
   mkdir -p ${MANIFESTS_PATH}
-  
+
     cat > "${MANIFESTS_PATH}/agent-config.yaml" << EOF
 apiVersion: v1alpha1
 metadata:
@@ -442,7 +395,7 @@ function generate_install_config() {
 
   MANIFESTS_PATH="${OCP_DIR}"
   mkdir -p ${MANIFESTS_PATH}
-  
+
   setNetworkingVars
 
   set +x
@@ -450,14 +403,14 @@ function generate_install_config() {
     cat > "${MANIFESTS_PATH}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
-compute: 
-- hyperthreading: Enabled 
+compute:
+- hyperthreading: Enabled
   name: worker
   replicas: ${NUM_WORKERS}
-controlPlane: 
-  hyperthreading: Enabled 
+controlPlane:
+  hyperthreading: Enabled
   name: master
-  replicas: ${NUM_MASTERS} 
+  replicas: ${NUM_MASTERS}
 metadata:
   name: ${CLUSTER_NAME}
   namespace: ${CLUSTER_NAMESPACE}
@@ -468,7 +421,7 @@ networking:
   networkType: ${NETWORK_TYPE}
   machineNetwork:
   - cidr: ${machine_network}
-  serviceNetwork: 
+  serviceNetwork:
   - ${service_network}
 platform:
 EOF
@@ -482,9 +435,9 @@ EOF
 else
 cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
     baremetal:
-      apiVips: 
+      apiVips:
         - ${API_VIP}
-      ingressVips: 
+      ingressVips:
         - ${INGRESS_VIP}
       hosts:
 EOF
@@ -498,11 +451,40 @@ EOF
     done
 fi
 cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
-fips: false 
+fips: false
 sshKey: ${SSH_PUB_KEY}
 pullSecret:  '${pull_secret}'
 EOF
     set -x
+}
+
+function oc_mirror_mce() {
+   tmpimageset=$(mktemp --tmpdir "mceimageset--XXXXXXXXXX")
+   _tmpfiles="$_tmpfiles $tmpimageset"
+
+   cat > "${tmpimageset}" << EOF
+---
+apiVersion: mirror.openshift.io/v1alpha2
+kind: ImageSetConfiguration
+mirror:
+  operators:
+    - catalog: registry.redhat.io/redhat/redhat-operator-index:v${OPENSHIFT_RELEASE_STREAM}
+      packages:
+        - name: multicluster-engine
+---
+apiVersion: mirror.openshift.io/v1alpha2
+kind: ImageSetConfiguration
+mirror:
+  operators:
+    - catalog: registry.redhat.io/redhat/redhat-operator-index:v${OPENSHIFT_RELEASE_STREAM}
+      packages:
+        - name: local-storage-operator
+EOF
+
+   pushd ${WORKING_DIR}
+   oc mirror --dest-skip-tls --config ${tmpimageset} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
+   popd
+
 }
 
 write_pull_secret
@@ -520,6 +502,10 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
 
      setup_release_mirror
 
+fi
+
+if [ "${OC_MIRROR}" == "true " ] && [  "${MIRROR_MCE}" == "true " ]; then
+  oc_mirror_mce
 fi
 
  if [[ "${NUM_MASTERS}" > "1" ]]; then
