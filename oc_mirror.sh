@@ -48,7 +48,7 @@ function setup_quay_mirror_registry() {
 
    mkdir -p ${WORKING_DIR}/quay-install
    pushd ${WORKING_DIR}/mirror-registry
-   sudo ./mirror-registry install --quayHostname ${LOCAL_REGISTRY_DNS_NAME} --quayRoot ${WORKING_DIR}/quay-install/ --initUser ${REGISTRY_USER} --initPassword ${REGISTRY_PASS} --sslCheckSkip -v
+   sudo ./mirror-registry install --quayHostname ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --quayRoot ${WORKING_DIR}/quay-install/ --initUser ${REGISTRY_USER} --initPassword ${REGISTRY_PASS} --sslCheckSkip -v
 
    quay_auths=`echo -n "${REGISTRY_USER}:${REGISTRY_PASS}" | base64 -w0`
 

@@ -569,7 +569,7 @@ set -x
 # When using OC_MIRROR the auths for the mirror will be added to DOCKER_CONFIG_FILE
 # or an UNAUTHORIZED error will result when attempting to use it. An example entry
 # in this file is:
-# "virthost.ostest.test.metalkube.org:8443": { "auth": "c3RhY2s6cXVheXBhc3N3b3Jk" },
+# "virthost.ostest.test.metalkube.org:LOCAL_REGISTRY_PORT=": { "auth": "<auth string>" },
 #export DOCKER_CONFIG_FILE=$HOME/.docker/config.json
 
 # MIRROR_OLM -

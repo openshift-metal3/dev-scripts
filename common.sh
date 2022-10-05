@@ -105,9 +105,6 @@ export REGISTRY_DIR=${REGISTRY_DIR:-$WORKING_DIR/registry}
 export REGISTRY_CREDS=${REGISTRY_CREDS:-$HOME/private-mirror-${CLUSTER_NAME}.json}
 export REGISTRY_CRT=registry.2.crt
 export REGISTRY_BACKEND=${REGISTRY_BACKEND:-"podman"}
-if [[ ${REGISTRY_BACKEND} = "quay" ]]; then
-    export LOCAL_REGISTRY_PORT=8443
-fi
 
 # Set this variable to build the installer from source
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
