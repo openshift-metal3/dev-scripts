@@ -4,13 +4,13 @@
    - community.general
   gather_facts: no
   vars:
-    - mirror_images: "{{ lookup('env', 'MIRROR_IMAGES') }}"
-    - oc_mirror: "{{ lookup('env', 'OC_MIRROR') }}"
-    - mirror_path: "{{ lookup('env', 'MIRROR_PATH') }}"
+    - agent_deploy_mce: "{{ lookup('env', 'AGENT_DEPLOY_MCE') }}"
     - local_registry_dns_name: "{{ lookup('env', 'LOCAL_REGISTRY_DNS_NAME') }}"
     - local_registry_port: "{{ lookup('env', 'LOCAL_REGISTRY_PORT') }}"
+    - mirror_images: "{{ lookup('env', 'MIRROR_IMAGES') }}"
     - mirror_image_url_suffix: "{{ lookup('env', 'MIRROR_IMAGE_URL_SUFFIX') }}"
-    - mirror_mce: "{{ lookup('env', 'MIRROR_MCE') }}"
+    - mirror_path: "{{ lookup('env', 'MIRROR_PATH') }}"
+    - oc_mirror: "{{ lookup('env', 'OC_MIRROR') }}"
 
   tasks:
   - name: write the registries.conf
