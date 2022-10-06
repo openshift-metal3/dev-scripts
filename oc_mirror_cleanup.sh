@@ -14,6 +14,10 @@ if [[ -f "/usr/local/bin/oc-mirror" ]]; then
   sudo rm "/usr/local/bin/oc-mirror"
 fi
 
+if [ -f "${WORKING_DIR}/.oc-mirror.log" ]; then
+   rm "${WORKING_DIR}/.oc-mirror.log"
+fi
+
 if [ -d "${WORKING_DIR}/oc-mirror-workspace" ]; then
    rm -rf "${WORKING_DIR}/oc-mirror-workspace"
 fi
