@@ -32,16 +32,9 @@ EOF
 function update_docker_config() {
 
    if [[ -f ${DOCKER_CONFIG_FILE} ]]; then
-      tmpdockerconfig=$(mktemp --tmpdir "dockerconfig--XXXXXXXXXX")
-      _tmpfiles="$_tmpfiles $tmpdockerconfig"
-
       cp ${DOCKER_CONFIG_FILE} ${DOCKER_CONFIG_FILE}.old
-      jq -s '.[0] * .[1]' ${DOCKER_CONFIG_FILE} ${PULL_SECRET_FILE} > ${tmpdockerconfig}
-      cp ${tmpdockerconfig} ${DOCKER_CONFIG_FILE}
-      echo "In order to use the mirror registry, entries have been added to ${DOCKER_CONFIG_FILE}"
-   else
-      echo "The ${DOCKER_CONFIG_FILE} does not exist, access to the local registry may fail authorization"
    fi
+   cp ${PULL_SECRET_FILE} ${DOCKER_CONFIG_FILE}
 }
 
 function setup_quay_mirror_registry() {
