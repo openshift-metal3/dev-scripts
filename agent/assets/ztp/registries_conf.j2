@@ -24,7 +24,7 @@ mirror-by-digest-only = false
 [[registry.mirror]]
 location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/ubi8"
 {# oc mirror registries.conf with MCE #}
-{% if mirror_mce == "true" %}
+{% if agent_deploy_mce == "true" %}
 [[registry]]
 prefix = ""
 location = "registry.redhat.io/multicluster-engine"
