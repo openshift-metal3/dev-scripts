@@ -440,7 +440,9 @@ if [[ -n "$MIRROR_IMAGES" || -z "$IP_STACK" || "$IP_STACK" = "v6" ]]; then
       export LOCAL_IMAGE_URL_SUFFIX="openshift/release-images"
 
       # set up the channel using the most recent candidate release
+      pushd ${WORKING_DIR}
       release_candidate=`oc-mirror list releases --channel=candidate-${OPENSHIFT_RELEASE_STREAM} | tail -1`
+      popd
       export OPENSHIFT_RELEASE_TAG="${release_candidate}-x86_64"
    fi
 
