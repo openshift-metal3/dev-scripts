@@ -272,7 +272,7 @@ spec:
   releaseImage: $(getReleaseImage)
 EOF
 
-if [[ ! -z "${MIRROR_IMAGES}" ]] || [[ ! -z "${OC_MIRROR}" ]]; then
+if [[ ! -z "${MIRROR_IMAGES}" ]]; then
    # Set up registries.conf and ca-bundle.crt for mirroring
   ansible-playbook "${SCRIPTDIR}/agent/assets/ztp/registries-conf-playbook.yaml" -e "mirror_path=${SCRIPTDIR}/${MIRROR_PATH}"
 
@@ -496,21 +496,21 @@ sudo yum install -y nmstate
 get_static_ips_and_macs
 
 
-if [ ! -z "${MIRROR_IMAGES}" ]; then
+if [[ ! -z "${MIRROR_IMAGES}" ]]; then
 
-     setup_local_registry
+    setup_local_registry
 
-     setup_release_mirror
+    setup_release_mirror
 
+
+    if [[  "${MIRROR_COMMAND}" == "oc-mirror" ]] && [[  "${AGENT_DEPLOY_MCE}" == "true " ]]; then
+        oc_mirror_mce
+    fi
 fi
 
-if [  "${OC_MIRROR}" == "true " ] && [  "${AGENT_DEPLOY_MCE}" == "true " ]; then
-  oc_mirror_mce
+if [[ "${NUM_MASTERS}" > "1" ]]; then
+   set_api_and_ingress_vip
 fi
-
- if [[ "${NUM_MASTERS}" > "1" ]]; then
-    set_api_and_ingress_vip
-  fi
 
 if [[ $NETWORKING_MODE == "DHCP" ]]; then
   generate_agent_config

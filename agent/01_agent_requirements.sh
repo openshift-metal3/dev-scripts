@@ -33,7 +33,7 @@ if [[ ${REGISTRY_BACKEND} = "quay" ]]; then
 
 fi
 
-if [[ ! -z "${OC_MIRROR}" ]] && [[ "${OC_MIRROR}" == true ]]; then
+if [[ "${MIRROR_COMMAND}" == oc-mirror ]]; then
 
    oc_mirror_file=oc-mirror.tar.gz
    oc_mirror_exec=${oc_mirror_file%%.*}

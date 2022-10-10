@@ -1,5 +1,5 @@
 {# base oc mirror registries.conf #}
-{% if oc_mirror == "true" %}
+{% if mirror_command == "oc-mirror" %}
 [[registry]]
 prefix = ""
 location = "quay.io/openshift-release-dev/ocp-release"

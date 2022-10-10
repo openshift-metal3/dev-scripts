@@ -397,10 +397,13 @@ EOF
 
 function setup_release_mirror {
 
-  if [[ -z "${OC_MIRROR}" ]] || [[ ! "${OC_MIRROR}" == true ]]; then
+  if [[ "${MIRROR_COMMAND}" == oc-adm ]]; then
      setup_legacy_release_mirror
-  else
+  elif [[ "${MIRROR_COMMAND}" == oc-mirror ]]; then
      setup_oc_mirror
+  else
+     echo "Invalid configuration for MIRROR_COMMAND - $MIRROR_COMMAND, must be oc-adm or oc-mirror"
+     exit 1
   fi
 
 }

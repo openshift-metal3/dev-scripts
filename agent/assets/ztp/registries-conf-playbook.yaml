@@ -10,7 +10,7 @@
     - local_registry_port: "{{ lookup('env', 'LOCAL_REGISTRY_PORT') }}"
     - mirror_images: "{{ lookup('env', 'MIRROR_IMAGES') }}"
     - mirror_path: "{{ lookup('env', 'MIRROR_PATH') }}"
-    - oc_mirror: "{{ lookup('env', 'OC_MIRROR') }}"
+    - mirror_command: "{{ lookup('env', 'MIRROR_COMMAND') }}"
 
   tasks:
   - name: write the registries.conf

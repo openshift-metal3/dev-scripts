@@ -559,16 +559,17 @@ set -x
 #
 #export MIRROR_IMAGES=true
 
-# OC_MIRROR -
-# When MIRROR_IMAGES is true, use the 'mirror-registry' command to create the
-# registry and the 'oc mirror' command to do the mirroring.
-# Note, this is currently only supported for the Agent implementation.
-# Default: false
-#export OC_MIRROR=false
+# MIRROR_COMMAND -
+# When MIRROR_IMAGES is true, this identifies the command that will create the mirror
+# Can be either:
+# - oc-adm - use the 'oc adm release mirror' command
+# - oc-mirror - use the 'oc mirror' command
+# Default: oc-adm
+#export MIRROR_COMMAND=oc-adm
 
-# When using OC_MIRROR the auths for the mirror will be added to DOCKER_CONFIG_FILE
-# or an UNAUTHORIZED error will result when attempting to use it. An example entry
-# in this file is:
+# When the MIRROR_COMMAND is set to 'oc-mirror' the auths for the mirror will be added
+# to DOCKER_CONFIG_FILE or an UNAUTHORIZED error will result.
+# An example entry in this file is:
 # "virthost.ostest.test.metalkube.org:LOCAL_REGISTRY_PORT=": { "auth": "<auth string>" },
 #export DOCKER_CONFIG_FILE=$HOME/.docker/config.json
 
