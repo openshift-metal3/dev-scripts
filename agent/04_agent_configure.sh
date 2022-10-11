@@ -502,8 +502,7 @@ if [[ ! -z "${MIRROR_IMAGES}" ]]; then
 
     setup_release_mirror
 
-
-    if [[  "${MIRROR_COMMAND}" == "oc-mirror" ]] && [[  "${AGENT_DEPLOY_MCE}" == "true " ]]; then
+    if [[ ${MIRROR_COMMAND} == "oc-mirror" ]] && [[ ${AGENT_DEPLOY_MCE} == "true" ]]; then
         oc_mirror_mce
     fi
 fi

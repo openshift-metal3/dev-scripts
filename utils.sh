@@ -413,6 +413,10 @@ function setup_legacy_release_mirror {
     # pull from one registry and push to local one
     # hence credentials are different
 
+    if [[ ! -d $WORKING_DIR/registry ]]; then
+	   mkdir $WORKING_DIR/registry
+    fi
+
     oc adm release mirror \
        --insecure=true \
         -a ${PULL_SECRET_FILE}  \
