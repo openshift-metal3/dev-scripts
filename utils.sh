@@ -376,10 +376,10 @@ function image_mirror_config {
             cat << EOF
 imageContentSources:
 - mirrors:
-    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}
+    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
   source: ${RELEASE}
 - mirrors:
-    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}
+    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
   source: ${TAGGED}
 additionalTrustBundle: |
 ${INDENTED_CERT}
@@ -413,16 +413,12 @@ function setup_legacy_release_mirror {
     # pull from one registry and push to local one
     # hence credentials are different
 
-    if [[ ! -d $WORKING_DIR/registry ]]; then
-	   mkdir $WORKING_DIR/registry
-    fi
-
     oc adm release mirror \
        --insecure=true \
         -a ${PULL_SECRET_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
-        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG} \
-        --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX} 2>&1 | tee ${MIRROR_LOG_FILE}
+        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
+        --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
     echo "export MIRRORED_RELEASE_IMAGE=$OPENSHIFT_RELEASE_IMAGE" > /tmp/mirrored_release_image
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
