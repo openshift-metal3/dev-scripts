@@ -447,10 +447,14 @@ if [[ -n "$MIRROR_IMAGES" || -z "$IP_STACK" || "$IP_STACK" = "v6" ]]; then
    fi
 
    # We're going to be using a locally modified release image
-   if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]] && [[ ${#OPENSHIFT_RELEASE_TAG} = 64 ]] && [[ ${OPENSHIFT_RELEASE_TAG} =~ [:alnum:] ]]; then
-       # Tag is a digest, add string for agent installer
-       export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}@sha256:${OPENSHIFT_RELEASE_TAG}"
+   if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
+	  if [[ ${#OPENSHIFT_RELEASE_TAG} = 64 ]] && [[ ${OPENSHIFT_RELEASE_TAG} =~ [:alnum:] ]]; then
+             # Tag is a digest, add string for agent installer
+             export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}@sha256:${OPENSHIFT_RELEASE_TAG}"
+	  else
+             export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}${OPENSHIFT_RELEASE_TAG}"
+	  fi
    else
-       export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}${OPENSHIFT_RELEASE_TAG}"
+       export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:latest"
    fi
 fi
