@@ -413,6 +413,11 @@ function setup_legacy_release_mirror {
     # pull from one registry and push to local one
     # hence credentials are different
 
+    if [[ ! -d $REGISTRY_DIR ]]; then
+        # Create directory needed for log file which isn't created when using quay backend
+        mkdir $REGISTRY_DIR
+    fi
+
     oc adm release mirror \
        --insecure=true \
         -a ${PULL_SECRET_FILE}  \
