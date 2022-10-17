@@ -578,6 +578,8 @@ set -x
 # has no effect if MIRROR_IMAGES is false. This will not work for releases that
 # have not yet shipped. The content for the release must have been published in
 # order for mirroring to work.
+# Note - MIRROR_OLM is currently not supported when MIRROR_COMMAND=oc-mirror, it
+# must be set to oc-adm
 #
 #export MIRROR_OLM=kubernetes-nmstate-operator
 
