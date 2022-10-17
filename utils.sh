@@ -397,10 +397,13 @@ EOF
 
 function setup_release_mirror {
 
-  if [[ -z "${OC_MIRROR}" ]] || [[ ! "${OC_MIRROR}" == true ]]; then
+  if [[ "${MIRROR_COMMAND}" == oc-adm ]]; then
      setup_legacy_release_mirror
-  else
+  elif [[ "${MIRROR_COMMAND}" == oc-mirror ]]; then
      setup_oc_mirror
+  else
+     echo "Invalid configuration for MIRROR_COMMAND - $MIRROR_COMMAND, must be oc-adm or oc-mirror"
+     exit 1
   fi
 
 }
@@ -409,6 +412,11 @@ function setup_legacy_release_mirror {
     # combine global and local secrets
     # pull from one registry and push to local one
     # hence credentials are different
+
+    if [[ ! -d $REGISTRY_DIR ]]; then
+        # Create directory needed for log file which isn't created when using quay backend
+        mkdir $REGISTRY_DIR
+    fi
 
     oc adm release mirror \
        --insecure=true \
@@ -428,7 +436,7 @@ function setup_legacy_release_mirror {
 
       oc adm release extract --registry-config "${PULL_SECRET_FILE}" \
         --command=$installer --to "${EXTRACT_DIR}" \
-        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}"
+        "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG}"
 
       mv -f "${EXTRACT_DIR}/$installer" ${OCP_DIR}
     fi

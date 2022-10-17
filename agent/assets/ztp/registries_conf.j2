@@ -1,5 +1,5 @@
 {# base oc mirror registries.conf #}
-{% if oc_mirror == "true" %}
+{% if mirror_command == "oc-mirror" %}
 [[registry]]
 prefix = ""
 location = "quay.io/openshift-release-dev/ocp-release"
@@ -57,7 +57,7 @@ location = "registry.ci.openshift.org/ocp/release"
 mirror-by-digest-only = false
 
 [[registry.mirror]]
-location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ mirror_image_url_suffix }}"
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
 
 [[registry]]
 prefix = ""
@@ -65,5 +65,5 @@ location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
 mirror-by-digest-only = false
 
 [[registry.mirror]]
-location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ mirror_image_url_suffix }}"
+location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
 {% endif %}
