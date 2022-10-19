@@ -27,10 +27,15 @@ function attach_agent_iso() {
       setfacl -m u:qemu:rx /root
     fi
 
+    local agent_iso="${OCP_DIR}/agent.$(uname -p).iso"
+    if [ ! -f "${agent_iso}" -a -f "${OCP_DIR}/agent.iso" ]; then
+        agent_iso="${OCP_DIR}/agent.iso"
+    fi
+
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
-        sudo virt-xml ${name} --add-device --disk "${OCP_DIR}/agent.iso",device=cdrom,target.dev=sdc
+        sudo virt-xml ${name} --add-device --disk "${agent_iso}",device=cdrom,target.dev=sdc
         sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
         sudo virt-xml ${name} --edit target=sdc --disk="boot_order=2" --start
     done
