@@ -252,7 +252,7 @@ function add_dnsmasq_multi_entry() {
     #     None
     for i in ${2//${STRINGS_SEPARATOR}/ }; do
         if [ "${1}" = "apivip" ] ; then
-            echo "address=/api.${CLUSTER_DOMAIN}/${i}" | sudo tee "${PATH_CONF_DNSMASQ}"
+            echo "address=/api.${CLUSTER_DOMAIN}/${i}" | sudo tee -a "${PATH_CONF_DNSMASQ}"
         fi
 
         if [ "${1}" = "ingressvip" ] ; then
@@ -265,6 +265,9 @@ set_api_and_ingress_vip() {
   # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
   if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
       get_vips
+
+      # make sure the dns_masq config file is cleaned up (add_dnsmasq_multi_entry() only appends)
+      rm -f "${PATH_CONF_DNSMASQ}"
 
       add_dnsmasq_multi_entry "apivip" "${API_VIP}"
       add_dnsmasq_multi_entry "ingressvip" "${INGRESS_VIP}"
