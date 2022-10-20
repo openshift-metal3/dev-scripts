@@ -197,22 +197,20 @@ if [ -n "${NETWORK_CONFIG_FOLDER:-}" ]; then
 fi
 
 function is_varset_add_comma() {
-    # Arguments:
-    #     First argument: the var to be checked if is already set
-    #     Second argument: new value to be assigned to the var
-    #
     # Description:
-    #     Adds comma as separator in case var is already set. Useful for multiple API_VIPs or INGRESS_VIPs
-    #     Example: 192.168.111.5,fd2e:6f44:5dd8:c956::14
+    #     Adds a comma between both given parameters. If only one parameter is
+    #     given, no comma is added and only the given parameter printed. Useful
+    #     for multiple API_VIPs or INGRESS_VIPs Example:
+    #     192.168.111.5,fd2e:6f44:5dd8:c956::14
     #
     # Returns:
     #     Print the string using comma
 
     # if string is *NOT* NULL/empty
-    if [[ -n "${1}" ]]; then
+    if [[ $# -ge 2 ]]; then
         echo "$1,$2"
     else
-        echo "$2"
+        echo "$1"
     fi
 }
 
@@ -232,8 +230,8 @@ function get_vips() {
     fi
 
     if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-        API_VIPs=$(is_varset_add_comma "${API_VIPs}" $(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}'))
-        INGRESS_VIPs=$(is_varset_add_comma "${INGRESS_VIPs}" $(nth_ip $EXTERNAL_SUBNET_V6 4))
+        API_VIPs=$(is_varset_add_comma ${API_VIPs} $(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}'))
+        INGRESS_VIPs=$(is_varset_add_comma ${INGRESS_VIPs} $(nth_ip $EXTERNAL_SUBNET_V6 4))
     fi
 }
 
