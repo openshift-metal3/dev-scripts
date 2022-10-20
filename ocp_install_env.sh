@@ -156,19 +156,19 @@ function setVIPs() {
     "apivips")
         if printf '4.12\n%s\n' "$(openshift_version)" | sort -V -C; then
             # OCP version is equals or newer as 4.12 and supports the new VIPs fields
-            renderVIPs "apiVIPs:" "${API_VIP}"
+            renderVIPs "apiVIPs:" "${API_VIPs}"
         else
             # OCP version is older as 4.12 and does not support the new VIPs fields
-            echo "    apiVIP: ${API_VIP%${STRINGS_SEPARATOR}*}"
+            echo "    apiVIP: ${API_VIPs%${STRINGS_SEPARATOR}*}"
         fi
     ;;
     "ingressvips")
         if printf '4.12\n%s\n' "$(openshift_version)" | sort -V -C; then
             # OCP version is equals or newer as 4.12 and supports the new VIPs fields
-            renderVIPs "ingressVIPs:" "${INGRESS_VIP}"
+            renderVIPs "ingressVIPs:" "${INGRESS_VIPs}"
         else
             # OCP version is older as 4.12 and does not support the new VIPs fields
-            echo "    ingressVIP: ${INGRESS_VIP%${STRINGS_SEPARATOR}*}"
+            echo "    ingressVIP: ${INGRESS_VIPs%${STRINGS_SEPARATOR}*}"
         fi
     ;;
     esac

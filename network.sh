@@ -202,7 +202,7 @@ function is_varset_add_comma() {
     #     Second argument: new value to be assigned to the var
     #
     # Description:
-    #     Adds comma as separator in case var is already set. Useful for multiple API_VIP or INGRESS_VIP
+    #     Adds comma as separator in case var is already set. Useful for multiple API_VIPs or INGRESS_VIPs
     #     Example: 192.168.111.5,fd2e:6f44:5dd8:c956::14
     #
     # Returns:
@@ -227,13 +227,13 @@ function get_vips() {
     #     None
     #
     if [[ -n "${EXTERNAL_SUBNET_V4}" ]]; then
-        API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
-        INGRESS_VIP=$(nth_ip $EXTERNAL_SUBNET_V4 4)
+        API_VIPs=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
+        INGRESS_VIPs=$(nth_ip $EXTERNAL_SUBNET_V4 4)
     fi
 
     if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-        API_VIP=$(is_varset_add_comma "${API_VIP}" $(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}'))
-        INGRESS_VIP=$(is_varset_add_comma "${INGRESS_VIP}" $(nth_ip $EXTERNAL_SUBNET_V6 4))
+        API_VIPs=$(is_varset_add_comma "${API_VIPs}" $(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}'))
+        INGRESS_VIPs=$(is_varset_add_comma "${INGRESS_VIPs}" $(nth_ip $EXTERNAL_SUBNET_V6 4))
     fi
 }
 
@@ -269,8 +269,8 @@ set_api_and_ingress_vip() {
       # make sure the dns_masq config file is cleaned up (add_dnsmasq_multi_entry() only appends)
       rm -f "${PATH_CONF_DNSMASQ}"
 
-      add_dnsmasq_multi_entry "apivip" "${API_VIP}"
-      add_dnsmasq_multi_entry "ingressvip" "${INGRESS_VIP}"
+      add_dnsmasq_multi_entry "apivip" "${API_VIPs}"
+      add_dnsmasq_multi_entry "ingressvip" "${INGRESS_VIPs}"
 
       echo "listen-address=::1" | sudo tee -a "${PATH_CONF_DNSMASQ}"
 
@@ -282,10 +282,10 @@ set_api_and_ingress_vip() {
   else
       # Specific for users *NOT* using devscript with KVM (virsh) for deploy. (Reads: baremetal)
       if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
-          API_VIP=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
+          API_VIPs=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
       else
-          API_VIP=$(dig +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
+          API_VIPs=$(dig +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
       fi
-      INGRESS_VIP=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
+      INGRESS_VIPs=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
   fi
 }
