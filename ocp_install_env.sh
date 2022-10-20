@@ -159,7 +159,7 @@ function setVIPs() {
             renderVIPs "apiVIPs:" "${API_VIP}"
         else
             # OCP version is older as 4.12 and does not support the new VIPs fields
-            echo "    apiVIP: ${API_VIP}"
+            echo "    apiVIP: ${API_VIP%${STRINGS_SEPARATOR}*}"
         fi
     ;;
     "ingressvips")
@@ -168,7 +168,7 @@ function setVIPs() {
             renderVIPs "ingressVIPs:" "${INGRESS_VIP}"
         else
             # OCP version is older as 4.12 and does not support the new VIPs fields
-            echo "    ingressVIP: ${INGRESS_VIP}"
+            echo "    ingressVIP: ${INGRESS_VIP%${STRINGS_SEPARATOR}*}"
         fi
     ;;
     esac
