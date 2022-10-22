@@ -35,6 +35,12 @@ flavors:
 baremetal_network_cidr_v4: "{{ lookup('env', 'EXTERNAL_SUBNET_V4') }}"
 baremetal_network_cidr_v6: "{{ lookup('env', 'EXTERNAL_SUBNET_V6') }}"
 baremetal_network_cidr: "{{ baremetal_network_cidr_v4 | default(baremetal_network_cidr_v6, true) }}"
+
+dns_dualstackhost:
+  - ip: "{{ baremetal_network_cidr_v6 | nthhost(5) }}"
+    hostnames:
+      - "api"
+
 dns_extrahosts:
   - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
     hostnames:
@@ -75,7 +81,7 @@ external_network:
       - 65535
     domain: "{{ cluster_domain }}"
     dns:
-      hosts: "{{dns_extrahosts + dns_customhosts | default([])}}"
+      hosts: "{{ dns_extrahosts + dns_customhosts + dns_dualstackhost if lookup('env', 'EXTERNAL_SUBNET_V6') else dns_extrahosts + dns_customhosts }}"
       forwarders:
         - domain: "apps.{{ cluster_domain }}"
           addr: "127.0.0.1"

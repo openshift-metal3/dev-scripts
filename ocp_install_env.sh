@@ -122,6 +122,58 @@ EOF
   fi
 }
 
+function renderVIPs() {
+    # Arguments:
+    #     First argument: field name
+    #     Second argument: value for the field
+    #
+    # Description:
+    #     This function helps to write in a YAML format multiple resources. (i.e: apiVIPs and ingressVIPs)
+    #     Example: apiVIPs, "192.168.11.5, fd2e:6f44:5dd8:c956::15"
+    #
+    # Returns:
+    #     YAML formatted resource
+    STRINGS_SEPARATOR=","
+    resource="${2}";
+
+    echo "    ${1}"
+    for data in ${resource//${STRINGS_SEPARATOR}/ }; do
+        echo "    - ${data}"
+    done
+}
+
+function setVIPs() {
+    # Arguments:
+    #     The type of VIP: apivips OR ingressvips
+    #
+    # Description:
+    #     apiVIP and ingressVIP both has been DEPRECATED in 4.12 in favor of apiVIPs and ingressVIPs.
+    #     This functions helps to write the new apiVIPs/ingressVIPs format or set the old fields.
+    #
+    # Returns:
+    #     The YAML formatted APIVIP or INGRESSVIP (supports new and old format)
+    case "${1}" in
+    "apivips")
+        if printf '4.12\n%s\n' "$(openshift_version)" | sort -V -C; then
+            # OCP version is equals or newer as 4.12 and supports the new VIPs fields
+            renderVIPs "apiVIPs:" "${API_VIPs}"
+        else
+            # OCP version is older as 4.12 and does not support the new VIPs fields
+            echo "    apiVIP: ${API_VIPs%${STRINGS_SEPARATOR}*}"
+        fi
+    ;;
+    "ingressvips")
+        if printf '4.12\n%s\n' "$(openshift_version)" | sort -V -C; then
+            # OCP version is equals or newer as 4.12 and supports the new VIPs fields
+            renderVIPs "ingressVIPs:" "${INGRESS_VIPs}"
+        else
+            # OCP version is older as 4.12 and does not support the new VIPs fields
+            echo "    ingressVIP: ${INGRESS_VIPs%${STRINGS_SEPARATOR}*}"
+        fi
+    ;;
+    esac
+}
+
 function libvirturi() {
     if [[ "$REMOTE_LIBVIRT" -ne 0 ]]; then
 cat <<EOF
@@ -236,8 +288,8 @@ $(baremetal_network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
 $(cluster_os_image)
-    apiVIP: ${API_VIP}
-    ingressVIP: ${INGRESS_VIP}
+$(setVIPs apivips)
+$(setVIPs ingressvips)
 $(dnsvip)
     hosts:
 EOF
