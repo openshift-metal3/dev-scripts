@@ -133,11 +133,10 @@ function renderVIPs() {
     #
     # Returns:
     #     YAML formatted resource
-    STRINGS_SEPARATOR=","
-    resource="${2}";
+    FIELD_VALUES="${2}";
 
     echo "    ${1}"
-    for data in ${resource//${STRINGS_SEPARATOR}/ }; do
+    for data in ${FIELD_VALUES//${VIPS_SEPARATOR}/ }; do
         echo "    - ${data}"
     done
 }
@@ -156,19 +155,19 @@ function setVIPs() {
     "apivips")
         if printf '4.12\n%s\n' "$(openshift_version)" | sort -V -C; then
             # OCP version is equals or newer as 4.12 and supports the new VIPs fields
-            renderVIPs "apiVIPs:" "${API_VIPs}"
+            renderVIPs "apiVIPs:" "${API_VIPS}"
         else
             # OCP version is older as 4.12 and does not support the new VIPs fields
-            echo "    apiVIP: ${API_VIPs%${STRINGS_SEPARATOR}*}"
+            echo "    apiVIP: ${API_VIPS%${VIPS_SEPARATOR}*}"
         fi
     ;;
     "ingressvips")
         if printf '4.12\n%s\n' "$(openshift_version)" | sort -V -C; then
             # OCP version is equals or newer as 4.12 and supports the new VIPs fields
-            renderVIPs "ingressVIPs:" "${INGRESS_VIPs}"
+            renderVIPs "ingressVIPs:" "${INGRESS_VIPS}"
         else
             # OCP version is older as 4.12 and does not support the new VIPs fields
-            echo "    ingressVIP: ${INGRESS_VIPs%${STRINGS_SEPARATOR}*}"
+            echo "    ingressVIP: ${INGRESS_VIPS%${VIPS_SEPARATOR}*}"
         fi
     ;;
     esac
