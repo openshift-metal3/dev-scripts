@@ -63,11 +63,36 @@ pullSecret: {{ pull_secret_contents }}
 sshKey: {{ ssh_pub_key }} 
 {% if mirror_images == "true" %}
 imageContentSources:
+{% if mirror_command == "oc-mirror" %}
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
+  source: "quay.io/openshift-release-dev/ocp-release"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
+  source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/ubi8"
+  source: "registry.redhat.io/ubi8"
+{% if agent_deploy_mce == "true" %}
+{# oc mirror registries.conf with MCE #}
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/multicluster-engine"
+  source: "registry.redhat.io/multicluster-engine"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/rhel8"
+  source: "registry.redhat.io/rhel8"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/redhat"
+  source: "registry.redhat.io/redhat"
+{% endif %}
+{% else %}
+{# oc_mirror = oc-adm #}
 - mirrors:
     - "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
   source: "registry.ci.openshift.org/ocp/release"
 - mirrors:
     - "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
   source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+{% endif %}
 additionalTrustBundle: {{ ca_bundle_crt }}
 {% endif %}

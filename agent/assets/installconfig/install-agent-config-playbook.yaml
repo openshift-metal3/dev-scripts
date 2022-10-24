@@ -32,12 +32,16 @@
     - pull_secret_contents: "{{ lookup('file', pull_secret) | to_json }}"
     - mirror_images: "{{ lookup('env', 'MIRROR_IMAGES') }}"
     - mirror_path: "{{ lookup('env', 'MIRROR_PATH') }}"
+    - mirror_command: "{{ lookup('env', 'MIRROR_COMMAND') }}"
     - local_image_url_suffix: "{{ lookup('env', 'LOCAL_IMAGE_URL_SUFFIX') }}"
     - local_registry_dns_name: "{{ lookup('env', 'LOCAL_REGISTRY_DNS_NAME') }}"
     - local_registry_port: "{{ lookup('env', 'LOCAL_REGISTRY_PORT') }}"
-    - ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
 
   tasks:
+  - name: Get additional trust bundle
+    set_fact:
+      ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
+    when: mirror_images == 'true'
   - name: write the install-config.yaml 
     template:
       src: "install-config_yaml.j2"
