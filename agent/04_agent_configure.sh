@@ -15,7 +15,7 @@ source $SCRIPTDIR/oc_mirror.sh
 
 early_deploy_validation
 
-CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
+export CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
 function get_nmstate_interface_block {
 
@@ -377,87 +377,6 @@ EOF
   fi
 }
 
-function generate_agent_config() {
-
-  MANIFESTS_PATH="${OCP_DIR}"
-  mkdir -p ${MANIFESTS_PATH}
-
-    cat > "${MANIFESTS_PATH}/agent-config.yaml" << EOF
-apiVersion: v1alpha1
-metadata:
-  name: ${CLUSTER_NAME}
-  namespace: ${CLUSTER_NAMESPACE}
-rendezvousIP: ${AGENT_NODES_IPS[0]}
-EOF
-}
-
-function generate_install_config() {
-
-  MANIFESTS_PATH="${OCP_DIR}"
-  mkdir -p ${MANIFESTS_PATH}
-
-  setNetworkingVars
-
-  set +x
-  pull_secret=$(cat $PULL_SECRET_FILE)
-    cat > "${MANIFESTS_PATH}/install-config.yaml" << EOF
-apiVersion: v1
-baseDomain: ${BASE_DOMAIN}
-compute:
-- hyperthreading: Enabled
-  name: worker
-  replicas: ${NUM_WORKERS}
-controlPlane:
-  hyperthreading: Enabled
-  name: master
-  replicas: ${NUM_MASTERS}
-metadata:
-  name: ${CLUSTER_NAME}
-  namespace: ${CLUSTER_NAMESPACE}
-networking:
-  clusterNetwork:
-  - cidr: ${cluster_network}
-    hostPrefix: ${cluster_host_prefix}
-  networkType: ${NETWORK_TYPE}
-  machineNetwork:
-  - cidr: ${machine_network}
-  serviceNetwork:
-  - ${service_network}
-platform:
-EOF
-# The assumption here is if number of masters is one
-# we want to generate an install config for none platform
-# to create a SNO cluster.
-if [[ "${NUM_MASTERS}" == "1" ]]; then
-cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
-  none: {}
-EOF
-else
-cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
-    baremetal:
-      apiVips:
-        - ${API_VIP}
-      ingressVips:
-        - ${INGRESS_VIP}
-      hosts:
-EOF
- num_ips=${#AGENT_NODES_IPS[@]}
- for (( i=0; i<$num_ips; i++ ))
-    do
-      cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
-          - name: host${i}
-            bootMACAddress: ${AGENT_NODES_MACS[i]}
-EOF
-    done
-fi
-cat >> "${MANIFESTS_PATH}/install-config.yaml" << EOF
-fips: false
-sshKey: ${SSH_PUB_KEY}
-pullSecret:  '${pull_secret}'
-EOF
-    set -x
-}
-
 function oc_mirror_mce() {
    tmpimageset=$(mktemp --tmpdir "mceimageset--XXXXXXXXXX")
    _tmpfiles="$_tmpfiles $tmpimageset"
@@ -511,11 +430,48 @@ if [[ "${NUM_MASTERS}" > "1" ]]; then
    set_api_and_ingress_vip
 fi
 
-if [[ $NETWORKING_MODE == "DHCP" ]]; then
-  generate_agent_config
-  generate_install_config
-else
-  generate_cluster_manifests
+MANIFESTS_PATH="${OCP_DIR}/cluster-manifests"
+
+mkdir -p ${MANIFESTS_PATH}
+if [ ! -z "${MIRROR_IMAGES}" ]; then
+  export MIRROR_PATH="${SCRIPTDIR}/${OCP_DIR}/mirror"
+  mkdir -p ${MIRROR_PATH}
+fi
+
+if [[ ${AGENT_USE_ZTP_MANIFESTS} == true ]]; then
+
+   generate_cluster_manifests
+
+ else
+
+  INSTALL_CONFIG_PATH="${OCP_DIR}"
+  mkdir -p ${INSTALL_CONFIG_PATH}
+
+  # set arrays as strings to pass in env
+  nodes_macs=$(printf '%s#' "${AGENT_NODES_MACS[@]}")
+  export AGENT_NODES_MACS_STR=${nodes_macs::-1}
+  nodes_ips=$(printf '%s#' "${AGENT_NODES_IPS[@]}")
+  export AGENT_NODES_IPS_STR=${nodes_ips::-1}
+  nodes_ipsv6=$(printf '%s#' "${AGENT_NODES_IPSV6[@]}")
+  export AGENT_NODES_IPSV6_STR=${nodes_ipsv6::-1}
+  nodes_hostnames=$(printf '%s#' "${AGENT_NODES_HOSTNAMES[@]}")
+  export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
+
+  export API_VIP=${API_VIPs%${STRINGS_SEPARATOR}*}
+  export INGRESS_VIP=${INGRESS_VIPs%${STRINGS_SEPARATOR}*}
+
+  if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+    # Store the certs for registry
+    if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+       cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
+    else
+       cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem ${MIRROR_PATH}/ca-bundle.crt
+    fi
+  fi
+
+  ansible-playbook -vvv \
+	  -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
+	  "${SCRIPTDIR}/agent/assets/installconfig/install-agent-config-playbook.yaml"
 fi
 
 generate_extra_cluster_manifests
