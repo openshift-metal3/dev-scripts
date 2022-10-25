@@ -65,10 +65,10 @@ sshKey: {{ ssh_pub_key }}
 imageContentSources:
 {% if mirror_command == "oc-mirror" %}
 - mirrors:
-    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/openshift/release-images"
   source: "quay.io/openshift-release-dev/ocp-release"
 - mirrors:
-    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/openshift/release"
   source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
 - mirrors:
     - "{{ local_registry_dns_name }}:{{ local_registry_port }}/ubi8"

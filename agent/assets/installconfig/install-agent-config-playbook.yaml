@@ -4,6 +4,7 @@
    - community.general
   gather_facts: no
   vars:
+    - agent_deploy_mce: "{{ lookup('env', 'AGENT_DEPLOY_MCE') }}"
     - cluster_name: "{{ lookup('env', 'CLUSTER_NAME') }}"
     - cluster_namespace: "{{ lookup('env', 'CLUSTER_NAMESPACE') }}"
     - base_domain: "{{ lookup('env', 'BASE_DOMAIN') }}"
