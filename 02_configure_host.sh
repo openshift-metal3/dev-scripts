@@ -6,6 +6,7 @@ source common.sh
 source network.sh
 source utils.sh
 source validation.sh
+source oc_mirror.sh
 
 early_deploy_validation
 
@@ -68,7 +69,7 @@ fi
 
 export ANSIBLE_FORCE_COLOR=true
 
-if use_podman_registry; then
+if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     setup_local_registry
 fi
 

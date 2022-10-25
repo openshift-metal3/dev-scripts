@@ -7,7 +7,7 @@ all: default
 assisted: assisted_deployment bell
 
 # Deploy cluster with agent installer flow
-agent: agent_requirements requirements configure agent_build_installer agent_configure agent_create_cluster
+agent: agent_requirements requirements configure agent_build_installer agent_prepare_release agent_configure agent_create_cluster
 
 agent_requirements:
 	./agent/01_agent_requirements.sh
@@ -15,11 +15,14 @@ agent_requirements:
 agent_build_installer:
 	./agent/03_agent_build_installer.sh
 
+agent_prepare_release:
+	./agent/04_agent_prepare_release.sh
+
 agent_configure:
-	./agent/04_agent_configure.sh
+	./agent/05_agent_configure.sh
 
 agent_create_cluster:
-	./agent/05_agent_create_cluster.sh
+	./agent/06_agent_create_cluster.sh
 
 agent_cleanup:
 	./agent/cleanup.sh
@@ -53,7 +56,7 @@ ocp_run:
 gather:
 	./must_gather.sh
 
-clean: ocp_cleanup ironic_cleanup proxy_cleanup host_cleanup assisted_deployment_cleanup agent_cleanup  registry_cleanup oc_mirror_cleanup
+clean: ocp_cleanup ironic_cleanup proxy_cleanup host_cleanup assisted_deployment_cleanup agent_cleanup registry_cleanup oc_mirror_cleanup
 
 assisted_deployment_cleanup:
 	./assisted_deployment.sh delete_all

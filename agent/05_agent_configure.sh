@@ -256,11 +256,6 @@ get_static_ips_and_macs
 
 
 if [[ ! -z "${MIRROR_IMAGES}" ]]; then
-
-    setup_local_registry
-
-    setup_release_mirror
-
     if [[ ${MIRROR_COMMAND} == "oc-mirror" ]] && [[ ${AGENT_DEPLOY_MCE} == "true" ]]; then
         oc_mirror_mce
     fi
