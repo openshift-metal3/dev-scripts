@@ -194,8 +194,8 @@ spec:
 EOF
 if [[ "${NUM_MASTERS}" > "1" ]]; then
 cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
-  apiVIP: ${API_VIPs%${STRINGS_SEPARATOR}*}
-  ingressVIP: ${INGRESS_VIPs%${STRINGS_SEPARATOR}*}
+  apiVIP: ${API_VIPS%${VIPS_SEPARATOR}*}
+  ingressVIP: ${INGRESS_VIPS%${VIPS_SEPARATOR}*}
 EOF
 fi
 

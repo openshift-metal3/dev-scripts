@@ -23,7 +23,7 @@ function wrap_if_ipv6(){
     echo "$1"
 }
 
-export STRINGS_SEPARATOR=","
+export VIPS_SEPARATOR=","
 export PATH_CONF_DNSMASQ="/etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf"
 
 export IP_STACK=${IP_STACK:-"v6"}
@@ -195,22 +195,25 @@ if [ -n "${NETWORK_CONFIG_FOLDER:-}" ]; then
   NETWORK_CONFIG_FOLDER="$(readlink -m $NETWORK_CONFIG_FOLDER)"
 fi
 
-function is_varset_add_comma() {
+function concat_parameters_with_vipsseparator() {
     # Description:
-    #     Adds a comma between both given parameters. If only one parameter is
-    #     given, no comma is added and only the given parameter printed. Useful
-    #     for multiple API_VIPs or INGRESS_VIPs Example:
-    #     192.168.111.5,fd2e:6f44:5dd8:c956::14
+    #     Adds ${VIPS_SEPARATOR} between all given parameters.
     #
     # Returns:
-    #     Print the string using comma
+    #     Print all given parameters with ${VIPS_SEPARATOR} in between.
+    
+    ARG_NR=1
+    RESULT=""
+    for ARG in "$@"; do
+      RESULT+="${ARG}"
+      if [[ $ARG_NR -lt $# ]]; then
+        RESULT+="${VIPS_SEPARATOR}"
+      fi
 
-    # if string is *NOT* NULL/empty
-    if [[ $# -ge 2 ]]; then
-        echo "$1,$2"
-    else
-        echo "$1"
-    fi
+      ARG_NR=$((ARG_NR+1))
+    done
+
+    echo "${RESULT}"
 }
 
 function get_vips() {
@@ -224,14 +227,17 @@ function get_vips() {
     #     None
     #
     if [[ -n "${EXTERNAL_SUBNET_V4}" ]]; then
-        API_VIPs=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
-        INGRESS_VIPs=$(nth_ip $EXTERNAL_SUBNET_V4 4)
+        API_VIPS_V4=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
+        INGRESS_VIPS_V4=$(nth_ip $EXTERNAL_SUBNET_V4 4)
     fi
 
     if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-        API_VIPs=$(is_varset_add_comma ${API_VIPs} $(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}'))
-        INGRESS_VIPs=$(is_varset_add_comma ${INGRESS_VIPs} $(nth_ip $EXTERNAL_SUBNET_V6 4))
+        API_VIPS_V6=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
+        INGRESS_VIPS_V6=$(nth_ip $EXTERNAL_SUBNET_V6 4)
     fi
+
+    API_VIPS=$(concat_parameters_with_vipsseparator ${API_VIPS_V4:-} ${API_VIPS_V6:-})
+    INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V4:-} ${INGRESS_VIPS_V6:-})
 }
 
 
@@ -247,7 +253,7 @@ function add_dnsmasq_multi_entry() {
     #
     # Returns:
     #     None
-    for i in ${2//${STRINGS_SEPARATOR}/ }; do
+    for i in ${2//${VIPS_SEPARATOR}/ }; do
         if [ "${1}" = "apivip" ] ; then
             echo "address=/api.${CLUSTER_DOMAIN}/${i}" | sudo tee -a "${PATH_CONF_DNSMASQ}"
         fi
@@ -258,7 +264,7 @@ function add_dnsmasq_multi_entry() {
     done
 }
 
-set_api_and_ingress_vip() {
+function set_api_and_ingress_vip() {
   # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
   if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
       get_vips
@@ -266,8 +272,8 @@ set_api_and_ingress_vip() {
       # make sure the dns_masq config file is cleaned up (add_dnsmasq_multi_entry() only appends)
       rm -f "${PATH_CONF_DNSMASQ}"
 
-      add_dnsmasq_multi_entry "apivip" "${API_VIPs}"
-      add_dnsmasq_multi_entry "ingressvip" "${INGRESS_VIPs}"
+      add_dnsmasq_multi_entry "apivip" "${API_VIPS}"
+      add_dnsmasq_multi_entry "ingressvip" "${INGRESS_VIPS}"
 
       echo "listen-address=::1" | sudo tee -a "${PATH_CONF_DNSMASQ}"
 
@@ -279,10 +285,10 @@ set_api_and_ingress_vip() {
   else
       # Specific for users *NOT* using devscript with KVM (virsh) for deploy. (Reads: baremetal)
       if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
-          API_VIPs=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
+          API_VIPS=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
       else
-          API_VIPs=$(dig +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
+          API_VIPS=$(dig +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
       fi
-      INGRESS_VIPs=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
+      INGRESS_VIPS=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
   fi
 }
