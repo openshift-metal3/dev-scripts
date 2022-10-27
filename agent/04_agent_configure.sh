@@ -457,8 +457,8 @@ if [[ ${AGENT_USE_ZTP_MANIFESTS} == true ]]; then
   nodes_hostnames=$(printf '%s#' "${AGENT_NODES_HOSTNAMES[@]}")
   export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
 
-  export API_VIP=${API_VIPs%${STRINGS_SEPARATOR}*}
-  export INGRESS_VIP=${INGRESS_VIPs%${STRINGS_SEPARATOR}*}
+  export API_VIP=${API_VIPS%${VIPS_SEPARATOR}*}
+  export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
 
   if [[ ! -z "${MIRROR_IMAGES}" ]]; then
     # Store the certs for registry
