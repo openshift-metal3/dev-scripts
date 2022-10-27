@@ -406,6 +406,39 @@ EOF
 
 }
 
+function generate_install_agent_config() {
+
+  INSTALL_CONFIG_PATH="${OCP_DIR}"
+  mkdir -p ${INSTALL_CONFIG_PATH}
+
+  # set arrays as strings to pass in env
+  nodes_macs=$(printf '%s#' "${AGENT_NODES_MACS[@]}")
+  export AGENT_NODES_MACS_STR=${nodes_macs::-1}
+  nodes_ips=$(printf '%s#' "${AGENT_NODES_IPS[@]}")
+  export AGENT_NODES_IPS_STR=${nodes_ips::-1}
+  nodes_ipsv6=$(printf '%s#' "${AGENT_NODES_IPSV6[@]}")
+  export AGENT_NODES_IPSV6_STR=${nodes_ipsv6::-1}
+  nodes_hostnames=$(printf '%s#' "${AGENT_NODES_HOSTNAMES[@]}")
+  export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
+
+  export API_VIP=${API_VIPS%${VIPS_SEPARATOR}*}
+  export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
+
+  if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+    # Store the certs for registry
+    if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+       cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
+    else
+       cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem ${MIRROR_PATH}/ca-bundle.crt
+    fi
+  fi
+
+  ansible-playbook -vvv \
+          -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
+          "${SCRIPTDIR}/agent/assets/installconfig/install-agent-config-playbook.yaml"
+
+}
+
 write_pull_secret
 
 # needed for assisted-service to run nmstatectl
@@ -444,34 +477,8 @@ if [[ ${AGENT_USE_ZTP_MANIFESTS} == true ]]; then
 
  else
 
-  INSTALL_CONFIG_PATH="${OCP_DIR}"
-  mkdir -p ${INSTALL_CONFIG_PATH}
+  generate_install_agent_config
 
-  # set arrays as strings to pass in env
-  nodes_macs=$(printf '%s#' "${AGENT_NODES_MACS[@]}")
-  export AGENT_NODES_MACS_STR=${nodes_macs::-1}
-  nodes_ips=$(printf '%s#' "${AGENT_NODES_IPS[@]}")
-  export AGENT_NODES_IPS_STR=${nodes_ips::-1}
-  nodes_ipsv6=$(printf '%s#' "${AGENT_NODES_IPSV6[@]}")
-  export AGENT_NODES_IPSV6_STR=${nodes_ipsv6::-1}
-  nodes_hostnames=$(printf '%s#' "${AGENT_NODES_HOSTNAMES[@]}")
-  export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
-
-  export API_VIP=${API_VIPS%${VIPS_SEPARATOR}*}
-  export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
-
-  if [[ ! -z "${MIRROR_IMAGES}" ]]; then
-    # Store the certs for registry
-    if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
-       cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
-    else
-       cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem ${MIRROR_PATH}/ca-bundle.crt
-    fi
-  fi
-
-  ansible-playbook -vvv \
-	  -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
-	  "${SCRIPTDIR}/agent/assets/installconfig/install-agent-config-playbook.yaml"
 fi
 
 generate_extra_cluster_manifests
