@@ -51,9 +51,15 @@ platform:
 {% set hostnames = agent_nodes_hostnames.split('#') %}
   baremetal:
     apiVIPs:
-      - {{ api_vips }} 
+{% set a_vips = api_vips.split(',') %}
+{% for api_vip in a_vips %}
+      - {{ api_vip }}
+{% endfor %}
     ingressVIPs:
-      - {{ ingress_vips }}
+{% set i_vips = ingress_vips.split(',') %}
+{% for ingress_vip in i_vips %}
+      - {{ ingress_vip }}
+{% endfor %}
     hosts:
 {% for mac in macs %}
       - name: {{ hostnames[loop.index0] }}

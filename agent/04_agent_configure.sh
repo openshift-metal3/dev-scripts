@@ -421,8 +421,13 @@ function generate_install_agent_config() {
   nodes_hostnames=$(printf '%s#' "${AGENT_NODES_HOSTNAMES[@]}")
   export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
 
-  export API_VIP=${API_VIPS%${VIPS_SEPARATOR}*}
-  export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
+  if [[ "$IP_STACK" = "v4v6" ]]; then
+     export API_VIP=${API_VIPS}
+     export INGRESS_VIP=${INGRESS_VIPS}
+  else
+     export API_VIP=${API_VIPS%${VIPS_SEPARATOR}*}
+     export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
+  fi
 
   if [[ ! -z "${MIRROR_IMAGES}" ]]; then
     # Store the certs for registry
