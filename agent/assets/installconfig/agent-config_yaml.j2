@@ -71,10 +71,15 @@ hosts:
           config:
             server:
               - {{ provisioning_host_external_ip }} 
+              - {{ provisioning_host_external_ip_dualstack }}
         routes:
           config:
             - destination: 0.0.0.0/0
               next-hop-address: {{ provisioning_host_external_ip }} 
+              next-hop-interface: eth0
+              table-id: 254
+            - destination: ::/0
+              next-hop-address: {{ provisioning_host_external_ip_dualstack }}
               next-hop-interface: eth0
               table-id: 254
 {% endif %}

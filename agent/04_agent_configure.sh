@@ -424,9 +424,11 @@ function generate_install_agent_config() {
   if [[ "$IP_STACK" = "v4v6" ]]; then
      export API_VIP=${API_VIPS}
      export INGRESS_VIP=${INGRESS_VIPS}
+     export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=$(nth_ip $EXTERNAL_SUBNET_V6 1)
   else
      export API_VIP=${API_VIPS%${VIPS_SEPARATOR}*}
      export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
+     export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=""
   fi
 
   if [[ ! -z "${MIRROR_IMAGES}" ]]; then

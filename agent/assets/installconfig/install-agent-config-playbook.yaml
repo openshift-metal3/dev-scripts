@@ -27,6 +27,7 @@
     - external_subnet_v4: "{{ lookup('env', 'EXTERNAL_SUBNET_V4') }}"
     - external_subnet_v6: "{{ lookup('env', 'EXTERNAL_SUBNET_V6') }}"
     - provisioning_host_external_ip: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP') }}"
+    - provisioning_host_external_ip_dualstack: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK') }}"
     - networking_mode: "{{ lookup('env', 'NETWORKING_MODE') }}"
     - ssh_pub_key: "{{ lookup('env', 'SSH_PUB_KEY') }}"
     - pull_secret: "{{ lookup('env', 'PULL_SECRET_FILE') }}"
