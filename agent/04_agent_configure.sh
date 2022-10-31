@@ -412,23 +412,20 @@ function generate_install_agent_config() {
   mkdir -p ${INSTALL_CONFIG_PATH}
 
   # set arrays as strings to pass in env
-  nodes_macs=$(printf '%s#' "${AGENT_NODES_MACS[@]}")
-  export AGENT_NODES_MACS_STR=${nodes_macs::-1}
-  nodes_ips=$(printf '%s#' "${AGENT_NODES_IPS[@]}")
+  nodes_ips=$(printf '%s,' "${AGENT_NODES_IPS[@]}")
   export AGENT_NODES_IPS_STR=${nodes_ips::-1}
-  nodes_ipsv6=$(printf '%s#' "${AGENT_NODES_IPSV6[@]}")
+  nodes_ipsv6=$(printf '%s,' "${AGENT_NODES_IPSV6[@]}")
   export AGENT_NODES_IPSV6_STR=${nodes_ipsv6::-1}
-  nodes_hostnames=$(printf '%s#' "${AGENT_NODES_HOSTNAMES[@]}")
+  nodes_macs=$(printf '%s,' "${AGENT_NODES_MACS[@]}")
+  export AGENT_NODES_MACS_STR=${nodes_macs::-1}
+  nodes_hostnames=$(printf '%s,' "${AGENT_NODES_HOSTNAMES[@]}")
   export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
 
+  export API_VIPS=${API_VIPS}
+  export INGRESS_VIPS=${INGRESS_VIPS}
+
   if [[ "$IP_STACK" = "v4v6" ]]; then
-     export API_VIP=${API_VIPS}
-     export INGRESS_VIP=${INGRESS_VIPS}
      export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=$(nth_ip $EXTERNAL_SUBNET_V6 1)
-  else
-     export API_VIP=${API_VIPS%${VIPS_SEPARATOR}*}
-     export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
-     export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=""
   fi
 
   if [[ ! -z "${MIRROR_IMAGES}" ]]; then

@@ -1,7 +1,7 @@
-{% set ips = agent_nodes_ips.split('#') %}
-{% set ipsv6 = agent_nodes_ipsv6.split('#') %}
-{% set macs = agent_nodes_macs.split('#') %}
-{% set hostnames = agent_nodes_hostnames.split('#') %}
+{% set ips = agent_nodes_ips.split(',') %}
+{% set ipsv6 = agent_nodes_ipsv6.split(',') %}
+{% set macs = agent_nodes_macs.split(',') %}
+{% set hostnames = agent_nodes_hostnames.split(',') %}
 apiVersion: v1alpha1
 metadata:
   name: {{ cluster_name }} 

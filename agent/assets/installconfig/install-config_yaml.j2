@@ -47,8 +47,8 @@ platform:
 {% if num_masters == "1" %}
   none: {}
 {% else %}
-{% set macs = agent_nodes_macs.split('#') %}
-{% set hostnames = agent_nodes_hostnames.split('#') %}
+{% set macs = agent_nodes_macs.split(',') %}
+{% set hostnames = agent_nodes_hostnames.split(',') %}
   baremetal:
     apiVIPs:
 {% set a_vips = api_vips.split(',') %}

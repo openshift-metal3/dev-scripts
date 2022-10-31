@@ -12,12 +12,12 @@
     - num_masters: "{{ lookup('env', 'NUM_MASTERS') }}"
     - network_type: "{{ lookup('env', 'NETWORK_TYPE') }}"
     - ip_stack: "{{ lookup('env', 'IP_STACK') }}"
-    - api_vips: "{{ lookup('env', 'API_VIP') }}"
-    - ingress_vips: "{{ lookup('env', 'INGRESS_VIP') }}"
     - agent_nodes_macs: "{{ lookup('env', 'AGENT_NODES_MACS_STR') }}"
     - agent_nodes_ips: "{{ lookup('env', 'AGENT_NODES_IPS_STR') }}"
     - agent_nodes_ipsv6: "{{ lookup('env', 'AGENT_NODES_IPSV6_STR') }}"
     - agent_nodes_hostnames: "{{ lookup('env', 'AGENT_NODES_HOSTNAMES_STR') }}"
+    - ingress_vips: "{{ lookup('env', 'INGRESS_VIPS') }}"
+    - api_vips: "{{ lookup('env', 'API_VIPS') }}"
     - cluster_host_prefix_v4: "{{ lookup('env', 'CLUSTER_HOST_PREFIX_V4') }}"
     - cluster_host_prefix_v6: "{{ lookup('env', 'CLUSTER_HOST_PREFIX_V6') }}"
     - cluster_subnet_v4: "{{ lookup('env', 'CLUSTER_SUBNET_V4') }}"
@@ -27,7 +27,6 @@
     - external_subnet_v4: "{{ lookup('env', 'EXTERNAL_SUBNET_V4') }}"
     - external_subnet_v6: "{{ lookup('env', 'EXTERNAL_SUBNET_V6') }}"
     - provisioning_host_external_ip: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP') }}"
-    - provisioning_host_external_ip_dualstack: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK') }}"
     - networking_mode: "{{ lookup('env', 'NETWORKING_MODE') }}"
     - ssh_pub_key: "{{ lookup('env', 'SSH_PUB_KEY') }}"
     - pull_secret: "{{ lookup('env', 'PULL_SECRET_FILE') }}"
@@ -44,6 +43,10 @@
     set_fact:
       ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
     when: mirror_images == 'true'
+  - name: Get external IPV6 address when set for dualstack
+    set_fact:
+      provisioning_host_external_ip_dualstack: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK') }}"
+    when: ip_stack == 'v4v6'
   - name: write the install-config.yaml 
     template:
       src: "install-config_yaml.j2"

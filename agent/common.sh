@@ -10,7 +10,9 @@ export OPENSHIFT_INSTALLER_CMD="openshift-install"
 
 # Override to consistently use the proper subnet
 export CLUSTER_HOST_PREFIX_V4="24"
-export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/64"
+if [[ "$IP_STACK" != "v4" ]]; then
+   export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/64"
+fi
 
 function getReleaseImage() {
     local releaseImage=${OPENSHIFT_RELEASE_IMAGE}
