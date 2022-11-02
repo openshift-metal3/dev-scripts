@@ -421,8 +421,10 @@ function generate_install_agent_config() {
   nodes_hostnames=$(printf '%s,' "${AGENT_NODES_HOSTNAMES[@]}")
   export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
 
-  export API_VIPS=${API_VIPS}
-  export INGRESS_VIPS=${INGRESS_VIPS}
+  if [[ "${NUM_MASTERS}" > "1" ]]; then
+     export API_VIPS=${API_VIPS}
+     export INGRESS_VIPS=${INGRESS_VIPS}
+  fi
 
   if [[ "$IP_STACK" = "v4v6" ]]; then
      export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=$(nth_ip $EXTERNAL_SUBNET_V6 1)

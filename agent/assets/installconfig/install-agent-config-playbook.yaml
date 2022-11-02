@@ -16,8 +16,6 @@
     - agent_nodes_ips: "{{ lookup('env', 'AGENT_NODES_IPS_STR') }}"
     - agent_nodes_ipsv6: "{{ lookup('env', 'AGENT_NODES_IPSV6_STR') }}"
     - agent_nodes_hostnames: "{{ lookup('env', 'AGENT_NODES_HOSTNAMES_STR') }}"
-    - ingress_vips: "{{ lookup('env', 'INGRESS_VIPS') }}"
-    - api_vips: "{{ lookup('env', 'API_VIPS') }}"
     - cluster_host_prefix_v4: "{{ lookup('env', 'CLUSTER_HOST_PREFIX_V4') }}"
     - cluster_host_prefix_v6: "{{ lookup('env', 'CLUSTER_HOST_PREFIX_V6') }}"
     - cluster_subnet_v4: "{{ lookup('env', 'CLUSTER_SUBNET_V4') }}"
@@ -43,6 +41,11 @@
     set_fact:
       ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
     when: mirror_images == 'true'
+  - name: Get VIPs when not using SNO
+    set_fact:
+      ingress_vips: "{{ lookup('env', 'INGRESS_VIPS') }}"
+      api_vips: "{{ lookup('env', 'API_VIPS') }}"
+    when: num_masters != 1
   - name: Get external IPV6 address when set for dualstack
     set_fact:
       provisioning_host_external_ip_dualstack: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK') }}"
