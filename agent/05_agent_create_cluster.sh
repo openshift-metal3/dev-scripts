@@ -102,9 +102,81 @@ function wait_for_cluster_ready() {
   echo "Cluster is ready!"
 }
 
+function wait_for_operator() {
+    subscription="$1"
+    namespace="${2:-}"
+    echo "Waiting for operator ${subscription} to get installed on namespace ${namespace}..."
+
+    for _ in $(seq 1 60); do
+        csv=$(oc -n "${namespace}" get subscription "${subscription}" -o jsonpath='{.status.installedCSV}' || true)
+        if [[ -n "${csv}" ]]; then
+            if [[ "$(oc -n "${namespace}" get csv "${csv}" -o jsonpath='{.status.phase}')" == "Succeeded" ]]; then
+                echo "ClusterServiceVersion (${csv}) is ready"
+                return 0
+            fi
+        fi
+
+        sleep 10
+    done
+
+    echo "Timed out waiting for csv to become ready!"
+    return 1
+}
+
+function install_lso_operator_latest_available() {
+  local version="$(openshift_version ${OCP_DIR})"
+  local operator_version="4.11"
+  local catalog_source_name=redhat-operators-v${operator_version/./-}
+
+  if [[ ( -n "${AGENT_DEPLOY_MCE}" ) && ( ${version} == "4.12" || ${version} == "4.13" ) ]]; then
+    cat > "${mceManifests}/catalog_source_lso_operator.yaml" << EOF
+kind: CatalogSource
+apiVersion: operators.coreos.com/v1alpha1
+metadata:
+  name: ${catalog_source_name}
+  namespace: openshift-marketplace
+spec:
+  displayName: Red Hat Operators v${operator_version}
+  image: registry.redhat.io/redhat/redhat-operator-index:v${operator_version}
+  priority: -100
+  publisher: Red Hat
+  sourceType: grpc
+  updateStrategy:
+    registryPoll:
+      interval: 10m0s
+EOF
+    apply_manifest "$mceManifests/catalog_source_lso_operator.yaml"
+    oc delete subscription local-storage-operator -n openshift-local-storage
+    cat > "${mceManifests}/lso_operator.yaml" << EOF
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+ name: local-operator-group
+ namespace: openshift-local-storage
+spec:
+ targetNamespaces:
+   - openshift-local-storage
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+ name: local-storage-operator
+ namespace: openshift-local-storage
+spec:
+ installPlanApproval: Automatic
+ name: local-storage-operator
+ source: ${catalog_source_name}
+ sourceNamespace: openshift-marketplace
+EOF
+    apply_manifest "$mceManifests/lso_operator.yaml"
+    wait_for_operator "local-storage-operator" "openshift-local-storage"
+  fi
+}
+
 function mce_prepare_postinstallation_manifests() {
   local mceManifests=$1
-
+  # TODO: Remove this once LSO is published to the 4.12 catalog.
+  install_lso_operator_latest_available
   # Copy all the manifests required after the installation completed
   cp ${SCRIPTDIR}/agent/assets/mce/agent_mce_1*.yaml ${mceManifests}
 

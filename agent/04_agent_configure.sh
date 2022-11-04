@@ -461,7 +461,11 @@ EOF
 function oc_mirror_mce() {
    tmpimageset=$(mktemp --tmpdir "mceimageset--XXXXXXXXXX")
    _tmpfiles="$_tmpfiles $tmpimageset"
-
+   # TODO: Remove this once LSO is published to the 4.12 catalog.
+   local version="$(openshift_version ${OCP_DIR})"
+   if [[ ( -n "${AGENT_DEPLOY_MCE}" ) && ( ${version} == "4.12" || ${version} == "4.13" ) ]]; then
+     local OPENSHIFT_RELEASE_STREAM="4.11"
+   fi
    cat > "${tmpimageset}" << EOF
 ---
 apiVersion: mirror.openshift.io/v1alpha2
