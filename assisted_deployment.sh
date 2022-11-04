@@ -327,10 +327,8 @@ function delete_hive() {
 }
 
 function delete_all() {
-    if  [ "$NODES_PLATFORM" = "assisted" ]; then
-        delete_assisted
-        delete_hive
-    fi
+    delete_assisted
+    delete_hive
 
     # Skipping LocalVolume cleanup on purpose.
 }
