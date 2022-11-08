@@ -1,0 +1,87 @@
+- name: Create webui content for Agent ISO
+  hosts: localhost
+  collections:
+   - community.general
+  gather_facts: no
+  vars:
+    - webui_image: "{{ lookup('env', 'WEBUI_IMAGE') }}"
+    - ocp_dir: "{{ loopkup('env', 'OCP_DIR') }}"
+
+  tasks:
+    - name: Check agent iso
+      ansible.builtin.file:
+        state: file
+        path: "{{ ocp_dir }}/agent.{{ ansible_architecture }}.iso"
+      register: agent_iso
+
+    - name: Create webui temp dir
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: webui
+      register: ui_tempdir
+
+    - name: write UI butane
+      template:
+        src: "ui.bu.j2"
+        dest: "{{ ui_tempdir.path }}/ui.bu"
+
+    - name: Generate UI ignition
+      containers.podman.podman_container:
+        name: butane
+        state: started
+        detach: no
+        rm: yes
+        volume:
+          - "{{ ui_tempdir.path }}:/data"
+        image: quay.io/coreos/butane:release
+        command: "--pretty --strict /data/ui.bu -o /data/ui.ign"
+
+    
+    - name: Extract Agent ISO ignition
+      containers.podman.podman_container:
+        name: coreos-installer
+        state: started
+        detach: no
+        rm: yes
+        volume:
+          - "{{ agent_iso.path }}:/data/agent.iso"
+        image: quay.io/coreos/coreos-installer:release
+        command: "iso ignition show /data/agent.iso"
+      register: iso_ignition
+
+    - name: save ISO ignition
+      ansible.builtin.copy:
+        content: "{{ iso_ignition.stdout }}"
+        dest: "{{ ui_tempdir.path }}/iso.ign"
+
+    - name: Get kcli ignition merger tool
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/karmab/kcli/master/extras/ignitionmerger.py
+        dest: "{{ ui_tempdir.path }}/ignitionmerger.py"
+        mode: "0755"
+
+    - name: Merge ignition
+      ansible.builtin.command:
+        argv:
+          - python
+          - "{{ ui_tempdir.path }}/ignitionmerger.py"
+          - "{{ ui_tempdir.path }}/iso.ign"
+          - "{{ ui_tempdir.path }}/ui.ign"
+      register: ignitionmerger
+
+    - name: save merged ignition
+      ansible.builtin.copy:
+        content: "{{ ignitionmerger.stdout }}"
+        dest: "{{ ui_tempdir.path }}/merged.ign"
+
+    - name: Embedding merged ignition
+      containers.podman.podman_container:
+        name: coreos-installer
+        state: started
+        detach: no
+        rm: yes
+        volume:
+          - "{{ ui_tempdir.path }}/merged.ign:/data/merged.ign"
+          - "{{ agent_iso.path }}:/data/agent.iso"
+        image: quay.io/coreos/coreos-installer:release
+        command: "iso ignition embed -f -i /data/merged.ign /data/agent.iso"

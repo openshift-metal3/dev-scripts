@@ -20,6 +20,16 @@ function create_image() {
     "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create image
 }
 
+function get_agent_iso() {
+  declare agent_iso
+
+  agent_iso="${OCP_DIR}/agent.$(uname -p).iso"
+  if [ ! -f "$agent_iso" -a -f "${OCP_DIR}/agent.iso" ]; then
+    agent_iso="${OCP_DIR}/agent.iso"
+  fi
+  echo "$agent_iso"
+}
+
 function attach_agent_iso() {
 
     # This is required to allow qemu opening the disk image
@@ -27,10 +37,7 @@ function attach_agent_iso() {
       setfacl -m u:qemu:rx /root
     fi
 
-    local agent_iso="${OCP_DIR}/agent.$(uname -p).iso"
-    if [ ! -f "${agent_iso}" -a -f "${OCP_DIR}/agent.iso" ]; then
-        agent_iso="${OCP_DIR}/agent.iso"
-    fi
+    local agent_iso=$(get_agent_iso)
 
     for (( n=0; n<${2}; n++ ))
     do
@@ -148,6 +155,10 @@ function mce_complete_deployment() {
 }
 
 create_image
+
+if [ ! -z "${AGENT_EMBED_GUI:-}" ]; then
+  ansible-playbook "${SCRIPTDIR}/agent/assets/webui/webui-playbook.yaml"
+fi
 
 attach_agent_iso master $NUM_MASTERS
 attach_agent_iso worker $NUM_WORKERS
