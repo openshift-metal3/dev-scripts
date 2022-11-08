@@ -667,3 +667,8 @@ set -x
 
 # Uncomment the following line to deploy the MCE operator, and to automatically import the current cluster as the hub cluster
 # export AGENT_DEPLOY_MCE=true
+
+# If you want to run the assisted service UI, you must set the following environment variables:
+# AGENT_EMBED_GUI=true
+# WEBUI_IMAGE="quay.io/edge-infrastructure/assisted-installer-ui:latest"
+# Note that if you can put a different WEBUI_IMAGE
