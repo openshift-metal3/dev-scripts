@@ -1,0 +1,60 @@
+- name: Create install-config and agent-config for Agent Installer
+  hosts: localhost
+  collections:
+   - community.general
+  gather_facts: no
+  vars:
+    - agent_deploy_mce: "{{ lookup('env', 'AGENT_DEPLOY_MCE') }}"
+    - cluster_name: "{{ lookup('env', 'CLUSTER_NAME') }}"
+    - cluster_namespace: "{{ lookup('env', 'CLUSTER_NAMESPACE') }}"
+    - base_domain: "{{ lookup('env', 'BASE_DOMAIN') }}"
+    - num_workers: "{{ lookup('env', 'NUM_WORKERS') }}"
+    - num_masters: "{{ lookup('env', 'NUM_MASTERS') }}"
+    - network_type: "{{ lookup('env', 'NETWORK_TYPE') }}"
+    - ip_stack: "{{ lookup('env', 'IP_STACK') }}"
+    - agent_nodes_macs: "{{ lookup('env', 'AGENT_NODES_MACS_STR') }}"
+    - agent_nodes_ips: "{{ lookup('env', 'AGENT_NODES_IPS_STR') }}"
+    - agent_nodes_ipsv6: "{{ lookup('env', 'AGENT_NODES_IPSV6_STR') }}"
+    - agent_nodes_hostnames: "{{ lookup('env', 'AGENT_NODES_HOSTNAMES_STR') }}"
+    - cluster_host_prefix_v4: "{{ lookup('env', 'CLUSTER_HOST_PREFIX_V4') }}"
+    - cluster_host_prefix_v6: "{{ lookup('env', 'CLUSTER_HOST_PREFIX_V6') }}"
+    - cluster_subnet_v4: "{{ lookup('env', 'CLUSTER_SUBNET_V4') }}"
+    - cluster_subnet_v6: "{{ lookup('env', 'CLUSTER_SUBNET_V6') }}"
+    - service_subnet_v4: "{{ lookup('env', 'SERVICE_SUBNET_V4') }}"
+    - service_subnet_v6: "{{ lookup('env', 'SERVICE_SUBNET_V6') }}"
+    - external_subnet_v4: "{{ lookup('env', 'EXTERNAL_SUBNET_V4') }}"
+    - external_subnet_v6: "{{ lookup('env', 'EXTERNAL_SUBNET_V6') }}"
+    - provisioning_host_external_ip: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP') }}"
+    - networking_mode: "{{ lookup('env', 'NETWORKING_MODE') }}"
+    - ssh_pub_key: "{{ lookup('env', 'SSH_PUB_KEY') }}"
+    - pull_secret: "{{ lookup('env', 'PULL_SECRET_FILE') }}"
+    - pull_secret_contents: "{{ lookup('file', pull_secret) | to_json }}"
+    - mirror_images: "{{ lookup('env', 'MIRROR_IMAGES') }}"
+    - mirror_path: "{{ lookup('env', 'MIRROR_PATH') }}"
+    - mirror_command: "{{ lookup('env', 'MIRROR_COMMAND') }}"
+    - local_image_url_suffix: "{{ lookup('env', 'LOCAL_IMAGE_URL_SUFFIX') }}"
+    - local_registry_dns_name: "{{ lookup('env', 'LOCAL_REGISTRY_DNS_NAME') }}"
+    - local_registry_port: "{{ lookup('env', 'LOCAL_REGISTRY_PORT') }}"
+
+  tasks:
+  - name: Get additional trust bundle
+    set_fact:
+      ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
+    when: mirror_images == 'true'
+  - name: Get VIPs when not using SNO
+    set_fact:
+      ingress_vips: "{{ lookup('env', 'INGRESS_VIPS') }}"
+      api_vips: "{{ lookup('env', 'API_VIPS') }}"
+    when: num_masters != 1
+  - name: Get external IPV6 address when set for dualstack
+    set_fact:
+      provisioning_host_external_ip_dualstack: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK') }}"
+    when: ip_stack == 'v4v6'
+  - name: write the install-config.yaml 
+    template:
+      src: "install-config_yaml.j2"
+      dest: "{{ install_path }}/install-config.yaml"
+  - name: write the agent-config.yaml 
+    template:
+      src: "agent-config_yaml.j2"
+      dest: "{{ install_path }}/agent-config.yaml"

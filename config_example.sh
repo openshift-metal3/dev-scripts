@@ -667,3 +667,7 @@ set -x
 
 # Uncomment the following line to deploy the MCE operator, and to automatically import the current cluster as the hub cluster
 # export AGENT_DEPLOY_MCE=true
+
+# Set the following value to true to supply ZTP manifests to the installer. By default the install-config.yaml/agent-config.yaml
+# will be used as input to the installer.
+# export AGENT_USE_ZTP_MANIFESTS=false

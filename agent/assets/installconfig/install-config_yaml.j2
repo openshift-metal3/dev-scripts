@@ -1,0 +1,105 @@
+apiVersion: v1
+baseDomain: {{ base_domain }}
+compute:
+- hyperthreading: Enabled
+  name: worker
+  replicas: {{ num_workers }} 
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  replicas: {{ num_masters }} 
+metadata:
+  name: {{ cluster_name }} 
+  namespace: {{ cluster_namespace }}
+networking:
+{% if ip_stack == "v4" %}
+  clusterNetwork:
+  - cidr: {{ cluster_subnet_v4 }}
+    hostPrefix: {{ cluster_host_prefix_v4 }}
+  machineNetwork:
+  - cidr: {{ external_subnet_v4 }}
+  serviceNetwork:
+  - {{ service_subnet_v4 }}
+{% elif ip_stack == "v6" %}
+  clusterNetwork:
+  - cidr: {{ cluster_subnet_v6 }}
+    hostPrefix: {{ cluster_host_prefix_v6 }}
+  machineNetwork:
+  - cidr: {{ external_subnet_v6 }}
+  serviceNetwork:
+  - {{ service_subnet_v6 }}
+{% else %}
+  clusterNetwork:
+  - cidr: {{ cluster_subnet_v4 }}
+    hostPrefix: {{ cluster_host_prefix_v4 }}
+  - cidr: {{ cluster_subnet_v6 }}
+    hostPrefix: {{ cluster_host_prefix_v6 }}
+  machineNetwork:
+  - cidr: {{ external_subnet_v4 }}
+  - cidr: {{ external_subnet_v6 }}
+  serviceNetwork:
+  - {{ service_subnet_v4 }}
+  - {{ service_subnet_v6 }}
+{% endif %}
+  networkType: {{ network_type }} 
+platform:
+{% if num_masters == "1" %}
+  none: {}
+{% else %}
+{% set macs = agent_nodes_macs.split(',') %}
+{% set hostnames = agent_nodes_hostnames.split(',') %}
+  baremetal:
+    apiVIPs:
+{% set a_vips = api_vips.split(',') %}
+{% for api_vip in a_vips %}
+      - {{ api_vip }}
+{% endfor %}
+    ingressVIPs:
+{% set i_vips = ingress_vips.split(',') %}
+{% for ingress_vip in i_vips %}
+      - {{ ingress_vip }}
+{% endfor %}
+    hosts:
+{% for mac in macs %}
+      - name: {{ hostnames[loop.index0] }}
+        bootMACAddress: {{ mac }}
+{% endfor %}
+{% endif %}
+pullSecret: {{ pull_secret_contents }}
+sshKey: {{ ssh_pub_key }} 
+{% if mirror_images == "true" %}
+imageContentSources:
+{% if mirror_command == "oc-mirror" %}
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/openshift/release-images"
+  source: "quay.io/openshift-release-dev/ocp-release"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/openshift/release"
+  source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/ubi8"
+  source: "registry.redhat.io/ubi8"
+{% if agent_deploy_mce == "true" %}
+{# oc mirror registries.conf with MCE #}
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/multicluster-engine"
+  source: "registry.redhat.io/multicluster-engine"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/rhel8"
+  source: "registry.redhat.io/rhel8"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/redhat"
+  source: "registry.redhat.io/redhat"
+{% endif %}
+{% else %}
+{# oc_mirror = oc-adm #}
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
+  source: "registry.ci.openshift.org/ocp/release"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/{{ local_image_url_suffix }}"
+  source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+{% endif %}
+additionalTrustBundle: {{ ca_bundle_crt }}
+{% endif %}
