@@ -273,8 +273,11 @@ spec:
 EOF
 
 if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+
    # Set up registries.conf and ca-bundle.crt for mirroring
-  ansible-playbook "${SCRIPTDIR}/agent/assets/ztp/registries-conf-playbook.yaml" -e "mirror_path=${SCRIPTDIR}/${MIRROR_PATH}"
+   get_mirror_info
+
+   ansible-playbook "${SCRIPTDIR}/agent/assets/ztp/registries-conf-playbook.yaml" -e "mirror_path=${SCRIPTDIR}/${MIRROR_PATH}"
 
    # Store the certs for registry
    if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
@@ -406,6 +409,59 @@ EOF
 
 }
 
+function convert_icsp_to_registries_conf {
+
+    # convert the following, for example, to registries.conf format
+    # - mirrors:
+    #   - virthost.ostest.test.metalkube.org:5000/openshift/release-images
+    # source: quay.io/openshift-release-dev/ocp-release
+
+    tmpregistriesfile=$(mktemp --tmpdir "registriesconf--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmpregistriesfile"
+    while read -r line; do
+        if [[ $line =~ "mirrors:" ]]; then
+	   continue
+        elif [[ $line =~ "source:" ]]; then
+            source=$(echo ${line} | cut -d":" -f2 | xargs)
+
+	    cat >> "${tmpregistriesfile}" << EOF
+[[registry]]
+prefix = ""
+location = "${source}"
+mirror-by-digest-only = true
+
+[[registry.mirror]]
+location = "${mirror}"
+
+EOF
+        else
+	    mirror=$(echo ${line} | cut -d"-" --complement -f1 | xargs)
+        fi
+    done < ${1}
+
+    cp ${tmpregistriesfile} ${1}
+}
+
+function get_mirror_info {
+
+    # Get the ICSP info from the mirror log
+    tmpmirrorinfo=$(mktemp --tmpdir "mirror--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmpmirrorinfo"
+    if [[ ${MIRROR_COMMAND} == "oc-adm" ]]; then
+       sed -n '/imageContentSources/,/^ *$/p' ${MIRROR_LOG_FILE} | tail -n+2 > ${tmpmirrorinfo}
+    else
+       results_dir=$(grep ICSP /home/dev-scripts/.oc-mirror.log | grep -o 'oc-mirror[^;]*')
+       sed -ne '/repository/,/---/p' ${WORKING_DIR}/${results_dir}/imageContentSourcePolicy.yaml > ${tmpmirrorinfo}
+       sed -i '/repositoryDigestMirrors/d;/---/d' ${tmpmirrorinfo}
+    fi
+
+    if [[ ${AGENT_USE_ZTP_MANIFESTS} == true ]]; then
+        convert_icsp_to_registries_conf ${tmpmirrorinfo}
+    fi
+
+    export MIRROR_INFO_FILE=${tmpmirrorinfo}
+}
+
 function generate_install_agent_config() {
 
   INSTALL_CONFIG_PATH="${OCP_DIR}"
@@ -437,6 +493,8 @@ function generate_install_agent_config() {
     else
        cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem ${MIRROR_PATH}/ca-bundle.crt
     fi
+
+    get_mirror_info
   fi
 
   ansible-playbook -vvv \

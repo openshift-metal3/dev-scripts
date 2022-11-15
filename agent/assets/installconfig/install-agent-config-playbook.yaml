@@ -31,15 +31,16 @@
     - pull_secret_contents: "{{ lookup('file', pull_secret) | to_json }}"
     - mirror_images: "{{ lookup('env', 'MIRROR_IMAGES') }}"
     - mirror_path: "{{ lookup('env', 'MIRROR_PATH') }}"
+    - mirror_info_file: "{{ lookup('env', 'MIRROR_INFO_FILE', default='') }}"
     - mirror_command: "{{ lookup('env', 'MIRROR_COMMAND') }}"
-    - local_image_url_suffix: "{{ lookup('env', 'LOCAL_IMAGE_URL_SUFFIX') }}"
     - local_registry_dns_name: "{{ lookup('env', 'LOCAL_REGISTRY_DNS_NAME') }}"
     - local_registry_port: "{{ lookup('env', 'LOCAL_REGISTRY_PORT') }}"
 
   tasks:
-  - name: Get additional trust bundle
+  - name: Get files for mirror configuration
     set_fact:
       ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
+      image_content_sources: "{{ lookup('file', mirror_info_file) }}"
     when: mirror_images == 'true'
   - name: Get VIPs when not using SNO
     set_fact:
