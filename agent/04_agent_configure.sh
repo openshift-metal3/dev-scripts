@@ -17,83 +17,6 @@ early_deploy_validation
 
 export CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
-function get_nmstate_interface_block {
-
-index="$1"
-
-if [[ "$IP_STACK" = "v4" ]]; then
-  echo "ipv4:
-          enabled: true
-          address:
-            - ip: ${AGENT_NODES_IPS[index]}
-              prefix-length: ${CLUSTER_HOST_PREFIX_V4}
-          dhcp: false"
-elif [[ "$IP_STACK" = "v6" ]]; then
-  echo "ipv6:
-          enabled: true
-          address:
-            - ip: ${AGENT_NODES_IPSV6[index]}
-              prefix-length: ${CLUSTER_HOST_PREFIX_V6}
-          dhcp: false"
-else
-       # v4v6
-  echo "ipv4:
-          enabled: true
-          address:
-            - ip: ${AGENT_NODES_IPS[index]}
-              prefix-length: ${CLUSTER_HOST_PREFIX_V4}
-          dhcp: false
-        ipv6:
-          enabled: true
-          address:
-            - ip: ${AGENT_NODES_IPSV6[index]}
-              prefix-length: ${CLUSTER_HOST_PREFIX_V6}
-          dhcp: false"
-fi
-
-}
-
-function get_nmstate_dns_block {
-
-if [[ "$IP_STACK" != "v4v6" ]]; then
-  echo "server:
-          - ${PROVISIONING_HOST_EXTERNAL_IP}"
-
-else
-  provisioning_host_external_ipv6=$(nth_ip $EXTERNAL_SUBNET_V6 1)
-  echo "server:
-          - ${PROVISIONING_HOST_EXTERNAL_IP}
-          - ${provisioning_host_external_ipv6}"
-fi
-
-}
-
-function get_nmstate_route_block {
-
-if [[ "$IP_STACK" = "v4" ]]; then
-  echo "- destination: 0.0.0.0/0
-          next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
-          next-hop-interface: eth0
-          table-id: 254"
-elif [[ "$IP_STACK" = "v6" ]]; then
-  echo "- destination: ::/0
-          next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
-          next-hop-interface: eth0
-          table-id: 254"
-else
-  provisioning_host_external_ipv6=$(nth_ip $EXTERNAL_SUBNET_V6 1)
-  echo "- destination: 0.0.0.0/0
-          next-hop-address: ${PROVISIONING_HOST_EXTERNAL_IP}
-          next-hop-interface: eth0
-          table-id: 254
-        - destination: ::/0
-          next-hop-address: ${provisioning_host_external_ipv6}
-          next-hop-interface: eth0
-          table-id: 254"
-fi
-
-}
-
 function add_dns_entry {
     ip=${1}
     hostname=${2}
@@ -155,211 +78,6 @@ function get_static_ips_and_macs() {
     done
 }
 
-function setNetworkingVars() {
-   if [[ "$IP_STACK" = "v4" ]]; then
-    cluster_network=${CLUSTER_SUBNET_V4}
-    service_network=${SERVICE_SUBNET_V4}
-    machine_network=${EXTERNAL_SUBNET_V4}
-    cluster_host_prefix=${CLUSTER_HOST_PREFIX_V4}
-  elif [[ "$IP_STACK" = "v6" ]]; then
-    cluster_network=${CLUSTER_SUBNET_V6}
-    service_network=${SERVICE_SUBNET_V6}
-    machine_network=${EXTERNAL_SUBNET_V6}
-    cluster_host_prefix=${CLUSTER_HOST_PREFIX_V6}
-  fi
-}
-
-function generate_cluster_manifests() {
-
-  MANIFESTS_PATH="${OCP_DIR}/cluster-manifests"
-  MIRROR_PATH="${OCP_DIR}/mirror"
-
-  # Fetch current OpenShift version from the release payload
-  VERSION="$(openshift_version ${OCP_DIR})"
-
-  mkdir -p ${MANIFESTS_PATH}
-  if [ ! -z "${MIRROR_IMAGES}" ]; then
-    mkdir -p ${MIRROR_PATH}
-  fi
-
-  setNetworkingVars
-
-    cat > "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
-apiVersion: extensions.hive.openshift.io/v1beta1
-kind: AgentClusterInstall
-metadata:
-  name: test-agent-cluster-install
-  namespace: ${CLUSTER_NAMESPACE}
-spec:
-EOF
-if [[ "${NUM_MASTERS}" > "1" ]]; then
-cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
-  apiVIP: ${API_VIPS%${VIPS_SEPARATOR}*}
-  ingressVIP: ${INGRESS_VIPS%${VIPS_SEPARATOR}*}
-EOF
-fi
-
-if [[ "$IP_STACK" != "v4v6" ]]; then
-cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
-  clusterDeploymentRef:
-    name: ${CLUSTER_NAME}
-  imageSetRef:
-    name: openshift-${VERSION}
-  networking:
-    clusterNetwork:
-    - cidr: ${cluster_network}
-      hostPrefix: ${cluster_host_prefix}
-    serviceNetwork:
-    - ${service_network}
-    machineNetwork:
-    - cidr: ${machine_network}
-    networkType: ${NETWORK_TYPE}
-  provisionRequirements:
-    controlPlaneAgents: ${NUM_MASTERS}
-    workerAgents: ${NUM_WORKERS}
-  sshPublicKey: ${SSH_PUB_KEY}
-EOF
-else
-cat >> "${MANIFESTS_PATH}/agent-cluster-install.yaml" << EOF
-  clusterDeploymentRef:
-    name: ${CLUSTER_NAME}
-  imageSetRef:
-    name: openshift-${VERSION}
-  networking:
-    clusterNetwork:
-    - cidr: ${CLUSTER_SUBNET_V4}
-      hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
-    - cidr: ${CLUSTER_SUBNET_V6}
-      hostPrefix: ${CLUSTER_HOST_PREFIX_V6}
-    serviceNetwork:
-    - ${SERVICE_SUBNET_V4}
-    - ${SERVICE_SUBNET_V6}
-    machineNetwork:
-    - cidr: ${EXTERNAL_SUBNET_V4}
-    - cidr: ${EXTERNAL_SUBNET_V6}
-    networkType: ${NETWORK_TYPE}
-  provisionRequirements:
-    controlPlaneAgents: ${NUM_MASTERS}
-    workerAgents: ${NUM_WORKERS}
-  sshPublicKey: ${SSH_PUB_KEY}
-EOF
-fi
-
-    cat > "${MANIFESTS_PATH}/cluster-deployment.yaml" << EOF
-apiVersion: hive.openshift.io/v1
-kind: ClusterDeployment
-metadata:
-  name: ${CLUSTER_NAME}
-  namespace: ${CLUSTER_NAMESPACE}
-spec:
-  baseDomain: ${BASE_DOMAIN}
-  clusterInstallRef:
-    group: extensions.hive.openshift.io
-    kind: AgentClusterInstall
-    name: test-agent-cluster-install
-    version: v1beta1
-  clusterName: ${CLUSTER_NAME}
-  pullSecretRef:
-    name: pull-secret
-EOF
-
-    cat > "${MANIFESTS_PATH}/cluster-image-set.yaml" << EOF
-apiVersion: hive.openshift.io/v1
-kind: ClusterImageSet
-metadata:
-  name: openshift-${VERSION}
-spec:
-  releaseImage: $(getReleaseImage)
-EOF
-
-if [[ ! -z "${MIRROR_IMAGES}" ]]; then
-
-   # Set up registries.conf and ca-bundle.crt for mirroring
-   get_mirror_info
-
-   ansible-playbook "${SCRIPTDIR}/agent/assets/ztp/registries-conf-playbook.yaml" -e "mirror_path=${SCRIPTDIR}/${MIRROR_PATH}"
-
-   # Store the certs for registry
-   if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
-      cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
-   else
-      cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem ${MIRROR_PATH}/ca-bundle.crt
-   fi
-fi
-
-    cat > "${MANIFESTS_PATH}/infraenv.yaml" << EOF
-apiVersion: agent-install.openshift.io/v1beta1
-kind: InfraEnv
-metadata:
-  name: myinfraenv
-  namespace: ${CLUSTER_NAMESPACE}
-spec:
-  clusterRef:
-    name: ${CLUSTER_NAME}
-    namespace: ${CLUSTER_NAMESPACE}
-  pullSecretRef:
-    name: pull-secret
-  sshAuthorizedKey: ${SSH_PUB_KEY}
-  nmStateConfigLabelSelector:
-    matchLabels:
-      ${CLUSTER_NAMESPACE}-nmstate-label-name: ${CLUSTER_NAMESPACE}-nmstate-label-value
-EOF
-
-    set +x
-    pull_secret=$(cat $PULL_SECRET_FILE)
-    cat > "${MANIFESTS_PATH}/pull-secret.yaml" << EOF
-apiVersion: v1
-kind: Secret
-type: kubernetes.io/dockerconfigjson
-metadata:
-  name: pull-secret
-  namespace: ${CLUSTER_NAMESPACE}
-stringData:
-  .dockerconfigjson: '${pull_secret}'
-
-EOF
-
-    if [[ "$IP_STACK" = "v4" ]]; then
-       num_ips=${#AGENT_NODES_IPS[@]}
-    else
-       num_ips=${#AGENT_NODES_IPSV6[@]}
-    fi
-
-    # Create a yaml for each host in nmstateconfig.yaml
-    for (( i=0; i<$num_ips; i++ ))
-    do
-        cat >> "${MANIFESTS_PATH}/nmstateconfig.yaml" << EOF
-apiVersion: agent-install.openshift.io/v1beta1
-kind: NMStateConfig
-metadata:
-  name: ${AGENT_NODES_HOSTNAMES[i]}
-  namespace: openshift-machine-api
-  labels:
-    ${CLUSTER_NAMESPACE}-nmstate-label-name: ${CLUSTER_NAMESPACE}-nmstate-label-value
-spec:
-  config:
-    interfaces:
-      - name: eth0
-        type: ethernet
-        state: up
-        mac-address: ${AGENT_NODES_MACS[i]}
-        $(get_nmstate_interface_block i)
-    dns-resolver:
-      config:
-        $(get_nmstate_dns_block)
-    routes:
-      config:
-        $(get_nmstate_route_block)
-  interfaces:
-    - name: "eth0"
-      macAddress: ${AGENT_NODES_MACS[i]}
----
-EOF
-    done
-
-    set -x
-}
-
 function generate_extra_cluster_manifests() {
 
   EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
@@ -376,7 +94,7 @@ data:
 EOF
 
   if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
-    cp ${SCRIPTDIR}/agent/assets/mce/agent_mce_0_*.yaml ${EXTRA_MANIFESTS_PATH}
+    cp ${SCRIPTDIR}/agent/mce/agent_mce_0_*.yaml ${EXTRA_MANIFESTS_PATH}
   fi
 }
 
@@ -462,10 +180,22 @@ function get_mirror_info {
     export MIRROR_INFO_FILE=${tmpmirrorinfo}
 }
 
-function generate_install_agent_config() {
+function generate_cluster_manifests() {
 
   INSTALL_CONFIG_PATH="${OCP_DIR}"
   mkdir -p ${INSTALL_CONFIG_PATH}
+
+  export MANIFESTS_PATH="${SCRIPTDIR}/${OCP_DIR}/cluster-manifests"
+  mkdir -p ${MANIFESTS_PATH}
+
+  export MIRROR_PATH="${SCRIPTDIR}/${OCP_DIR}/mirror"
+  if [ ! -z "${MIRROR_IMAGES}" ]; then
+    mkdir -p ${MIRROR_PATH}
+  fi
+
+  # Fetch current OpenShift version from the release payload
+  export VERSION="$(openshift_version ${OCP_DIR})"
+  export IMAGE=$(getReleaseImage)
 
   # set arrays as strings to pass in env
   nodes_ips=$(printf '%s,' "${AGENT_NODES_IPS[@]}")
@@ -480,6 +210,8 @@ function generate_install_agent_config() {
   if [[ "${NUM_MASTERS}" > "1" ]]; then
      export API_VIPS=${API_VIPS}
      export INGRESS_VIPS=${INGRESS_VIPS}
+     export API_VIP=${API_VIPS%${VIPS_SEPARATOR}*}
+     export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
   fi
 
   if [[ "$IP_STACK" = "v4v6" ]]; then
@@ -497,9 +229,10 @@ function generate_install_agent_config() {
     get_mirror_info
   fi
 
+  # Create manifests
   ansible-playbook -vvv \
           -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
-          "${SCRIPTDIR}/agent/assets/installconfig/install-agent-config-playbook.yaml"
+          "${SCRIPTDIR}/agent/create-manifests-playbook.yaml"
 
 }
 
@@ -537,22 +270,6 @@ else
   configure_dnsmasq ${ip} ""
 fi
 
-MANIFESTS_PATH="${OCP_DIR}/cluster-manifests"
-
-mkdir -p ${MANIFESTS_PATH}
-if [ ! -z "${MIRROR_IMAGES}" ]; then
-  export MIRROR_PATH="${SCRIPTDIR}/${OCP_DIR}/mirror"
-  mkdir -p ${MIRROR_PATH}
-fi
-
-if [[ ${AGENT_USE_ZTP_MANIFESTS} == true ]]; then
-
-   generate_cluster_manifests
-
- else
-
-  generate_install_agent_config
-
-fi
+generate_cluster_manifests
 
 generate_extra_cluster_manifests

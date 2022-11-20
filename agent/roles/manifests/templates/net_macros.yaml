@@ -1,0 +1,52 @@
+{% macro interfaces(mac) -%}
+    interfaces:
+      - name: eth0
+        type: ethernet
+        state: up
+        mac-address: {{ mac }}
+{%- endmacro %}
+
+{% macro ip(ip, prefix) -%}
+          enabled: true
+          address:
+            - ip: {{ ip }}
+              prefix-length: {{ prefix }}
+          dhcp: false
+{%- endmacro %}
+
+{% macro dns(ext_ip) -%}
+    dns-resolver:
+      config:
+        server:
+          - {{ ext_ip }}
+{%- endmacro %}
+
+{% macro route(dest, ext_ip) -%}
+    routes:
+      config:
+        - destination: {{ dest }} 
+          next-hop-address: {{ ext_ip }}
+          next-hop-interface: eth0
+          table-id: 254
+{%- endmacro %}
+
+{% macro dns_dualstack(ext_ip, dualstack_ext_ip) -%}
+    dns-resolver:
+      config:
+        server:
+          - {{ ext_ip }}
+          - {{ dualstack_ext_ip }}
+{%- endmacro %}
+
+{% macro route_dualstack(ext_ip, dualstack_ext_ip) -%}
+    routes:
+      config:
+        - destination: 0.0.0.0/0 
+          next-hop-address: {{ ext_ip }}
+          next-hop-interface: eth0
+          table-id: 254
+        - destination: ::/0 
+          next-hop-address: {{ dualstack_ext_ip }}
+          next-hop-interface: eth0
+          table-id: 254
+{%- endmacro %}

@@ -1,0 +1,14 @@
+- name: Get mirror settings
+  set_fact:
+    image_content_sources: "{{ lookup('file', mirror_info_file) }}"
+  when: mirror_images == 'true'
+
+- name: write the install-config.yaml 
+  template:
+    src: "templates/install-config_yaml.j2"
+    dest: "{{ install_path }}/install-config.yaml"
+
+- name: write the agent-config.yaml 
+  template:
+    src: "agent-config_yaml.j2"
+    dest: "{{ install_path }}/agent-config.yaml"
