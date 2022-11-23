@@ -240,7 +240,6 @@ function get_vips() {
     INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V4:-} ${INGRESS_VIPS_V6:-})
 }
 
-
 function add_dnsmasq_multi_entry() {
     # Arguments:
     #     First argument: the type of entry to be added in openshift-${CLUSTER_NAME}.conf
@@ -264,24 +263,30 @@ function add_dnsmasq_multi_entry() {
     done
 }
 
+function configure_dnsmasq() {
+  apiVips=${1}
+  ingressVips=${2}
+
+  # make sure the dns_masq config file is cleaned up (add_dnsmasq_multi_entry() only appends)
+  rm -f "${PATH_CONF_DNSMASQ}"
+
+  add_dnsmasq_multi_entry "apivip" "${apiVips}"
+  add_dnsmasq_multi_entry "ingressvip" "${ingressVips}"
+
+  echo "listen-address=::1" | sudo tee -a "${PATH_CONF_DNSMASQ}"
+
+  # Risk reduction for CVE-2020-25684, CVE-2020-25685, and CVE-2020-25686
+  # See: https://access.redhat.com/security/vulnerabilities/RHSB-2021-001
+  echo "cache-size=0" | sudo tee -a "${PATH_CONF_DNSMASQ}"
+
+  sudo systemctl reload NetworkManager
+}
+
 function set_api_and_ingress_vip() {
   # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
   if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
       get_vips
-
-      # make sure the dns_masq config file is cleaned up (add_dnsmasq_multi_entry() only appends)
-      rm -f "${PATH_CONF_DNSMASQ}"
-
-      add_dnsmasq_multi_entry "apivip" "${API_VIPS}"
-      add_dnsmasq_multi_entry "ingressvip" "${INGRESS_VIPS}"
-
-      echo "listen-address=::1" | sudo tee -a "${PATH_CONF_DNSMASQ}"
-
-      # Risk reduction for CVE-2020-25684, CVE-2020-25685, and CVE-2020-25686
-      # See: https://access.redhat.com/security/vulnerabilities/RHSB-2021-001
-      echo "cache-size=0" | sudo tee -a "${PATH_CONF_DNSMASQ}"
-
-      sudo systemctl reload NetworkManager
+      configure_dnsmasq ${API_VIPS} ${INGRESS_VIPS}
   else
       # Specific for users *NOT* using devscript with KVM (virsh) for deploy. (Reads: baremetal)
       if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
