@@ -529,8 +529,9 @@ else
   # For SNO clusters, at least the api dns entry must be set
   # otherwise oc/openshift-install commands requiring the
   # kubeconfig will not work properly
-  ip=${AGENT_NODES_IPS[0]}
-  if [[ "$IP_STACK" != "v4" ]]; then
+  if [[ "$IP_STACK" = "v4" ]]; then
+    ip=${AGENT_NODES_IPS[0]}
+  else
     ip=${AGENT_NODES_IPSV6[0]}
   fi
   configure_dnsmasq ${ip} ""
