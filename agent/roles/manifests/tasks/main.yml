@@ -1,0 +1,23 @@
+- name: Get additional trust bundle
+  set_fact:
+    ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
+  when: mirror_images == 'true'
+
+- name: Get VIPs when not using SNO
+  set_fact:
+    ingress_vips: "{{ lookup('env', 'INGRESS_VIPS') }}"
+    api_vips: "{{ lookup('env', 'API_VIPS') }}"
+  when: num_masters != 1
+
+- name: Get external IPV6 address when set for dualstack
+  set_fact:
+    provisioning_host_external_ip_dualstack: "{{ lookup('env', 'PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK') }}"
+  when: ip_stack == 'v4v6'
+
+- name: Create install-config and agent-config manifests
+  import_tasks: install-config.yml
+  when: agent_use_ztp_manifests == 'false'
+
+- name: Create ZTP based manifests
+  import_tasks: ztp.yml
+  when: agent_use_ztp_manifests == 'true'

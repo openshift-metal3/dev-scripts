@@ -106,7 +106,7 @@ function mce_prepare_postinstallation_manifests() {
   local mceManifests=$1
 
   # Copy all the manifests required after the installation completed
-  cp ${SCRIPTDIR}/agent/assets/mce/agent_mce_1*.yaml ${mceManifests}
+  cp ${SCRIPTDIR}/agent/mce/agent_mce_1*.yaml ${mceManifests}
 
   # Render the cluster image set template
   local clusterImageSetTemplate=${mceManifests}/agent_mce_1_04_clusterimageset.yaml

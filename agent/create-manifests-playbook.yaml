@@ -1,0 +1,7 @@
+- name: Create manifests to use for the Agent Installer
+  hosts: localhost
+  collections:
+   - community.general
+  gather_facts: true 
+  roles:
+  - role: manifests 

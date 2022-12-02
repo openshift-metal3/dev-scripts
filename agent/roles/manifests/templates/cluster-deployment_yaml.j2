@@ -1,0 +1,15 @@
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  name: {{ cluster_name }}
+  namespace: {{ cluster_namespace }}
+spec:
+  baseDomain: {{ base_domain }}
+  clusterInstallRef:
+    group: extensions.hive.openshift.io
+    kind: AgentClusterInstall
+    name: test-agent-cluster-install
+    version: v1beta1
+  clusterName: {{ cluster_name }}
+  pullSecretRef:
+    name: pull-secret

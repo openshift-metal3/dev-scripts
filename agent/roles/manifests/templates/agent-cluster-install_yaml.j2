@@ -1,0 +1,49 @@
+apiVersion: extensions.hive.openshift.io/v1beta1
+kind: AgentClusterInstall
+metadata:
+  name: test-agent-cluster-install
+  namespace: {{ cluster_namespace }}
+spec:
+{% if num_masters != "1" %}
+  apiVIP: {{ api_vip }} 
+  ingressVIP: {{ ingress_vip }} 
+{% endif %}
+  clusterDeploymentRef:
+    name: {{ cluster_name }}
+  imageSetRef:
+    name: openshift-{{ version }}
+  networking:
+{% if ip_stack == "v4" %}
+    clusterNetwork:
+    - cidr: {{ cluster_subnet_v4 }}
+      hostPrefix: {{ cluster_host_prefix_v4 }}
+    serviceNetwork:
+    - {{ service_subnet_v4 }}
+    machineNetwork:
+    - cidr: {{ external_subnet_v4 }}
+{% elif ip_stack == "v6" %}
+    clusterNetwork:
+    - cidr: {{ cluster_subnet_v6 }}
+      hostPrefix: {{ cluster_host_prefix_v6 }}
+    serviceNetwork:
+    - {{ service_subnet_v6 }}
+    machineNetwork:
+    - cidr: {{ external_subnet_v6 }}
+{% else %}
+    clusterNetwork:
+    - cidr: {{ cluster_subnet_v4 }}
+      hostPrefix: {{ cluster_host_prefix_v4 }}
+    - cidr: {{ cluster_subnet_v6 }}
+      hostPrefix: {{ cluster_host_prefix_v6 }}
+    serviceNetwork:
+    - {{ service_subnet_v4 }}
+    - {{ service_subnet_v6 }}
+    machineNetwork:
+    - cidr: {{ external_subnet_v4 }}
+    - cidr: {{ external_subnet_v6 }}
+{% endif %}
+    networkType: {{ network_type }}
+  provisionRequirements:
+    controlPlaneAgents: {{ num_masters }}
+    workerAgents: {{ num_workers }}
+  sshPublicKey: {{ ssh_pub_key }}

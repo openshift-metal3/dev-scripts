@@ -1,0 +1,46 @@
+- name: Get VIP, only one is currently supported
+  set_fact:
+    api_vip: "{{ lookup('env', 'API_VIP') }}"
+    ingress_vip: "{{ lookup('env', 'INGRESS_VIP') }}"
+  when: num_masters != 1
+
+- name: Write agent-cluster-install.yaml
+  template:
+    src: "agent-cluster-install_yaml.j2"
+    dest: "{{ manifests_path }}/agent-cluster-install.yaml"
+
+- name: Write cluster-image-set.yaml
+  template:
+    src: "cluster-image-set_yaml.j2"
+    dest: "{{ manifests_path }}/cluster-image-set.yaml"
+
+- name: Write cluster-deployment.yaml
+  template:
+    src: "cluster-deployment_yaml.j2"
+    dest: "{{ manifests_path }}/cluster-deployment.yaml"
+
+- name: Write infraenv.yaml
+  template:
+    src: "infraenv_yaml.j2"
+    dest: "{{ manifests_path }}/infraenv.yaml"
+
+- name: Write pull-secret.yaml
+  template:
+    src: "pull-secret_yaml.j2"
+    dest: "{{ manifests_path }}/pull-secret.yaml"
+
+- name: Write nmstateconfig.yaml
+  template:
+    src: "nmstateconfig_yaml.j2"
+    dest: "{{ manifests_path }}/nmstateconfig.yaml"
+
+- name: Get mirror settings
+  set_fact:
+    registries: "{{ lookup('file', mirror_info_file) }}"
+  when: mirror_images == 'true'
+
+- name: Write registries.conf
+  template:
+    src: "registries_conf.j2"
+    dest: "{{ mirror_path }}/registries.conf"
+  when: mirror_images == 'true'
