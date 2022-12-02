@@ -24,6 +24,9 @@ agent_create_cluster:
 agent_cleanup:
 	./agent/cleanup.sh
 
+agent_gather:
+	./agent/gather.sh
+
 agent_tests:
 	./agent/agent_tests.sh
 
