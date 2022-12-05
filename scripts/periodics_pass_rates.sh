@@ -26,7 +26,7 @@ done
 shift $((OPTIND-1))
 
 ALLJOBSURL="https://raw.githubusercontent.com/openshift/release/master/ci-operator/jobs/openshift/release/openshift-release-master-periodics.yaml"
-JOBSTOTEST=$(curl -s $ALLJOBSURL | yq -r ".periodics[] | select(.name | contains(\"metal-ipi\")) | select(.name | contains(\"${1:-periodic}-\")) | .name")
+JOBSTOTEST=$(curl -s $ALLJOBSURL | yq -r ".periodics[] | select(.name | contains(\"metal-ipi\")) | select(.name | contains(\"nightly-${1:-}\")) | .name")
 
 function getJobSummary(){
     JOB=$1
