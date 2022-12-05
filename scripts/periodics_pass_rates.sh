@@ -27,6 +27,7 @@ shift $((OPTIND-1))
 
 ALLJOBSURL="https://raw.githubusercontent.com/openshift/release/master/ci-operator/jobs/openshift/release/openshift-release-master-periodics.yaml"
 JOBSTOTEST=$(curl -s $ALLJOBSURL | yq -r ".periodics[] | select(.name | contains(\"metal-ipi\")) | select(.name | contains(\"nightly-${1:-}\")) | .name")
+RESULT_FORMAT=${RESULT_FORMAT:-"%4s %5s - %s\n"}
 
 function getJobSummary(){
     JOB=$1
@@ -35,10 +36,10 @@ function getJobSummary(){
     SUCCESS=$(echo $DATA | jq '.[].Result' | grep "SUCCESS" | wc -l)
     TOTAL=$(echo $DATA | jq '.[].Result' | grep -v "PENDING" | wc -l)
     if [ "$TOTAL" == 0 ] ; then
-        echo $JOB $SUCCESS/0 0% - ${URL}
+        printf "$RESULT_FORMAT" $SUCCESS/0 0% - ${URL}
         return
     fi
-    echo $(( (SUCCESS * 100)/TOTAL ))% $SUCCESS/$TOTAL - ${URL}
+    printf "$RESULT_FORMAT" $(( (SUCCESS * 100)/TOTAL ))% $SUCCESS/$TOTAL ${URL}
     if [ "$LIST" == "1" ] ; then
         echo $DATA | jq '.[] | select(.Result | contains("FAILURE")) | "    \(.Started) https://prow.ci.openshift.org/\(.SpyglassLink) " ' -r
     fi
