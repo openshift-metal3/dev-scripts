@@ -1,5 +1,4 @@
-#!/bin/bash
-#
+#!/usr/bin/env bash
 
 usage() {
     echo "$(basename $0) -  list recent pass rates for metal-ipi jobs" 1>&2
