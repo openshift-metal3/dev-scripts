@@ -8,4 +8,11 @@ source "$SCRIPTDIR"/agent/04_agent_configure.sh
 
 ip=$(<"${OCP_DIR}"/node0-ip)
 
-ssh -o 'ConnectTimeout=30' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' core@"${ip}" if ! command -v /usr/local/bin/agent-gather '>&' /dev/null ';' then echo "Skipping gathering agent logs, agent-gather script not present." else sudo /usr/local/bin/agent-gather -o ';' fi >agent-gather.tar.xz
+if ssh -o 'ConnectTimeout=30' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' core@"${ip}" agent-gather -O >agent-gather.tar.xz; then
+    echo "Agent logs saved to agent-gather.tar.xz" >&2
+else
+    if [ $? == 127 ]; then
+        echo "Skipping gathering agent logs, agent-gather script not present." >&2
+    fi
+    rm agent-gather.tar.xz
+fi
