@@ -4,7 +4,7 @@ set -euxo pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-source "$SCRIPTDIR"/agent/04_agent_configure.sh
+source "$SCRIPTDIR"/common.sh
 
 ip=$(<"${OCP_DIR}"/node0-ip)
 
