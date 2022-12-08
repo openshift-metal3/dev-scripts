@@ -268,7 +268,6 @@ else
     ip=${AGENT_NODES_IPSV6[0]}
   fi
   configure_dnsmasq ${ip} ""
-  echo "${ip}" > ${OCP_DIR}/node0-ip
 fi
 
 generate_cluster_manifests
