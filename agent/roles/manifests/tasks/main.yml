@@ -1,7 +1,7 @@
 - name: Get additional trust bundle
   set_fact:
     ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
-  when: mirror_images == 'true'
+  when: mirror_images
 
 - name: Get VIPs when not using SNO
   set_fact:

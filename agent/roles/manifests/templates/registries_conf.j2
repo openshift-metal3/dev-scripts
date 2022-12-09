@@ -1,4 +1,4 @@
-{% if mirror_images == "true" %}
+{% if mirror_images %}
 {# base oc mirror registries.conf #}
 {{ registries }}
 {% if (mirror_command == "oc-mirror") and (agent_deploy_mce == "true") %}

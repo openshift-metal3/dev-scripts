@@ -1,7 +1,7 @@
 - name: Get mirror settings
   set_fact:
     image_content_sources: "{{ lookup('file', mirror_info_file) }}"
-  when: mirror_images == 'true'
+  when: mirror_images
 
 - name: write the install-config.yaml 
   template:

@@ -68,7 +68,7 @@ platform:
 {% endif %}
 pullSecret: {{ pull_secret_contents }}
 sshKey: {{ ssh_pub_key }} 
-{% if mirror_images == "true" %}
+{% if mirror_images %}
 imageContentSources:
 {{ image_content_sources }}
 {% if (mirror_command == "oc-mirror") and (agent_deploy_mce == "true") %}
