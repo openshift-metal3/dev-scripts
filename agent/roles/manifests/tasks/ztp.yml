@@ -37,10 +37,10 @@
 - name: Get mirror settings
   set_fact:
     registries: "{{ lookup('file', mirror_info_file) }}"
-  when: mirror_images == 'true'
+  when: mirror_images
 
 - name: Write registries.conf
   template:
     src: "registries_conf.j2"
     dest: "{{ mirror_path }}/registries.conf"
-  when: mirror_images == 'true'
+  when: mirror_images
