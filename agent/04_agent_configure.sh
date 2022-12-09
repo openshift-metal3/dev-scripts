@@ -19,6 +19,7 @@ export CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
 function add_dns_entry {
     ip=${1}
+    echo "${ip}">>"${OCP_DIR}"/hostip
     hostname=${2}
 
     # Add a DNS entry for this hostname if it's not already defined
