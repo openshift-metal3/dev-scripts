@@ -17,5 +17,4 @@ do
         fi
         rm agent-gather-"${host}".tar.xz
     fi
-    sudo sed -i "/${host}/d" /etc/hosts
 done
