@@ -17,12 +17,11 @@ early_deploy_validation
 
 export CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
-function add_host_entry {
+function add_ip_host_entry {
     ip=${1}
     hostname=${2}
 
-    echo "${hostname}">>"${OCP_DIR}"/hostname
-    echo "${ip} ${hostname}" | sudo tee -a /etc/hosts
+    echo "${ip} ${hostname}">>"${OCP_DIR}"/hosts
 }
 
 function add_dns_entry {
@@ -70,17 +69,17 @@ function get_static_ips_and_macs() {
         if [[ "$IP_STACK" = "v4" ]]; then
             AGENT_NODES_IPS+=($(nth_ip ${EXTERNAL_SUBNET_V4} ${ip}))
             add_dns_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
-            add_host_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
+            add_ip_host_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
         elif [[ "$IP_STACK" = "v6" ]]; then
             AGENT_NODES_IPSV6+=($(nth_ip ${EXTERNAL_SUBNET_V6} ${ip}))
             add_dns_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
-            add_host_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
+            add_ip_host_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
         else
 	    # v4v6
             AGENT_NODES_IPS+=($(nth_ip ${EXTERNAL_SUBNET_V4} ${ip}))
             AGENT_NODES_IPSV6+=($(nth_ip $EXTERNAL_SUBNET_V6 ${ip}))
             add_dns_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
-            add_host_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
+            add_ip_host_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
             add_dns_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
         fi
 
