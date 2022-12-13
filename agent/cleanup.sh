@@ -14,8 +14,3 @@ early_cleanup_validation
 
 rm -rf "${OCP_DIR}/manifests"
 rm -rf "${OCP_DIR}/output"
-
-for host in $(cat "${OCP_DIR}"/hostname); 
-do
-    sudo sed -i "/${host}/d" /etc/hosts
-done
