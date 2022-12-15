@@ -122,8 +122,14 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]] ; then
 fi
 
 # We use yq in a few places for processing YAML but it isn't packaged
-# for CentOS/RHEL so we have to install from pip.
-sudo python -m pip install 'yq>=2.10.0'
+# for CentOS/RHEL so we have to install from pip. We do not want to
+# overwrite an existing installation of the golang version, though,
+# so check if we have a yq before installing.
+if ! which yq 2>&1 >/dev/null; then
+    sudo python -m pip install 'yq>=2.10.0'
+else
+    echo "Using yq from $(which yq)"
+fi
 
 # needed if we are using locally built images
 # We stop any systemd service so we can run in a container, since
