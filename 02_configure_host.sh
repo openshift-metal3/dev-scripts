@@ -94,8 +94,8 @@ configure_chronyd
 export VNC_CONSOLE=true
 if [[ $(uname -m) == "aarch64" ]]; then
   VNC_CONSOLE=false
+  echo "libvirt_cdrombus: scsi" >> vm_setup_vars.yml
 fi
-
 
 ansible-playbook \
     -e @vm_setup_vars.yml \
