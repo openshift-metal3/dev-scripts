@@ -69,7 +69,7 @@ fi
 
 export ANSIBLE_FORCE_COLOR=true
 
-if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+if use_podman_registry; then
     setup_local_registry
 fi
 
