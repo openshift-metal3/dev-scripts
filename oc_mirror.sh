@@ -10,9 +10,6 @@ function add_auth_to_pull_secret() {
 
    tmpauthfile=$(mktemp --tmpdir "quayauth--XXXXXXXXXX")
    _tmpfiles="$_tmpfiles $tmpauthfile"
-   tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
-   _tmpfiles="$_tmpfiles $tmppullsecret"
-
 
    cat > "${tmpauthfile}" << EOF
 {
@@ -24,9 +21,7 @@ function add_auth_to_pull_secret() {
 }
 EOF
 
-   jq -s '.[0] * .[1]' ${tmpauthfile} ${PULL_SECRET_FILE} > ${tmppullsecret}
-   cp ${tmppullsecret} ${PULL_SECRET_FILE}
-
+   cp ${tmpauthfile} ${REGISTRY_CREDS}
 }
 
 function update_docker_config() {

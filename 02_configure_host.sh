@@ -69,7 +69,7 @@ fi
 
 export ANSIBLE_FORCE_COLOR=true
 
-if use_podman_registry; then
+if use_registry ""; then
     setup_local_registry
 fi
 
@@ -280,15 +280,15 @@ fi
 sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
 echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
 
-# Remove any previous file, or podman login panics when reading the
-# blank authfile with a "assignment to entry in nil map" error
-rm -f ${REGISTRY_CREDS}
-if use_podman_registry; then
+if use_registry "podman"; then
+    # Remove any previous file, or podman login panics when reading the
+    # blank authfile with a "assignment to entry in nil map" error
+    rm -f ${REGISTRY_CREDS}
     # create authfile for local registry
     sudo podman login --authfile ${REGISTRY_CREDS} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
         ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
-else
+elif ! use_registry "quay"; then
     # Create a blank authfile in order to have something valid when we read it in 04_setup_ironic.sh
     echo '{}' | sudo dd of=${REGISTRY_CREDS}
 fi
