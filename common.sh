@@ -356,6 +356,11 @@ if [[ $DISTRO == "almalinux8" || $DISTRO == "rocky8" ]]; then
     ALMA_PYTHON_OVERRIDE="-e ansible_python_interpreter=/usr/libexec/platform-python"
 fi
 
+export ENABLE_LOCAL_REGISTRY=${ENABLE_LOCAL_REGISTRY:-}
+
+# Defaults the DISABLE_MULTICAST variable
+export DISABLE_MULTICAST=${DISABLE_MULTICAST:-false}
+
 # Agent specific configuration 
 
 function invalidAgentValue() {

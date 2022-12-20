@@ -6,6 +6,7 @@ source common.sh
 source network.sh
 source utils.sh
 source validation.sh
+source oc_mirror.sh
 
 early_deploy_validation
 
