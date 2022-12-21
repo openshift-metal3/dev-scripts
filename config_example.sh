@@ -567,6 +567,12 @@ set -x
 # Default: oc-adm
 #export MIRROR_COMMAND=oc-adm
 
+# OC_MIRROR_TO_FILE -
+# When MIRROR_IMAGES is true and MIRROR_COMMAND is oc-mirror, it this is set it
+# cause the mirror to be generated in a 2-step process - first the contents of
+# the mirror is stored in a tarfile and then the tarfile is published to the registry
+# Default is unset
+
 # When the MIRROR_COMMAND is set to 'oc-mirror' the auths for the mirror will be added
 # to DOCKER_CONFIG_FILE or an UNAUTHORIZED error will result.
 # An example entry in this file is:

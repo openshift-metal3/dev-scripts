@@ -77,6 +77,9 @@ export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 # identify the command used to mirror images, either 'oc-adm' or 'oc-mirror'
 export MIRROR_COMMAND=${MIRROR_COMMAND:-oc-adm}
 
+# mirror images for installation in restricted network
+export OC_MIRROR_TO_FILE=${OC_MIRROR_TO_FILE:-}
+
 # file containing auths for oc-mirror
 export DOCKER_CONFIG_FILE=${DOCKER_CONFIG_FILE:-$HOME/.docker/config.json}
 
