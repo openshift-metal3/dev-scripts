@@ -31,9 +31,9 @@ set -x
 # OPENSHIFT_RELEASE_STREAM -
 # Select a different release stream from which to pull the latest image, if the
 # image name is not specified.
-# Default: 4.11
+# Default: 4.12
 #
-#export OPENSHIFT_RELEASE_STREAM=4.11
+#export OPENSHIFT_RELEASE_STREAM=4.12
 
 # OPENSHIFT_RELEASE_TYPE -
 # Select a different release type from which to pull the latest image.
@@ -46,7 +46,7 @@ set -x
 # OPENSHIFT_VERSION -
 # Set the Openshift version. If unset defaults to $OPENSHIFT_RELEASE_STREAM.
 #
-#export OPENSHIFT_VERSION=4.11
+#export OPENSHIFT_VERSION=4.12
 
 # *_LOCAL_IMAGE -
 # Use <NAME>_LOCAL_IMAGE to build or use copy of container images locally e.g.
