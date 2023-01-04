@@ -137,7 +137,7 @@ function create_cluster() {
     fi
 
     if [ ! -z "${ASSETS_EXTRA_FOLDER:-}" ]; then
-      cp -rf ${ASSETS_EXTRA_FOLDER}/*.yaml ${assets_dir}/openshift/
+      find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -exec cp {} "${assets_dir}/openshift" \;
     fi
 
     if [[ "$BMO_WATCH_ALL_NAMESPACES" == "true" ]]; then
