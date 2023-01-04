@@ -96,7 +96,8 @@ function wait_for_cluster_ready() {
   fi
 
   echo "Waiting for cluster ready... "
-  if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for install-complete; then
+  "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for install-complete 2>&1 | grep --line-buffered -v 'password'
+  if [ ${PIPESTATUS[0]} != 0 ]; then
       exit 1
   fi
   echo "Cluster is ready!"
