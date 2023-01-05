@@ -568,8 +568,8 @@ set -x
 #export MIRROR_COMMAND=oc-adm
 
 # OC_MIRROR_TO_FILE -
-# When MIRROR_IMAGES is true and MIRROR_COMMAND is oc-mirror, it this is set it
-# cause the mirror to be generated in a 2-step process - first the contents of
+# When MIRROR_IMAGES is true and MIRROR_COMMAND is oc-mirror, if this is set it
+# will cause the mirror to be generated in a 2-step process. First the contents of
 # the mirror is stored in a tarfile and then the tarfile is published to the registry
 # Default is unset
 
