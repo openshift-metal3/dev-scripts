@@ -84,10 +84,12 @@ function set_full_imageset() {
    # Create imageset with all images from releaseImage
    imageset=$1
 
+   latest_release=$(oc-mirror list releases --channel candidate-${OPENSHIFT_RELEASE_STREAM}| tail -n1)
+
    cat > "${imageset}" << EOF
 apiVersion: mirror.openshift.io/v1alpha2
 kind: ImageSetConfiguration
-archiveSize: 24
+archiveSize: 16
 storageConfig:
   local:
     path: metadata
@@ -97,6 +99,8 @@ mirror:
       - "amd64"
     channels:
       - name: candidate-${OPENSHIFT_RELEASE_STREAM}
+        minVersion: $latest_release
+        maxVersion: $latest_release
         type: ocp
   additionalImages:
   - name: registry.redhat.io/ubi8/ubi:latest
