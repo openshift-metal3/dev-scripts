@@ -60,11 +60,6 @@ platform:
 {% for ingress_vip in i_vips %}
       - {{ ingress_vip }}
 {% endfor %}
-    hosts:
-{% for mac in macs %}
-      - name: {{ hostnames[loop.index0] }}
-        bootMACAddress: {{ mac }}
-{% endfor %}
 {% endif %}
 pullSecret: {{ pull_secret_contents }}
 sshKey: {{ ssh_pub_key }} 
