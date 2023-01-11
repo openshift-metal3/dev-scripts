@@ -49,14 +49,11 @@ function setup_quay_mirror_registry() {
    popd
 }
 
-# Mirror the upstream channel directly to the local registry
-function mirror_to_mirror_publish() {
+function create_registry_imageset() {
 
-   # Create imageset containing the local URL and the OCP release to mirror
-   tmpimageset=$(mktemp --tmpdir "imageset--XXXXXXXXXX")
-   _tmpfiles="$_tmpfiles $tmpimageset"
+   imageset=$1
 
-   cat > "${tmpimageset}" << EOF
+   cat > "${imageset}" << EOF
 apiVersion: mirror.openshift.io/v1alpha2
 kind: ImageSetConfiguration
 archiveSize: 4
@@ -66,6 +63,8 @@ storageConfig:
     skipTLS: true
 mirror:
   platform:
+    architectures:
+      - "amd64"
     channels:
     - name: candidate-${OPENSHIFT_RELEASE_STREAM}
       type: ocp
@@ -73,19 +72,16 @@ mirror:
   - name: registry.redhat.io/ubi8/ubi:latest
 EOF
 
-   pushd ${WORKING_DIR}
-   oc mirror --dest-skip-tls --config ${tmpimageset} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
-   popd
-
 }
 
-function set_full_imageset() {
+function create_file_imageset() {
 
-   # Create imageset with all images from releaseImage
    imageset=$1
 
    latest_release=$(oc-mirror list releases --channel candidate-${OPENSHIFT_RELEASE_STREAM}| tail -n1)
 
+   # Note that the archiveSize defines the maximum size, in GiB, of each file within the image set.
+   # This must be large enough to include all images in one file for the publish.
    cat > "${imageset}" << EOF
 apiVersion: mirror.openshift.io/v1alpha2
 kind: ImageSetConfiguration
@@ -108,6 +104,20 @@ EOF
 
 }
 
+# Mirror the upstream channel directly to the local registry
+function mirror_to_mirror_publish() {
+
+   # Create imageset containing the local URL and the OCP release to mirror
+   tmpimageset=$(mktemp --tmpdir "imageset--XXXXXXXXXX")
+   _tmpfiles="$_tmpfiles $tmpimageset"
+
+   create_registry_imageset $tmpimageset
+
+   pushd ${WORKING_DIR}
+   oc mirror --dest-skip-tls --config ${tmpimageset} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
+   popd
+}
+
 # Use the oc-mirror command to generate a tar file of the release image
 function mirror_to_file() {
 
@@ -125,14 +135,10 @@ function mirror_to_file() {
 function publish_image() {
 
    pushd ${WORKING_DIR}
-   oc-mirror --from $archive_file docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --skip-metadata-check
+   oc-mirror --from $archive_file docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --dest-skip-tls --skip-metadata-check
    popd
 
 }
-
-# function publish_bootstrap_image() {
-#
-# }
 
 # Set up a mirror using the 'oc mirror' command
 # The backend registry can be either 'podman' or 'quay'
@@ -146,7 +152,7 @@ function setup_oc_mirror() {
        tmpimageset=$(mktemp --tmpdir "imageset--XXXXXXXXXX")
        _tmpfiles="$_tmpfiles $tmpimageset"
 
-       set_full_imageset $tmpimageset
+       create_file_imageset $tmpimageset
 
        mirror_to_file $tmpimageset
 
