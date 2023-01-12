@@ -671,3 +671,8 @@ set -x
 # Set the following value to true to supply ZTP manifests to the installer. By default the install-config.yaml/agent-config.yaml
 # will be used as input to the installer.
 # export AGENT_USE_ZTP_MANIFESTS=false
+
+# Uncomment and set the following value to "true" to disable the automated
+# deployment systemd services of the Agent based installation. This is
+# particularly useful for WebUI development.
+# export AGENT_DISABLE_AUTOMATED=false

@@ -72,6 +72,21 @@ function force_mirror_disconnect() {
 
 }
 
+function disable_automated_installation() {
+  local agent_iso_abs_path="$(realpath "${OCP_DIR}/agent.$(uname -p).iso")"
+  local ign_temp_path="$(mktemp --directory)"
+  _tmpfiles="$_tmpfiles $ign_temp_path"
+  echo "Extracting ISO ignition..."
+  podman run --privileged --rm -v /run/udev:/run/udev -v "${agent_iso_abs_path}:/data/agent.iso" -w /data  quay.io/coreos/coreos-installer:release iso ignition show agent.iso > "${ign_temp_path}/iso.ign"
+
+  echo "disabling automated installation systemd services..."
+  jq --compact-output --argjson filterlist '["apply-host-config.service", "create-cluster-and-infraenv.service", "install-status.service", "set-hostname.service", "start-cluster-installation.service"]' \
+    'walk( . as $i | if type == "object" and has("enabled") and any($filterlist[]; . == $i.name) then .enabled = false else . end)' < "${ign_temp_path}/iso.ign" > "${ign_temp_path}/disabled_automation.ign"
+
+  echo "Embedding merged ignition..."
+  podman run --privileged --rm -v /run/udev:/run/udev -v "${agent_iso_abs_path}:/data/agent.iso" -v "${ign_temp_path}/disabled_automation.ign:/data/disabled_automation.ign" -w /data  quay.io/coreos/coreos-installer:release iso ignition embed -f -i disabled_automation.ign agent.iso
+}
+
 function enable_assisted_service_ui() {
   if [[ "${IP_STACK}" = "v6" ]]; then
        echo "In a disconnected environment the assisted-installer GUI cannot be enabled"
@@ -149,6 +164,9 @@ function mce_complete_deployment() {
 }
 
 create_image
+if [[ "${AGENT_DISABLE_AUTOMATED:-}" == "true" ]]; then
+  disable_automated_installation
+fi
 
 attach_agent_iso master $NUM_MASTERS
 attach_agent_iso worker $NUM_WORKERS
