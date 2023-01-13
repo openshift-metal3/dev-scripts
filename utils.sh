@@ -674,10 +674,11 @@ function auth_template_and_removetmp(){
     removetmp
 }
 
-use_podman_registry() {
-  # return true if using the local registry and the backend is podman
+use_registry() {
+  check_registry=$1
+  # return true if using the local registry and the backend is quay
   if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
-     if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+     if [[ ${check_registry} == "" ]] || [[ ${check_registry} == "${REGISTRY_BACKEND}" ]]; then
         return 0
      fi
   fi
