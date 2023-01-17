@@ -27,6 +27,10 @@ fi
 # https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
 export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"5.9.0"}
 
+# Speed up dnf downloads
+sudo sh -c "echo 'fastestmirror=1' >> /etc/dnf/dnf.conf"
+sudo sh -c "echo 'max_parallel_downloads=8' >> /etc/dnf/dnf.conf"
+
 # Update to latest packages first
 sudo dnf -y upgrade
 
