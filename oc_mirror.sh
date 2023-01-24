@@ -34,6 +34,11 @@ function update_docker_config() {
 
 function setup_quay_mirror_registry() {
 
+   if sudo podman container exists registry; then
+     echo "The podman registry is currently running and will cause a conflict with quay registry. Run \"registry_cleanup.sh\" to remove podman registry."
+     exit 1
+   fi
+
    mkdir -p ${WORKING_DIR}/quay-install
    pushd ${WORKING_DIR}/mirror-registry
    sudo ./mirror-registry install --quayHostname ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --quayRoot ${WORKING_DIR}/quay-install/ --initUser ${REGISTRY_USER} --initPassword ${REGISTRY_PASS} --sslCheckSkip -v
