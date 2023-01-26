@@ -80,7 +80,7 @@ function create_file_imageset() {
    cat > "${imageset}" << EOF
 apiVersion: mirror.openshift.io/v1alpha2
 kind: ImageSetConfiguration
-archiveSize: 16
+archiveSize: 18
 storageConfig:
   local:
     path: metadata

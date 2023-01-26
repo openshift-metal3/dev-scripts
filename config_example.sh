@@ -682,3 +682,8 @@ set -x
 # deployment systemd services of the Agent based installation. This is
 # particularly useful for WebUI development.
 # export AGENT_DISABLE_AUTOMATED=false
+
+# When MIRROR_IMAGES=true, instead of using a registry on the dev-scripts
+# machine, mirror the release to a tarfile, transfer that tarfile to a host,
+# and run the registry there
+# export AGENT_REGISTRY_ON_NODE=false
