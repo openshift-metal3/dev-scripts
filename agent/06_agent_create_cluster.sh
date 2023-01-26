@@ -179,6 +179,14 @@ if [ ! -z "${AGENT_ENABLE_GUI:-}" ]; then
   enable_assisted_service_ui
 fi
 
+if [[ "${AGENT_REGISTRY_ON_NODE:-}" == "true" ]]; then
+source $SCRIPTDIR/agent/node_registry.sh
+
+   create_container_image_file
+
+   put_tools_to_host
+fi
+
 wait_for_cluster_ready
 
 # Temporary fix for the CI. To be removed once we'll 

@@ -190,6 +190,56 @@ function get_mirror_info {
     export MIRROR_INFO_FILE=${tmpmirrorinfo}
 }
 
+function update_mirror_info_node_registry {
+
+    # Create ImageContentSources using registry on Node0
+    tmpmirrorinfo=$(mktemp --tmpdir "mirror--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmpmirrorinfo"
+
+    cat >> "${tmpmirrorinfo}" << EOF
+  - mirrors:
+    - master-0.ostest.test.metalkube.org:5000/ubi8
+    source: registry.redhat.io/ubi8
+  - mirrors:
+    - master-0.ostest.test.metalkube.org:5000/openshift/release
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+  - mirrors:
+    - master-0.ostest.test.metalkube.org:5000/openshift/release-images
+    source: quay.io/openshift-release-dev/ocp-release
+  - mirrors:
+    - master-0.ostest.test.metalkube.org:5000/openshift/release-images
+    source: registry.ci.openshift.org/ocp/release
+EOF
+
+    export MIRROR_INFO_FILE=${tmpmirrorinfo}
+
+    # Create empty ca-cert file for install-config, it will be created on node
+    mkdir -p ${MIRROR_PATH}
+    touch ${MIRROR_PATH}/ca-bundle.crt
+}
+
+function update_pull_secret_node_registry() {
+  # Add pull secret for registry on node0
+  tmppullsecret=$(mktemp --tmpdir "node-pullsecret--XXXXXXXXXX")
+  _tmpfiles="$_tmpfiles $tmppullsecret"
+
+  auths=`echo -n "ocp-user:ocp-pass" | base64 -w0`
+
+  cat > ${tmppullsecret} <<EOF
+{
+  "auths": {
+    "master-0.ostest.test.metalkube.org:${LOCAL_REGISTRY_PORT}": {
+      "auth": "${auths}"
+    }
+  }
+}
+EOF
+
+  jq -s '.[0] * .[1]' ${tmppullsecret} ${PULL_SECRET_FILE} > ./tmppullsecret.json
+  cp ./tmppullsecret.json ${PULL_SECRET_FILE}
+
+}
+
 function generate_cluster_manifests() {
 
   INSTALL_CONFIG_PATH="${OCP_DIR}"
@@ -201,6 +251,12 @@ function generate_cluster_manifests() {
   export MIRROR_PATH="${SCRIPTDIR}/${OCP_DIR}/mirror"
   if [ ! -z "${MIRROR_IMAGES}" ]; then
     mkdir -p ${MIRROR_PATH}
+  fi
+
+  if [[ "${AGENT_REGISTRY_ON_NODE:-}" == "true" ]]; then
+    update_pull_secret_node_registry
+
+    update_mirror_info_node_registry
   fi
 
   # Fetch current OpenShift version from the release payload
@@ -228,7 +284,7 @@ function generate_cluster_manifests() {
      export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=$(nth_ip $EXTERNAL_SUBNET_V6 1)
   fi
 
-  if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+  if [[ ! -z "${MIRROR_IMAGES}" ]] && [[ ! "${AGENT_REGISTRY_ON_NODE:-}" == "true" ]]; then
     # Store the certs for registry
     if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
        cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt

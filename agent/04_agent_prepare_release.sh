@@ -29,7 +29,7 @@ write_pull_secret
 
 # Release mirroring could be required by the subsequent steps
 # even if the current one will be skipped
-if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+if [[ ! -z "${MIRROR_IMAGES}" ]] && [[ ! "${AGENT_REGISTRY_ON_NODE:-}" == "true" ]]; then
    setup_release_mirror
 fi
 

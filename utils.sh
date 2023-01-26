@@ -676,7 +676,10 @@ function auth_template_and_removetmp(){
 
 use_registry() {
   check_registry=$1
-  # return true if using the local registry and the backend is quay
+  if [[ "${AGENT_REGISTRY_ON_NODE:-}" == "true" ]]; then
+     return 1
+  fi
+
   if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
      if [[ ${check_registry} == "" ]] || [[ ${check_registry} == "${REGISTRY_BACKEND}" ]]; then
         return 0
