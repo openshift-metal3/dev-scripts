@@ -193,9 +193,10 @@ set -x
 # single-stack cluster on dual-stack hosts.
 
 # IP_STACK -
-# IP stack for the cluster.
+# IP stack for the cluster. "v4v6" is ipv4-primary dual stack, "v6v4" is
+# ipv6-primary dual stack.
 # Default: "v6"
-# Choices: "v4", "v6", "v4v6"
+# Choices: "v4", "v6", "v4v6", "v6v4"
 #
 #export IP_STACK=v4
 
