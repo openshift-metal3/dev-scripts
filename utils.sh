@@ -381,6 +381,10 @@ imageContentSources:
 - mirrors:
     - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image
   source: ${TAGGED}
+- mirrors:
+    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-test-image
+  source: quay.io/openshift/community-e2e-images
+
 additionalTrustBundle: |
 ${INDENTED_CERT}
 EOF
@@ -388,6 +392,9 @@ EOF
             cat ${MIRROR_LOG_FILE} | sed -n '/To use the new mirrored repository to install/,/To use the new mirrored repository for upgrades/p' |\
                 sed -e '/^$/d' -e '/To use the new mirrored repository/d'
             cat << EOF
+- mirrors:
+    - ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-test-image
+  source: quay.io/openshift/community-e2e-images
 additionalTrustBundle: |
 ${INDENTED_CERT}
 EOF
