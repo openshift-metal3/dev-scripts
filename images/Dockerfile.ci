@@ -3,7 +3,7 @@
 
 FROM registry.ci.openshift.org/openshift/release:golang-1.14
 ENV HOME /output
-RUN INSTALL_PKGS="ansible python-pip nss_wrapper" && \
+RUN INSTALL_PKGS="ansible python-pip nss_wrapper ipcalc" && \
     yum install -y $INSTALL_PKGS && \
     pip install packet-python && \
     ansible-galaxy collection install "community.general:4.8.1" && \
