@@ -35,6 +35,8 @@ agent_tests:
 
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
+bmc_test: requirements configure build_installer ironic install_config bell
+
 requirements:
 	./01_install_requirements.sh
 
