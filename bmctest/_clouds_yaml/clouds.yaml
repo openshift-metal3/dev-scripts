@@ -1,0 +1,3 @@
+clouds:
+ metal3:
+  baremetal_endpoint_override: http://localhost:6385/v1
