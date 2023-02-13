@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -xe
+set -euxo pipefail
 
 source logging.sh
 source common.sh
@@ -307,7 +307,7 @@ if ! command -v baremetal | grep -v "${IRONICCLIENT_PATH}"; then
 fi
 
 # Block Multicast with ebtables
-if [ "$DISABLE_MULTICAST" == "true" ]; then
+if [ "${DISABLE_MULTICAST:-false}" == "true" ]; then
     for dst in 224.0.0.251 224.0.0.18; do
         sudo ebtables -A INPUT --pkttype-type multicast -p ip4 --ip-dst ${dst} -j DROP
         sudo ebtables -A FORWARD --pkttype-type multicast -p ip4 --ip-dst ${dst} -j DROP
