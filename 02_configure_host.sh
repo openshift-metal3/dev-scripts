@@ -221,7 +221,6 @@ if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
               grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
           fi
       fi
-      sudo systemctl restart $NET_SERVICE
     fi
 fi
 
