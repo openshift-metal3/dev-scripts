@@ -73,6 +73,46 @@ There are variable defaults set in both the `common.sh` and the `ocp_install_env
 scripts, which may be important to override for your particular environment. You can
 set override values in your `config_$USER.sh` script.
 
+### Configuration for 64-bit ARM 
+64-bit ARM systems are supported for agent and BMIPI on 64-bit ARM hosts, emulating ARM on x86 (or vice versa) is not supported. You will also need to explictly set `OPENSHIFT_RELEASE_IMAGE` with a 64-bit ARM payload from https://arm64.ocp.releases.ci.openshift.org/ 
+
+BMIPI cannot ipxe using ipv6, and the upstream vbmc, sushy-tools and ironic  containers are only build for 64-bit x86. You must build your own vbmc, sushy-tools and then extract ironic from the release payload:
+
+Build a 64-bit ARM version of vbmc and sushy-tools (must be executed on a 64-bit ARM system):
+
+```
+podman build -f https://raw.githubusercontent.com/metal3-io/ironic-image/main/resources/vbmc/Dockerfile . -t <yourbuild>/vbmc:arm
+
+podman build -f https://raw.githubusercontent.com/metal3-io/ironic-image/main/resources/sushy-tools/Dockerfile . -t <yourbuild>/sushy-tools:arm
+```
+
+Override the sushy-tools and vbmc images in your `config_$USER.sh`
+
+```
+export SUSHY_TOOLS_IMAGE=<yourbuild>/sushy-tools:arm
+
+export VBMC_IMAGE=<yourbuild>/vbmc:arm
+```
+
+Lastly, you'll need the ironic container from the OCP release payload:
+
+```
+oc adm release info quay.io/openshift-release-dev/ocp-release:4.13.0-ec.4-aarch64 --image-for ironic
+
+quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:cbddb6cdfa138bce5e8cf3ed59287024cf39ec0822b1b84dd125b96d8b871b20
+```
+
+Pull the Container
+
+```
+podman pull quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:cbddb6cdfa138bce5e8cf3ed59287024cf39ec0822b1b84dd125b96d8b871b20 --authfile=pullsecret.json 
+```
+
+Override the ironic image in your `config_$USER.sh`
+```
+export IRONIC_IMAGE=quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:cbddb6cdfa138bce5e8cf3ed59287024cf39ec0822b1b84dd125b96d8b871b20
+```
+
 ### Baremetal
 
 For baremetal test setups where you don't require the VM fake-baremetal nodes,

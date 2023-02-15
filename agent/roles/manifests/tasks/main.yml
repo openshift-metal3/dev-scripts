@@ -3,6 +3,10 @@
     ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
   when: mirror_images
 
+- name: Set GoCPUArchitecture
+  set_fact:
+    goCPUArchitecture: "{{ lookup('env', 'ARCH') }}"
+
 - name: Get VIPs when not using SNO
   set_fact:
     ingress_vips: "{{ lookup('env', 'INGRESS_VIPS') }}"

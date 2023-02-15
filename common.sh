@@ -468,7 +468,7 @@ if [[ -n "$MIRROR_IMAGES" || -z "${IP_STACK:-}" || "$IP_STACK" = "v6" ]]; then
       pushd ${WORKING_DIR}
       release_candidate=`oc-mirror list releases --channel=candidate-${OPENSHIFT_RELEASE_STREAM} | tail -1`
       popd
-      export OPENSHIFT_RELEASE_TAG="${release_candidate}-x86_64"
+      export OPENSHIFT_RELEASE_TAG="${release_candidate}-$(uname -m)"
    fi
 
    # We're going to be using a locally modified release image

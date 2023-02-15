@@ -32,6 +32,7 @@ set -x
 # Select a different release stream from which to pull the latest image, if the
 # image name is not specified.
 # Default: 4.14
+# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE  
 #
 #export OPENSHIFT_RELEASE_STREAM=4.14
 
@@ -40,11 +41,13 @@ set -x
 # If using ga then set OPENSHIFT_VERSION to the required version.
 # Default: nightly
 # Choices: ci, nightly, ga
+# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE  
 #
 #export OPENSHIFT_RELEASE_TYPE=nightly
 
 # OPENSHIFT_VERSION -
 # Set the Openshift version. If unset defaults to $OPENSHIFT_RELEASE_STREAM.
+# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE  
 #
 #export OPENSHIFT_VERSION=4.12
 
@@ -195,6 +198,7 @@ set -x
 # IP_STACK -
 # IP stack for the cluster. "v4v6" is ipv4-primary dual stack, "v6v4" is
 # ipv6-primary dual stack.
+# NOTE: arm64 does not support v6
 # Default: "v6"
 # Choices: "v4", "v6", "v4v6", "v6v4"
 #
@@ -203,6 +207,7 @@ set -x
 # HOST_IP_STACK -
 # IP stack for the host.
 # Default: If unset, defaults to ${IP_STACK}.
+# NOTE: arm64 does not support v6
 # Choices: "v4", "v6", "v4v6"
 #
 #export HOST_IP_STACK=v4v6
