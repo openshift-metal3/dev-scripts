@@ -95,7 +95,7 @@ elif [[ "$HOST_IP_STACK" = "v6" ]]; then
   export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"fd00:1101::0/64"}
   export EXTERNAL_SUBNET_V4=""
   export EXTERNAL_SUBNET_V6=${EXTERNAL_SUBNET_V6:-"fd2e:6f44:5dd8:c956::/120"}
-elif [[ "$HOST_IP_STACK" = "v4v6" ]]; then
+elif [[ "$HOST_IP_STACK" = "v4v6" || "$HOST_IP_STACK" = "v6v4" ]]; then
   export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"fd00:1101::0/64"}
   export EXTERNAL_SUBNET_V4=${EXTERNAL_SUBNET_V4:-"192.168.111.0/24"}
   export EXTERNAL_SUBNET_V6=${EXTERNAL_SUBNET_V6:-"fd2e:6f44:5dd8:c956::/120"}
@@ -122,7 +122,7 @@ elif [[ "$IP_STACK" = "v6" ]]; then
   export SERVICE_SUBNET_V6=${SERVICE_SUBNET_V6:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
   export MIRROR_IMAGES=true
-elif [[ "$IP_STACK" = "v4v6" ]]; then
+elif [[ "$IP_STACK" = "v4v6" || "$IP_STACK" = "v6v4" ]]; then
   export CLUSTER_SUBNET_V4=${CLUSTER_SUBNET_V4:-"10.128.0.0/14"}
   export CLUSTER_SUBNET_V6=${CLUSTER_SUBNET_V6:-"fd01::/48"}
   export CLUSTER_HOST_PREFIX_V4=${CLUSTER_HOST_PREFIX_V4:-"23"}
@@ -147,7 +147,7 @@ export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIO
 
 export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(nth_ip $PROVISIONING_NETWORK 1)}
 
-if [[ "${HOST_IP_STACK}" = "v6" ]]; then
+if [[ "${HOST_IP_STACK}" = "v6" || "${HOST_IP_STACK}" = "v6v4" ]]; then
   export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(nth_ip $EXTERNAL_SUBNET_V6 1)}
 else
   export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(nth_ip $EXTERNAL_SUBNET_V4 1)}
@@ -236,8 +236,13 @@ function get_vips() {
         INGRESS_VIPS_V6=$(nth_ip $EXTERNAL_SUBNET_V6 4)
     fi
 
-    API_VIPS=$(concat_parameters_with_vipsseparator ${API_VIPS_V4:-} ${API_VIPS_V6:-})
-    INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V4:-} ${INGRESS_VIPS_V6:-})
+    if [[ "$IP_STACK" == "v4" || "$IP_STACK" == "v4v6" ]]; then
+        API_VIPS=$(concat_parameters_with_vipsseparator ${API_VIPS_V4:-} ${API_VIPS_V6:-})
+        INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V4:-} ${INGRESS_VIPS_V6:-})
+    else
+        API_VIPS=$(concat_parameters_with_vipsseparator ${API_VIPS_V6:-} ${API_VIPS_V4:-})
+        INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V6:-} ${INGRESS_VIPS_V4:-})
+    fi
 }
 
 function add_dnsmasq_multi_entry() {

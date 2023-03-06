@@ -100,10 +100,9 @@ EOF
   fi
 
   if [ -n "${ENABLE_BOOTSTRAP_STATIC_IP}" ]; then
-    if [[ "${IP_STACK}" = "v6" ]]; then
+    if [[ "${IP_STACK}" = "v6" || "${IP_STACK}" = "v6v4" ]]; then
       BOOTSTRAP_IP=$(nth_ip $EXTERNAL_SUBNET_V6 $((idx + 9)))
     else
-      # Note we assume v4 for dual-stack v4v6 since it's the primary network
       BOOTSTRAP_IP=$(nth_ip $EXTERNAL_SUBNET_V4 $((idx + 9)))
     fi
 cat <<EOF
@@ -224,6 +223,20 @@ cat <<EOF
   serviceNetwork:
   - ${SERVICE_SUBNET_V4}
   - ${SERVICE_SUBNET_V6}
+EOF
+  elif [[ "${IP_STACK}" == "v6v4" ]]; then
+cat <<EOF
+  machineNetwork:
+  - cidr: ${EXTERNAL_SUBNET_V6}
+  - cidr: ${EXTERNAL_SUBNET_V4}
+  clusterNetwork:
+  - cidr: ${CLUSTER_SUBNET_V6}
+    hostPrefix: ${CLUSTER_HOST_PREFIX_V6}
+  - cidr: ${CLUSTER_SUBNET_V4}
+    hostPrefix: ${CLUSTER_HOST_PREFIX_V4}
+  serviceNetwork:
+  - ${SERVICE_SUBNET_V6}
+  - ${SERVICE_SUBNET_V4}
 EOF
   else
     echo "Unexpected IP_STACK value: '${IP_STACK}'"
