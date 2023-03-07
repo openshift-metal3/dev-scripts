@@ -5,9 +5,9 @@ set -eu
 # bmctest.sh tests the hosts from the supplied yaml config file
 # are working with the required ironic opperations (register, power, virtual media)
 
-# FIXME use fedora or other Red Hat image
-ISO="archlinux-2023.02.01-x86_64.iso"
-ISO_URL="https://geo.mirror.pkgbuild.com/iso/2023.02.01/$ISO"
+# FIXME stable URL?
+export ISO="fedora-coreos-37.20230205.3.0-live.x86_64.iso"
+ISO_URL="https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/37.20230205.3.0/x86_64/$ISO"
 # use the upstream ironic image by default
 IRONICIMAGE="quay.io/metal3-io/ironic:latest"
 
@@ -45,12 +45,23 @@ function timestamp {
     echo -n "$(date +%T) "
     echo "$1"
 }
+export -f timestamp
 
+ERROR_FILE=$(mktemp)
+export ERROR_FILE
 function cleanup {
     timestamp "cleaning up - removing container"
     sudo podman rm -f -t 0 bmctest
+    rm -rf "$ERROR_FILE"
 }
 trap "cleanup" EXIT
+
+timestamp "checking / installing GNU parallel"
+if ! which parallel > /dev/null 2>&1; then
+    sudo dnf install -y parallel
+    mkdir -p ~/.parallel
+    touch ~/.parallel/will-cite
+fi
 
 timestamp "checking / getting ISO image"
 if sudo [ ! -e /srv/ironic/html/images/${ISO} ]; then
@@ -80,12 +91,9 @@ sudo podman exec -d bmctest bash -c "runironic > /tmp/ironic.log 2>&1"
 timestamp "starting httpd process"
 sudo podman exec -d bmctest bash -c "/bin/runhttpd > /tmp/httpd.log 2>&1"
 
-EXIT=0
-ERRORS=""
-
 # FIXME - take --wait as argument to script
 # create function for repeated "if EXIT ERRORS return" code
-function manage {
+function test_manage {
     local name=$1; local address=$2; local systemid=$3; local user=$4; local pass=$5
     baremetal node create --boot-interface redfish-virtual-media --driver redfish \
         --driver-info redfish_address="${address}" --driver-info redfish_system_id="${systemid}" \
@@ -94,24 +102,24 @@ function manage {
         --name "${name}" > /dev/null
     echo -n "    " # indent baremetal output
     if ! baremetal node manage "${name}" --wait 60; then
-        EXIT=$((EXIT + 1))
-        ERRORS+="can not manage node ${name}\n"
+        echo "can not manage node ${name}" >> "$ERROR_FILE"
         return 1
     fi
 }
+export -f test_manage
 
-function power {
+function test_power {
     local name=$1
     for power in on off; do
         if ! baremetal node power "$power" "$name" --power-timeout 60; then
-            EXIT=$((EXIT + 1))
-            ERRORS+="can not power $power ${name}\n"
+            echo "can not power $power ${name}" >> "$ERROR_FILE"
             return 1
         fi
     done
 }
+export -f test_power
 
-function boot_vmedia {
+function test_boot_vmedia {
     local name=$1
     # FIXME for Dell we might need idrac-virtualmedia
     baremetal node set "$name" --boot-interface redfish-virtual-media --deploy-interface ramdisk \
@@ -121,60 +129,70 @@ function boot_vmedia {
     baremetal node provide --wait 60 "$name"
     echo -n "    " # indent baremetal output
     if ! baremetal node deploy --wait 120 "$name"; then
-        EXIT=$((EXIT + 1))
-        ERROS+="failed to boot node $name from ISO"
+        echo "failed to boot node $name from ISO" >> "$ERROR_FILE"
         return 1
     fi
 }
+export -f test_boot_vmedia
 
-function boot_device {
+function test_boot_device {
     local name=$1
-    # this is called after boot_vmedia which sets the boot device as cdrom
-    # so we test with setting it to pxe
     if ! baremetal node boot device set "$name" pxe; then
-        EXIT=$((EXIT + 1))
-        ERROS+="failed to switch boot device to PXE on $name"
+        echo "failed to switch boot device to PXE on $name" >> "$ERROR_FILE"
         return 1
     fi
 }
+export -f test_boot_device
 
-function eject_media {
+function test_eject_media {
    local name=$1
    if ! baremetal node passthru call "$name" eject_vmedia; then
-        EXIT=$((EXIT + 1))
-        ERROS+="failed to eject media on $name"
+        echo "failed to eject media on $name" >> "$ERROR_FILE"
         return 1
     fi
 }
+export -f test_eject_media
 
-# FIXME - use gnu parallel or something of the sort
-while read -r NAME ADDRESS SYSTEMID USERNAME PASSWORD; do
-    echo; timestamp "===== $NAME ====="
+function test_node {
+    local name=$1; local address=$2; local systemid=$3; local user=$4; local pass=$5
+    echo; echo "===== $name ====="
 
-    timestamp "attempting to manage $NAME (check address & credentials)"
-    if manage "$NAME" "$ADDRESS" "$SYSTEMID" "$USERNAME" "$PASSWORD"; then
+    timestamp "attempting to manage $name (check address & credentials)"
+    if test_manage "$name" "$address" "$systemid" "$user" "$pass"; then
        echo "    success"
     else
-       continue
+       echo "    failed to manage $name - can not run further tests on node"
+       return 0
     fi
 
-    timestamp "testing ability to power on/off $NAME"
-    power "$NAME" && echo "    success"
-
-    timestamp "testing booting from redfish-virtual-media on $NAME"
-    if boot_vmedia "$NAME"; then
+    timestamp "testing ability to power on/off $name"
+    if test_power "$name"; then
         echo "    success"
-    else
-       continue
     fi
 
-    timestamp "verifying node boot device can be set"
-    boot_device "$NAME" && echo "    success"
+    timestamp "verifying node boot device can be set on $name"
+    if test_boot_device "$name"; then
+        echo "    success"
+    fi
 
-    timestamp "testing vmedia detach" # may need to actually provision a live-iso image
-    eject_media "$NAME" && echo "    success"
-done < <(yq -r '.hosts[] | "\(.name) \(.bmc.address) \(.bmc.systemid) \(.bmc.username) \(.bmc.password)"' "$CONFIGFILE")
+    timestamp "testing booting from redfish-virtual-media on $name"
+    if test_boot_vmedia "$name"; then
+        echo "    success"
+    fi
 
-echo; timestamp "========== Found $EXIT errors =========="
-echo -e "$ERRORS"
-exit $EXIT
+    timestamp "testing vmedia detach on $name"
+    if test_eject_media "$name"; then
+        echo "    success"
+    fi
+}
+export -f test_node
+
+timestamp "testing, can take several minutes, please wait for results ..."
+yq -r '.hosts[] | "\(.name) \(.bmc.address) \(.bmc.systemid) \(.bmc.username) \(.bmc.password)"' "$CONFIGFILE" | \
+    parallel --colsep ' ' -a - test_node
+
+EXIT=$(wc -l "$ERROR_FILE" | cut -d ' '  -f 1)
+echo; echo "========== Found $EXIT errors =========="
+cat "$ERROR_FILE"
+echo
+exit "$EXIT"
