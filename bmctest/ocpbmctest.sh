@@ -61,8 +61,10 @@ timestamp "extracting the hosts from $CONFIGFILE"
 yq -y '{hosts: [.platform.baremetal.hosts[] | {
         name,
         bmc: {
-            address: (.bmc.address | capture("(?<url>https?://[^/]+)(?<path>/.*$)")).url,
-            systemid: (.bmc.address | capture("(?<url>https?://[^/]+)(?<path>/.*$)")).path,
+            boot: (.bmc.address | capture("(?<boot>[^+:]+)")).boot,
+            protocol: (.bmc.address | if test("\\+(?<proto>[^:]+)") then (. | capture("\\+(?<proto>[^:]+)")).proto else "https" end),
+            address: (.bmc.address | capture("://(?<addr>[^/]+)")).addr,
+            systemid: (.bmc.address | capture("://(?<addr>[^/]+)(?<path>/.*$)")).path,
             username: .bmc.username,
             password: .bmc.password }
         }]}' "$CONFIGFILE" > "$INPUTFILE"
