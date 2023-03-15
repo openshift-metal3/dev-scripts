@@ -78,10 +78,20 @@ if nc -z localhost 80; then
     exit 1
 fi
 
-# FIXME run baremetal cli and configure it with clouds.yaml inside the container
 timestamp "starting ironic container"
 sudo podman run --authfile "$PULL_SECRET" --rm -d --net host --env PROVISIONING_INTERFACE="${INTERFACE}" \
-    -v /srv/ironic:/shared --name bmctest --entrypoint sleep "$IRONICIMAGE" infinity
+    --env OS_CLOUD=bmctest -v /srv/ironic:/shared --name bmctest --entrypoint sleep "$IRONICIMAGE" infinity
+
+# configure baremetal to run inside container
+sudo podman exec bmctest bash -c "mkdir -p /etc/openstack"
+sudo podman cp clouds.yaml bmctest:/etc/openstack/clouds.yaml
+# FIXME python depreciation warnings inside container
+sudo podman exec bmctest bash -c "echo -e '#!/usr/bin/env bash\npython3 -W ignore /usr/bin/baremetal \$@' > /usr/local/bin/bm"
+sudo podman exec bmctest bash -c "chmod +x /usr/local/bin/bm"
+function bmwrap {
+    sudo podman exec bmctest bm $@
+}
+export -f bmwrap
 
 # starting ironic
 timestamp "starting ironic process"
@@ -109,13 +119,13 @@ function test_manage {
             echo "unsupported boot method \"$boot\" for $name" >> "$ERROR_LOG"
             return 1
     esac
-    baremetal node create --driver "$driver" \
+    bmwrap node create --driver "$driver" \
         --driver-info redfish_address="${protocol}://${address}" --driver-info redfish_system_id="$systemid" \
         --driver-info redfish_verify_ca=False --driver-info redfish_username="$user" \
         --driver-info redfish_password="$pass" --property capabilities='boot_mode:uefi' \
         $extra --name "$name" > /dev/null
     echo -n "    " # indent baremetal output
-    if ! baremetal node manage "$name" --wait 60; then
+    if ! bmwrap node manage "$name" --wait 60; then
         echo "can not manage node $name" >> "$ERROR_LOG"
         return 1
     fi
@@ -125,7 +135,7 @@ export -f test_manage
 function test_power {
     local name=$1
     for power in on off; do
-        if ! baremetal node power "$power" "$name" --power-timeout 60; then
+        if ! bmwrap node power "$power" "$name" --power-timeout 60; then
             echo "can not power $power ${name}" >> "$ERROR_LOG"
             return 1
         fi
@@ -147,13 +157,13 @@ function test_boot_vmedia {
             return 1
     esac
     local ip=$(ip route get 1.1.1.1 | awk '{printf $7}')
-    baremetal node set "$name" --boot-interface "$boot_if" --deploy-interface ramdisk \
+    bmwrap node set "$name" --boot-interface "$boot_if" --deploy-interface ramdisk \
     --instance-info boot_iso="http://${ip}/images/${ISO}"
-    baremetal node set "$name" --no-automated-clean
+    bmwrap node set "$name" --no-automated-clean
     echo -n "    " # indent baremetal output
-    baremetal node provide --wait 60 "$name"
+    bmwrap node provide --wait 60 "$name"
     echo -n "    " # indent baremetal output
-    if ! baremetal node deploy --wait 120 "$name"; then
+    if ! bmwrap node deploy --wait 120 "$name"; then
         echo "failed to boot node $name from ISO" >> "$ERROR_LOG"
         return 1
     fi
@@ -162,7 +172,7 @@ export -f test_boot_vmedia
 
 function test_boot_device {
     local name=$1
-    if ! baremetal node boot device set "$name" pxe; then
+    if ! bmwrap node boot device set "$name" pxe; then
         echo "failed to switch boot device to PXE on $name" >> "$ERROR_LOG"
         return 1
     fi
@@ -171,7 +181,7 @@ export -f test_boot_device
 
 function test_eject_media {
    local name=$1
-   if ! baremetal node passthru call "$name" eject_vmedia; then
+   if ! bmwrap node passthru call "$name" eject_vmedia; then
         echo "failed to eject media on $name" >> "$ERROR_LOG"
         return 1
     fi
