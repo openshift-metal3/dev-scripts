@@ -10,20 +10,23 @@ export ISO="fedora-coreos-37.20230205.3.0-live.x86_64.iso"
 ISO_URL="https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/37.20230205.3.0/x86_64/$ISO"
 # use the upstream ironic image by default
 IRONICIMAGE="quay.io/metal3-io/ironic:latest"
+export HTTP_PORT="6380"
 
 function usage {
     echo "USAGE:"
-    echo "./$(basename "$0") [-i ironic_image] -I interface -s pull_secret.json -c config.yaml"
+    echo "./$(basename "$0") [-i ironic_image] -I interface [-p http_port] -s pull_secret.json -c config.yaml"
     echo "ironic image defaults to $IRONICIMAGE"
+    echo "http_port defaults to $HTTP_PORT"
 }
 
-while getopts "i:I:s:c:h" opt; do
+while getopts "i:I:s:c:p:h" opt; do
     case $opt in
         h) usage; exit 0 ;;
         i) IRONICIMAGE=$OPTARG ;;
         I) INTERFACE=$OPTARG ;;
         s) PULL_SECRET=$OPTARG ;;
         c) CONFIGFILE=$OPTARG ;;
+        p) HTTP_PORT=$OPTARG ;;
         ?) usage; exit 1 ;;
     esac
 done
@@ -56,8 +59,27 @@ function cleanup {
 }
 trap "cleanup" EXIT
 
-timestamp "checking / installing GNU parallel"
-if ! which parallel > /dev/null 2>&1; then
+timestamp "checking / installing dependencies (passwordless sudo, podman, curl, parallel, nc, yq)"
+if ! sudo true; then
+    echo "ERROR: passwordless sudo not available"
+    exit 1
+fi
+if ! command -v curl > /dev/null 2>&1; then
+    sudo dnf install -y curl
+fi
+if ! command -v nc > /dev/null 2>&1; then
+    sudo dnf install -y nc
+fi
+if ! command -v podman > /dev/null 2>&1; then
+    sudo dnf install -y podman
+fi
+if ! command -v yq > /dev/null 2>&1; then
+    if ! command -v pip3 > /dev/null 2>&1; then
+        sudo dnf install python3-pip
+    fi
+    pip3 install yq
+fi
+if ! command -v parallel > /dev/null 2>&1; then
     sudo dnf install -y parallel
     mkdir -p ~/.parallel
     touch ~/.parallel/will-cite
@@ -72,15 +94,22 @@ fi
 timestamp "checking / cleaning old container"
 sudo podman rm -f -t 0 bmctest
 
-timestamp "checking TCP 80 port is not already in use"
-if nc -z localhost 80; then
-    echo "ERROR: HTTP port already in use, exiting"
+timestamp "checking TCP 6385 port for Ironic is not already in use"
+if nc -z localhost 6385; then
+    echo "ERROR: Ironic port already in use, exiting"
+    exit 1
+fi
+
+timestamp "checking TCP $HTTP_PORT port for httpd is not already in use"
+if nc -z localhost "$HTTP_PORT"; then
+    echo "ERROR: httpd port already in use, exiting"
     exit 1
 fi
 
 timestamp "starting ironic container"
 sudo podman run --authfile "$PULL_SECRET" --rm -d --net host --env PROVISIONING_INTERFACE="${INTERFACE}" \
-    --env OS_CLOUD=bmctest -v /srv/ironic:/shared --name bmctest --entrypoint sleep "$IRONICIMAGE" infinity
+    --env HTTP_PORT="$HTTP_PORT" --env OS_CLOUD=bmctest -v /srv/ironic:/shared --name bmctest \
+    --entrypoint sleep "$IRONICIMAGE" infinity
 
 # configure baremetal to run inside container
 sudo podman exec bmctest bash -c "mkdir -p /etc/openstack"
@@ -89,7 +118,7 @@ sudo podman cp clouds.yaml bmctest:/etc/openstack/clouds.yaml
 sudo podman exec bmctest bash -c "echo -e '#!/usr/bin/env bash\npython3 -W ignore /usr/bin/baremetal \$@' > /usr/local/bin/bm"
 sudo podman exec bmctest bash -c "chmod +x /usr/local/bin/bm"
 function bmwrap {
-    sudo podman exec bmctest bm $@
+    sudo podman exec bmctest bm "$@"
 }
 export -f bmwrap
 
@@ -104,7 +133,7 @@ sudo podman exec -d bmctest bash -c "/bin/runhttpd > /tmp/httpd.log 2>&1"
 # FIXME - take --wait as argument to script
 # see https://github.com/openshift/baremetal-operator/blob/master/docs/api.md
 function test_manage {
-    local name=$1; local boot=$2; local protocol=$3; local address=$4; local systemid=$5; local user=$6; local pass=$7
+    local name=$1; local boot=$2; local protocol=$3; local address=$4; local systemid=$5; local user=$6; local pass=$7; local insecure=$8
     case $boot in
         idrac-virtualmedia)
             local driver="idrac"
@@ -119,11 +148,19 @@ function test_manage {
             echo "unsupported boot method \"$boot\" for $name" >> "$ERROR_LOG"
             return 1
     esac
+    case $insecure in
+        null | False | false | no | No)
+            local verify_ca="True"
+            ;;
+        yes | Yes | True | true)
+            local verify_ca="False"
+            ;;
+    esac
     bmwrap node create --driver "$driver" \
         --driver-info redfish_address="${protocol}://${address}" --driver-info redfish_system_id="$systemid" \
-        --driver-info redfish_verify_ca=False --driver-info redfish_username="$user" \
+        --driver-info redfish_verify_ca=$verify_ca --driver-info redfish_username="$user" \
         --driver-info redfish_password="$pass" --property capabilities='boot_mode:uefi' \
-        $extra --name "$name" > /dev/null
+        "$extra" --name "$name" > /dev/null
     echo -n "    " # indent baremetal output
     if ! bmwrap node manage "$name" --wait 60; then
         echo "can not manage node $name" >> "$ERROR_LOG"
@@ -156,9 +193,10 @@ function test_boot_vmedia {
             echo "unknown boot method \"$boot\" for $name" >> "$ERROR_LOG"
             return 1
     esac
-    local ip=$(ip route get 1.1.1.1 | awk '{printf $7}')
+    local ip
+    ip=$(ip route get 1.1.1.1 | awk '{printf $7}')
     bmwrap node set "$name" --boot-interface "$boot_if" --deploy-interface ramdisk \
-    --instance-info boot_iso="http://${ip}/images/${ISO}"
+    --instance-info boot_iso="http://${ip}:${HTTP_PORT}/images/${ISO}"
     bmwrap node set "$name" --no-automated-clean
     echo -n "    " # indent baremetal output
     bmwrap node provide --wait 60 "$name"
@@ -189,11 +227,11 @@ function test_eject_media {
 export -f test_eject_media
 
 function test_node {
-    local name=$1; local boot=$2; local protocol=$3; local address=$4; local systemid=$5; local user=$6; local pass=$7
+    local name=$1; local boot=$2; local protocol=$3; local address=$4; local systemid=$5; local user=$6; local pass=$7; local insecure=$8
     echo; echo "===== $name ====="
 
-    timestamp "attempting to manage $name (check address & credentials)"
-    if test_manage "$name" "$boot" "$protocol" "$address" "$systemid" "$user" "$pass"; then
+    timestamp "attempting to manage $name (check address, credentials, certificates)"
+    if test_manage "$name" "$boot" "$protocol" "$address" "$systemid" "$user" "$pass" "$insecure"; then
        echo "    success"
     else
        echo "    failed to manage $name - can not run further tests on node"
@@ -223,8 +261,8 @@ function test_node {
 export -f test_node
 
 timestamp "testing, can take several minutes, please wait for results ..."
-yq -r '.hosts[] | "\(.name) \(.bmc.boot) \(.bmc.protocol) \(.bmc.address) \(.bmc.systemid) \(.bmc.username) \(.bmc.password)"' "$CONFIGFILE" | \
-    parallel --colsep ' ' -a - test_node
+yq -r '.hosts[] | "\(.name) \(.bmc.boot) \(.bmc.protocol) \(.bmc.address) \(.bmc.systemid) \(.bmc.username) \(.bmc.password) \(.bmc.insecure)"' \
+    "$CONFIGFILE" | parallel --colsep ' ' -a - test_node
 
 EXIT=$(wc -l "$ERROR_LOG" | cut -d ' '  -f 1)
 echo; echo "========== Found $EXIT errors =========="

@@ -35,6 +35,18 @@ function timestamp {
     echo "$1"
 }
 
+timestamp "checking/installing dependencies (passwordless sudo, yq)"
+if ! sudo true; then
+    echo "ERROR: passwordless sudo not available"
+    exit 1
+fi
+if ! command -v yq > /dev/null 2>&1; then
+    if ! command -v pip3 > /dev/null 2>&1; then
+        sudo dnf install python3-pip
+    fi
+    pip3 install yq
+fi
+
 timestamp "getting the release image url"
 RELEASEIMAGE=$(curl -s https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest-"${RELEASE}"/release.txt \
     | grep -o 'quay.io/openshift-release-dev/ocp-release.*')
@@ -66,7 +78,8 @@ yq -y '{hosts: [.platform.baremetal.hosts[] | {
             address: (.bmc.address | capture("://(?<addr>[^/]+)")).addr,
             systemid: (.bmc.address | capture("://(?<addr>[^/]+)(?<path>/.*$)")).path,
             username: .bmc.username,
-            password: .bmc.password }
+            password: .bmc.password,
+            insecure: .bmc.disableCertificateVerification }
         }]}' "$CONFIGFILE" > "$INPUTFILE"
 
 timestamp "calling bmctest.sh"
