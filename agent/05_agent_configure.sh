@@ -176,9 +176,11 @@ function get_mirror_info {
     tmpmirrorinfo=$(mktemp --tmpdir "mirror--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpmirrorinfo"
     if [[ ${MIRROR_COMMAND} == "oc-adm" ]]; then
-       sed -n '/imageContentSources/,/^ *$/p' ${MIRROR_LOG_FILE} | tail -n+2 > ${tmpmirrorinfo}
+       # Handle both ImageContentSources and ImageDigestSources in the output. In 4.14, `oc adm` was changed to
+       # output ImageDigestSources, while prior to that it was ImageContentSources
+       sed -n -E '/imageContentSources|imageDigestSources/,/^ *$/p' ${MIRROR_LOG_FILE} | tail -n+2 > ${tmpmirrorinfo}
     else
-       results_dir=$(grep ICSP /home/dev-scripts/.oc-mirror.log | grep -o 'oc-mirror[^;]*')
+       results_dir=$(grep ICSP ${WORKING_DIR}/.oc-mirror.log | grep -o 'oc-mirror[^;]*')
        sed -ne '/repository/,/---/p' ${WORKING_DIR}/${results_dir}/imageContentSourcePolicy.yaml > ${tmpmirrorinfo}
        sed -i '/repositoryDigestMirrors/d;/---/d' ${tmpmirrorinfo}
     fi
