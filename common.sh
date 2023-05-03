@@ -376,6 +376,7 @@ function invalidAgentValue() {
 # Agent test scenario
 export AGENT_E2E_TEST_SCENARIO=${AGENT_E2E_TEST_SCENARIO:-}
 export NETWORKING_MODE=${NETWORKING_MODE:-}
+export BOOT_MODE=${BOOT_MODE:-}
 
 # Enable MCE deployment
 export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
@@ -390,10 +391,25 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   export IP_STACK=$(echo ${arr[1]##*IP} | tr V v)
   
   if [[ "$delimiterCount" == "2" ]]; then
-    export NETWORKING_MODE=${arr[2]}
-    if [[ $NETWORKING_MODE != "DHCP" ]]; then
+    val=${arr[2]}
+    if [[ $val == "DHCP" ]]; then
+      export NETWORKING_MODE=$val
+    elif [[ $val == "PXE" ]]; then
+      export BOOT_MODE=$val
+    else
       invalidAgentValue
     fi
+  fi
+
+  if [[ "$delimiterCount" == "3" ]]; then
+    export NETWORKING_MODE=${arr[2]}
+    export BOOT_MODE=${arr[3]}
+  fi
+  if [[ $NETWORKING_MODE != "DHCP" && $NETWORKING_MODE != "" ]]; then
+    invalidAgentValue
+  fi
+  if [[ $BOOT_MODE != "PXE" && $BOOT_MODE != "" ]]; then
+    invalidAgentValue
   fi
 
   case "$SCENARIO" in

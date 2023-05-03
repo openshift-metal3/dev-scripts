@@ -14,6 +14,12 @@ source $SCRIPTDIR/agent/common.sh
 
 early_deploy_validation
 
+function create_pxe_files() {
+    local asset_dir="${1:-${OCP_DIR}}"
+    local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+    "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create pxe-files
+}
+
 function create_image() {
     local asset_dir="${1:-${OCP_DIR}}"
     local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
@@ -163,31 +169,35 @@ function mce_complete_deployment() {
   mce_apply_postinstallation_manifests ${mceManifests}
 }
 
-create_image
-if [[ "${AGENT_DISABLE_AUTOMATED:-}" == "true" ]]; then
-  disable_automated_installation
-fi
+if [ ! -z "${BOOT_MODE}" ]; then
+  create_pxe_files
+else
+  create_image
+  if [[ "${AGENT_DISABLE_AUTOMATED:-}" == "true" ]]; then
+    disable_automated_installation
+  fi
 
-attach_agent_iso master $NUM_MASTERS
-attach_agent_iso worker $NUM_WORKERS
+  attach_agent_iso master $NUM_MASTERS
+  attach_agent_iso worker $NUM_WORKERS
 
-if [ ! -z "${MIRROR_IMAGES}" ]; then
-  force_mirror_disconnect
-fi
+  if [ ! -z "${MIRROR_IMAGES}" ]; then
+    force_mirror_disconnect
+  fi
 
-if [ ! -z "${AGENT_ENABLE_GUI:-}" ]; then
-  enable_assisted_service_ui
-fi
+  if [ ! -z "${AGENT_ENABLE_GUI:-}" ]; then
+    enable_assisted_service_ui
+  fi
 
-wait_for_cluster_ready
+  wait_for_cluster_ready
 
-# Temporary fix for the CI. To be removed once we'll 
-# be able to generate the cluster credentials
-if [ ! -f "${OCP_DIR}/auth/kubeadmin-password" ]; then
-    oc patch --kubeconfig="${OCP_DIR}/auth/kubeconfig" secret -n kube-system kubeadmin --type json -p '[{"op": "replace", "path": "/data/kubeadmin", "value": "'"$(openssl rand -base64 18 | tr -d '\n' | tee "${OCP_DIR}/auth/kubeadmin-password" | htpasswd -nBi -C 10 "" | tr -d ':\n' | sed -e 's/\$2y\$/$2a$/' | base64 -w 0 -)"'"}]'
-fi
+  # Temporary fix for the CI. To be removed once we'll 
+  # be able to generate the cluster credentials
+  if [ ! -f "${OCP_DIR}/auth/kubeadmin-password" ]; then
+      oc patch --kubeconfig="${OCP_DIR}/auth/kubeconfig" secret -n kube-system kubeadmin --type json -p '[{"op": "replace", "path": "/data/kubeadmin", "value": "'"$(openssl rand -base64 18 | tr -d '\n' | tee "${OCP_DIR}/auth/kubeadmin-password" | htpasswd -nBi -C 10 "" | tr -d ':\n' | sed -e 's/\$2y\$/$2a$/' | base64 -w 0 -)"'"}]'
+  fi
 
-if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
-  mce_complete_deployment
+  if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
+    mce_complete_deployment
+  fi
 fi
 
