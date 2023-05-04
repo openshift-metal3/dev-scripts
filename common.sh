@@ -392,9 +392,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   
   if [[ "$delimiterCount" == "2" ]]; then
     val=${arr[2]}
-    if [[ $val == "DHCP" ]]; then
+    if [[ "${val}" == "DHCP" ]]; then
       export NETWORKING_MODE=$val
-    elif [[ $val == "PXE" ]]; then
+    elif [[ "${val}" == "PXE" ]]; then
       export BOOT_MODE=$val
     else
       invalidAgentValue
@@ -405,10 +405,10 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     export NETWORKING_MODE=${arr[2]}
     export BOOT_MODE=${arr[3]}
   fi
-  if [[ $NETWORKING_MODE != "DHCP" && $NETWORKING_MODE != "" ]]; then
+  if [[ "${NETWORKING_MODE}" != "DHCP" && "${NETWORKING_MODE} != "" ]]; then
     invalidAgentValue
   fi
-  if [[ $BOOT_MODE != "PXE" && $BOOT_MODE != "" ]]; then
+  if [[ "${BOOT_MODE}" != "PXE" && "${BOOT_MODE}" != "" ]]; then
     invalidAgentValue
   fi
 

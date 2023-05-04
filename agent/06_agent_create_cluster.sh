@@ -169,7 +169,7 @@ function mce_complete_deployment() {
   mce_apply_postinstallation_manifests ${mceManifests}
 }
 
-if [ ! -z "${BOOT_MODE}" ]; then
+if [[ "${BOOT_MODE}" == "PXE" ]]; then
   create_pxe_files
 else
   create_image
