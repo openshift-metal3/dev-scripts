@@ -405,7 +405,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     export NETWORKING_MODE=${arr[2]}
     export BOOT_MODE=${arr[3]}
   fi
-  if [[ "${NETWORKING_MODE}" != "DHCP" && "${NETWORKING_MODE} != "" ]]; then
+  if [[ "${NETWORKING_MODE}" != "DHCP" && "${NETWORKING_MODE}" != "" ]]; then
     invalidAgentValue
   fi
   if [[ "${BOOT_MODE}" != "PXE" && "${BOOT_MODE}" != "" ]]; then
