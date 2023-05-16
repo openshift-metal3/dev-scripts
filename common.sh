@@ -376,7 +376,7 @@ function invalidAgentValue() {
 # Agent test scenario
 export AGENT_E2E_TEST_SCENARIO=${AGENT_E2E_TEST_SCENARIO:-}
 export NETWORKING_MODE=${NETWORKING_MODE:-}
-export BOOT_MODE=${BOOT_MODE:-}
+export BOOT_MODE=${BOOT_MODE:-"ISO"}
 
 # Enable MCE deployment
 export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
@@ -394,7 +394,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     val=${arr[2]}
     if [[ "${val}" == "DHCP" ]]; then
       export NETWORKING_MODE=$val
-    elif [[ "${val}" == "PXE" ]]; then
+    elif [[ "${val}" == "PXE" || "${val}" == "ISO"]]; then
       export BOOT_MODE=$val
     else
       invalidAgentValue
@@ -408,7 +408,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   if [[ "${NETWORKING_MODE}" != "DHCP" && "${NETWORKING_MODE}" != "" ]]; then
     invalidAgentValue
   fi
-  if [[ "${BOOT_MODE}" != "PXE" && "${BOOT_MODE}" != "" ]]; then
+  if [[ "${BOOT_MODE}" != "PXE" && "${BOOT_MODE}" != "ISO" ]]; then
     invalidAgentValue
   fi
 

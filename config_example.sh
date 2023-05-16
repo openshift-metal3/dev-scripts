@@ -654,19 +654,33 @@ set -x
 
 # Set a single config variable AGENT_E2E_TEST_SCENARIO to create a cluster for the different scenarios 
 # i.e. Single Node Openshift(SNO), Highly Available (HA) or Compact cluster.
+# The boot mode for the agent machines can only be set to ISO or PXE.
+# For backward compatibility of CI jobs, the default boot mode is ISO.
 # The only supported values for AGENT_E2E_TEST_SCENARIO are 
-# - COMPACT_IPV4
-# - COMPACT_IPV6
-# - COMPACT_IPV4_DHCP
-# - COMPACT_IPV6_DHCP
-# - HA_IPV4
-# - HA_IPV6
-# - HA_IPV4_DHCP
-# - HA_IPV6 _DHCP
-# - SNO_IPV4
-# - SNO_IPV6
-# - SNO_IPV4_DHCP
-# - SNO_IPV6_DHCP
+# - COMPACT_IPV4_ISO
+# - COMPACT_IPV6_ISO
+# - COMPACT_IPV4_PXE
+# - COMPACT_IPV6_PXE
+# - COMPACT_IPV4_DHCP_ISO
+# - COMPACT_IPV6_DHCP_ISO
+# - COMPACT_IPV4_DHCP_PXE
+# - COMPACT_IPV6_DHCP_PXE
+# - HA_IPV4_ISO
+# - HA_IPV6_ISO
+# - HA_IPV4_PXE
+# - HA_IPV6_PXE
+# - HA_IPV4_DHCP_ISO
+# - HA_IPV6 _DHCP_ISO
+# - HA_IPV4_DHCP_PXE
+# - HA_IPV6 _DHCP_PXE
+# - SNO_IPV4_ISO
+# - SNO_IPV6_ISO
+# - SNO_IPV4_PXE
+# - SNO_IPV6_PXE
+# - SNO_IPV4_DHCP_ISO
+# - SNO_IPV6_DHCP_ISO
+# - SNO_IPV4_DHCP_PXE
+# - SNO_IPV6_DHCP_PXE
 # When set, the code internally sets other low level details such as disk size, memory, number of masters and workers,
 # cpu and ip stack.
 # This config variable is used only by the agent based installer and is required.
