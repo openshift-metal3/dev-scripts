@@ -394,7 +394,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     val=${arr[2]}
     if [[ "${val}" == "DHCP" ]]; then
       export NETWORKING_MODE=$val
-    elif [[ "${val}" == "PXE" || "${val}" == "ISO"]]; then
+    elif [[ "${val}" == "PXE" || "${val}" == "ISO" ]]; then
       export BOOT_MODE=$val
     else
       invalidAgentValue

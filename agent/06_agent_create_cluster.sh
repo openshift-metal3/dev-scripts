@@ -173,33 +173,36 @@ openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
 
 if [[ "${BOOT_MODE}" == "PXE" ]]; then
   create_pxe_files ${asset_dir} ${openshift_install}
-else
+fi
+
+if [[ "${BOOT_MODE}" == "ISO" ]]; then
   create_image ${asset_dir} ${openshift_install}
-  if [[ "${AGENT_DISABLE_AUTOMATED:-}" == "true" ]]; then
-    disable_automated_installation
-  fi
+fi
 
-  attach_agent_iso master $NUM_MASTERS
-  attach_agent_iso worker $NUM_WORKERS
+if [[ "${AGENT_DISABLE_AUTOMATED:-}" == "true" ]]; then
+  disable_automated_installation
+fi
 
-  if [ ! -z "${MIRROR_IMAGES}" ]; then
-    force_mirror_disconnect
-  fi
+attach_agent_iso master $NUM_MASTERS
+attach_agent_iso worker $NUM_WORKERS
 
-  if [ ! -z "${AGENT_ENABLE_GUI:-}" ]; then
-    enable_assisted_service_ui
-  fi
+if [ ! -z "${MIRROR_IMAGES}" ]; then
+  force_mirror_disconnect
+fi
 
-  wait_for_cluster_ready
+if [ ! -z "${AGENT_ENABLE_GUI:-}" ]; then
+  enable_assisted_service_ui
+fi
 
-  # Temporary fix for the CI. To be removed once we'll 
-  # be able to generate the cluster credentials
-  if [ ! -f "${OCP_DIR}/auth/kubeadmin-password" ]; then
-      oc patch --kubeconfig="${OCP_DIR}/auth/kubeconfig" secret -n kube-system kubeadmin --type json -p '[{"op": "replace", "path": "/data/kubeadmin", "value": "'"$(openssl rand -base64 18 | tr -d '\n' | tee "${OCP_DIR}/auth/kubeadmin-password" | htpasswd -nBi -C 10 "" | tr -d ':\n' | sed -e 's/\$2y\$/$2a$/' | base64 -w 0 -)"'"}]'
-  fi
+wait_for_cluster_ready
 
-  if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
-    mce_complete_deployment
-  fi
+# Temporary fix for the CI. To be removed once we'll 
+# be able to generate the cluster credentials
+if [ ! -f "${OCP_DIR}/auth/kubeadmin-password" ]; then
+    oc patch --kubeconfig="${OCP_DIR}/auth/kubeconfig" secret -n kube-system kubeadmin --type json -p '[{"op": "replace", "path": "/data/kubeadmin", "value": "'"$(openssl rand -base64 18 | tr -d '\n' | tee "${OCP_DIR}/auth/kubeadmin-password" | htpasswd -nBi -C 10 "" | tr -d ':\n' | sed -e 's/\$2y\$/$2a$/' | base64 -w 0 -)"'"}]'
+fi
+
+if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
+  mce_complete_deployment
 fi
 
