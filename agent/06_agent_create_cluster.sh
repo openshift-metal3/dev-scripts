@@ -171,11 +171,11 @@ function mce_complete_deployment() {
 asset_dir="${1:-${OCP_DIR}}"
 openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
 
-if [[ "${BOOT_MODE}" == "PXE" ]]; then
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
   create_pxe_files ${asset_dir} ${openshift_install}
 fi
 
-if [[ "${BOOT_MODE}" == "ISO" ]]; then
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO" ]]; then
   create_image ${asset_dir} ${openshift_install}
 fi
 
