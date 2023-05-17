@@ -27,3 +27,7 @@ function getReleaseImage() {
     fi
     echo ${releaseImage}
 }
+
+if [[ "$IP_STACK" = "v4v6" ]]; then
+    export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=$(nth_ip $EXTERNAL_SUBNET_V6 1)
+fi

@@ -247,6 +247,28 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     ;;    
 esac
 
+if [ "$AGENT_E2E_TEST_TUI_BAD_DNS" = "true" ]; then
+  # wait 5 minutes for VMs to load and arrive at agent-tui check screen
+  echo "Running test scenario: bad DNS record(s) in agent-config.yaml"
+  echo "Waiting for 5 mins to arrive at agent-tui check screen"
+  sleep 300
+
+  # Take screenshots of console before fixing DNS. The screenshot may help us see if
+  # agent-tui has reached the expected failure state.
+  name=${CLUSTER_NAME}_master_0
+  sudo virsh screenshot $name "${OCP_DIR}/${name}_console_screenshot_before_dns_fix.ppm"
+
+  echo "Fixing DNS through agent-tui"
+  # call script to fix DNS IP on all hosts
+  if [[ "$IP_STACK" = "v4v6" ]]; then
+    ./agent/e2e/agent-tui/test-fix-wrong-dns.sh $CLUSTER_NAME $IP_STACK $PROVISIONING_HOST_EXTERNAL_IP $PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK
+  else
+    ./agent/e2e/agent-tui/test-fix-wrong-dns.sh $CLUSTER_NAME $IP_STACK $PROVISIONING_HOST_EXTERNAL_IP
+  fi
+
+  echo "Finished fixing DNS through agent-tui"
+fi
+
 if [ ! -z "${MIRROR_IMAGES}" ]; then
   force_mirror_disconnect
 fi

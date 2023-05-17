@@ -690,3 +690,14 @@ set -x
 # This config variable is used only by the agent based installer and is optional.
 # The default value for AGENT_E2E_TEST_BOOT_MODE is 'ISO'.
 # AGENT_E2E_TEST_BOOT_MODE=PXE
+
+# Uncomment and set the following value to "true" to enable a test scenario
+# where the DNS is disabled on the hosts by setting its IP address to an incorrect value.
+# This causes the agent-tui to reach a state where it remains up showing the
+# release image cannot be reached and waits for the user to fix the issue.
+# The test scenario adds a sleep after the VMs are booted and "waits" for the hosts to reach this state.
+# After the sleep, it then invokes a series of console key presses to simulate a user fixing the issue
+# through the console. The key presses should fix the issue and should allow the automated
+# workflow to continue ending with a successful cluster installation. If it fails to fix the issue
+# then the wait-for commands should timeout and fail.
+# export AGENT_E2E_TEST_TUI_BAD_DNS=false

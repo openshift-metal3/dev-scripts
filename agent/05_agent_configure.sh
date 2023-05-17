@@ -226,10 +226,6 @@ function generate_cluster_manifests() {
      export INGRESS_VIP=${INGRESS_VIPS%${VIPS_SEPARATOR}*}
   fi
 
-  if [[ "$IP_STACK" = "v4v6" ]]; then
-     export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=$(nth_ip $EXTERNAL_SUBNET_V6 1)
-  fi
-
   if [[ ! -z "${MIRROR_IMAGES}" ]]; then
     # Store the certs for registry
     if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
@@ -278,5 +274,25 @@ else
 fi
 
 generate_cluster_manifests
+
+if [ "$AGENT_E2E_TEST_TUI_BAD_DNS" = "true" ]; then
+  # Create a bad dns configuration by changing master-0's
+  # DNS server IP address
+  if [[ "$IP_STACK" = "v4" ]]; then
+    # from 192.168.111.1 to 192.168.111.2
+    yq -i -y '.hosts[0].networkConfig["dns-resolver"].config.server[0] = "192.168.111.2"' "${OCP_DIR}/agent-config.yaml"
+  fi
+  if [[ "$IP_STACK" = "v6" ]]; then
+    # from fd2e:6f44:5dd8:c956::1 to fd2e:6f44:5dd8:c956::2
+    yq -i -y '.hosts[0].networkConfig["dns-resolver"].config.server[0] = "fd2e:6f44:5dd8:c956::2"' "${OCP_DIR}/agent-config.yaml"
+  fi
+  if [[ "$IP_STACK" = "v4v6" ]]; then
+    # from 192.168.111.1 and fd2e:6f44:5dd8:c956::1 to 192.168.111.2 and fd2e:6f44:5dd8:c956::2
+    yq -i -y '.hosts[0].networkConfig["dns-resolver"].config.server[0] = "192.168.111.2"' "${OCP_DIR}/agent-config.yaml"
+    yq -i -y '.hosts[0].networkConfig["dns-resolver"].config.server[1] = "fd2e:6f44:5dd8:c956::2"' "${OCP_DIR}/agent-config.yaml"
+  fi
+fi
+
+cat "${OCP_DIR}/agent-config.yaml"
 
 generate_extra_cluster_manifests
