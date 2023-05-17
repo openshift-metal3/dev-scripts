@@ -23,7 +23,26 @@ function create_pxe_files() {
 function create_image() {
     local asset_dir=${1}
     local openshift_install=${2}
+
+    if [ "${AGENT_USE_APPLIANCE_MODEL}" == true ]; then
+      create_factory_image
+    else
+      create_automated_image
+    fi
+}
+
+function create_automated_image() {
     "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create image
+}
+
+function create_factory_image() {
+    "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create cluster-manifests
+    "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create unconfigured-ignition
+    oc adm release info --image-for=machine-os-images --insecure=true $OPENSHIFT_RELEASE_IMAGE
+    base_iso_url=$(oc adm release info --image-for=machine-os-images --insecure=true $OPENSHIFT_RELEASE_IMAGE)
+    oc image extract --path /coreos/coreos-x86_64.iso:$HOME/.cache/agent/image_cache --confirm $base_iso_url
+    local agent_iso_abs_path="$(realpath "${OCP_DIR}")"
+    podman run --privileged --rm -v /run/udev:/run/udev -v "${agent_iso_abs_path}:${agent_iso_abs_path}" -v "$HOME/.cache/agent/image_cache/:$HOME/.cache/agent/image_cache/" quay.io/coreos/coreos-installer:release iso ignition embed -f -i "${agent_iso_abs_path}/unconfigured-agent.ign" -o "${agent_iso_abs_path}/agent.iso" $HOME/.cache/agent/image_cache/coreos-x86_64.iso
 }
 
 function attach_agent_iso() {

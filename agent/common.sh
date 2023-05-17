@@ -27,3 +27,5 @@ function getReleaseImage() {
     fi
     echo ${releaseImage}
 }
+
+export AGENT_USE_APPLIANCE_MODEL=${AGENT_USE_APPLIANCE_MODEL:-"false"}

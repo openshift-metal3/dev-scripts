@@ -693,3 +693,9 @@ set -x
 # As per https://libvirt.org/formatnetwork.html, the tftp element is not supported for IPv6 addresses, 
 # and can only be specified on a single IPv4 address per network
 # AGENT_E2E_TEST_BOOT_MODE=PXE
+
+# Uncomment the following line to deploy the cluster using the appliance model
+# The appliance model boots the host using the unconfigured ignition. It then mounts
+# the configuration ISO where its contents are copied over to the host. The cluster
+# installation is triggered when the /etc/assisted/rendezvous-host.env file is present.
+# export AGENT_USE_APPLIANCE_MODEL=false
