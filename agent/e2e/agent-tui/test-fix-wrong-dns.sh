@@ -1,14 +1,7 @@
 #!/bin/bash
 
 CLUSTER_NAME=$1
-IP_STACK=$2
-# Contains IPv4 IP address when IP_STACK = v4 or v4v6
-# Contains IPv6 IP address when IP_STACK = v6
-GOOD_DNS_IP=$3
-# Contains IPv6 IP address when IP_STACK = v4v6
-if [ $IP_STACK = "v4v6" ]; then
-  GOOD_DNS_IP2=$4
-fi
+GOOD_DNS_IP=$2
 
 ### utils function for sending various keys and/or text to the console
 
@@ -91,29 +84,27 @@ pressEnter "Select '<Configure network>' button"
 pressEnter "Select 'Edit a connection'"
 pressEnter "Select 'enp2s0'"
 
-if [ $IP_STACK = "v4" ]; then
-  pressTab "Goto DNS field" 10
-  pressBackspace "Cleanup DNS previous value" 15
-  pressKeys "Insert correct DNS address" "${GOOD_DNS_IP}"
-  pressTab "Goto <OK> button" 14
-fi
+pressTab "Goto DNS field" 10
+pressBackspace "Cleanup DNS previous value" 15
+pressKeys "Insert correct DNS address" "${GOOD_DNS_IP}"
+pressTab "Goto <OK> button" 14
 
-if [ $IP_STACK = "v6" ]; then
-  pressTab "Goto DNS field" 12
-  pressBackspace "Cleanup DNS previous value" 24
-  pressKeys "Insert correct DNS address" "${GOOD_DNS_IP}"
-  pressTab "Goto <OK> button" 12
-fi
+# if [ $IP_STACK = "v6" ]; then
+#   pressTab "Goto DNS field" 12
+#   pressBackspace "Cleanup DNS previous value" 24
+#   pressKeys "Insert correct DNS address" "${GOOD_DNS_IP}"
+#   pressTab "Goto <OK> button" 12
+# fi
 
-if [ $IP_STACK = "v4v6" ]; then
-  pressTab "Goto IPv4 DNS field" 10
-  pressBackspace "Cleanup DNS previous IPv4 value" 15
-  pressKeys "Insert correct IPv4 DNS address" "${GOOD_DNS_IP}"
-  pressTab "Goto IPv6 DNS field" 15
-  pressBackspace "Cleanup DNS previous IPv6 value" 24
-  pressKeys "Insert correct IPv6 DNS address" "${GOOD_DNS_IP2}"
-  pressTab "Goto <OK> button" 12
-fi
+# if [ $IP_STACK = "v4v6" ]; then
+#   pressTab "Goto IPv4 DNS field" 10
+#   pressBackspace "Cleanup DNS previous IPv4 value" 15
+#   pressKeys "Insert correct IPv4 DNS address" "${GOOD_DNS_IP}"
+#   pressTab "Goto IPv6 DNS field" 15
+#   pressBackspace "Cleanup DNS previous IPv6 value" 24
+#   pressKeys "Insert correct IPv6 DNS address" "${GOOD_DNS_IP2}"
+#   pressTab "Goto <OK> button" 12
+# fi
 
 pressEnter "Select '<OK>' button"
 pressTab "Goto <Back> button" 4

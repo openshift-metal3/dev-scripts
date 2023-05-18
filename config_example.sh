@@ -693,6 +693,11 @@ set -x
 
 # Uncomment and set the following value to "true" to enable a test scenario
 # where the DNS is disabled on the hosts by setting its IP address to an incorrect value.
+# Uncomment and set the following value to one or more test cases below.
+# Multiple test cases can be listed using ',' as the delimiter.
+#
+# 1. 'bad_dns' test case:
+# The DNS is disabled on the hosts by setting its IP address to an incorrect value.
 # This causes the agent-tui to reach a state where it remains up showing the
 # release image cannot be reached and waits for the user to fix the issue.
 # The test scenario adds a sleep after the VMs are booted and "waits" for the hosts to reach this state.
@@ -700,4 +705,6 @@ set -x
 # through the console. The key presses should fix the issue and should allow the automated
 # workflow to continue ending with a successful cluster installation. If it fails to fix the issue
 # then the wait-for commands should timeout and fail.
-# export AGENT_E2E_TEST_TUI_BAD_DNS=false
+# This test case is only supported when IP_STACK=v4.
+#
+# export AGENT_TEST_CASES='bad_dns'

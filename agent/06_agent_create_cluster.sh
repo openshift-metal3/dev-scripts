@@ -169,11 +169,24 @@ function mce_complete_deployment() {
   mce_apply_postinstallation_manifests ${mceManifests}
 }
 
-# Generate the PXE artifacts
-function create_pxe_files() {
-    local asset_dir=${1}
-    local openshift_install=${2}
-    "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create pxe-files
+function run_agent_test_cases() {
+  if [[ $AGENT_TEST_CASES =~ "bad_dns" ]]; then
+    # wait 5 minutes for VMs to load and arrive at agent-tui check screen
+    echo "Running test scenario: bad DNS record(s) in agent-config.yaml"
+    echo "Waiting for 5 mins to arrive at agent-tui check screen"
+    sleep 300
+
+    # Take screenshots of console before fixing DNS. The screenshot may help us see if
+    # agent-tui has reached the expected failure state.
+    name=${CLUSTER_NAME}_master_0
+    sudo virsh screenshot $name "${OCP_DIR}/${name}_console_screenshot_before_dns_fix.ppm"
+
+    echo "Fixing DNS through agent-tui"
+    # call script to fix DNS IP address on master-0
+    ./agent/e2e/agent-tui/test-fix-wrong-dns.sh $CLUSTER_NAME $PROVISIONING_HOST_EXTERNAL_IP
+
+    echo "Finished fixing DNS through agent-tui"
+  fi
 }
 
 # Setup the environment to allow iPXE booting, by reusing libvirt native features
@@ -247,26 +260,8 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     ;;    
 esac
 
-if [ "$AGENT_E2E_TEST_TUI_BAD_DNS" = "true" ]; then
-  # wait 5 minutes for VMs to load and arrive at agent-tui check screen
-  echo "Running test scenario: bad DNS record(s) in agent-config.yaml"
-  echo "Waiting for 5 mins to arrive at agent-tui check screen"
-  sleep 300
-
-  # Take screenshots of console before fixing DNS. The screenshot may help us see if
-  # agent-tui has reached the expected failure state.
-  name=${CLUSTER_NAME}_master_0
-  sudo virsh screenshot $name "${OCP_DIR}/${name}_console_screenshot_before_dns_fix.ppm"
-
-  echo "Fixing DNS through agent-tui"
-  # call script to fix DNS IP on all hosts
-  if [[ "$IP_STACK" = "v4v6" ]]; then
-    ./agent/e2e/agent-tui/test-fix-wrong-dns.sh $CLUSTER_NAME $IP_STACK $PROVISIONING_HOST_EXTERNAL_IP $PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK
-  else
-    ./agent/e2e/agent-tui/test-fix-wrong-dns.sh $CLUSTER_NAME $IP_STACK $PROVISIONING_HOST_EXTERNAL_IP
-  fi
-
-  echo "Finished fixing DNS through agent-tui"
+if [ ! -z "${AGENT_TEST_CASES:-}" ]; then
+  run_agent_test_cases
 fi
 
 if [ ! -z "${MIRROR_IMAGES}" ]; then
