@@ -54,3 +54,17 @@ the recommended configurations through some concrete examples.
 | dev/qe |  | In this case the latest _nightly_ release is automatically downloaded, and the installer is extracted<br>from that payload. `OPENSHIFT_RELEASE_STREAM` and `OPENSHIFT_RELEASE_TYPE` respectively<br>are used to determine the version and stream to be gathered |
 | dev/qe | `OPENSHIFT_RELEASE_IMAGE=`<br>`registry.ci.openshift.org/ocp/release:4.11.0-0.nightly-2022-05-11-054135` | As before, but pinning to a specific release version |
 | CI | `OPENSHIFT_RELEASE_IMAGE=<ephemeral payload pullspec>`<br>`OPENSHIFT_CI=true` | This is the configuration used in the CI to test an ephemeral payload |
+
+# Troubleshooting
+
+If `make agent` target fails booting the ISO due to permission issue, for example,
+```
+ERROR    Failed starting domain 'ostest_master_0': internal error: process exited while connecting to monitor: 
+2023-05-18T13:47:42.452459Z qemu-kvm: -blockdev {"driver":"file","filename":"/home/abi/dev-scripts/ocp/ostest/agent.x86_64.iso","node-name":"libvirt-1-storage","auto-read-only":true,"discard":"unmap"}: 
+
+Could not open '/home/abi/dev-scripts/ocp/ostest/agent.x86_64.iso': Permission denied
+```
+Set necessary permissions with `sudo setfacl -m u:qemu:rx /home/<USER>/`. This is required only once.
+
+Note: This could happen on those systems where libvirtd was just installed.
+
