@@ -64,5 +64,7 @@ ERROR    Failed starting domain 'ostest_master_0': internal error: process exite
 
 Could not open '/home/abi/dev-scripts/ocp/ostest/agent.x86_64.iso': Permission denied
 ```
-Set necessary permissions with `sudo setfacl -m u:qemu:rx /home/<USER>/`
+Set necessary permissions with `sudo setfacl -m u:qemu:rx /home/<USER>/`. This is required only once.
+
+Note: This could happen on those systems where libvirtd was just installed.
 
