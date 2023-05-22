@@ -400,24 +400,24 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
       "COMPACT" )
           export NUM_MASTERS=3
           export MASTER_VCPU=4
-          export MASTER_DISK=120
+          export MASTER_DISK=100
           export MASTER_MEMORY=32768
           export NUM_WORKERS=0
           ;;
       "HA" )
           export NUM_MASTERS=3
           export MASTER_VCPU=4
-          export MASTER_DISK=120
+          export MASTER_DISK=100
           export MASTER_MEMORY=32768
           export NUM_WORKERS=2
           export WORKER_VCPU=4
-          export WORKER_DISK=120
+          export WORKER_DISK=100
           export WORKER_MEMORY=9000
           ;;
       "SNO" )
           export NUM_MASTERS=1
           export MASTER_VCPU=8
-          export MASTER_DISK=120
+          export MASTER_DISK=100
           export MASTER_MEMORY=32768
           export NUM_WORKERS=0
           export NETWORK_TYPE="OVNKubernetes"
