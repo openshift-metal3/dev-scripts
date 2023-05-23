@@ -348,6 +348,9 @@ set -x
 # (Currently this just expects a non-empty value, the IP is fixed to .9)
 # export ENABLE_BOOTSTRAP_STATIC_IP=true
 
+# A MAC address to use for the external NIC on the bootstrap VM.
+# EXTERNAL_BOOTSTRAP_MAC=52:54:00:00:11:22
+
 # NETWORK_CONFIG_FOLDER -
 # Set this to the location of a folder containing networkConfigs for the nodes
 # in the deployment. The filenames correspond to the name of the host. For

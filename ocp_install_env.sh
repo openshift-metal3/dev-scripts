@@ -121,6 +121,15 @@ EOF
   fi
 }
 
+function external_mac() {
+  if [ -n "$EXTERNAL_BOOTSTRAP_MAC" ] ; then
+cat <<EOF
+    externalMACAddress: $EXTERNAL_BOOTSTRAP_MAC
+EOF
+  fi
+}
+
+
 function renderVIPs() {
     # Arguments:
     #     First argument: field name
@@ -298,6 +307,7 @@ platform:
 $(libvirturi)
 $(baremetal_network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
+$(external_mac)
     bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
 $(cluster_os_image)
 $(setVIPs apivips)
