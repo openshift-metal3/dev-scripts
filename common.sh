@@ -376,6 +376,7 @@ function invalidAgentValue() {
 # Agent test scenario
 export AGENT_E2E_TEST_SCENARIO=${AGENT_E2E_TEST_SCENARIO:-}
 export NETWORKING_MODE=${NETWORKING_MODE:-}
+export AGENT_E2E_TEST_BOOT_MODE=${AGENT_E2E_TEST_BOOT_MODE:-"ISO"}
 
 # Enable MCE deployment
 export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
@@ -395,6 +396,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
       invalidAgentValue
     fi
   fi
+
 
   case "$SCENARIO" in
       "COMPACT" )
@@ -439,6 +441,18 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   if [[ $IP_STACK != 'v4' ]] && [[ $IP_STACK != 'v6' ]] && [[ $IP_STACK != 'v4v6' ]]; then
     echo "Invalid value $IP_STACK for IP stack, use 'V4', 'V6', or 'V4V6'."
     exit 1
+  fi
+fi
+
+if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then
+  if [[ $AGENT_E2E_TEST_BOOT_MODE == "PXE" && $IP_STACK != 'v4' ]]; then
+      echo "Invalid value $IP_STACK for IP stack, only use 'V4' when using AGENT_E2E_TEST_BOOT_MODE as $AGENT_E2E_TEST_BOOT_MODE."
+      exit 1
+  fi
+
+  if [[ $AGENT_E2E_TEST_BOOT_MODE != "ISO" && $AGENT_E2E_TEST_BOOT_MODE != "PXE" ]]; then
+      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE."
+      exit 1
   fi
 fi
 

@@ -654,6 +654,8 @@ set -x
 
 # Set a single config variable AGENT_E2E_TEST_SCENARIO to create a cluster for the different scenarios 
 # i.e. Single Node Openshift(SNO), Highly Available (HA) or Compact cluster.
+# The boot mode for the agent machines can only be set to ISO or PXE.
+# For backward compatibility of CI jobs, the default boot mode is ISO.
 # The only supported values for AGENT_E2E_TEST_SCENARIO are 
 # - COMPACT_IPV4
 # - COMPACT_IPV6
@@ -683,3 +685,11 @@ set -x
 # deployment systemd services of the Agent based installation. This is
 # particularly useful for WebUI development.
 # export AGENT_DISABLE_AUTOMATED=false
+
+# When set, the code internally sets the boot mode for the agents.
+# This config variable is used only by the agent based installer and is optional.
+# The default value for AGENT_E2E_TEST_BOOT_MODE is 'ISO'.
+# When set to 'PXE', the AGENT_E2E_TEST_SCENARIO can only be set to IPV4 scenarios.
+# As per https://libvirt.org/formatnetwork.html, the tftp element is not supported for IPv6 addresses, 
+# and can only be specified on a single IPv4 address per network
+# AGENT_E2E_TEST_BOOT_MODE=PXE

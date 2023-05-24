@@ -14,9 +14,15 @@ source $SCRIPTDIR/agent/common.sh
 
 early_deploy_validation
 
+function create_pxe_files() {
+    local asset_dir=${1}
+    local openshift_install=${2}
+    "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create pxe-files
+}
+
 function create_image() {
-    local asset_dir="${1:-${OCP_DIR}}"
-    local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+    local asset_dir=${1}
+    local openshift_install=${2}
     "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create image
 }
 
@@ -162,8 +168,17 @@ function mce_complete_deployment() {
   mce_prepare_postinstallation_manifests ${mceManifests}
   mce_apply_postinstallation_manifests ${mceManifests}
 }
+asset_dir="${1:-${OCP_DIR}}"
+openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
 
-create_image
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
+  create_pxe_files ${asset_dir} ${openshift_install}
+fi
+
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO" ]]; then
+  create_image ${asset_dir} ${openshift_install}
+fi
+
 if [[ "${AGENT_DISABLE_AUTOMATED:-}" == "true" ]]; then
   disable_automated_installation
 fi

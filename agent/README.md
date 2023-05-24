@@ -6,7 +6,7 @@ using the agent-based installer approach.
 # Quickstart
 
 Use the following configuration in your `config_<user>.sh` to deploy a 
-compact cluster:
+compact cluster which is booted from an ISO:
 
     # Configure ipv4 environment
     export IP_STACK=v4
