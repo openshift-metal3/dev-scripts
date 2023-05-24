@@ -108,7 +108,7 @@ ansible-playbook \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$NUM_WORKERS" \
     -e "num_extraworkers=$NUM_EXTRA_WORKERS" \
-    -e "libvirt_firmware=uefi" \
+    -e "libvirt_firmware=$LIBVIRT_FIRMWARE" \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "sushy_ignore_boot_device=$REDFISH_EMULATOR_IGNORE_BOOT_DEVICE" \

@@ -168,23 +168,85 @@ function mce_complete_deployment() {
   mce_prepare_postinstallation_manifests ${mceManifests}
   mce_apply_postinstallation_manifests ${mceManifests}
 }
+
+# Generate the PXE artifacts
+function create_pxe_files() {
+    local asset_dir=${1}
+    local openshift_install=${2}
+    "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create pxe-files
+}
+
+# Setup the environment to allow iPXE booting, by reusing libvirt native features
+# to configure dnsmaq tftp server and pxe boot file
+function setup_pxe_server() {
+    local PXE_SERVER_DIR=${WORKING_DIR}/pxe
+    mkdir -p ${PXE_SERVER_DIR}
+
+    # Create the iPXE boot file
+    local PXE_SERVER_PORT=8089
+    local PXE_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${PXE_SERVER_PORT}
+    local PXE_BOOT_FILE=boot.ipxe
+
+    sudo cat > ${PXE_SERVER_DIR}/${PXE_BOOT_FILE} << EOF
+#!ipxe
+kernel ${PXE_SERVER_URL}/agent-vmlinuz.x86_64 initrd=main coreos.live.rootfs_url=${PXE_SERVER_URL}/agent-rootfs.x86_64.img ignition.firstboot ignition.platform.id=metal
+initrd --name main ${PXE_SERVER_URL}/agent-initrd.x86_64.img
+boot
+EOF
+
+    # Configure the DHCP options for PXE, based on the network type
+    sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} > ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
+
+    local DHCP_PXE_OPTS="dhcp-boot=${PXE_SERVER_URL}/${PXE_BOOT_FILE}"
+    if [[ "${IP_STACK}" = "v6" ]]; then
+      DHCP_PXE_OPTS="dhcp-option=option6:bootfile-url,${PXE_SERVER_URL}/${PXE_BOOT_FILE}"
+    fi
+    sudo sed -i "/<\/dnsmasq:options>/i   <dnsmasq:option value='${DHCP_PXE_OPTS}'/>" ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
+    
+    sudo virsh net-define ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
+
+    # Copy the generated PXE artifacts in the tftp server location
+    cp ${SCRIPTDIR}/${OCP_DIR}/pxe/* ${PXE_SERVER_DIR}
+
+    # Run a local http server to provide all the necessary PXE artifacts
+    echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${PXE_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${PXE_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${PXE_SERVER_DIR}/agentpxeserver.go
+    nohup go run ${PXE_SERVER_DIR}/agentpxeserver.go &
+}
+
+# Configure the instances for PXE booting
+function agent_pxe_boot() {
+    for (( n=0; n<${2}; n++ ))
+      do
+          name=${CLUSTER_NAME}_${1}_${n}
+          sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
+          sudo virt-xml ${name} --edit source=${BAREMETAL_NETWORK_NAME} --network="boot_order=2" --start
+      done
+}
+
 asset_dir="${1:-${OCP_DIR}}"
 openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
 
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
-  create_pxe_files ${asset_dir} ${openshift_install}
-fi
+case "${AGENT_E2E_TEST_BOOT_MODE}" in
+  "ISO" )
+    create_image ${asset_dir} ${openshift_install}
+    if [[ "${AGENT_DISABLE_AUTOMATED:-}" == "true" ]]; then
+      disable_automated_installation
+    fi
 
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO" ]]; then
-  create_image ${asset_dir} ${openshift_install}
-fi
+    attach_agent_iso master $NUM_MASTERS
+    attach_agent_iso worker $NUM_WORKERS
+    ;;
 
-if [[ "${AGENT_DISABLE_AUTOMATED:-}" == "true" ]]; then
-  disable_automated_installation
-fi
+  "PXE" )
+    create_pxe_files ${asset_dir} ${openshift_install}
+    setup_pxe_server
 
-attach_agent_iso master $NUM_MASTERS
-attach_agent_iso worker $NUM_WORKERS
+    agent_pxe_boot master $NUM_MASTERS
+    agent_pxe_boot worker $NUM_WORKERS
+    ;;    
+esac
 
 if [ ! -z "${MIRROR_IMAGES}" ]; then
   force_mirror_disconnect
@@ -205,4 +267,3 @@ fi
 if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
   mce_complete_deployment
 fi
-

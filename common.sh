@@ -235,6 +235,7 @@ INT_IF=${INT_IF:-}
 ROOT_DISK_NAME=${ROOT_DISK_NAME-"/dev/sda"}
 # Length of DHCP leases
 export DHCP_LEASE_EXPIRY=${DHCP_LEASE_EXPIRY:-60}
+export LIBVIRT_FIRMWARE=${LIBVIRT_FIRMWARE:-uefi}
 
 FILESYSTEM=${FILESYSTEM:="/"}
 
@@ -397,7 +398,6 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     fi
   fi
 
-
   case "$SCENARIO" in
       "COMPACT" )
           export NUM_MASTERS=3
@@ -442,14 +442,15 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     echo "Invalid value $IP_STACK for IP stack, use 'V4', 'V6', or 'V4V6'."
     exit 1
   fi
+
+  # We're interested in booting a plain iPXE, so setting back the libivirt 
+  # firmware to the default 
+  if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
+    LIBVIRT_FIRMWARE=bios
+  fi
 fi
 
 if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then
-  if [[ $AGENT_E2E_TEST_BOOT_MODE == "PXE" && $IP_STACK != 'v4' ]]; then
-      echo "Invalid value $IP_STACK for IP stack, only use 'V4' when using AGENT_E2E_TEST_BOOT_MODE as $AGENT_E2E_TEST_BOOT_MODE."
-      exit 1
-  fi
-
   if [[ $AGENT_E2E_TEST_BOOT_MODE != "ISO" && $AGENT_E2E_TEST_BOOT_MODE != "PXE" ]]; then
       printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE."
       exit 1
