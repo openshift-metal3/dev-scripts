@@ -689,7 +689,4 @@ set -x
 # When set, the code internally sets the boot mode for the agents.
 # This config variable is used only by the agent based installer and is optional.
 # The default value for AGENT_E2E_TEST_BOOT_MODE is 'ISO'.
-# When set to 'PXE', the AGENT_E2E_TEST_SCENARIO can only be set to IPV4 scenarios.
-# As per https://libvirt.org/formatnetwork.html, the tftp element is not supported for IPv6 addresses, 
-# and can only be specified on a single IPv4 address per network
 # AGENT_E2E_TEST_BOOT_MODE=PXE
