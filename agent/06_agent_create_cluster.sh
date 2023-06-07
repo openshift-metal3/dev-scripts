@@ -183,8 +183,7 @@ function setup_pxe_server() {
     mkdir -p ${PXE_SERVER_DIR}
 
     # Create the iPXE boot file
-    local PXE_SERVER_PORT=8089
-    local PXE_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${PXE_SERVER_PORT}
+    local PXE_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_PXE_SERVER_PORT}
     local PXE_BOOT_FILE=boot.ipxe
 
     sudo cat > ${PXE_SERVER_DIR}/${PXE_BOOT_FILE} << EOF
@@ -211,7 +210,7 @@ EOF
     cp ${SCRIPTDIR}/${OCP_DIR}/pxe/* ${PXE_SERVER_DIR}
 
     # Run a local http server to provide all the necessary PXE artifacts
-    echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${PXE_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${PXE_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${PXE_SERVER_DIR}/agentpxeserver.go
+    echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${PXE_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${AGENT_PXE_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${PXE_SERVER_DIR}/agentpxeserver.go
     nohup go run ${PXE_SERVER_DIR}/agentpxeserver.go &
 }
 
