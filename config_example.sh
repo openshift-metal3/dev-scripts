@@ -708,3 +708,15 @@ set -x
 # This test case is only supported when IP_STACK=v4.
 #
 # export AGENT_TEST_CASES='bad_dns'
+
+# Uncomment the following line to deploy the cluster using the appliance model
+# The appliance model boots the host using the unconfigured ignition. It then mounts
+# the configuration ISO where its contents are copied over to the host. The cluster
+# installation is triggered when the /etc/assisted/rendezvous-host.env file is present.
+# export AGENT_USE_APPLIANCE_MODEL=false
+
+# When the installation is done using the agent appliance the config-image can
+# be added either when creating the VM or after the host has booted with the unconfigured
+# ignition. This setting configures when the config-image is added, by default it will be
+# adding when creating the VM.
+# export AGENT_APPLIANCE_HOTPLUG=false
