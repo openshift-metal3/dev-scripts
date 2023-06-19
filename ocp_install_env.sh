@@ -85,7 +85,7 @@ function baremetal_network_configuration() {
 cat <<EOF
     provisioningNetwork: "${PROVISIONING_NETWORK_PROFILE}"
 EOF
-  if printf '%s\n4.6\n' "$(openshift_version)" | sort -V -C; then
+    if printf '%s\n4.6\n' "$(openshift_version)" | sort -V -C; then
 cat <<EOF
     provisioningHostIP: "${CLUSTER_PROVISIONING_IP}"
     bootstrapProvisioningIP: "${BOOTSTRAP_PROVISIONING_IP}"
@@ -109,6 +109,11 @@ cat <<EOF
     bootstrapExternalStaticIP: "${BOOTSTRAP_IP}"
     bootstrapExternalStaticGateway: "${PROVISIONING_HOST_EXTERNAL_IP}"
 EOF
+    if ! printf '%s\n4.13\n' "$(openshift_version)" | sort -V -C; then
+cat <<EOF
+    bootstrapExternalStaticDNS: "${PROVISIONING_HOST_EXTERNAL_IP}"
+EOF
+    fi
   fi
 }
 
