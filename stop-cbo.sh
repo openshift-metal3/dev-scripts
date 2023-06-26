@@ -16,7 +16,7 @@ fi
 
 # Tell the cluster-version-operator to stop managing the
 # cluster-baremetal-operator and baremetalhost CRD
-oc patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","group":"apps/v1","name":"cluster-baremetal-operator","namespace":"openshift-machine-api","unmanaged":true},{"kind":"CustomResourceDefinition","group":"apiextensions.k8s.io/v1","name":"baremetalhosts.metal3.io","namespace":"","unmanaged":true}]}}'
+oc patch clusterversion version --namespace openshift-cluster-version --type merge -p '{"spec":{"overrides":[{"kind":"Deployment","group":"apps","name":"cluster-baremetal-operator","namespace":"openshift-machine-api","unmanaged":true},{"kind":"CustomResourceDefinition","group":"apiextensions.k8s.io","name":"baremetalhosts.metal3.io","namespace":"","unmanaged":true}]}}'
 
 # Stop any existing machine-api-operator
 oc scale deployment -n openshift-machine-api --replicas=0 cluster-baremetal-operator
