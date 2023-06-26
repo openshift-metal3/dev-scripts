@@ -8,7 +8,8 @@ apiVersion: v1alpha1
 metadata:
   name: {{ cluster_name }} 
   namespace: {{ cluster_namespace }}
-rendezvousIP: {{ ips[0] }} 
+rendezvousIP: {{ ips[0] }}
+ipxeBaseURL: http://{{ agent_pxe_provisioning_host_external_ip }}:{{ agent_pxe_server_port }}
 {% if networking_mode != "dhcp" %}
 hosts:
 {% for hostname in hostnames %}

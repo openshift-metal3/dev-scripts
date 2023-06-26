@@ -179,19 +179,9 @@ function create_pxe_files() {
 # Setup the environment to allow iPXE booting, by reusing libvirt native features
 # to configure dnsmaq tftp server and pxe boot file
 function setup_pxe_server() {
-    local PXE_SERVER_DIR=${WORKING_DIR}/pxe
-    mkdir -p ${PXE_SERVER_DIR}
-
-    # Create the iPXE boot file
-    local PXE_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_PXE_SERVER_PORT}
-    local PXE_BOOT_FILE=boot.ipxe
-
-    sudo cat > ${PXE_SERVER_DIR}/${PXE_BOOT_FILE} << EOF
-#!ipxe
-kernel ${PXE_SERVER_URL}/agent-vmlinuz.x86_64 initrd=main coreos.live.rootfs_url=${PXE_SERVER_URL}/agent-rootfs.x86_64.img ignition.firstboot ignition.platform.id=metal
-initrd --name main ${PXE_SERVER_URL}/agent-initrd.x86_64.img
-boot
-EOF
+    local PXE_SERVER_DIR=${1}/pxe
+    local PXE_SERVER_URL=http://${AGENT_PXE_PROVISIONING_HOST_EXTERNAL_IP}:${AGENT_PXE_SERVER_PORT}
+    local PXE_BOOT_FILE=$(find "${PXE_SERVER_DIR}" -type f -name "*.ipxe" -exec basename {} \;)
 
     # Configure the DHCP options for PXE, based on the network type
     sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} > ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
@@ -205,9 +195,6 @@ EOF
     sudo virsh net-define ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
     sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
     sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
-
-    # Copy the generated PXE artifacts in the tftp server location
-    cp ${SCRIPTDIR}/${OCP_DIR}/pxe/* ${PXE_SERVER_DIR}
 
     # Run a local http server to provide all the necessary PXE artifacts
     echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${PXE_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${AGENT_PXE_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${PXE_SERVER_DIR}/agentpxeserver.go
@@ -240,7 +227,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
   "PXE" )
     create_pxe_files ${asset_dir} ${openshift_install}
-    setup_pxe_server
+    setup_pxe_server ${asset_dir}
 
     agent_pxe_boot master $NUM_MASTERS
     agent_pxe_boot worker $NUM_WORKERS
