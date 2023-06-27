@@ -380,6 +380,8 @@ export NETWORKING_MODE=${NETWORKING_MODE:-}
 export AGENT_E2E_TEST_BOOT_MODE=${AGENT_E2E_TEST_BOOT_MODE:-"ISO"}
 
 # PXE server port used by agent (when AGENT_E2E_TEST_BOOT_MODE is "PXE")
+# Needed to be defined here since it's required also by the shared step 02_configure_host.sh
+# to open a firewall port
 export AGENT_PXE_SERVER_PORT=${AGENT_PXE_SERVER_PORT:-8089}
 
 # Enable MCE deployment

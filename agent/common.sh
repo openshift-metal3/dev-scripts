@@ -16,6 +16,13 @@ if [[ "$IP_STACK" != "v4" ]]; then
    export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/64"
 fi
 
+# Set required config vars for PXE boot mode
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
+  export PXE_SERVER_DIR=${WORKING_DIR}/pxe
+  export PXE_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_PXE_SERVER_PORT}
+  export PXE_BOOT_FILE=agent.x86_64.ipxe
+fi
+
 function getReleaseImage() {
     local releaseImage=${OPENSHIFT_RELEASE_IMAGE}
     if [ ! -z "${MIRROR_IMAGES}" ]; then
