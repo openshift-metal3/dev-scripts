@@ -9,6 +9,7 @@ export AGENT_USE_ZTP_MANIFESTS=${AGENT_USE_ZTP_MANIFESTS:-"false"}
 
 export AGENT_USE_APPLIANCE_MODEL=${AGENT_USE_APPLIANCE_MODEL:-"false"}
 export AGENT_APPLIANCE_HOTPLUG=${AGENT_APPLIANCE_HOTPLUG:-"false"}
+export AGENT_PLATFORM_TYPE=${AGENT_PLATFORM_TYPE:-""}
 
 # Override command name in case of extraction
 export OPENSHIFT_INSTALLER_CMD="openshift-install"

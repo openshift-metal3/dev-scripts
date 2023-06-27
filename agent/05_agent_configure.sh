@@ -32,6 +32,10 @@ function add_dns_entry {
     if ! $(sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath "//dns/host[@ip = '${ip}']" - &> /dev/null); then
       sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${ip}'> <hostname>${hostname}</hostname> </host>"  --live --config
     fi
+
+    if [[ "${AGENT_PLATFORM_TYPE}" == "none" ]]; then
+      echo "address=/${hostname}.${CLUSTER_DOMAIN}/${ip}" | sudo tee -a "${PATH_CONF_DNSMASQ}"
+    fi
 }
 
 function get_static_ips_and_macs() {
@@ -245,7 +249,122 @@ function generate_cluster_manifests() {
   ansible-playbook -vvv \
           -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
           "${SCRIPTDIR}/agent/create-manifests-playbook.yaml"
+}
 
+function add_haproxy_server_lines() {
+  num_servers=${1}
+  type=${2}
+  port=${3}
+
+  for (( n=0; n<${num_servers}; n++ ))
+  do
+    sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+  server ${type}-$n ${type}-$n.${CLUSTER_DOMAIN}:${port} check inter 1s
+EOF"
+  done
+}
+
+function enable_load_balancer() {
+  api_ip=${1}
+  load_balancer_ip=${2}
+  if [[ "${AGENT_PLATFORM_TYPE}" == "none" && "${NUM_MASTERS}" > "1" ]]; then
+
+    # setup haproxy as the load balancer
+    if [[ "${IP_STACK}" == "v6" ]]; then
+      # The "wildcard" is different depending on IP stack.
+      # See http://docs.haproxy.org/1.6/configuration.html#4.2-bind
+      export HAPROXY_WILDCARD="[::]"
+    else
+      export HAPROXY_WILDCARD="*"
+    fi
+
+    sudo dnf install -y haproxy
+    sudo rm -f /etc/haproxy/haproxy.cfg
+    sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+global
+  log         127.0.0.1 local2
+  pidfile     /var/run/haproxy.pid
+  maxconn     4000
+  daemon
+defaults
+  mode                    http
+  log                     global
+  option                  dontlognull
+  option http-server-close
+  option                  redispatch
+  retries                 3
+  timeout http-request    10s
+  timeout queue           1m
+  timeout connect         10s
+  timeout client          1m
+  timeout server          1m
+  timeout http-keep-alive 10s
+  timeout check           10s
+  maxconn                 3000
+frontend stats
+  bind *:1936
+  mode            http
+  log             global
+  maxconn 10
+  stats enable
+  stats hide-version
+  stats refresh 30s
+  stats show-node
+  stats show-desc Stats for ocp4 cluster
+  stats auth admin:ocp4
+  stats uri /stats
+listen api-server-6443
+  bind ${HAPROXY_WILDCARD}:6443
+  mode tcp
+EOF"
+    add_haproxy_server_lines $NUM_MASTERS "master" "6443"
+    sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+listen machine-config-server-22623
+  bind ${HAPROXY_WILDCARD}:22623
+  mode tcp
+EOF"
+    add_haproxy_server_lines $NUM_MASTERS "master" "22623"
+
+    if [[ "${NUM_WORKERS}" > "0" ]]; then
+      sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+listen ingress-router-443
+  bind ${HAPROXY_WILDCARD}:443
+  mode tcp
+  balance source
+EOF"
+      add_haproxy_server_lines $NUM_WORKERS "worker" "443"
+      sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+listen ingress-router-80
+  bind ${HAPROXY_WILDCARD}:80
+  mode tcp
+  balance source
+EOF"
+      add_haproxy_server_lines $NUM_WORKERS "worker" "80"
+    else
+      sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+listen ingress-router-443
+  bind ${HAPROXY_WILDCARD}:443
+  mode tcp
+  balance source
+EOF"
+      add_haproxy_server_lines $NUM_WORKERS "master" "443"
+      sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+listen ingress-router-80
+  bind ${HAPROXY_WILDCARD}:80
+  mode tcp
+  balance source
+EOF"
+      add_haproxy_server_lines $NUM_WORKERS "master" "80"
+    fi
+
+    sudo systemctl restart haproxy
+
+    # update api and add api-int and *.apps entries to baremetal network DNS
+    # delete existing entries pointing to the wrong api ip before adding correct entry
+    sudo virsh net-update ${BAREMETAL_NETWORK_NAME} delete dns-host "<host ip='${api_ip}'> <hostname>api</hostname> </host>"  --live --config
+    sudo virsh net-update ${BAREMETAL_NETWORK_NAME} delete dns-host "<host ip='${api_ip}'> <hostname>virthost</hostname> </host>"  --live --config
+    sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host "<host ip='${load_balancer_ip}'> <hostname>api</hostname> <hostname>api-int</hostname> <hostname>*.apps</hostname> <hostname>virthost</hostname> </host>"  --live --config
+  fi
 }
 
 write_pull_secret
@@ -264,7 +383,20 @@ if [[ ! -z "${MIRROR_IMAGES}" ]]; then
 fi
 
 if [[ "${NUM_MASTERS}" > "1" ]]; then
-   set_api_and_ingress_vip
+  if [[ "${AGENT_PLATFORM_TYPE}" == "none" ]]; then
+    # for platform "none" both API and INGRESS point to the same
+    # load balancer IP address
+    get_vips
+    if [[ "$IP_STACK" = "v6" ]]; then
+      export load_balancer_ip=$(nth_ip $EXTERNAL_SUBNET_V6 1)
+    else
+      export load_balancer_ip=$(nth_ip $EXTERNAL_SUBNET_V4 1)
+    fi
+    configure_dnsmasq ${load_balancer_ip} ${load_balancer_ip}
+    enable_load_balancer ${API_VIPS} ${load_balancer_ip}
+  else
+    set_api_and_ingress_vip
+  fi
 else
   # For SNO clusters, at least the api dns entry must be set
   # otherwise oc/openshift-install commands requiring the

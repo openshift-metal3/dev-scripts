@@ -21,3 +21,6 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     rm -rf ${WORKING_DIR}/pxe
     ;;
 esac
+
+sudo systemctl stop haproxy || true
+sudo rm /etc/haproxy/haproxy.cfg || true
