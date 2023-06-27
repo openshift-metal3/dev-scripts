@@ -694,6 +694,7 @@ set -x
 # When set, the code internally sets the boot mode for the agents.
 # This config variable is used only by the agent based installer and is optional.
 # The default value for AGENT_E2E_TEST_BOOT_MODE is 'ISO'.
+# For the openshift-appliance flow, set the boot mode to 'DISKIMAGE'.
 # AGENT_E2E_TEST_BOOT_MODE=PXE
 
 # Uncomment and set the following value to "true" to enable a test scenario
@@ -733,3 +734,9 @@ set -x
 # haproxy is deployed as the load balancer, and the appropriate DNS records
 # are created.
 # export AGENT_PLATFORM_TYPE=none
+
+# Image reference for OpenShift-based Appliance Builder.
+# See: https://github.com/openshift/appliance
+# Default: "quay.io/edge-infrastructure/openshift-appliance:latest"
+#
+# export APPLIANCE_IMAGE="quay.io/edge-infrastructure/openshift-appliance:latest"

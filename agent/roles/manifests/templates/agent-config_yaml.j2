@@ -7,7 +7,7 @@
 {% set test_cases = agent_test_cases.split(',') %}
 apiVersion: v1alpha1
 metadata:
-  name: {{ cluster_name }} 
+  name: {{ cluster_name }}
   namespace: {{ cluster_namespace }}
 rendezvousIP: {{ ips[0] }} 
 {% if boot_mode == "PXE" %}

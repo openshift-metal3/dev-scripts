@@ -457,10 +457,15 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
 fi
 
 if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then
-  if [[ $AGENT_E2E_TEST_BOOT_MODE != "ISO" && $AGENT_E2E_TEST_BOOT_MODE != "PXE" ]]; then
-      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE."
+  case "$AGENT_E2E_TEST_BOOT_MODE" in
+    "ISO" | "PXE" | "DISKIMAGE")
+      # Valid value
+      ;;
+    *)
+      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE."
       exit 1
-  fi
+      ;;
+  esac
 fi
 
 # For IPv6 (default case) mirror images are used since quay doesn't support IPv6

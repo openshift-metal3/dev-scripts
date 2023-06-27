@@ -82,12 +82,16 @@ function set_device_config_image() {
     done
 }
 
+function set_file_acl() {
+  # This is required to allow qemu opening the disk image
+  if [ "${OPENSHIFT_CI}" == true ]; then
+    setfacl -m u:qemu:rx /root
+  fi
+}
+
 function attach_agent_iso() {
 
-    # This is required to allow qemu opening the disk image
-    if [ "${OPENSHIFT_CI}" == true ]; then
-      setfacl -m u:qemu:rx /root
-    fi
+    set_file_acl
 
     local agent_iso="${OCP_DIR}/agent.$(uname -p).iso"
     if [ ! -f "${agent_iso}" -a -f "${OCP_DIR}/agent.iso" ]; then
@@ -110,6 +114,35 @@ function attach_agent_iso() {
         sudo virt-xml ${name} --edit target=sdc --disk="boot_order=2" --start
     done
 
+}
+
+function attach_appliance_diskimage() {
+    set_file_acl
+
+    local config_image_drive="sdd"
+    local appliance_disk_image="${OCP_DIR}/appliance.raw"
+
+    # Create the config ISO
+    mkdir -p ${config_image_dir}
+    cp ${asset_dir}/*.yaml ${config_image_dir}
+    create_config_image
+
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        disk_image=${appliance_disk_image}_${1}_${n}
+
+        # Every node needs a copy of the appliance disk image
+        sudo cp "${appliance_disk_image}" "${disk_image}"
+
+        # Attach the appliance disk image and the config ISO 
+        sudo virt-xml ${name} --remove-device --disk 1
+        sudo virt-xml ${name} --add-device --disk "${disk_image}",device=disk,target.dev=sda
+        sudo virt-xml ${name} --add-device --disk "${config_image_dir}/agentconfig.noarch.iso",device=cdrom,target.dev=${config_image_drive}
+        
+        # Boot machine from the appliance disk image
+        sudo virt-xml ${name} --edit target=sda --disk="boot_order=1" --start
+    done
 }
 
 function get_node0_ip() {
@@ -178,7 +211,7 @@ function enable_assisted_service_ui() {
 function wait_for_cluster_ready() {
   local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
   local dir="${OCP_DIR}"
-  if [[ "${AGENT_USE_APPLIANCE_MODEL}" == true ]]; then
+  if [[ "${AGENT_USE_APPLIANCE_MODEL}" == true || "${AGENT_E2E_TEST_BOOT_MODE}" == "DISKIMAGE" ]]; then
      dir="${config_image_dir}"
   fi
   if ! "${openshift_install}" --dir="${dir}" --log-level=debug agent wait-for bootstrap-complete; then
@@ -294,6 +327,14 @@ function agent_pxe_boot() {
       done
 }
 
+function create_appliance() {
+    local asset_dir="$(realpath "${1}")"
+
+    # Build appliance with `debug-base-ignition` flag for using the custom openshift-install
+    # binary from assets directory.
+    sudo podman run -it --rm --pull newer --privileged --net=host -v ${asset_dir}:/assets:Z ${APPLIANCE_IMAGE} build --debug-base-ignition
+}
+
 asset_dir="${1:-${OCP_DIR}}"
 config_image_dir="${1:-${OCP_DIR}/configimage}"
 openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
@@ -315,7 +356,16 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     agent_pxe_boot master $NUM_MASTERS
     agent_pxe_boot worker $NUM_WORKERS
-    ;;    
+    ;;
+
+  "DISKIMAGE" )
+    # Build disk image using openshift-appliance
+    create_appliance ${asset_dir}
+
+    # Attach the diskimage to nodes
+    attach_appliance_diskimage master $NUM_MASTERS
+    attach_appliance_diskimage worker $NUM_WORKERS
+    ;;
 esac
 
 if [ ! -z "${AGENT_TEST_CASES:-}" ]; then
