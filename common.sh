@@ -490,4 +490,4 @@ if [[ -n "$MIRROR_IMAGES" || -z "${IP_STACK:-}" || "$IP_STACK" = "v6" ]]; then
    fi
 fi
 
-export AGENT_TEST_CASESS=${AGENT_TEST_CASES:-}
+export AGENT_TEST_CASES=${AGENT_TEST_CASES:-}
