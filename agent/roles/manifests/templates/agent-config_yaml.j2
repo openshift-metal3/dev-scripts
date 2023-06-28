@@ -9,6 +9,9 @@ metadata:
   name: {{ cluster_name }} 
   namespace: {{ cluster_namespace }}
 rendezvousIP: {{ ips[0] }} 
+{% if boot_mode == "PXE" %}
+ipxeBaseURL: {{ pxe_server_url }}
+{% endif %}
 {% if networking_mode != "dhcp" %}
 hosts:
 {% for hostname in hostnames %}
