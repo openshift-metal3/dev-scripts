@@ -4,6 +4,7 @@
 {% set ipsv6 = agent_nodes_ipsv6.split(',') %}
 {% set macs = agent_nodes_macs.split(',') %}
 {% set hostnames = agent_nodes_hostnames.split(',') %}
+{% set test_cases = agent_test_cases.split(',') %}
 apiVersion: v1alpha1
 metadata:
   name: {{ cluster_name }} 
@@ -21,7 +22,11 @@ hosts:
 {% if ip_stack == "v4" %}
             ipv4:
           {{ net.ip(ips[loop.index0], cluster_host_prefix_v4)|indent(4, True) }}
+{% if "master-0" in hostname and "bad_dns" in test_cases %}
+    {{ net.dns("192.168.123.1")|indent(4, True)  }}
+{% else %}
     {{ net.dns(provisioning_host_external_ip)|indent(4, True)  }}
+{% endif %}
     {{ net.route("0.0.0.0/0", provisioning_host_external_ip)|indent(4, True) }}
 {% elif ip_stack == "v6" %}
             ipv6:

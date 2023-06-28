@@ -18,10 +18,6 @@
   import_tasks: install-config.yml
   when: agent_use_ztp_manifests == 'false'
 
-- name: Patch agent-config manifest to test agent-tui
-  ansible.builtin.command: yq -i -y '.hosts[0].networkConfig["dns-resolver"].config.server[0] = "192.168.123.1"' "{{ install_path }}/agent-config.yaml"
-  when: (agent_use_ztp_manifests == 'false' and 'bad_dns' in agent_test_cases)
-
 - name: Create ZTP based manifests
   import_tasks: ztp.yml
   when: agent_use_ztp_manifests == 'true'
