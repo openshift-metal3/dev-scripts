@@ -199,7 +199,7 @@ function setup_pxe_server() {
 
     # Run a local http server to provide all the necessary PXE artifacts
     echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${PXE_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${AGENT_PXE_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${PXE_SERVER_DIR}/agentpxeserver.go
-    nohup go run ${PXE_SERVER_DIR}/agentpxeserver.go &
+    nohup go run ${PXE_SERVER_DIR}/agentpxeserver.go >/dev/null 2>&1 &
 }
 
 # Configure the instances for PXE booting
