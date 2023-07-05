@@ -40,11 +40,13 @@ dns_dualstackhost:
   - ip: "{{ baremetal_network_cidr_v6 | nthhost(5) }}"
     hostnames:
       - "api"
+      - "api-int"
 
 dns_extrahosts:
   - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
     hostnames:
       - "api"
+      - "api-int"
   - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
     hostnames:
       - "ns1"
