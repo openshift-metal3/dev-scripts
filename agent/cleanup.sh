@@ -22,5 +22,5 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     ;;
 esac
 
-sudo systemctl stop haproxy || true
-sudo rm /etc/haproxy/haproxy.cfg || true
+sudo podman rm -f extlb || true
+sudo rm haproxy.* || true

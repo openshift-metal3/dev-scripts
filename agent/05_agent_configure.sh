@@ -258,9 +258,9 @@ function add_haproxy_server_lines() {
 
   for (( n=0; n<${num_servers}; n++ ))
   do
-    sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+    cat << EOF >> haproxy.cfg
   server ${type}-$n ${type}-$n.${CLUSTER_DOMAIN}:${port} check inter 1s
-EOF"
+EOF
   done
 }
 
@@ -278,29 +278,14 @@ function enable_load_balancer() {
       export HAPROXY_WILDCARD="*"
     fi
 
-    sudo dnf install -y haproxy
-    sudo rm -f /etc/haproxy/haproxy.cfg
-    sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
-global
-  log         127.0.0.1 local2
-  pidfile     /var/run/haproxy.pid
-  maxconn     4000
-  daemon
+    rm haproxy.* || true
+    cat << EOF >> haproxy.cfg
 defaults
-  mode                    http
-  log                     global
-  option                  dontlognull
-  option http-server-close
-  option                  redispatch
-  retries                 3
-  timeout http-request    10s
-  timeout queue           1m
-  timeout connect         10s
-  timeout client          1m
-  timeout server          1m
-  timeout http-keep-alive 10s
-  timeout check           10s
-  maxconn                 3000
+    mode                    tcp
+    log                     global
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
 frontend stats
   bind *:1936
   mode            http
@@ -316,48 +301,51 @@ frontend stats
 listen api-server-6443
   bind ${HAPROXY_WILDCARD}:6443
   mode tcp
-EOF"
+EOF
     add_haproxy_server_lines $NUM_MASTERS "master" "6443"
-    sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+
+    cat << EOF >> haproxy.cfg
 listen machine-config-server-22623
   bind ${HAPROXY_WILDCARD}:22623
   mode tcp
-EOF"
+EOF
     add_haproxy_server_lines $NUM_MASTERS "master" "22623"
 
     if [[ "${NUM_WORKERS}" > "0" ]]; then
-      sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+      cat << EOF >> haproxy.cfg
 listen ingress-router-443
   bind ${HAPROXY_WILDCARD}:443
   mode tcp
   balance source
-EOF"
+EOF
       add_haproxy_server_lines $NUM_WORKERS "worker" "443"
-      sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+
+      cat << EOF >> haproxy.cfg
 listen ingress-router-80
   bind ${HAPROXY_WILDCARD}:80
   mode tcp
   balance source
-EOF"
+EOF
       add_haproxy_server_lines $NUM_WORKERS "worker" "80"
     else
-      sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+      cat << EOF >> haproxy.cfg
 listen ingress-router-443
   bind ${HAPROXY_WILDCARD}:443
   mode tcp
   balance source
-EOF"
-      add_haproxy_server_lines $NUM_WORKERS "master" "443"
-      sudo bash -c "cat << EOF >> /etc/haproxy/haproxy.cfg
+EOF
+      add_haproxy_server_lines $NUM_MASTERS "master" "443"
+
+      cat << EOF >> haproxy.cfg
 listen ingress-router-80
   bind ${HAPROXY_WILDCARD}:80
   mode tcp
   balance source
-EOF"
-      add_haproxy_server_lines $NUM_WORKERS "master" "80"
+EOF
+      add_haproxy_server_lines $NUM_MASTERS "master" "80"
     fi
 
-    sudo systemctl restart haproxy
+    sudo podman run -d  --net host -v .:/etc/haproxy/:z --entrypoint bash --name extlb quay.io/openshift/origin-haproxy-router  -c 'haproxy -f /etc/haproxy/haproxy.cfg'
 
     # update api and add api-int and *.apps entries to baremetal network DNS
     # delete existing entries pointing to the wrong api ip before adding correct entry
