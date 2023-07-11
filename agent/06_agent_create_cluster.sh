@@ -23,7 +23,63 @@ function create_pxe_files() {
 function create_image() {
     local asset_dir=${1}
     local openshift_install=${2}
+
+    if [ "${AGENT_USE_APPLIANCE_MODEL}" == true ]; then
+      create_factory_image
+    else
+      create_automated_image
+    fi
+}
+
+function create_automated_image() {
     "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create image
+}
+
+function create_factory_image() {
+    config_image_drive="sdd"
+
+    # The command to create the config-image must be run out of a separate asset directory using same assets
+    mkdir -p ${config_image_dir}
+    if [[ ${AGENT_USE_ZTP_MANIFESTS} == true ]]; then
+       mkdir -p ${config_image_dir}/cluster-manifests
+       cp ${asset_dir}/cluster-manifests/*.yaml ${config_image_dir}/cluster-manifests/
+    else
+       cp ${asset_dir}/*.yaml ${config_image_dir}
+    fi
+
+    # Create the unconfigured ignition and include it in an ISO
+    "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create cluster-manifests
+
+    # Remove any static networking configuration from unconfigured so that config-image sets it
+    rm "${asset_dir}/cluster-manifests/nmstateconfig.yaml"
+    rm "${asset_dir}/.openshift_install_state.json"
+
+    "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create unconfigured-ignition
+    base_iso_url=$(oc adm release info --registry-config "$PULL_SECRET_FILE" --image-for=machine-os-images --insecure=true $OPENSHIFT_RELEASE_IMAGE)
+    oc image extract --path /coreos/coreos-$(uname -m).iso:$HOME/.cache/agent/image_cache --registry-config "$PULL_SECRET_FILE" --confirm $base_iso_url
+    local agent_iso_abs_path="$(realpath "${OCP_DIR}")"
+    podman run --privileged --rm -v /run/udev:/run/udev -v "${agent_iso_abs_path}:${agent_iso_abs_path}" -v "$HOME/.cache/agent/image_cache/:$HOME/.cache/agent/image_cache/" quay.io/coreos/coreos-installer:release iso ignition embed -f -i "${agent_iso_abs_path}/unconfigured-agent.ign" -o "${agent_iso_abs_path}/agent.iso" $HOME/.cache/agent/image_cache/coreos-$(uname -m).iso
+
+    if [ "${AGENT_APPLIANCE_HOTPLUG}" != true ]; then
+        create_config_image
+    fi
+}
+
+function create_config_image() {
+
+    "${openshift_install}" --log-level=debug --dir="${config_image_dir}" agent create config-image
+
+    # Copy the auth files to OCP_DIR so wait-for command can access it
+    cp -r ${config_image_dir}/auth ${asset_dir}
+}
+
+function set_device_config_image() {
+
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        sudo virsh change-media --domain ${name} --path ${config_image_drive} --source "${PWD}/${config_image_dir}/agentconfig.noarch.iso" --live --update
+    done
 }
 
 function attach_agent_iso() {
@@ -42,9 +98,18 @@ function attach_agent_iso() {
     do
         name=${CLUSTER_NAME}_${1}_${n}
         sudo virt-xml ${name} --add-device --disk "${agent_iso}",device=cdrom,target.dev=sdc
+	if [ "${AGENT_USE_APPLIANCE_MODEL}" == true ]; then
+	    if [ "${AGENT_APPLIANCE_HOTPLUG}" == true ]; then
+                # Add the device with no image. It will be added later using change-media when config-drive is created
+                sudo virt-xml ${name} --add-device --disk device=cdrom,target.dev=${config_image_drive}
+	    else
+	        sudo virt-xml ${name} --add-device --disk "${config_image_dir}/agentconfig.noarch.iso",device=cdrom,target.dev=${config_image_drive}
+	    fi
+        fi
         sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
         sudo virt-xml ${name} --edit target=sdc --disk="boot_order=2" --start
     done
+
 }
 
 function get_node0_ip() {
@@ -112,12 +177,16 @@ function enable_assisted_service_ui() {
 
 function wait_for_cluster_ready() {
   local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
-  if ! "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for bootstrap-complete; then
+  local dir="${OCP_DIR}"
+  if [[ "${AGENT_USE_APPLIANCE_MODEL}" == true ]]; then
+     dir="${config_image_dir}"
+  fi
+  if ! "${openshift_install}" --dir="${dir}" --log-level=debug agent wait-for bootstrap-complete; then
       exit 1
   fi
 
   echo "Waiting for cluster ready... "
-  "${openshift_install}" --dir="${OCP_DIR}" --log-level=debug agent wait-for install-complete 2>&1 | grep --line-buffered -v 'password'
+  "${openshift_install}" --dir="${dir}" --log-level=debug agent wait-for install-complete 2>&1 | grep --line-buffered -v 'password'
   if [ ${PIPESTATUS[0]} != 0 ]; then
       exit 1
   fi
@@ -226,6 +295,7 @@ function agent_pxe_boot() {
 }
 
 asset_dir="${1:-${OCP_DIR}}"
+config_image_dir="${1:-${OCP_DIR}/configimage}"
 openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
 
 case "${AGENT_E2E_TEST_BOOT_MODE}" in
@@ -252,12 +322,23 @@ if [ ! -z "${AGENT_TEST_CASES:-}" ]; then
   run_agent_test_cases
 fi
 
-if [ ! -z "${MIRROR_IMAGES}" ]; then
-  force_mirror_disconnect
-fi
-
 if [ ! -z "${AGENT_ENABLE_GUI:-}" ]; then
   enable_assisted_service_ui
+fi
+
+if [[ "${AGENT_USE_APPLIANCE_MODEL}" == true ]] && [[ "${AGENT_APPLIANCE_HOTPLUG}" == true ]]; then
+
+    # Wait for user input before creating config-image and mounting it to continue installation
+    set +x
+    config_image_msg="An unconfigured ISO has been installed on the hosts. Press any key to build a config-image and mount it to continue installation."
+    echo -e "\n"
+    read -n 1 -p "${config_image_msg}" input
+    set -x
+
+    create_config_image
+
+    set_device_config_image master $NUM_MASTERS
+    set_device_config_image worker $NUM_WORKERS
 fi
 
 wait_for_cluster_ready
