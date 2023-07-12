@@ -23,4 +23,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 esac
 
 sudo podman rm -f extlb || true
-sudo rm haproxy.* || true
+sudo rm ${WORKING_DIR}/haproxy.* || true
+sudo firewall-cmd --zone libvirt --remove-port=${MACHINE_CONFIG_SERVER_PORT}/tcp
+sudo firewall-cmd --zone libvirt --remove-port=${KUBE_API_PORT}/tcp
+sudo firewall-cmd --zone libvirt --remove-port=${INGRESS_ROUTER_PORT}/tcp

@@ -32,10 +32,6 @@ function add_dns_entry {
     if ! $(sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath "//dns/host[@ip = '${ip}']" - &> /dev/null); then
       sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${ip}'> <hostname>${hostname}</hostname> </host>"  --live --config
     fi
-
-    if [[ "${AGENT_PLATFORM_TYPE}" == "none" ]]; then
-      echo "address=/${hostname}.${CLUSTER_DOMAIN}/${ip}" | sudo tee -a "${PATH_CONF_DNSMASQ}"
-    fi
 }
 
 function get_static_ips_and_macs() {
@@ -256,17 +252,31 @@ function add_haproxy_server_lines() {
   type=${2}
   port=${3}
 
-  for (( n=0; n<${num_servers}; n++ ))
+  # AGENT_NODES_IPS has master ip addresses listed first
+  # and worker ip addresses listed second.
+  # Depending on the $type, here we find the right
+  # slice of the array to iterate over.
+  if [[ "$type" == "master" ]]; then
+    starting=0
+  else
+    # $type == "worker"
+    starting=$NUM_MASTERS
+    num_servers=$((NUM_MASTERS + num_servers))
+  fi
+
+  for (( n=$starting; n<${num_servers}; n++ ))
   do
-    cat << EOF >> haproxy.cfg
-  server ${type}-$n ${type}-$n.${CLUSTER_DOMAIN}:${port} check inter 1s
+    cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+  server ${type}-$n ${AGENT_NODES_IPS[n]}:${port} check inter 1s
 EOF
   done
 }
 
 function enable_load_balancer() {
-  api_ip=${1}
-  load_balancer_ip=${2}
+  local api_ip=${1}
+  local load_balancer_ip=${2}
+  local HTTP_PORT=80
+
   if [[ "${AGENT_PLATFORM_TYPE}" == "none" && "${NUM_MASTERS}" > "1" ]]; then
 
     # setup haproxy as the load balancer
@@ -278,8 +288,7 @@ function enable_load_balancer() {
       export HAPROXY_WILDCARD="*"
     fi
 
-    rm haproxy.* || true
-    cat << EOF >> haproxy.cfg
+    cat << EOF >> ${WORKING_DIR}/haproxy.cfg
 defaults
     mode                    tcp
     log                     global
@@ -298,54 +307,60 @@ frontend stats
   stats show-desc Stats for ocp4 cluster
   stats auth admin:ocp4
   stats uri /stats
-listen api-server-6443
-  bind ${HAPROXY_WILDCARD}:6443
+listen api-server-${KUBE_API_PORT}
+  bind ${HAPROXY_WILDCARD}:${KUBE_API_PORT}
   mode tcp
 EOF
-    add_haproxy_server_lines $NUM_MASTERS "master" "6443"
+    add_haproxy_server_lines $NUM_MASTERS "master" "${KUBE_API_PORT}"
 
-    cat << EOF >> haproxy.cfg
-listen machine-config-server-22623
-  bind ${HAPROXY_WILDCARD}:22623
+    cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen machine-config-server-${MACHINE_CONFIG_SERVER_PORT}
+  bind ${HAPROXY_WILDCARD}:${MACHINE_CONFIG_SERVER_PORT}
   mode tcp
 EOF
-    add_haproxy_server_lines $NUM_MASTERS "master" "22623"
+    add_haproxy_server_lines $NUM_MASTERS "master" "${MACHINE_CONFIG_SERVER_PORT}"
 
     if [[ "${NUM_WORKERS}" > "0" ]]; then
-      cat << EOF >> haproxy.cfg
-listen ingress-router-443
-  bind ${HAPROXY_WILDCARD}:443
+      # Cluster contains workers, ingress and HTTP traffic goes to them
+      cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen ingress-router-${INGRESS_ROUTER_PORT}
+  bind ${HAPROXY_WILDCARD}:${INGRESS_ROUTER_PORT}
   mode tcp
   balance source
 EOF
-      add_haproxy_server_lines $NUM_WORKERS "worker" "443"
+      add_haproxy_server_lines $NUM_WORKERS "worker" "${INGRESS_ROUTER_PORT}"
 
-      cat << EOF >> haproxy.cfg
-listen ingress-router-80
-  bind ${HAPROXY_WILDCARD}:80
+      cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen ingress-router-${HTTP_PORT}
+  bind ${HAPROXY_WILDCARD}:${HTTP_PORT}
   mode tcp
   balance source
 EOF
-      add_haproxy_server_lines $NUM_WORKERS "worker" "80"
+      add_haproxy_server_lines $NUM_WORKERS "worker" "${HTTP_PORT}"
     else
-      cat << EOF >> haproxy.cfg
-listen ingress-router-443
-  bind ${HAPROXY_WILDCARD}:443
+      # Cluster does not contain workers, ingress and HTTP traffic goes to
+      # control plane
+      cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen ingress-router-${INGRESS_ROUTER_PORT}
+  bind ${HAPROXY_WILDCARD}:${INGRESS_ROUTER_PORT}
   mode tcp
   balance source
 EOF
-      add_haproxy_server_lines $NUM_MASTERS "master" "443"
+      add_haproxy_server_lines $NUM_MASTERS "master" "${INGRESS_ROUTER_PORT}"
 
-      cat << EOF >> haproxy.cfg
-listen ingress-router-80
-  bind ${HAPROXY_WILDCARD}:80
+      cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen ingress-router-${HTTP_PORT}
+  bind ${HAPROXY_WILDCARD}:${HTTP_PORT}
   mode tcp
   balance source
 EOF
-      add_haproxy_server_lines $NUM_MASTERS "master" "80"
+      add_haproxy_server_lines $NUM_MASTERS "master" "${HTTP_PORT}"
     fi
 
-    sudo podman run -d  --net host -v .:/etc/haproxy/:z --entrypoint bash --name extlb quay.io/openshift/origin-haproxy-router  -c 'haproxy -f /etc/haproxy/haproxy.cfg'
+    sudo firewall-cmd --zone libvirt --add-port=${MACHINE_CONFIG_SERVER_PORT}/tcp
+    sudo firewall-cmd --zone libvirt --add-port=${KUBE_API_PORT}/tcp
+    sudo firewall-cmd --zone libvirt --add-port=${INGRESS_ROUTER_PORT}/tcp
+    sudo podman run -d  --net host -v ${WORKING_DIR}:/etc/haproxy/:z --entrypoint bash --name extlb quay.io/openshift/origin-haproxy-router  -c 'haproxy -f /etc/haproxy/haproxy.cfg'
 
     # update api and add api-int and *.apps entries to baremetal network DNS
     # delete existing entries pointing to the wrong api ip before adding correct entry
@@ -375,13 +390,8 @@ if [[ "${NUM_MASTERS}" > "1" ]]; then
     # for platform "none" both API and INGRESS point to the same
     # load balancer IP address
     get_vips
-    if [[ "$IP_STACK" = "v6" ]]; then
-      export load_balancer_ip=$(nth_ip $EXTERNAL_SUBNET_V6 1)
-    else
-      export load_balancer_ip=$(nth_ip $EXTERNAL_SUBNET_V4 1)
-    fi
-    configure_dnsmasq ${load_balancer_ip} ${load_balancer_ip}
-    enable_load_balancer ${API_VIPS} ${load_balancer_ip}
+    configure_dnsmasq ${PROVISIONING_HOST_EXTERNAL_IP} ${PROVISIONING_HOST_EXTERNAL_IP}
+    enable_load_balancer ${API_VIPS} ${PROVISIONING_HOST_EXTERNAL_IP}
   else
     set_api_and_ingress_vip
   fi

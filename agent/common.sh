@@ -9,7 +9,7 @@ export AGENT_USE_ZTP_MANIFESTS=${AGENT_USE_ZTP_MANIFESTS:-"false"}
 
 export AGENT_USE_APPLIANCE_MODEL=${AGENT_USE_APPLIANCE_MODEL:-"false"}
 export AGENT_APPLIANCE_HOTPLUG=${AGENT_APPLIANCE_HOTPLUG:-"false"}
-export AGENT_PLATFORM_TYPE=${AGENT_PLATFORM_TYPE:-""}
+export AGENT_PLATFORM_TYPE=${AGENT_PLATFORM_TYPE:-"baremetal"}
 
 # Override command name in case of extraction
 export OPENSHIFT_INSTALLER_CMD="openshift-install"
@@ -38,3 +38,9 @@ function getReleaseImage() {
     fi
     echo ${releaseImage}
 }
+
+# External load balancer configuration.
+# The following ports are opened in firewalld so that libvirt VMs can communicate with haproxy.
+export MACHINE_CONFIG_SERVER_PORT=22623
+export KUBE_API_PORT=6443
+export INGRESS_ROUTER_PORT=443

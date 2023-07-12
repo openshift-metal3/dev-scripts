@@ -14,15 +14,15 @@ the Kubernetes API, OpenShift application wildcard, and the names of the control
 and compute machines. Users are also responsible for providing a load balancer
 infrastructure for the API and application ingress. 
 
-In the context of dev-scripts, None platform requires these DNS records to be 
-present in the 'ostestbm' network.
+In the context of dev-scripts and excluding SNO, None platform requires these DNS records to be 
+present in the 'ostestbm' network. 
 * api.<cluster_name>.<base_domain> 
 * api-int.<cluster_name>.<base_domain> 'new'
 * *.apps.<cluster_name>.<base_domain>. 'new'
 
 All three names point to the load balancer's IP address. 
 
-The DNS records are add to the ostestbm libvirt network by the enable_load_balancer() 
+The DNS records are added to the ostestbm libvirt network by the enable_load_balancer()
 function in 'agent/05_agent_configure.sh'.
 
 ````
@@ -76,31 +76,20 @@ sudo virsh net-dumpxml ostestbm
 is configured and enabled by the enable_load_balancer() function.
 
 'haproxy' runs on the hypervisor host and is accessed by the hosts forming the OpenShift cluster through
-the 'ostestbm' network through that network's .1 or ::1 IP address. Its configuration file path is /etc/haproxy/haproxy.cfg.
-'haproxy' needs to be able to resolve the hostnames listed in its configuration file. Example of hostnames that need
-to be resolvable on the hypervisor host:
+the 'ostestbm' network's .1 or ::1 IP address.
 
-````
-listen api-server-6443
-  bind *:6443
-  mode tcp
-  server master-0 master-0.ostest.test.metalkube.org:6443 check inter 1s
-  server master-1 master-1.ostest.test.metalkube.org:6443 check inter 1s
-  server master-2 master-2.ostest.test.metalkube.org:6443 check inter 1s
-````
+Its configuration follows the sample load balancer configuration for user-provisioned clusters described in https://docs.openshift.com/container-platform/4.13/installing/installing_bare_metal/installing-bare-metal.html#installation-load-balancing-user-infra-example_installing-bare-metal.
 
-From the hypervisor host, hostnames such as master-0.ostest.test.metalkube.org are not resolvable by default.
-To make them resolvable, the dnsmasq service on the hypervisor was updated.
+The OpenShift services configured to use the external load balancer are:
+* Kubernetes api port 6443
+* Machine config server port 22623 - serves the ignition configs
+* Ingress router ports 443 and 80
 
-An address entry for each host in the cluster has been updated in '/etc/NetworkManager/dnsmasq.d/openshift-ostest.conf':
+These ports are opened in the libvirt firewalld domain so that the VMs inside the domain can communicate with haproxy deployed
+on the hypervisor host.
 
-address=/master-0.ostest.test.metalkube.org/192.168.111.80
-address=/master-1.ostest.test.metalkube.org/192.168.111.81
-address=/master-2.ostest.test.metalkube.org/192.168.111.82
-address=/worker-0.ostest.test.metalkube.org/192.168.111.83
-address=/worker-1.ostest.test.metalkube.org/192.168.111.84
+In '/etc/NetworkManager/dnsmasq.d/openshift-ostest.conf', api and .app addresses are updated to point to the load balancer IP.
 
-In openshift-ostest.conf, api and .app addresses are also updated to point to the load balancer IP.
 For IPv4:
 
 ````
@@ -115,5 +104,12 @@ address=/api.ostest.test.metalkube.org/fd2e:6f44:5dd8:c956::1
 address=/.apps.ostest.test.metalkube.org/fd2e:6f44:5dd8:c956::1
 ````
 
+This to ensure that any clients attempting to use the Kubernetes API from the hypervisor host can reach it.
+For example, if the api IP address isn't updated and left pointing to the API_VIP used by the baremetal platform:
 
+```
+[rwsu@ dev-scripts]export KUBECONFIG=./ocp/ostest/auth/kubeconfig
+[rwsu@ dev-scripts]$ oc get co
+Unable to connect to the server: dial tcp 192.168.111.5:6443: connect: no route to host
+```
 
