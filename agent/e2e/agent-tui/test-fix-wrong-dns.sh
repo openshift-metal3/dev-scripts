@@ -10,6 +10,11 @@ function _pressKey() {
 
   name=${CLUSTER_NAME}_master_0
   sudo virsh send-key $name $keyCode
+
+  # On some CI instances, the sequence of events appears to be too fast
+  # for the console refresh, leading the test in the wrong state.
+  # Let's add a small pause between one keypress event and the subsequent
+  sleep 1
 }
 
 function pressKey() {
