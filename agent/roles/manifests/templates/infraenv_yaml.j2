@@ -7,6 +7,7 @@ spec:
   clusterRef:
     name: {{ cluster_name }} 
     namespace: {{ cluster_namespace }}
+  cpuArchitecture: {{ ansible_architecture }}
   pullSecretRef:
     name: pull-secret
   sshAuthorizedKey: {{ ssh_pub_key }}

@@ -4,8 +4,9 @@ compute:
 - hyperthreading: Enabled
   name: worker
   replicas: {{ num_workers }} 
+  architecture: {{ goCPUArchitecture }}
 controlPlane:
-  architecture: amd64
+  architecture: {{ goCPUArchitecture }}
   hyperthreading: Enabled
   name: master
   replicas: {{ num_masters }} 

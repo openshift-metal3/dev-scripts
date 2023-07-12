@@ -122,7 +122,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
         _tmpfiles="$_tmpfiles $OLM_DIR"
 
         pushd $OLM_DIR
-        curl -O https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/${VERSION}.0/opm-linux.tar.gz
+        curl -O https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/${VERSION}.0/opm-linux.tar.gz
         tar xf opm-linux.tar.gz
         sudo mv -f opm /usr/local/bin
         popd
