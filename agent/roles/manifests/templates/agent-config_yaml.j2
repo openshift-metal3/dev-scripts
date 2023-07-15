@@ -13,7 +13,7 @@ rendezvousIP: {{ ips[0] }}
 {% if boot_mode == "PXE" %}
 ipxeBaseURL: {{ pxe_server_url }}
 {% endif %}
-{% if networking_mode != "dhcp" %}
+{% if networking_mode != "DHCP" %}
 hosts:
 {% for hostname in hostnames %}
     - hostname: {{ hostname }}
