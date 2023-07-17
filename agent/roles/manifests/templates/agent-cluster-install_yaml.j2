@@ -47,3 +47,6 @@ spec:
     controlPlaneAgents: {{ num_masters }}
     workerAgents: {{ num_workers }}
   sshPublicKey: {{ ssh_pub_key }}
+{% if platform_type == "none" %}
+  userManagedNetworking: true
+{% endif %}

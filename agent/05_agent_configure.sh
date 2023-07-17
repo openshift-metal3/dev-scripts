@@ -245,7 +245,129 @@ function generate_cluster_manifests() {
   ansible-playbook -vvv \
           -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
           "${SCRIPTDIR}/agent/create-manifests-playbook.yaml"
+}
 
+function add_haproxy_server_lines() {
+  num_servers=${1}
+  type=${2}
+  port=${3}
+
+  # AGENT_NODES_IPS has master ip addresses listed first
+  # and worker ip addresses listed second.
+  # Depending on the $type, here we find the right
+  # slice of the array to iterate over.
+  if [[ "$type" == "master" ]]; then
+    starting=0
+  else
+    # $type == "worker"
+    starting=$NUM_MASTERS
+    num_servers=$((NUM_MASTERS + num_servers))
+  fi
+
+  for (( n=$starting; n<${num_servers}; n++ ))
+  do
+    cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+  server ${type}-$n ${AGENT_NODES_IPS[n]}:${port} check inter 1s
+EOF
+  done
+}
+
+function enable_load_balancer() {
+  local api_ip=${1}
+  local load_balancer_ip=${2}
+  local HTTP_PORT=80
+
+  if [[ "${AGENT_PLATFORM_TYPE}" == "none" && "${NUM_MASTERS}" > "1" ]]; then
+
+    # setup haproxy as the load balancer
+    if [[ "${IP_STACK}" == "v6" ]]; then
+      # The "wildcard" is different depending on IP stack.
+      # See http://docs.haproxy.org/1.6/configuration.html#4.2-bind
+      export HAPROXY_WILDCARD="[::]"
+    else
+      export HAPROXY_WILDCARD="*"
+    fi
+
+    cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+defaults
+    mode                    tcp
+    log                     global
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+frontend stats
+  bind *:1936
+  mode            http
+  log             global
+  maxconn 10
+  stats enable
+  stats hide-version
+  stats refresh 30s
+  stats show-node
+  stats show-desc Stats for ocp4 cluster
+  stats auth admin:ocp4
+  stats uri /stats
+listen api-server-${KUBE_API_PORT}
+  bind ${HAPROXY_WILDCARD}:${KUBE_API_PORT}
+  mode tcp
+EOF
+    add_haproxy_server_lines $NUM_MASTERS "master" "${KUBE_API_PORT}"
+
+    cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen machine-config-server-${MACHINE_CONFIG_SERVER_PORT}
+  bind ${HAPROXY_WILDCARD}:${MACHINE_CONFIG_SERVER_PORT}
+  mode tcp
+EOF
+    add_haproxy_server_lines $NUM_MASTERS "master" "${MACHINE_CONFIG_SERVER_PORT}"
+
+    if [[ "${NUM_WORKERS}" > "0" ]]; then
+      # Cluster contains workers, ingress and HTTP traffic goes to them
+      cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen ingress-router-${INGRESS_ROUTER_PORT}
+  bind ${HAPROXY_WILDCARD}:${INGRESS_ROUTER_PORT}
+  mode tcp
+  balance source
+EOF
+      add_haproxy_server_lines $NUM_WORKERS "worker" "${INGRESS_ROUTER_PORT}"
+
+      cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen ingress-router-${HTTP_PORT}
+  bind ${HAPROXY_WILDCARD}:${HTTP_PORT}
+  mode tcp
+  balance source
+EOF
+      add_haproxy_server_lines $NUM_WORKERS "worker" "${HTTP_PORT}"
+    else
+      # Cluster does not contain workers, ingress and HTTP traffic goes to
+      # control plane
+      cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen ingress-router-${INGRESS_ROUTER_PORT}
+  bind ${HAPROXY_WILDCARD}:${INGRESS_ROUTER_PORT}
+  mode tcp
+  balance source
+EOF
+      add_haproxy_server_lines $NUM_MASTERS "master" "${INGRESS_ROUTER_PORT}"
+
+      cat << EOF >> ${WORKING_DIR}/haproxy.cfg
+listen ingress-router-${HTTP_PORT}
+  bind ${HAPROXY_WILDCARD}:${HTTP_PORT}
+  mode tcp
+  balance source
+EOF
+      add_haproxy_server_lines $NUM_MASTERS "master" "${HTTP_PORT}"
+    fi
+
+    sudo firewall-cmd --zone libvirt --add-port=${MACHINE_CONFIG_SERVER_PORT}/tcp
+    sudo firewall-cmd --zone libvirt --add-port=${KUBE_API_PORT}/tcp
+    sudo firewall-cmd --zone libvirt --add-port=${INGRESS_ROUTER_PORT}/tcp
+    sudo podman run -d  --net host -v ${WORKING_DIR}:/etc/haproxy/:z --entrypoint bash --name extlb quay.io/openshift/origin-haproxy-router  -c 'haproxy -f /etc/haproxy/haproxy.cfg'
+
+    # update api and add api-int and *.apps entries to baremetal network DNS
+    # delete existing entries pointing to the wrong api ip before adding correct entry
+    sudo virsh net-update ${BAREMETAL_NETWORK_NAME} delete dns-host "<host ip='${api_ip}'> <hostname>api</hostname> </host>"  --live --config
+    sudo virsh net-update ${BAREMETAL_NETWORK_NAME} delete dns-host "<host ip='${api_ip}'> <hostname>virthost</hostname> </host>"  --live --config
+    sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host "<host ip='${load_balancer_ip}'> <hostname>api</hostname> <hostname>api-int</hostname> <hostname>*.apps</hostname> <hostname>virthost</hostname> </host>"  --live --config
+  fi
 }
 
 write_pull_secret
@@ -264,7 +386,15 @@ if [[ ! -z "${MIRROR_IMAGES}" ]]; then
 fi
 
 if [[ "${NUM_MASTERS}" > "1" ]]; then
-   set_api_and_ingress_vip
+  if [[ "${AGENT_PLATFORM_TYPE}" == "none" ]]; then
+    # for platform "none" both API and INGRESS point to the same
+    # load balancer IP address
+    get_vips
+    configure_dnsmasq ${PROVISIONING_HOST_EXTERNAL_IP} ${PROVISIONING_HOST_EXTERNAL_IP}
+    enable_load_balancer ${API_VIPS} ${PROVISIONING_HOST_EXTERNAL_IP}
+  else
+    set_api_and_ingress_vip
+  fi
 else
   # For SNO clusters, at least the api dns entry must be set
   # otherwise oc/openshift-install commands requiring the

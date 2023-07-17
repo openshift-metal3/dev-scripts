@@ -725,3 +725,11 @@ set -x
 # ignition. This setting configures when the config-image is added, by default it will be
 # adding when creating the VM.
 # export AGENT_APPLIANCE_HOTPLUG=false
+
+# Sets the install-config.yaml's platform type.
+# The default is 'baremetal'.
+# When set to 'none', the cluster is deployed using platform none.
+# This means userManagedNetworking is set to true in AgentClusterInstall,
+# haproxy is deployed as the load balancer, and the appropriate DNS records
+# are created.
+# export AGENT_PLATFORM_TYPE=none

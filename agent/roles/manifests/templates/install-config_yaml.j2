@@ -45,7 +45,7 @@ networking:
 {% endif %}
   networkType: {{ network_type }} 
 platform:
-{% if num_masters == "1" %}
+{% if (platform_type == "none") %}
   none: {}
 {% else %}
 {% set macs = agent_nodes_macs.split(',') %}
