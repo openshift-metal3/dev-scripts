@@ -43,10 +43,10 @@ spec:
     - cidr: {{ external_subnet_v6 }}
 {% endif %}
     networkType: {{ network_type }}
+{% if platform_type == "none" %}
+    userManagedNetworking: true
+{% endif %}
   provisionRequirements:
     controlPlaneAgents: {{ num_masters }}
     workerAgents: {{ num_workers }}
   sshPublicKey: {{ ssh_pub_key }}
-{% if platform_type == "none" %}
-  userManagedNetworking: true
-{% endif %}
