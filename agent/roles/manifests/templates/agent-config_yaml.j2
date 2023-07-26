@@ -9,7 +9,11 @@ apiVersion: v1alpha1
 metadata:
   name: {{ cluster_name }} 
   namespace: {{ cluster_namespace }}
-rendezvousIP: {{ ips[0] }} 
+{% if ip_stack == "v4" or ip_stack == "v4v6" %}
+rendezvousIP: {{ ips[0] }}
+{% else %}
+rendezvousIP: {{ ipsv6[0] }}
+{% endif %}
 {% if boot_mode == "PXE" %}
 ipxeBaseURL: {{ pxe_server_url }}
 {% endif %}
