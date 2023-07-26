@@ -14,12 +14,6 @@ export AGENT_PLATFORM_TYPE=${AGENT_PLATFORM_TYPE:-"baremetal"}
 # Override command name in case of extraction
 export OPENSHIFT_INSTALLER_CMD="openshift-install"
 
-# Override to consistently use the proper subnet
-export CLUSTER_HOST_PREFIX_V4="24"
-if [[ "$IP_STACK" != "v4" ]]; then
-   export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/64"
-fi
-
 # Set required config vars for PXE boot mode
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
   export PXE_SERVER_DIR=${WORKING_DIR}/pxe
