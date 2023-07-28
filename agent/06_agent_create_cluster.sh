@@ -56,6 +56,7 @@ function create_factory_image() {
 
     "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create unconfigured-ignition
     base_iso_url=$(oc adm release info --registry-config "$PULL_SECRET_FILE" --image-for=machine-os-images --insecure=true $OPENSHIFT_RELEASE_IMAGE)
+    mkdir -p $HOME/.cache/agent/image_cache
     oc image extract --path /coreos/coreos-$(uname -m).iso:$HOME/.cache/agent/image_cache --registry-config "$PULL_SECRET_FILE" --confirm $base_iso_url
     local agent_iso_abs_path="$(realpath "${OCP_DIR}")"
     podman run --privileged --rm -v /run/udev:/run/udev -v "${agent_iso_abs_path}:${agent_iso_abs_path}" -v "$HOME/.cache/agent/image_cache/:$HOME/.cache/agent/image_cache/" quay.io/coreos/coreos-installer:release iso ignition embed -f -i "${agent_iso_abs_path}/unconfigured-agent.ign" -o "${agent_iso_abs_path}/agent.iso" $HOME/.cache/agent/image_cache/coreos-$(uname -m).iso
