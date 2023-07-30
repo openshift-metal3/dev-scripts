@@ -17,19 +17,19 @@ spec:
     {{ net.interfaces(macs[loop.index0]) }}
 {% if ip_stack == "v4" %}
         ipv4:
-          {{ net.ip(ips[loop.index0], cluster_host_prefix_v4) }}
+          {{ net.ip(networking_mode, ips[loop.index0], cluster_host_prefix_v4) }}
     {{ net.dns(provisioning_host_external_ip) }}
     {{ net.route("0.0.0.0/0", provisioning_host_external_ip) }}
 {% elif ip_stack == "v6" %}
         ipv6:
-          {{ net.ip(ipsv6[loop.index0], cluster_host_prefix_v6) }}
+          {{ net.ip(networking_mode, ipsv6[loop.index0], cluster_host_prefix_v6) }}
     {{ net.dns(provisioning_host_external_ip) }}
     {{ net.route("::/0", provisioning_host_external_ip) }}
 {% else %}
         ipv4:
-          {{ net.ip(ips[loop.index0], cluster_host_prefix_v4) }}
+          {{ net.ip(networking_mode, ips[loop.index0], cluster_host_prefix_v4) }}
         ipv6:
-          {{ net.ip(ipsv6[loop.index0], cluster_host_prefix_v6) }}
+          {{ net.ip(networking_mode, ipsv6[loop.index0], cluster_host_prefix_v6) }}
     {{ net.dns_dualstack(provisioning_host_external_ip, provisioning_host_external_ip_dualstack) }}
     {{ net.route_dualstack(provisioning_host_external_ip, provisioning_host_external_ip_dualstack) }}
 {% endif %}
