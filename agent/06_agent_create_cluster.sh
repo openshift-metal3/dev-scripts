@@ -51,7 +51,7 @@ function create_factory_image() {
     "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create cluster-manifests
 
     # Remove any static networking configuration from unconfigured so that config-image sets it
-    rm "${asset_dir}/cluster-manifests/nmstateconfig.yaml"
+    rm -f "${asset_dir}/cluster-manifests/nmstateconfig.yaml"
     rm "${asset_dir}/.openshift_install_state.json"
 
     "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create unconfigured-ignition
