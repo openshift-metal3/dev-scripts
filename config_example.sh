@@ -686,6 +686,10 @@ set -x
 # will be used as input to the installer.
 # export AGENT_USE_ZTP_MANIFESTS=false
 
+# TEST_SW_RAID -
+# Enable testing of software RAID
+# export TEST_SW_RAID=true
+
 # Uncomment and set the following value to "true" to disable the automated
 # deployment systemd services of the Agent based installation. This is
 # particularly useful for WebUI development.

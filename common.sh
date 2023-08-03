@@ -494,3 +494,6 @@ if [[ -n "$MIRROR_IMAGES" || -z "${IP_STACK:-}" || "$IP_STACK" = "v6" || "$IP_ST
 fi
 
 export AGENT_TEST_CASES=${AGENT_TEST_CASES:-}
+
+# Defaults the variable to disable testing software RAID
+export TEST_SW_RAID=${TEST_SW_RAID:-true}

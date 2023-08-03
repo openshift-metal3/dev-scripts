@@ -108,6 +108,17 @@ function create_cluster() {
     mkdir -p ${assets_dir}/openshift
     generate_assets
 
+    if [[ "$TEST_SW_RAID" == "true" ]] && [[ "$NUM_WORKERS" -gt 0 ]]; then
+        for n in $(seq "$NUM_MASTERS" $(expr "$NUM_WORKERS" + "$NUM_MASTERS" - 1));
+        do
+        sed -i "/status/i \\
+  raid: \n\
+    softwareRAIDVolumes: \n\
+    - level: \"1\" \
+"  ${assets_dir}/openshift/99_openshift-cluster-api_hosts-$n.yaml
+        done
+    fi
+
     if [ -z "${NTP_SERVERS}" ];
     then
       export NTP_SERVERS="$PROVISIONING_HOST_EXTERNAL_IP"
