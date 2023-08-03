@@ -20,6 +20,11 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     sudo pkill agentpxeserver || true
     rm -rf ${WORKING_DIR}/pxe
     ;;
+  "DISKIMAGE" )
+    sudo rm -rf "${OCP_DIR}/cache"
+    sudo rm -rf "${OCP_DIR}/temp"
+    sudo podman rmi -f ${APPLIANCE_IMAGE} || true
+    ;;
 esac
 
 sudo podman rm -f extlb || true
