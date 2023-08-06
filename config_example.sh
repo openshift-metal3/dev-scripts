@@ -619,6 +619,14 @@ set -x
 #
 # export INSTALLER_PROXY=true
 
+# DISCONNECTED_ENV -
+# Blocks all outgoing traffic by using 'route' forward mode.
+# This is useful when a fully disconnected environment should be tested.
+# E.g. on openshift-appliance flow (https://github.com/openshift/appliance)
+# Default: ""
+#
+export DISCONNECTED_ENV=true
+
 ################################################################################
 ## Assisted Deployment
 ##
