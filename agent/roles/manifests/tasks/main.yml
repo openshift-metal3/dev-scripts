@@ -25,3 +25,7 @@
 - name: Create ZTP based manifests
   import_tasks: ztp.yml
   when: agent_use_ztp_manifests == 'true'
+
+- name: Create appliance-config manifests
+  import_tasks: appliance.yml
+  when: boot_mode == 'DISKIMAGE'

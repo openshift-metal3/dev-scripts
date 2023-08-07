@@ -1,0 +1,4 @@
+- name: write the appliance-config.yaml 
+  template:
+    src: "appliance-config_yaml.j2"
+    dest: "{{ install_path }}/appliance-config.yaml"

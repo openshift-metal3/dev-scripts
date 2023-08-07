@@ -12,7 +12,9 @@ controlPlane:
   replicas: {{ num_masters }} 
 metadata:
   name: {{ cluster_name }} 
+{% if boot_mode != "DISKIMAGE" %}
   namespace: {{ cluster_namespace }}
+{% endif %}
 networking:
 {% if ip_stack == "v4" %}
   clusterNetwork:
