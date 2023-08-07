@@ -123,11 +123,6 @@ function attach_appliance_diskimage() {
     local config_image_drive="sdd"
     local appliance_disk_image="${OCP_DIR}/appliance.raw"
 
-    # Create the config ISO
-    mkdir -p ${config_image_dir}
-    cp ${asset_dir}/*.yaml ${config_image_dir}
-    create_config_image
-
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
@@ -360,6 +355,11 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     ;;
 
   "DISKIMAGE" )
+    # Create the config ISO
+    mkdir -p ${config_image_dir}
+    cp ${asset_dir}/*.yaml ${config_image_dir}
+    create_config_image
+
     # Build disk image using openshift-appliance
     create_appliance ${asset_dir}
 
