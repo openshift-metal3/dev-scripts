@@ -17,6 +17,7 @@ rendezvousIP: {{ ipsv6[0] }}
 {% if boot_mode == "PXE" %}
 ipxeBaseURL: {{ pxe_server_url }}
 {% endif %}
+{% if networking_mode != "DHCP" or agent_nmstate_dhcp == 'true' %}
 hosts:
 {% for hostname in hostnames %}
     - hostname: {{ hostname }}
@@ -48,3 +49,4 @@ hosts:
     {{ net.route_dualstack(provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
 {% endif %}
 {% endfor %}
+{% endif %}

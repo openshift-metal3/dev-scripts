@@ -1,4 +1,5 @@
 agent_deploy_mce: "{{ lookup('env', 'AGENT_DEPLOY_MCE') }}"
+agent_nmstate_dhcp: "{{ lookup('env', 'AGENT_NMSTATE_DHCP') }}"
 agent_nodes_macs: "{{ lookup('env', 'AGENT_NODES_MACS_STR') }}"
 agent_nodes_ips: "{{ lookup('env', 'AGENT_NODES_IPS_STR') }}"
 agent_nodes_ipsv6: "{{ lookup('env', 'AGENT_NODES_IPSV6_STR') }}"

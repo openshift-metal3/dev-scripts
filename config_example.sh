@@ -733,3 +733,9 @@ set -x
 # haproxy is deployed as the load balancer, and the appropriate DNS records
 # are created.
 # export AGENT_PLATFORM_TYPE=none
+
+# When set to 'true', configure the host settings in agent-config.yaml to
+# include the nmstate configuration when using DHCP.
+# The default is 'false', in which case the nmstate configuration will
+# not be included
+# export AGENT_NMSTATE_DHCP=false
