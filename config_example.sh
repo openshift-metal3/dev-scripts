@@ -735,6 +735,12 @@ set -x
 # are created.
 # export AGENT_PLATFORM_TYPE=none
 
+# When set to 'true', configure the host settings in agent-config.yaml to
+# include the nmstate configuration when using DHCP.
+# The default is 'false', in which case the nmstate configuration will
+# not be included
+# export AGENT_NMSTATE_DHCP=false
+
 # Image reference for OpenShift-based Appliance Builder.
 # See: https://github.com/openshift/appliance
 # Default: "quay.io/edge-infrastructure/openshift-appliance:latest"

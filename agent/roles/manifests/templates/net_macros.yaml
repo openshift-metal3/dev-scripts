@@ -6,12 +6,21 @@
         mac-address: {{ mac }}
 {%- endmacro %}
 
-{% macro ip(ip, prefix) -%}
+{% macro ip(mode, ip, prefix) -%}
+{% if mode == "DHCP" -%}
+          {% if ip is ansible.utils.ipv6 %}autoconf: true
+          {% endif %}auto-dns: false
+          enabled: true
+          dhcp: true
+          auto-gateway: true
+          auto-routes: true
+{%- else -%}
           enabled: true
           address:
             - ip: {{ ip }}
               prefix-length: {{ prefix }}
           dhcp: false
+{%- endif -%}
 {%- endmacro %}
 
 {% macro dns(ext_ip) -%}
