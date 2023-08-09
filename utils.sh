@@ -538,6 +538,101 @@ function setup_local_registry() {
     fi
 }
 
+# This function originates from a toolchain developed for the Assisted Installer available at
+# https://github.com/openshift/assisted-service/blob/release-4.14/deploy/operator/mirror_utils.sh
+function mirror_package() {
+  # Here we will do the next actions:
+  # 1. Create an index of specific packages from specific remote indexes
+  # 2. Push the index image to the local index
+  # 3. Upload all packages to the local index and create ICSP and
+  #    CatalogSource for the new created index
+
+  # e.g. "local-storage-operator,kubernetes-nmstate-operator"
+  PACKAGES="${1}"
+
+  # e.g. "registry.redhat.io/redhat/redhat-operator-index:v4.8"
+  REMOTE_INDEX="${2}"
+
+  # e.g. "virthost.ostest.test.metalkube.org:5000"
+  LOCAL_REGISTRY="${3}"
+
+  # e.g. "/run/user/0/containers/auth.json", "~/.docker/config.json"
+  # should have authentication information for both official registry
+  # (pull-secret) and for the local registry
+  AUTHFILE="${4}"
+
+  CATALOG_SOURCE_NAME="${5}"
+
+  # If the remote index is referenced using name and tag, use "name:tag" for the local image.
+  # If the remote index is referenced using a digest, use "name:digest" for the local image.
+  LOCAL_INDEX_NAME=${REMOTE_INDEX##*/}
+  LOCAL_INDEX_NAME="${LOCAL_INDEX_NAME/@*:/:}"
+
+  LOCAL_REGISTRY_INDEX_TAG="${LOCAL_REGISTRY}/olm-index/${LOCAL_INDEX_NAME}"
+  LOCAL_REGISTRY_IMAGE_TAG="${LOCAL_REGISTRY}/olm"
+
+  # "opm render" uses the docker/containerd libraries directly and it does not allow to specify
+  # a path for auth keys. Details: https://github.com/operator-framework/operator-registry/issues/935
+  AUTH_DIR=$(mktemp -d -t manifests-XXXXXXXXXX)
+  cp "${AUTHFILE}" "${AUTH_DIR}/config.json"
+
+  PRUNED_CATALOG_DIR=$(mktemp -d -t pruned-catalog-XXXXXXXXXX)
+  mkdir -p "${PRUNED_CATALOG_DIR}/configs"
+  DOCKER_CONFIG="${AUTH_DIR}" opm render "${REMOTE_INDEX}" > "${PRUNED_CATALOG_DIR}/configs/raw-index.json"
+
+  IFS=','
+  read -ra values <<< "$PACKAGES"
+  for val in "${values[@]}"; do
+    jq "select(.name == \"${val}\" or .package == \"${val}\")" "${PRUNED_CATALOG_DIR}/configs/raw-index.json" >> "${PRUNED_CATALOG_DIR}/configs/index.json"
+  done
+  IFS=' '
+  rm "${PRUNED_CATALOG_DIR}/configs/raw-index.json"
+
+  opm validate "${PRUNED_CATALOG_DIR}/configs"
+  opm generate dockerfile "${PRUNED_CATALOG_DIR}/configs"
+
+  podman build \
+      -t "${LOCAL_REGISTRY_INDEX_TAG}" \
+      -f "${PRUNED_CATALOG_DIR}/configs.Dockerfile"
+
+  GODEBUG=x509ignoreCN=0 podman push \
+        --tls-verify=false \
+        "${LOCAL_REGISTRY_INDEX_TAG}" \
+        --authfile "${AUTHFILE}"
+
+  mkdir -p "${OCP_DIR}/manifests"
+  MANIFESTS_DIR="${OCP_DIR}/manifests"
+  GODEBUG=x509ignoreCN=0 oc adm catalog mirror \
+        "${LOCAL_REGISTRY_INDEX_TAG}" \
+        "${LOCAL_REGISTRY_IMAGE_TAG}" \
+        --registry-config="${AUTHFILE}" \
+        --to-manifests="${MANIFESTS_DIR}"
+
+  echo "Created image-content-source-policy:"
+  cat "${MANIFESTS_DIR}/imageContentSourcePolicy.yaml"
+
+  cat > "${MANIFESTS_DIR}/catalogSource.yaml" << EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: ${CATALOG_SOURCE_NAME}
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: ${LOCAL_REGISTRY_INDEX_TAG}
+  displayName: Mirror index for OLM packages from ${REMOTE_INDEX}
+  publisher: Local
+  grpcPodConfig:
+    securityContextConfig: restricted
+  updateStrategy:
+    registryPoll:
+      interval: 30m
+EOF
+
+  echo "Created catalog source:"
+  cat "${MANIFESTS_DIR}/catalogSource.yaml"
+}
+
 function add_local_certificate_as_trusted() {
     REGISTRY_CONFIG="registry-config"
     oc create configmap ${REGISTRY_CONFIG} \
