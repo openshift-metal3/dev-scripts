@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-source network.sh
-
 export AGENT_STATIC_IP_NODE0_ONLY=${AGENT_STATIC_IP_NODE0_ONLY:-"false"}
 export AGENT_NMSTATE_DHCP=${AGENT_NMSTATE_DHCP:-"false"}
 
