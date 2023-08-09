@@ -1,9 +1,19 @@
-{% macro interfaces(mac) -%}
-    interfaces:
-      - name: eth0
-        type: ethernet
-        state: up
-        mac-address: {{ mac }}
+{% macro interfaces(name, mac) -%}
+       - name: {{ name }}
+            type: ethernet
+            state: up
+            mac-address: {{ mac }}
+{%- endmacro %}
+
+{% macro bond(name, mode) -%}
+       - name: {{ name }}
+            type: bond
+            state: up
+            link-aggregation:
+              mode: {{ mode }}
+              port:
+              - eth0
+              - eth1
 {%- endmacro %}
 
 {% macro ip(mode, ip, prefix) -%}
@@ -30,12 +40,12 @@
           - {{ ext_ip }}
 {%- endmacro %}
 
-{% macro route(dest, ext_ip) -%}
+{% macro route(interface, dest, ext_ip) -%}
     routes:
       config:
         - destination: {{ dest }} 
           next-hop-address: {{ ext_ip }}
-          next-hop-interface: eth0
+          next-hop-interface: {{ interface }}
           table-id: 254
 {%- endmacro %}
 
@@ -47,15 +57,15 @@
           - {{ dualstack_ext_ip }}
 {%- endmacro %}
 
-{% macro route_dualstack(ext_ip, dualstack_ext_ip) -%}
+{% macro route_dualstack(interface, ext_ip, dualstack_ext_ip) -%}
     routes:
       config:
         - destination: 0.0.0.0/0 
           next-hop-address: {{ ext_ip }}
-          next-hop-interface: eth0
+          next-hop-interface: {{ interface }}
           table-id: 254
         - destination: ::/0 
           next-hop-address: {{ dualstack_ext_ip }}
-          next-hop-interface: eth0
+          next-hop-interface: {{ interface }}
           table-id: 254
 {%- endmacro %}

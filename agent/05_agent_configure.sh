@@ -370,6 +370,27 @@ EOF
   fi
 }
 
+# Reconfigure the ostestm bridge setup and create a bond
+function setup_agent_bond() {
+
+    # Create unique macs for both ports
+    macStr="00:${RANDOM:0-2}:${RANDOM:0-2}:${RANDOM:0-2}:${RANDOM:0-2}"
+
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        sudo virt-xml ${name} --remove-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio
+        macByte=$(printf "%02x" $((2*n)))
+        mac1="${macStr}:${macByte}"
+        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${mac1}"
+        AGENT_NODES_MACS+=(${mac1})
+        macByte=$(printf "%02x" $((2*n + 1)))
+        mac2="${macStr}:${macByte}"
+        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${mac2}"
+	AGENT_NODES_MACS+=(${mac2})
+    done
+}
+
 write_pull_secret
 
 # needed for assisted-service to run nmstatectl
@@ -405,6 +426,15 @@ else
     ip=${AGENT_NODES_IPSV6[0]}
   fi
   configure_dnsmasq ${ip} ""
+fi
+
+# Note that BOND_PRIMARY_INTERFACE creates the same mac on both ports so can't be used here
+if [[ ${AGENT_BOND_CONFIG} != "none" ]]; then
+    # Rewrite mac array
+    AGENT_NODES_MACS=()
+
+    setup_agent_bond master $NUM_MASTERS
+    setup_agent_bond worker $NUM_WORKERS
 fi
 
 generate_cluster_manifests

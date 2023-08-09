@@ -752,3 +752,9 @@ set -x
 # Default: "quay.io/edge-infrastructure/openshift-appliance:latest"
 #
 # export APPLIANCE_IMAGE="quay.io/edge-infrastructure/openshift-appliance:latest"
+
+# When not set to 'none', this setting is used to create a bond from 2 NICs and
+# set the bond mode to the value. The possible values are 'none', 'balance-rr',
+# 'active-backup', 'broadcast', 'balance-xor', 'balance-tlb', and 'balance-alb'.
+# By default no bond is created (value='none')
+# export AGENT_BOND_CONFIG=none

@@ -1,3 +1,4 @@
+agent_bond_config: "{{ lookup('env', 'AGENT_BOND_CONFIG') }}"
 agent_deploy_mce: "{{ lookup('env', 'AGENT_DEPLOY_MCE') }}"
 agent_nmstate_dhcp: "{{ lookup('env', 'AGENT_NMSTATE_DHCP') }}"
 agent_nodes_macs: "{{ lookup('env', 'AGENT_NODES_MACS_STR') }}"

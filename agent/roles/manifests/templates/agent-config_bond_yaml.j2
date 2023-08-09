@@ -4,7 +4,6 @@
 {% set ipsv6 = agent_nodes_ipsv6.split(',') %}
 {% set macs = agent_nodes_macs.split(',') %}
 {% set hostnames = agent_nodes_hostnames.split(',') %}
-{% set test_cases = agent_test_cases.split(',') %}
 apiVersion: v1alpha1
 metadata:
   name: {{ cluster_name }}
@@ -17,37 +16,35 @@ rendezvousIP: {{ ipsv6[0] }}
 {% if boot_mode == "PXE" %}
 ipxeBaseURL: {{ pxe_server_url }}
 {% endif %}
-{% if networking_mode != "DHCP" or agent_nmstate_dhcp == 'true' %}
 hosts:
 {% for hostname in hostnames %}
     - hostname: {{ hostname }}
       interfaces:
         - name: eth0
-          macAddress: {{ macs[loop.index0] }}
+          macAddress: {{ macs[2*loop.index0] }}
+        - name: eth1
+          macAddress: {{ macs[2*loop.index0+1] }}
       networkConfig:
         interfaces:
-          {{ net.interfaces("eth0", macs[loop.index0]) }}
+          {{ net.interfaces("eth0", macs[2*loop.index0]) }}
+          {{ net.interfaces("eth1", macs[2*loop.index0+1]) }}
+          {{ net.bond("bond0", agent_bond_config) }}
 {% if ip_stack == "v4" %}
             ipv4:
           {{ net.ip(networking_mode, ips[loop.index0], external_subnet_v4_prefixlen)|indent(4, True) }}
-{% if "master-0" in hostname and "bad_dns" in test_cases %}
-    {{ net.dns("192.168.123.1")|indent(4, True)  }}
-{% else %}
     {{ net.dns(provisioning_host_external_ip)|indent(4, True)  }}
-{% endif %}
-    {{ net.route("eth0", "0.0.0.0/0", provisioning_host_external_ip)|indent(4, True) }}
+    {{ net.route("bond0", "0.0.0.0/0", provisioning_host_external_ip)|indent(4, True) }}
 {% elif ip_stack == "v6" %}
             ipv6:
           {{ net.ip(networking_mode, ipsv6[loop.index0], external_subnet_v6_prefixlen)|indent(4, True) }}
     {{ net.dns(provisioning_host_external_ip)|indent(4, True) }}
-    {{ net.route("eth0", "::/0", provisioning_host_external_ip)|indent(4, True) }}
+    {{ net.route("bond0", "::/0", provisioning_host_external_ip)|indent(4, True) }}
 {% else %}
             ipv4:
           {{ net.ip(networking_mode, ips[loop.index0], external_subnet_v4_prefixlen)|indent(4, True) }}
             ipv6:
           {{ net.ip(networking_mode, ipsv6[loop.index0], external_subnet_v6_prefixlen)|indent(4, True) }}
     {{ net.dns_dualstack(provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
-    {{ net.route_dualstack("eth0", provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
+    {{ net.route_dualstack("bond0", provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
 {% endif %}
 {% endfor %}
-{% endif %}
