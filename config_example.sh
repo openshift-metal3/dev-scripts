@@ -656,6 +656,12 @@ set -x
 # More info here: https://github.com/openshift-metal3/dev-scripts/pull/1241#issuecomment-846067822
 # export BMO_WATCH_ALL_NAMESPACES="true"
 
+# When not set to 'none', this setting is used to configure the bonding mode.
+# For platforms that use nmstate configuration, the bond mode is set to the value.
+# The possible values are 'none', 'balance-rr', 'active-backup', 'broadcast', 'balance-xor',
+# 'balance-tlb', and 'balance-alb'.
+# export BOND_CONFIG=none
+
 ################################################################################
 ## Agent Deployment
 ##
@@ -752,9 +758,3 @@ set -x
 # Default: "quay.io/edge-infrastructure/openshift-appliance:latest"
 #
 # export APPLIANCE_IMAGE="quay.io/edge-infrastructure/openshift-appliance:latest"
-
-# When not set to 'none', this setting is used to create a bond from 2 NICs and
-# set the bond mode to the value. The possible values are 'none', 'balance-rr',
-# 'active-backup', 'broadcast', 'balance-xor', 'balance-tlb', and 'balance-alb'.
-# By default no bond is created (value='none')
-# export AGENT_BOND_CONFIG=none

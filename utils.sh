@@ -781,4 +781,22 @@ use_registry() {
   return 1
 }
 
+# Reconfigure the ostestm bridge setup and create a bond with unique addresses for both nics
+function setup_bond() {
+
+    macStr="00:${RANDOM:0-2}:${RANDOM:0-2}:${RANDOM:0-2}:${RANDOM:0-2}"
+
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        sudo virt-xml ${name} --remove-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio
+        macByte=$(printf "%02x" $((2*n)))
+        mac1="${macStr}:${macByte}"
+        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${mac1}"
+        macByte=$(printf "%02x" $((2*n + 1)))
+        mac2="${macStr}:${macByte}"
+        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${mac2}"
+    done
+}
+
 trap removetmp EXIT
