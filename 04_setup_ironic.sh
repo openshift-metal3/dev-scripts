@@ -127,16 +127,20 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
         sudo mv -f opm /usr/local/bin
         popd
 
+        if [ -z "${MIRROR_OLM_REMOTE_INDEX:-}" ]; then
+            INDEX_IMAGE="registry.redhat.io/redhat/redhat-operator-index:v${VERSION}"
+        else
+            INDEX_IMAGE=${MIRROR_OLM_REMOTE_INDEX}
+        fi
+
         echo "Mirroring OLM operator(s): ${MIRROR_OLM}"
-        REGISTRY_AUTH_FILE=${PULL_SECRET_FILE} opm index prune -f registry.redhat.io/redhat/redhat-operator-index:v${VERSION} -p ${MIRROR_OLM} -t ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/redhat-operator-index:v${VERSION}
-
-        podman push --authfile ${PULL_SECRET_FILE} ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/redhat-operator-index:v${VERSION}
-
-        oc adm catalog mirror ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/redhat-operator-index:v${VERSION} ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/olm -a $PULL_SECRET_FILE --to-manifests=${OLM_DIR}
-
-        mkdir -p ${OCP_DIR}/manifests
-        cp -a ${OLM_DIR}/catalogSource.yaml ${OCP_DIR}/manifests
-        cp -a ${OLM_DIR}/imageContentSourcePolicy.yaml ${OCP_DIR}/manifests
+        echo "Using OLM remote index: ${INDEX_IMAGE}"
+        mirror_package \
+            "${MIRROR_OLM}" \
+            "${INDEX_IMAGE}" \
+            "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}" \
+            "${PULL_SECRET_FILE}" \
+            "mirror-catalog-for-olm"
     fi
 fi
 

@@ -32,7 +32,7 @@ set -x
 # Select a different release stream from which to pull the latest image, if the
 # image name is not specified.
 # Default: 4.14
-# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE  
+# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE
 #
 #export OPENSHIFT_RELEASE_STREAM=4.14
 
@@ -41,13 +41,13 @@ set -x
 # If using ga then set OPENSHIFT_VERSION to the required version.
 # Default: nightly
 # Choices: ci, nightly, ga
-# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE  
+# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE
 #
 #export OPENSHIFT_RELEASE_TYPE=nightly
 
 # OPENSHIFT_VERSION -
 # Set the Openshift version. If unset defaults to $OPENSHIFT_RELEASE_STREAM.
-# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE  
+# NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE
 #
 #export OPENSHIFT_VERSION=4.12
 
@@ -593,7 +593,13 @@ set -x
 # Note - MIRROR_OLM is currently not supported when MIRROR_COMMAND=oc-mirror, it
 # must be set to oc-adm
 #
-#export MIRROR_OLM=kubernetes-nmstate-operator
+#export MIRROR_OLM="local-storage-operator,kubernetes-nmstate-operator"
+
+# MIRROR_OLM_REMOTE_INDEX -
+# OLM catalog index to be used instead of a default one.
+# Default: "registry.redhat.io/redhat/redhat-operator-index:v${VERSION}"
+#
+#export MIRROR_OLM_REMOTE_INDEX="corp.example/registry/corp-operator-index:v2"
 
 ################################################################################
 ## Multi-cluster/Hive variables
@@ -657,11 +663,11 @@ set -x
 # Set whether static IPs will be used for all nodes or only Node0
 # export AGENT_STATIC_IP_NODE0_ONLY="true"
 
-# Set a single config variable AGENT_E2E_TEST_SCENARIO to create a cluster for the different scenarios 
+# Set a single config variable AGENT_E2E_TEST_SCENARIO to create a cluster for the different scenarios
 # i.e. Single Node Openshift(SNO), Highly Available (HA) or Compact cluster.
 # The boot mode for the agent machines can only be set to ISO or PXE.
 # For backward compatibility of CI jobs, the default boot mode is ISO.
-# The only supported values for AGENT_E2E_TEST_SCENARIO are 
+# The only supported values for AGENT_E2E_TEST_SCENARIO are
 # - COMPACT_IPV4
 # - COMPACT_IPV6
 # - COMPACT_IPV4_DHCP
