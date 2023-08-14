@@ -659,8 +659,8 @@ set -x
 # For platforms that use nmstate configuration, the bond mode is set to the value.
 # The possible values are 'balance-rr', 'active-backup', 'broadcast', 'balance-xor',
 # 'balance-tlb', and 'balance-alb'.
-# The default is 'balance-rr'.
-# export BOND_CONFIG=balance-rr
+# The default is no bonding, so value is set to 'none'.
+# export BOND_CONFIG='none'
 
 ################################################################################
 ## Agent Deployment

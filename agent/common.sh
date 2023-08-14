@@ -10,7 +10,7 @@ export AGENT_USE_APPLIANCE_MODEL=${AGENT_USE_APPLIANCE_MODEL:-"false"}
 export AGENT_APPLIANCE_HOTPLUG=${AGENT_APPLIANCE_HOTPLUG:-"false"}
 export AGENT_PLATFORM_TYPE=${AGENT_PLATFORM_TYPE:-"baremetal"}
 
-export BOND_CONFIG=${BOND_CONFIG:-"balance-rr"}
+export BOND_CONFIG=${BOND_CONFIG:-"none"}
 
 # Image reference for OpenShift-based Appliance Builder.
 # See: https://github.com/openshift/appliance
