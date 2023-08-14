@@ -781,7 +781,7 @@ use_registry() {
   return 1
 }
 
-# Reconfigure the ostestm bridge setup and create a bond with unique addresses for both nics
+# Reconfigure the ostestm bridge setup and create a bond with unique addresses for the second nic
 function setup_bond() {
 
     macStr="00:${RANDOM:0-2}:${RANDOM:0-2}:${RANDOM:0-2}:${RANDOM:0-2}"
@@ -789,13 +789,12 @@ function setup_bond() {
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
+        primaryMac=$(sudo virsh dumpxml ${name} | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
         sudo virt-xml ${name} --remove-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio
-        macByte=$(printf "%02x" $((2*n)))
-        mac1="${macStr}:${macByte}"
-        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${mac1}"
-        macByte=$(printf "%02x" $((2*n + 1)))
-        mac2="${macStr}:${macByte}"
-        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${mac2}"
+        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${primaryMac}"
+        macByte=$(printf "%02x" ${n})
+        secondaryMac="${macStr}:${macByte}"
+        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${secondaryMac}"
     done
 }
 
