@@ -107,3 +107,4 @@ When setting the above variables to true you also might want to set the followin
 | REGISTRY_CREDS          | $HOME/$USER-private-mirror-$CLUSTER_NAME.json   | String - File path      | Location of the local registry mirror's credentials.                     |
 | MIRROR_OLM              |                                                 | String - List           | Comma-separated list of OLM operators to mirror into the local registry. |
 | MIRROR_OLM_REMOTE_INDEX | registry.redhat.io/redhat/redhat-operator-index | String                  | Custom operator index image.                                             |
+| MIRROR_CUSTOM_IMAGES    |                                                 | String - List           | Comma-separated list of container images to mirror.                      |

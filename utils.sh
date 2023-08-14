@@ -633,6 +633,70 @@ EOF
   cat "${MANIFESTS_DIR}/catalogSource.yaml"
 }
 
+function is_valid_env_var_name() {
+    echo "$1" | grep -q '^[_[:alpha:]][_[:alpha:][:digit:]]*$' && return || return 1
+}
+
+function mirror_single_image() {
+    # e.g. "registry.example:3218/ci/hello@sha256:8724d7403c1456534d85a6e2cc57b40b04a86564b44e621a001"
+    IMAGE="${1}"
+
+    # e.g. "virthost.ostest.test.metalkube.org:5000"
+    LOCAL_REGISTRY="${2}"
+
+    # e.g. "/run/user/0/containers/auth.json", "~/.docker/config.json"
+    # should have authentication information for both official registry
+    # (pull-secret) and for the local registry
+    AUTHFILE="${3}"
+
+    # Extract the original location of the image, i.e. strip SHA or tag. Sample result is
+    # "registry.example:3218/ci/hello". We use it to build the
+    # ImageContentSourcePolicy manifest from the original registry to the local one.
+    # We need to support both mirroring by sha and by tag, so double substitution is needed.
+    # We use perl with negative lookahead because both ":" and "@" may appear in the original
+    # registry path (as username and port).
+    IMAGE_PATH=$(perl -pe 's#\:(?:.(?!\:))+$##' <<< "${IMAGE}")
+    IMAGE_PATH=$(perl -pe 's#\@(?:.(?!\@))+$##' <<< "${IMAGE_PATH}")
+
+    # If the remote image is referenced using name and tag, use "name:tag" for the local image.
+    # If the remote image is referenced using a digest, use "name:digest" for the local image.
+    LOCAL_NAME_WITH_TAG="${IMAGE##*/}"
+    LOCAL_NAME_WITH_TAG="${LOCAL_NAME_WITH_TAG/@*:/:}"
+    LOCAL_NAME=$(perl -pe 's#:.*##' <<< "${LOCAL_NAME_WITH_TAG}")
+    LOCAL_REGISTRY_WITH_TAG="${LOCAL_REGISTRY}/custom/${LOCAL_NAME_WITH_TAG}"
+
+    GODEBUG=x509ignoreCN=0 podman pull \
+        --tls-verify=false \
+        "${IMAGE}" \
+        --authfile "${AUTHFILE}"
+
+    podman tag "${IMAGE}" "${LOCAL_REGISTRY_WITH_TAG}"
+
+    GODEBUG=x509ignoreCN=0 podman push \
+        --tls-verify=false \
+        "${LOCAL_REGISTRY_WITH_TAG}" \
+        --authfile "${AUTHFILE}"
+
+    mkdir -p "${OCP_DIR}/manifests"
+    MANIFESTS_DIR="${OCP_DIR}/manifests"
+    RANDOM_SUFFIX=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13 ; echo '')
+
+      cat > "${MANIFESTS_DIR}/imageContentSourcePolicy-${RANDOM_SUFFIX}.yaml" << EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: local-registry-for-custom-images-${RANDOM_SUFFIX}
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - ${LOCAL_REGISTRY}/custom/${LOCAL_NAME}
+    source: ${IMAGE_PATH}
+EOF
+
+    echo "Created image-content-source-policy:"
+    cat "${MANIFESTS_DIR}/imageContentSourcePolicy-${RANDOM_SUFFIX}.yaml"
+}
+
 function add_local_certificate_as_trusted() {
     REGISTRY_CONFIG="registry-config"
     oc create configmap ${REGISTRY_CONFIG} \

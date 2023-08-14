@@ -142,6 +142,28 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
             "${PULL_SECRET_FILE}" \
             "mirror-catalog-for-olm"
     fi
+
+    if [ -n "${MIRROR_CUSTOM_IMAGES:-}" ]; then
+        IFS=','
+        read -ra values <<< "$MIRROR_CUSTOM_IMAGES"
+        for val in "${values[@]}"; do
+            # In order to allow providing an ENV variable containing the image, we need a logic
+            # that checks if provided VAL is a correct ENV variable with a content or a final
+            # image name. It allows to consume here both variable "MY_IMAGE_IS_HERE" as well as
+            # e.g. "registry.example/ci/hello:world"
+            if is_valid_env_var_name "${val}" && [ ! -z "${!val:-}" ]; then
+                IMAGE="${!val}"
+            else
+                IMAGE="${val}"
+            fi
+
+            mirror_single_image \
+                "${IMAGE}" \
+                "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}" \
+                "${PULL_SECRET_FILE}"
+        done
+        IFS=' '
+    fi
 fi
 
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader; do
