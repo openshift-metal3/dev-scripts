@@ -1,19 +1,19 @@
-{% macro interfaces(name, mac) -%}
-       - name: {{ name }}
-            type: ethernet
-            state: up
-            mac-address: {{ mac }}
+{%- macro interfaces(name, mac) -%}
+      - name: {{ name }}
+        type: ethernet
+        state: up
+        mac-address: {{ mac }}
 {%- endmacro %}
 
 {% macro bond(name, mode) -%}
-       - name: {{ name }}
-            type: bond
-            state: up
-            link-aggregation:
-              mode: {{ mode }}
-              port:
-              - eth0
-              - eth1
+      - name: {{ name }}
+        type: bond
+        state: up
+        link-aggregation:
+          mode: {{ mode }}
+          port:
+          - eth0
+          - eth1
 {%- endmacro %}
 
 {% macro ip(mode, ip, prefix) -%}

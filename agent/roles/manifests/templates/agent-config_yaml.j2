@@ -26,7 +26,7 @@ hosts:
           macAddress: {{ macs[loop.index0] }}
       networkConfig:
         interfaces:
-          {{ net.interfaces("eth0", macs[loop.index0]) }}
+      {{ net.interfaces("eth0", macs[loop.index0])|indent(4, True) }}
 {% if ip_stack == "v4" %}
             ipv4:
           {{ net.ip(networking_mode, ips[loop.index0], external_subnet_v4_prefixlen)|indent(4, True) }}

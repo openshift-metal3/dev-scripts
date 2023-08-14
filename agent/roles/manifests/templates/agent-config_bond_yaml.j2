@@ -26,9 +26,9 @@ hosts:
           macAddress: {{ macs[2*loop.index0+1] }}
       networkConfig:
         interfaces:
-          {{ net.interfaces("eth0", macs[2*loop.index0]) }}
-          {{ net.interfaces("eth1", macs[2*loop.index0+1]) }}
-          {{ net.bond("bond0", agent_bond_config) }}
+      {{ net.interfaces("eth0", macs[2*loop.index0])|indent(4, True) }}
+      {{ net.interfaces("eth1", macs[2*loop.index0+1])|indent(4, True) }}
+      {{ net.bond("bond0", agent_bond_config)|indent(4, True) }}
 {% if ip_stack == "v4" %}
             ipv4:
           {{ net.ip(networking_mode, ips[loop.index0], external_subnet_v4_prefixlen)|indent(4, True) }}

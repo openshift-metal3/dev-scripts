@@ -33,6 +33,13 @@
   template:
     src: "nmstateconfig_yaml.j2"
     dest: "{{ manifests_path }}/nmstateconfig.yaml"
+  when: agent_bond_config == 'none'
+
+- name: Write nmstateconfig.yaml with nics in a bond
+  template:
+    src: "nmstateconfig_bond_yaml.j2"
+    dest: "{{ manifests_path }}/nmstateconfig.yaml"
+  when: agent_bond_config != 'none'
 
 - name: Get mirror settings
   set_fact:

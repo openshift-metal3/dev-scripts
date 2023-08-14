@@ -83,11 +83,11 @@ function get_static_ips_and_macs() {
             add_dns_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
         fi
 
-        # Get the generated mac addresses or, in the case of a bond, the configured ones
+        # Get the generated mac addresses
         AGENT_NODES_MACS+=($(sudo virsh dumpxml $cluster_name | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -))
-        if [[ ${BOND_CONFIG} != "none" ]]; then
+        if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
+	   # For a bond a separate mac is used on the 2nd interface
            mac1=${AGENT_NODES_MACS[-1]}
-           # increment to get next mac
            next=$(printf "%02x" $((${mac1##*:} + 1)))
            mac2="${mac1%:*}:$next"
            AGENT_NODES_MACS+=(${mac2})
