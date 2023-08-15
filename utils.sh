@@ -434,9 +434,13 @@ function setup_legacy_release_mirror {
       EXTRACT_DIR=$(mktemp --tmpdir -d "mirror-installer--XXXXXXXXXX")
       _tmpfiles="$_tmpfiles $EXTRACT_DIR"
 
+      local tmpconfig
+      tmpconfig=$KUBECONFIG
+      unset KUBECONFIG
       oc adm release extract --registry-config "${PULL_SECRET_FILE}" \
         --command=$installer --to "${EXTRACT_DIR}" \
         "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG}"
+      export KUBECONFIG="$tmpconfig"
 
       mv -f "${EXTRACT_DIR}/$installer" ${OCP_DIR}
     fi
