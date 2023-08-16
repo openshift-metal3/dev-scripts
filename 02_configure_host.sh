@@ -234,6 +234,7 @@ fi
 # restart the libvirt network so it applies an ip to the bridge
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
+    sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
     sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
     if [ "$INT_IF" ]; then #Need to bring UP the NIC after destroying the libvirt network
         sudo ifup $INT_IF
