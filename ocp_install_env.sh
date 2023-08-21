@@ -325,7 +325,7 @@ pullSecret: |
   $(jq -c . $install_config_pull_secret)
 sshKey: |
   ${SSH_PUB_KEY}
-fips: ${FIPS_MODE:-false}
+fips: ${FIPS_MODE:-true}
 EOF
 
   if [[ ! -z "$INSTALLER_PROXY" ]]; then
