@@ -366,6 +366,10 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     # Attach the diskimage to nodes
     attach_appliance_diskimage master $NUM_MASTERS
     attach_appliance_diskimage worker $NUM_WORKERS
+
+    # Delete the unused appliance.raw file
+    # (to avoid storage overconsumption on the CI machine)
+    sudo rm -f "${OCP_DIR}/appliance.raw"
     ;;
 esac
 
