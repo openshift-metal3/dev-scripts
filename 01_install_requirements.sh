@@ -31,8 +31,13 @@ export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"5.9.0"}
 sudo sh -c "echo 'fastestmirror=1' >> /etc/dnf/dnf.conf"
 sudo sh -c "echo 'max_parallel_downloads=8' >> /etc/dnf/dnf.conf"
 
+# Refresh dnf data
+# We could also use --refresh to just force metadata update
+# in the upgrade command,but this is more explicit and complete
+sudo dnf -y clean all
+
 # Update to latest packages first
-sudo dnf -y upgrade
+sudo dnf -y upgrade --nobest
 
 # Install additional repos as needed for each OS version
 # shellcheck disable=SC1091
@@ -91,6 +96,13 @@ case $DISTRO in
 esac
 
 sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
+
+
+# Hijack metal3-dev-env update module to use nobest
+# during dnf upgrade
+sudo dnf -y install jq
+sudo python -m pip install yq
+yq -iy '.[3].dnf.nobest = "true"' ${METAL3_DEV_ENV_PATH}/vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
 
 # Also need the 3.9 version of netaddr for ansible.netcommon
 # and lxml for the pyxpath script
