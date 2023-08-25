@@ -46,7 +46,15 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]] && [ -n "$NODES_FILE" ] ; then
         if [[ $ADDRESS =~ ^ipmi://([^:]*)(:([0-9]+))?$ ]] ; then
             IPMIIP=${BASH_REMATCH[1]}
             IPMIPORT=${BASH_REMATCH[3]:-623}
-            ipmitool -I lanplus -H $IPMIIP -p $IPMIPORT -U $USER -P $PASSWORD power off || echo "WARNING($?): Skipping power down of $ADDRESS"
+            ipmitool -I lanplus -H $IPMIIP -p $IPMIPORT -U $USER -P $PASSWORD power off || echo "WARNING($?): Failed power down of $ADDRESS"
+        elif [[ $ADDRESS =~ ^(redfish.*://)(.*)$ ]] ; then
+            SCHEME="https://"
+            SYSTEM="${BASH_REMATCH[2]}"
+            if [[ ${BASH_REMATCH[1]} =~ http: ]] ; then
+                SCHEME="http://"
+            fi
+            SYSTEMURL="${SCHEME}${SYSTEM}"
+            curl -u $USER:$PASSWORD -k -H 'Content-Type: application/json' $SYSTEMURL/Actions/ComputerSystem.Reset -d '{"ResetType": "ForceOff"}' || echo "WARNING($?): Failed power down of $ADDRESS"
         else
             # TODO: Add support for other protocols
             echo "WARNING: Skipping power down of $ADDRESS"
