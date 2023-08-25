@@ -4,7 +4,7 @@ metadata:
   name: test-agent-cluster-install
   namespace: {{ cluster_namespace }}
 spec:
-{% if num_masters != "1" %}
+{% if (platform_type != "none") and (platform_type != "external") %}
   apiVIP: {{ api_vip }} 
   ingressVIP: {{ ingress_vip }} 
 {% endif %}
@@ -43,8 +43,12 @@ spec:
     - cidr: {{ external_subnet_v6 }}
 {% endif %}
     networkType: {{ network_type }}
-{% if platform_type == "none" %}
+{% if (platform_type == "none") or (platform_type == "external") %}
     userManagedNetworking: true
+{% endif %}
+{% if (platform_type == "external") %}
+  external:
+    platformName: oci
 {% endif %}
   provisionRequirements:
     controlPlaneAgents: {{ num_masters }}

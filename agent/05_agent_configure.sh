@@ -277,7 +277,7 @@ function enable_load_balancer() {
   local load_balancer_ip=${2}
   local HTTP_PORT=80
 
-  if [[ "${AGENT_PLATFORM_TYPE}" == "none" && "${NUM_MASTERS}" > "1" ]]; then
+  if [[ "${AGENT_PLATFORM_TYPE}" == "none" || "${AGENT_PLATFORM_TYPE}" == "external" ]] && [[ "${NUM_MASTERS}" > "1" ]]; then
 
     # setup haproxy as the load balancer
     if [[ "${IP_STACK}" == "v6" ]]; then
@@ -370,6 +370,30 @@ EOF
   fi
 }
 
+# Change the domain manufacturer and product to ensure validations pass when using external platform
+function set_oci() {
+
+    tmpdomain=$(mktemp --tmpdir "virt-domain--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmpdomain"
+
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        sudo virsh dumpxml ${name} > ${tmpdomain}
+        sed -i '/\/os>/a\
+ <sysinfo type="smbios">\
+   <system>\
+     <entry name="manufacturer">OracleCloud.com</entry>\
+     <entry name="product">OCI</entry>\
+   </system>\
+ </sysinfo>' ${tmpdomain}
+
+        sed -i '/\<os>/a\
+ <smbios mode="sysinfo"/>' ${tmpdomain}
+       sudo virsh define ${tmpdomain}
+    done
+}
+
 write_pull_secret
 
 # needed for assisted-service to run nmstatectl
@@ -386,8 +410,8 @@ if [[ ! -z "${MIRROR_IMAGES}" ]]; then
 fi
 
 if [[ "${NUM_MASTERS}" > "1" ]]; then
-  if [[ "${AGENT_PLATFORM_TYPE}" == "none" ]]; then
-    # for platform "none" both API and INGRESS point to the same
+  if [[ "${AGENT_PLATFORM_TYPE}" == "none" || "${AGENT_PLATFORM_TYPE}" == "external" ]]; then
+    # for platform "none" or "external" both API and INGRESS point to the same
     # load balancer IP address
     get_vips
     configure_dnsmasq ${PROVISIONING_HOST_EXTERNAL_IP} ${PROVISIONING_HOST_EXTERNAL_IP}
@@ -405,6 +429,11 @@ else
     ip=${AGENT_NODES_IPSV6[0]}
   fi
   configure_dnsmasq ${ip} ""
+fi
+
+if [[ "${AGENT_PLATFORM_TYPE}" == "external" ]]; then
+  set_oci master $NUM_MASTERS
+  set_oci worker $NUM_WORKERS
 fi
 
 generate_cluster_manifests
