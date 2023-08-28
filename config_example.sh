@@ -162,6 +162,8 @@ set -x
 
 # ASSETS_EXTRA_FOLDER -
 # Folder where to copy extra manifests for the cluster deployment
+# If dev-scripts is running with a local registry enabled, any container images
+# referenced will be mirrored and the container updated to reference the mirror
 #
 #export ASSETS_EXTRA_FOLDER=local_file_path
 

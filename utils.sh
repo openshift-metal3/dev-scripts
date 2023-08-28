@@ -137,7 +137,21 @@ function create_cluster() {
     fi
 
     if [ ! -z "${ASSETS_EXTRA_FOLDER:-}" ]; then
-      find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -exec cp {} "${assets_dir}/openshift" \;
+      if [[ ! -z "${MIRROR_IMAGES}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+        for ASSET in $(find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -print) ; do
+            ASSET_NEW=${assets_dir}/openshift/${ASSET##*/}
+            cp $ASSET $ASSET_NEW
+            for IMAGE in $(yq '.. | objects | select(has("containers")) | .containers[].image' $ASSET -r | sort | uniq) ; do
+                IMAGE_SHORT=${IMAGE##*/}
+                IMAGE_MIRRORED=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/assets/${IMAGE_SHORT}
+                sudo -E podman pull --authfile $PULL_SECRET_FILE $IMAGE
+                sudo podman push --tls-verify=false --remove-signatures --authfile $PULL_SECRET_FILE $IMAGE $IMAGE_MIRRORED
+                sed -i -e "s%${IMAGE}%${IMAGE_MIRRORED}%g" $ASSET_NEW
+            done
+        done
+      else
+        find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -exec cp {} "${assets_dir}/openshift" \;
+      fi
     fi
 
     if [[ "$BMO_WATCH_ALL_NAMESPACES" == "true" ]]; then
