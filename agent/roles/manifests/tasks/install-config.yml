@@ -12,3 +12,10 @@
   template:
     src: "agent-config_yaml.j2"
     dest: "{{ install_path }}/agent-config.yaml"
+  when: agent_bond_config == 'none'
+
+- name: write the agent-config.yaml with nics in a bond
+  template:
+    src: "agent-config_bond_yaml.j2"
+    dest: "{{ install_path }}/agent-config.yaml"
+  when: agent_bond_config != 'none'

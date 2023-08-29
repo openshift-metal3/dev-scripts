@@ -85,6 +85,10 @@ function get_static_ips_and_macs() {
 
         # Get the generated mac addresses
         AGENT_NODES_MACS+=($(sudo virsh dumpxml $cluster_name | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -))
+        if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
+	   # For a bond, a random mac is added for the 2nd interface
+	   AGENT_NODES_MACS+=($(sudo virsh domiflist ${cluster_name} | grep ${BAREMETAL_NETWORK_NAME} | grep -v ${AGENT_NODES_MACS[-1]} | awk '{print $5}'))
+        fi
     done
 }
 

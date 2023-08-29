@@ -329,3 +329,9 @@ if [ "${DISABLE_MULTICAST:-false}" == "true" ]; then
         sudo ebtables -A OUTPUT --pkttype-type multicast -p ip6 --ip6-dst ${dst} -j DROP
     done
 fi
+
+if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
+
+    setup_bond master $NUM_MASTERS
+    setup_bond worker $NUM_WORKERS
+fi

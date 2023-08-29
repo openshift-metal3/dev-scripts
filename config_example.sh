@@ -658,6 +658,12 @@ set -x
 # More info here: https://github.com/openshift-metal3/dev-scripts/pull/1241#issuecomment-846067822
 # export BMO_WATCH_ALL_NAMESPACES="true"
 
+# For platforms that use nmstate configuration, the bond mode is set to the value.
+# The possible values are 'balance-rr', 'active-backup', 'broadcast', 'balance-xor',
+# 'balance-tlb', and 'balance-alb'.
+# The default is no bonding, so value is set to 'none'.
+# export BOND_CONFIG='none'
+
 ################################################################################
 ## Agent Deployment
 ##

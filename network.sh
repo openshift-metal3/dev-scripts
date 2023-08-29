@@ -199,6 +199,10 @@ if [ -n "${NETWORK_CONFIG_FOLDER:-}" ]; then
   NETWORK_CONFIG_FOLDER="$(readlink -m $NETWORK_CONFIG_FOLDER)"
 fi
 
+if [[ ! -z "${BOND_CONFIG:-}" && "${BOND_CONFIG}" != 'none' ]]; then
+  BOND_PRIMARY_INTERFACE="eth0"
+fi
+
 function concat_parameters_with_vipsseparator() {
     # Description:
     #     Adds ${VIPS_SEPARATOR} between all given parameters.
