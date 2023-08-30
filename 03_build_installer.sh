@@ -62,3 +62,4 @@ else
   clone_installer
   build_installer
 fi
+

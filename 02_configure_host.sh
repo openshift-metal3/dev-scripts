@@ -335,3 +335,9 @@ if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
     setup_bond master $NUM_MASTERS
     setup_bond worker $NUM_WORKERS
 fi
+
+# We should have both virsh networks started by this point.
+# Let's do a quick validation here before moving to the next
+# stage
+sudo virsh net-list | grep ${PROVISIONING_NETWORK_NAME} || sudo virsh net-start ${PROVISIONING_NETWORK_NAME}
+sudo virsh net-list | grep ${BAREMETAL_NETWORK_NAME} || sudo virsh net-start ${BAREMETAL_NETWORK_NAME}

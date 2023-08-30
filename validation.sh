@@ -55,7 +55,7 @@ function early_deploy_validation() {
 
     early_either_validation
 
-    if [ ! -s ${PERSONAL_PULL_SECRET} ]; then
+    if [ ! -s ${PERSONAL_PULL_SECRET} -a ${OPENSHIFT_RELEASE_TYPE} != "okd" ]; then
         error "${PERSONAL_PULL_SECRET} is missing or empty"
         if [ -n "${PULL_SECRET:-}" ]; then
             error "It looks like you are using the old PULL_SECRET variable."
@@ -67,7 +67,7 @@ function early_deploy_validation() {
         exit 1
     fi
 
-    if [ "${OPENSHIFT_CI}" != "true" -a ${#CI_TOKEN} = 0 ]; then
+    if [ "${OPENSHIFT_CI}" != "true" -a ${#CI_TOKEN} = 0 -a "${OPENSHIFT_RELEASE_TYPE}" != "okd" ]; then
         error "No valid CI_TOKEN set in ${CONFIG}"
         if [ -n "${PULL_SECRET:-}" ]; then
             error "It looks like you are using the old PULL_SECRET variable."

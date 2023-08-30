@@ -40,10 +40,19 @@ set -x
 # Select a different release type from which to pull the latest image.
 # If using ga then set OPENSHIFT_VERSION to the required version.
 # Default: nightly
-# Choices: ci, nightly, ga
+# Choices: ci, nightly, ga, okd
 # NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE
+# NOTE: If set to okd, a OPENSHIFT_RELEASE_IMAGE is required. See the below
+# section on OPENSHIFT_RELEASE_IMAGE for an example.
 #
 #export OPENSHIFT_RELEASE_TYPE=nightly
+
+# OPENSHIFT_RELEASE_IMAGE -
+# Define a specific image to deploy the cluster from. If using OKD,
+# this can be set to an image from: https://amd64.origin.releases.ci.openshift.org
+# For example:
+# export OPENSHIFT_RELEASE_IMAGE=registry.ci.openshift.org/origin/release:4.15.0-0.okd-2023-08-29-101209
+# Default: Undefined
 
 # OPENSHIFT_VERSION -
 # Set the Openshift version. If unset defaults to $OPENSHIFT_RELEASE_STREAM.
