@@ -603,6 +603,12 @@ set -x
 #
 #export MIRROR_OLM_REMOTE_INDEX="corp.example/registry/corp-operator-index:v2"
 
+# MIRROR_CUSTOM_IMAGES -
+# Comma-separated list of container images to mirror into the local registry. This
+# has no effect if MIRROR_IMAGES is false.
+#
+#export MIRROR_CUSTOM_IMAGES="corp.example/registry/sample-app:v1"
+
 ################################################################################
 ## Multi-cluster/Hive variables
 ##
