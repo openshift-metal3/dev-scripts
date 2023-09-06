@@ -18,7 +18,7 @@ rm -rf "${OCP_DIR}/output"
 case "${AGENT_E2E_TEST_BOOT_MODE}" in
   "PXE" )
     sudo pkill agentpxeserver || true
-    rm -rf ${WORKING_DIR}/pxe
+    rm -rf ${WORKING_DIR}/boot-artifacts
     ;;
   "DISKIMAGE" )
     sudo rm -rf "${OCP_DIR}/cache"

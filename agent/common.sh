@@ -21,7 +21,7 @@ export OPENSHIFT_INSTALLER_CMD="openshift-install"
 
 # Set required config vars for PXE boot mode
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
-  export PXE_SERVER_DIR=${WORKING_DIR}/pxe
+  export PXE_SERVER_DIR=${WORKING_DIR}/boot-artifacts
   export PXE_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_PXE_SERVER_PORT}
   export PXE_BOOT_FILE=agent.x86_64.ipxe
 fi

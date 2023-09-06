@@ -306,7 +306,7 @@ function setup_pxe_server() {
     sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
 
     # Copy the generated PXE artifacts in the tftp server location
-    cp ${SCRIPTDIR}/${OCP_DIR}/pxe/* ${PXE_SERVER_DIR}
+    cp ${SCRIPTDIR}/${OCP_DIR}/boot-artifacts/* ${PXE_SERVER_DIR}
 
     # Run a local http server to provide all the necessary PXE artifacts
     echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${PXE_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${AGENT_PXE_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${PXE_SERVER_DIR}/agentpxeserver.go
