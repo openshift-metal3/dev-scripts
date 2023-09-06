@@ -14,7 +14,7 @@ rendezvousIP: {{ ips[0] }}
 rendezvousIP: {{ ipsv6[0] }}
 {% endif %}
 {% if boot_mode == "PXE" %}
-ipxeBaseURL: {{ pxe_server_url }}
+bootArtifactsBaseURL: {{ pxe_server_url }}
 {% endif %}
 hosts:
 {% for hostname in hostnames %}
