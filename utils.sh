@@ -735,6 +735,9 @@ function verify_pull_secret() {
 }
 
 function write_pull_secret() {
+	if [ "${OPENSHIFT_RELEASE_TYPE}" == "okd" ]; then
+		return
+	fi
     if [ "${OPENSHIFT_CI}" == true ]; then
         # We don't need to fetch a personal pull secret with the
         # token, but we still need to merge what we're given with the
