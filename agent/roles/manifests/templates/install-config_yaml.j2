@@ -49,6 +49,9 @@ networking:
 platform:
 {% if (platform_type == "none") %}
   none: {}
+{% elif (platform_type == "external") %}
+  external:
+    platformName: oci
 {% else %}
 {% set macs = agent_nodes_macs.split(',') %}
 {% set hostnames = agent_nodes_hostnames.split(',') %}
