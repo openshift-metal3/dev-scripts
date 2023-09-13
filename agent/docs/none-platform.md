@@ -1,4 +1,4 @@
-# None Platform Support
+# None and External Platform Support
 
 ## Configuration Variable
 
@@ -6,16 +6,20 @@ To enable None platform for compact and HA clusters:
 ````
 export AGENT_PLATFORM_TYPE=none
 ````
+To enable External platform for compact and HA clusters:
+````
+export AGENT_PLATFORM_TYPE=external
+````
 
 ### Network Configuration
 
-With None platform, the user is responsible for configuring the DNS entries for
+With None and External platforms, the user is responsible for configuring the DNS entries for
 the Kubernetes API, OpenShift application wildcard, and the names of the control plane
 and compute machines. Users are also responsible for providing a load balancer
 infrastructure for the API and application ingress. 
 
-In the context of dev-scripts and excluding SNO, None platform requires these DNS records to be 
-present in the 'ostestbm' network. 
+In the context of dev-scripts and excluding SNO, these platforms require the following DNS
+records to be present in the 'ostestbm' network.
 * api.<cluster_name>.<base_domain> 
 * api-int.<cluster_name>.<base_domain> 'new'
 * *.apps.<cluster_name>.<base_domain>. 'new'
@@ -72,8 +76,8 @@ sudo virsh net-dumpxml ostestbm
 </network>
 ````
 
-'haproxy' is the load balancer deployed for enabling the None platform with the agent-based installer. The haproxy service
-is configured and enabled by the enable_load_balancer() function.
+'haproxy' is the load balancer deployed for enabling the None and External platforms with the agent-based installer.
+The haproxy service is configured and enabled by the enable_load_balancer() function.
 
 'haproxy' runs on the hypervisor host and is accessed by the hosts forming the OpenShift cluster through
 the 'ostestbm' network's .1 or ::1 IP address.

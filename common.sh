@@ -428,7 +428,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_MEMORY=32768
           export NUM_WORKERS=0
           export NETWORK_TYPE="OVNKubernetes"
-          export AGENT_PLATFORM_TYPE="none"
+          if [[ "${AGENT_PLATFORM_TYPE:-baremetal}" != "external" ]]; then
+            export AGENT_PLATFORM_TYPE="none"
+          fi
           ;;
       *)
         invalidAgentValue
