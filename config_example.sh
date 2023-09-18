@@ -332,6 +332,19 @@ set -x
 # v4v6 Provisioning network
 #export PROVISIONING_NETWORK="172.23.0.0/16"
 
+# Extra Network(s)
+# Provision one or more extra networks for each host.
+# Each new network will be connected to an addition interface on each host.
+# The hosts will automatically name the interface(s) connected to the network.
+# EXTRA_NETWORK_NAMES array may contain any name you wish and each new
+# network name must have a corresponding subnet.
+#
+#export EXTRA_NETWORK_NAMES="nmstate1 nmstate2"
+#export NMSTATE1_NETWORK_SUBNET_V4='192.168.221.0/24'
+#export NMSTATE1_NETWORK_SUBNET_V6='fd2e:6f44:5dd8:ca56::/120'
+#export NMSTATE2_NETWORK_SUBNET_V4='192.168.222.0/24'
+#export NMSTATE2_NETWORK_SUBNET_V6='fd2e:6f44:5dd8:cc56::/120'
+
 # EXTERNAL_SUBNET -
 # Set the external subnet CIDR for the Openshift cluster.
 # The value selected is based off the value of HOST_IP_STACK.
