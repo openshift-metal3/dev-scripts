@@ -506,7 +506,7 @@ EOF
         openssl req -x509 \
                 -key ${REGISTRY_DIR}/certs/${REGISTRY_KEY} \
                 -out  ${REGISTRY_DIR}/certs/${REGISTRY_CRT} \
-                -days 365 \
+                -days 3650 \
                 -config ${SSL_CONF} \
                 -extensions SAN
 
