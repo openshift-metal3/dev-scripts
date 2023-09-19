@@ -428,8 +428,10 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_MEMORY=32768
           export NUM_WORKERS=0
           export NETWORK_TYPE="OVNKubernetes"
-          if [[ "${AGENT_PLATFORM_TYPE:-baremetal}" != "external" ]]; then
-            export AGENT_PLATFORM_TYPE="none"
+          export AGENT_PLATFORM_TYPE="${AGENT_PLATFORM_TYPE:-"none"}"
+          if [[ "${AGENT_PLATFORM_TYPE}" != "external" ]]  && [[ "${AGENT_PLATFORM_TYPE}" != "none" ]]; then
+            echo "Invalid value ${AGENT_PLATFORM_TYPE},  use 'none' or 'external'."
+            exit 1
           fi
           ;;
       *)
