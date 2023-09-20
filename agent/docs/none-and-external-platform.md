@@ -6,7 +6,7 @@ To enable None platform for compact and HA clusters:
 ````
 export AGENT_PLATFORM_TYPE=none
 ````
-To enable External platform for compact and HA clusters:
+To enable External platform for SNO, compact, and HA clusters:
 ````
 export AGENT_PLATFORM_TYPE=external
 ````
