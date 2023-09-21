@@ -10,6 +10,7 @@ controlPlane:
   hyperthreading: Enabled
   name: master
   replicas: {{ num_masters }} 
+fips: {{ fips_mode }}
 metadata:
   name: {{ cluster_name }} 
 {% if boot_mode != "DISKIMAGE" %}
