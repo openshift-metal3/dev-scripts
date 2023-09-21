@@ -773,9 +773,12 @@ set -x
 # The default is 'baremetal'.
 # When set to 'none', the cluster is deployed using platform none.
 # This means userManagedNetworking is set to true in AgentClusterInstall,
-# haproxy is deployed as the load balancer, and the appropriate DNS records
-# are created.
-# export AGENT_PLATFORM_TYPE=none
+# and, if not set for SNO, haproxy is deployed as the load balancer, and the appropriate
+# DNS records are created.
+# Likewise when set to 'external', the cluster is deployed in the same way as 'none' with
+# the addition of setting the manufacturer and product for the domain to ensure that
+# the assisted-service validations pass.
+# export AGENT_PLATFORM_TYPE=baremetal
 
 # When set to 'true', configure the host settings in agent-config.yaml to
 # include the nmstate configuration when using DHCP.
