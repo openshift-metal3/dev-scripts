@@ -53,6 +53,20 @@ platform:
 {% elif (platform_type == "external") %}
   external:
     platformName: oci
+{% elif (platform_type == "vsphere") %}
+  vsphere:
+{% set macs = agent_nodes_macs.split(',') %}
+{% set hostnames = agent_nodes_hostnames.split(',') %}
+    apiVIPs:
+{% set a_vips = api_vips.split(',') %}
+{% for api_vip in a_vips %}
+      - {{ api_vip }}
+{% endfor %}
+    ingressVIPs:
+{% set i_vips = ingress_vips.split(',') %}
+{% for ingress_vip in i_vips %}
+      - {{ ingress_vip }}
+{% endfor %}
 {% endif %}
 pullSecret: {{ pull_secret_contents }}
 sshKey: {{ ssh_pub_key }} 
