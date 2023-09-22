@@ -7,13 +7,19 @@
   template:
     src: "templates/install-config_yaml.j2"
     dest: "{{ install_path }}/install-config.yaml"
-  when: platform_type != "baremetal"
+  when: platform_type != "baremetal" and platform_type != "vsphere"
 
 - name: write the install-config.yaml
   template:
     src: "templates/install-config_baremetal_yaml.j2"
     dest: "{{ install_path }}/install-config.yaml"
   when: platform_type == "baremetal"
+
+- name: write the install-config.yaml
+  template:
+    src: "templates/install-config_vsphere_yaml.j2"
+    dest: "{{ install_path }}/install-config.yaml"
+  when: platform_type == "vsphere"
 
 - name: write the agent-config.yaml 
   template:

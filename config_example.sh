@@ -205,7 +205,6 @@ set -x
 # for the cluster image-registry
 # export PERSISTENT_IMAGEREG=true
 
-
 ################################################################################
 ## Network Settings
 ##
@@ -804,6 +803,13 @@ set -x
 # The default is 'false', in which case the hosts will be defined in
 # agent-config.yaml.
 # export AGENT_BM_HOSTS_IN_INSTALL_CONFIG=false
+
+# AGENT_WAIT_FOR_INSTALL_COMPLETE
+# Default: true
+#
+# Setting this to false skips the "wait-for install-complete" step.
+#
+# export AGENT_WAIT_FOR_INSTALL_COMPLETE=false
 
 # Image reference for OpenShift-based Appliance Builder.
 # See: https://github.com/openshift/appliance

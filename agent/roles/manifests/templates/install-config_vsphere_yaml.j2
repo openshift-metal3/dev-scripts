@@ -1,0 +1,99 @@
+apiVersion: v1
+baseDomain: {{ base_domain }}
+compute:
+- hyperthreading: Enabled
+  name: worker
+  replicas: {{ num_workers }} 
+  architecture: {{ goCPUArchitecture }}
+controlPlane:
+  architecture: {{ goCPUArchitecture }}
+  hyperthreading: Enabled
+  name: master
+  replicas: {{ num_masters }} 
+fips: {{ fips_mode }}
+metadata:
+  name: {{ cluster_name }} 
+{% if boot_mode != "DISKIMAGE" %}
+  namespace: {{ cluster_namespace }}
+{% endif %}
+networking:
+{% if ip_stack == "v4" %}
+  clusterNetwork:
+  - cidr: {{ cluster_subnet_v4 }}
+    hostPrefix: {{ cluster_host_prefix_v4 }}
+  machineNetwork:
+  - cidr: {{ external_subnet_v4 }}
+  serviceNetwork:
+  - {{ service_subnet_v4 }}
+{% elif ip_stack == "v6" %}
+  clusterNetwork:
+  - cidr: {{ cluster_subnet_v6 }}
+    hostPrefix: {{ cluster_host_prefix_v6 }}
+  machineNetwork:
+  - cidr: {{ external_subnet_v6 }}
+  serviceNetwork:
+  - {{ service_subnet_v6 }}
+{% else %}
+  clusterNetwork:
+  - cidr: {{ cluster_subnet_v4 }}
+    hostPrefix: {{ cluster_host_prefix_v4 }}
+  - cidr: {{ cluster_subnet_v6 }}
+    hostPrefix: {{ cluster_host_prefix_v6 }}
+  machineNetwork:
+  - cidr: {{ external_subnet_v4 }}
+  - cidr: {{ external_subnet_v6 }}
+  serviceNetwork:
+  - {{ service_subnet_v4 }}
+  - {{ service_subnet_v6 }}
+{% endif %}
+  networkType: {{ network_type }} 
+platform:
+  vsphere:
+    vcenters:
+    - datacenters:
+      - testDatacenter
+      password: testPassword
+      server: vcenter.test.com
+      user: testUser@vcenter.test.com
+    failuredomains:
+    - name: test-failure-baseDomain
+      server: vcenter.test.com
+      region: testRegion
+      topology:
+        datacenter: testDatacenter
+        datastore: /testDatacenter/datastore/testDatastore
+        computeCluster: /testDatacenter/host/testClusters
+        folder: /testDatacenter/vm/testFolder
+        networks:
+        - testNetwork
+      zone: testZone
+    apiVIPs: 
+{% set a_vips = api_vips.split(',') %}
+{% for api_vip in a_vips %}
+      - {{ api_vip }}
+{% endfor %}
+    ingressVIPs:
+{% set i_vips = ingress_vips.split(',') %}
+{% for ingress_vip in i_vips %}
+      - {{ ingress_vip }}
+{% endfor %}
+pullSecret: {{ pull_secret_contents }}
+sshKey: {{ ssh_pub_key }} 
+{% if mirror_images %}
+imageContentSources:
+{{ image_content_sources }}
+{% if (mirror_command == "oc-mirror") and (agent_deploy_mce == "true") %}
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/multicluster-engine"
+  source: "registry.redhat.io/multicluster-engine"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/rhel8"
+  source: "registry.redhat.io/rhel8"
+- mirrors:
+    - "{{ local_registry_dns_name }}:{{ local_registry_port }}/redhat"
+  source: "registry.redhat.io/redhat"
+{% endif %}
+additionalTrustBundle: {{ ca_bundle_crt }}
+{% elif enable_local_registry %}
+additionalTrustBundle: {{ registry_certificate }}
+{% endif %}
