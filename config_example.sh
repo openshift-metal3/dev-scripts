@@ -789,6 +789,12 @@ set -x
 # not be included
 # export AGENT_NMSTATE_DHCP=false
 
+# When set to 'true', set the baremetal hosts field in install-config.yaml,
+# not in agent-config.yaml. This is similar to baremetal IPI configuration.
+# The default is 'false', in which case the hosts will be defined in
+# agent-config.yaml.
+# export AGENT_INSTALL_CONFIG_HOSTS=false
+
 # Image reference for OpenShift-based Appliance Builder.
 # See: https://github.com/openshift/appliance
 # Default: "quay.io/edge-infrastructure/openshift-appliance:latest"
