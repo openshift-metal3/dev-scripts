@@ -77,24 +77,24 @@ platform:
       bootMACAddress: {{ macs[loop.index0] }}
       networkConfig:
         interfaces:
-      {{ net.interfaces("enp2s0", macs[loop.index0])|indent(4, True) }}
+      {{ net.interfaces("eth0", macs[loop.index0])|indent(4, True) }}
 {% if ip_stack == "v4" %}
             ipv4:
           {{ net.ip(networking_mode, ips[loop.index0], external_subnet_v4_prefixlen)|indent(4, True) }}
     {{ net.dns(provisioning_host_external_ip)|indent(4, True)  }}
-    {{ net.route("enp2s0", "0.0.0.0/0", provisioning_host_external_ip)|indent(4, True) }}
+    {{ net.route("eth0", "0.0.0.0/0", provisioning_host_external_ip)|indent(4, True) }}
 {% elif ip_stack == "v6" %}
             ipv6:
           {{ net.ip(networking_mode, ipsv6[loop.index0], external_subnet_v6_prefixlen)|indent(4, True) }}
     {{ net.dns(provisioning_host_external_ip)|indent(4, True) }}
-    {{ net.route("enp2s0", "::/0", provisioning_host_external_ip)|indent(4, True) }}
+    {{ net.route("eth0", "::/0", provisioning_host_external_ip)|indent(4, True) }}
 {% else %}
             ipv4:
           {{ net.ip(networking_mode, ips[loop.index0], external_subnet_v4_prefixlen)|indent(4, True) }}
             ipv6:
           {{ net.ip(networking_mode, ipsv6[loop.index0], external_subnet_v6_prefixlen)|indent(4, True) }}
     {{ net.dns_dualstack(provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
-    {{ net.route_dualstack("enp2s0", provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
+    {{ net.route_dualstack("eth0", provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
 {% endif %}
 {% endfor %}
 {% endif %}
