@@ -16,7 +16,7 @@ release payload, as well as the custom images, are stored in a local registry ma
 
 The first step consists in having a local checkout of all the repos that are meant to be used for the release
 (see in the appendix for the specific agent repos and image names), with the desired code changes.
-Even thought not strictly necessary, it's recommend to manually build each Dockerfile to ensure that it's working fine.
+Even though not strictly necessary, it's recommended to manually build each Dockerfile to ensure that it's working fine.
 
 # Configure the local repositories
 
