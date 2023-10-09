@@ -20,9 +20,14 @@ source $SCRIPTDIR/oc_mirror.sh
 # To specify a custom Dockerfile set <ENTRYNAME>_DOCKERFILE, as a relative path of the Dockerfile
 # within the configured repo
 #
-# For example, to use a custom installer image:
+# To specify a custom image name, set <ENTRYNAME>_IMAGE with the required image name
+#
+# For example, to use a custom installer and assisted-service image:
 # export INSTALLER_LOCAL_REPO=~/go/src/github.com/openshift/installer
 # export INSTALLER_DOCKERFILE=images/installer/Dockerfile.ci
+# export ASSISTED_SERVICE_LOCAL_REPO=~/git/assisted-service
+# export ASSISTED_SERVICE_DOCKERFILE=Dockerfile.assisted-service.ocp
+# export ASSISTED_SERVICE_IMAGE=agent-installer-api-server
 
 early_deploy_validation
 write_pull_secret
@@ -77,8 +82,13 @@ function build_local_release() {
         cd -
         sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
         
-        IMAGE_NAME=$(echo ${IMAGE_VAR/_LOCAL_REPO} | tr '[:upper:]_' '[:lower:]-')
-        OLDIMAGE=$(sudo podman run --rm --authfile $PULL_SECRET_FILE $OPENSHIFT_RELEASE_IMAGE image $IMAGE_NAME)
+        FINAL_IMAGE_NAME=${IMAGE_VAR/_LOCAL_REPO}_IMAGE
+        FINAL_IMAGE=${!FINAL_IMAGE_NAME:-}
+        if [[ -z "$FINAL_IMAGE" ]]; then
+            FINAL_IMAGE=$(echo ${IMAGE_VAR/_LOCAL_REPO} | tr '[:upper:]_' '[:lower:]-')
+        fi
+        
+        OLDIMAGE=$(sudo podman run --rm --authfile $PULL_SECRET_FILE $OPENSHIFT_RELEASE_IMAGE image $FINAL_IMAGE)
         echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> $DOCKERFILE
     done
 

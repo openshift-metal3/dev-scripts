@@ -211,7 +211,7 @@ if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
     export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${OPENSHIFT_RELEASE_IMAGE}"
 fi
 
-if env | grep -q "_LOCAL_IMAGE=" ; then
+if env | grep -q "_LOCAL_IMAGE=\|_LOCAL_REPO=" ; then
     export MIRROR_IMAGES=true
 fi
 
