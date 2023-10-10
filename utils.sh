@@ -434,6 +434,7 @@ function setup_legacy_release_mirror {
 
     oc adm release mirror \
        --insecure=true \
+       --keep-manifest-list=true \
         -a ${PULL_SECRET_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
         --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
