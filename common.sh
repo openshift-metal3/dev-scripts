@@ -126,6 +126,12 @@ if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
     export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_VERSION%.*}
 fi
 
+if [ "${FIPS_MODE:-false}" = "true" ]; then
+    if ! [ "${FIPS_VALIDATE:-false}" = "true" ]; then
+        export OPENSHIFT_INSTALL_SKIP_HOSTCRYPT_VALIDATION="true"
+    fi
+fi
+
 # DNS resolution for amd64.ocp.releases.ci.openshift.org fails
 # pretty regularly, so try a few times before giving up.
 function get_latest_ci_image() {
