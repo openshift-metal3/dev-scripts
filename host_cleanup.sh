@@ -46,6 +46,9 @@ fi
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     sudo ifdown ${PROVISIONING_NETWORK_NAME} || true
     sudo ip link delete ${PROVISIONING_NETWORK_NAME} || true
+    if [[ -d /sys/class/net/pro-ipv6-dummy ]]; then
+       sudo ip link delete pro-ipv6-dummy || true
+    fi
     sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
 fi
 # Leaving this around causes issues when the host is rebooted
