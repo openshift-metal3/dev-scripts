@@ -247,10 +247,13 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     fi
 fi
 
-# The IPv6 bridge interface will remain in DOWN state with NO-CARRIER unless an interface is added,
+# IPv6 bridge interfaces will remain in DOWN state with NO-CARRIER unless an interface is added,
 # so add a dummy interface to ensure the bridge comes up
 if [[ -n "${EXTERNAL_SUBNET_V6}" ]] && [ ! "$INT_IF" ]; then
     sudo ip link add name bm-ipv6-dummy up master ${BAREMETAL_NETWORK_NAME} type dummy || true
+fi
+if [[ "${PROVISIONING_NETWORK}" =~ : ]] && [ ! "$PRO_IF" ] ; then
+    sudo ip link add name pro-ipv6-dummy up master ${PROVISIONING_NETWORK_NAME} type dummy || true
 fi
 
 IPTABLES=iptables
