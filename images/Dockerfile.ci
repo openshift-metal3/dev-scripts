@@ -3,6 +3,8 @@
 
 FROM registry.ci.openshift.org/openshift/release:rhel-8-release-golang-1.19-openshift-4.13
 
+# TESTING CI 
+
 ENV HOME /output
 
 # For RHEL7
