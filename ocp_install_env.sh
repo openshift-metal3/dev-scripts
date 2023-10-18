@@ -288,7 +288,8 @@ function generate_ocp_install_config() {
         exit 1
       fi
     fi
-
+    # Try to fix libvirt stability before running bootstrap VM
+    sudo systemctl restart virtproxyd.socket
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
