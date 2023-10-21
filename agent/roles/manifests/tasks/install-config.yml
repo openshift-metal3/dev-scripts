@@ -7,6 +7,13 @@
   template:
     src: "templates/install-config_yaml.j2"
     dest: "{{ install_path }}/install-config.yaml"
+  when: platform_type != "baremetal"
+
+- name: write the install-config.yaml
+  template:
+    src: "templates/install-config_hosts_yaml.j2"
+    dest: "{{ install_path }}/install-config.yaml"
+  when: platform_type == "baremetal"
 
 - name: write the agent-config.yaml 
   template:

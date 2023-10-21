@@ -793,7 +793,7 @@ set -x
 # not in agent-config.yaml. This is similar to baremetal IPI configuration.
 # The default is 'false', in which case the hosts will be defined in
 # agent-config.yaml.
-# export AGENT_INSTALL_CONFIG_HOSTS=false
+# export AGENT_BM_HOSTS_IN_INSTALL_CONFIG=false
 
 # Image reference for OpenShift-based Appliance Builder.
 # See: https://github.com/openshift/appliance

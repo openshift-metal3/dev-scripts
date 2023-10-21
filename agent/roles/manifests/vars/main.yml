@@ -1,6 +1,6 @@
 agent_bond_config: "{{ lookup('env', 'BOND_CONFIG') }}"
 agent_deploy_mce: "{{ lookup('env', 'AGENT_DEPLOY_MCE') }}"
-agent_install_config_hosts: "{{ lookup('env', 'AGENT_INSTALL_CONFIG_HOSTS') }}"
+agent_install_config_bm_hosts: "{{ lookup('env', 'AGENT_BM_HOSTS_IN_INSTALL_CONFIG') }}"
 agent_nmstate_dhcp: "{{ lookup('env', 'AGENT_NMSTATE_DHCP') }}"
 agent_nodes_macs: "{{ lookup('env', 'AGENT_NODES_MACS_STR') }}"
 agent_nodes_ips: "{{ lookup('env', 'AGENT_NODES_IPS_STR') }}"
