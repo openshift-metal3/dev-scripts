@@ -17,7 +17,7 @@ rendezvousIP: {{ ipsv6[0] }}
 {% if boot_mode == "PXE" %}
 bootArtifactsBaseURL: {{ pxe_server_url }}
 {% endif %}
-{% if networking_mode != "DHCP" or agent_nmstate_dhcp == 'true' %}
+{% if (agent_install_config_bm_hosts == "false") and (networking_mode != "DHCP" or agent_nmstate_dhcp == 'true') %}
 hosts:
 {% for hostname in hostnames %}
     - hostname: {{ hostname }}
