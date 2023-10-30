@@ -69,8 +69,8 @@ function create_factory_image() {
 function create_config_image() {
 
     # Copy any extra manifests
-    if [ -d "${asset_dir}/openshift" ]; then
-        cp -r "${asset_dir}/openshift" "${config_image_dir}"
+    if [ -d $EXTRA_MANIFESTS_PATH ]; then
+        cp -r $EXTRA_MANIFESTS_PATH "${config_image_dir}"
     fi
 
     "${openshift_install}" --log-level=debug --dir="${config_image_dir}" agent create config-image

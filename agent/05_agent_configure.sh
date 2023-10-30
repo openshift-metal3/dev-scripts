@@ -94,7 +94,6 @@ function get_static_ips_and_macs() {
 
 function generate_extra_cluster_manifests() {
 
-  EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
   mkdir -p ${EXTRA_MANIFESTS_PATH}
 
 cat > "${EXTRA_MANIFESTS_PATH}/agent-test.yaml" << EOF
