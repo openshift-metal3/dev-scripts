@@ -21,6 +21,9 @@ export APPLIANCE_IMAGE=${APPLIANCE_IMAGE:-"quay.io/edge-infrastructure/openshift
 # Override command name in case of extraction
 export OPENSHIFT_INSTALLER_CMD="openshift-install"
 
+# Location of extra manifests
+export EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
+
 # Set required config vars for PXE boot mode
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
   export PXE_SERVER_DIR=${WORKING_DIR}/boot-artifacts

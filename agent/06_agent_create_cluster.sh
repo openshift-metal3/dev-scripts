@@ -68,6 +68,11 @@ function create_factory_image() {
 
 function create_config_image() {
 
+    # Copy any extra manifests
+    if [ -d $EXTRA_MANIFESTS_PATH ]; then
+        cp -r $EXTRA_MANIFESTS_PATH "${config_image_dir}"
+    fi
+
     "${openshift_install}" --log-level=debug --dir="${config_image_dir}" agent create config-image
 
     # Copy the auth files to OCP_DIR so wait-for command can access it
