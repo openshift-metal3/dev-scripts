@@ -373,8 +373,10 @@ EOF
   fi
 }
 
-# Change the domain manufacturer and product to ensure validations pass when using external platform
-function set_oci() {
+# Change the domain manufacturer to ensure validations pass when using specific platforms
+function set_device_mfg() {
+
+    platform=${3}
 
     tmpdomain=$(mktemp --tmpdir "virt-domain--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpdomain"
@@ -383,13 +385,26 @@ function set_oci() {
     do
         name=${CLUSTER_NAME}_${1}_${n}
         sudo virsh dumpxml ${name} > ${tmpdomain}
-        sed -i '/\/os>/a\
+
+        if [[ "${platform}" == "external" ]]; then
+          sed -i '/\/os>/a\
  <sysinfo type="smbios">\
    <system>\
      <entry name="manufacturer">OracleCloud.com</entry>\
      <entry name="product">OCI</entry>\
    </system>\
  </sysinfo>' ${tmpdomain}
+        elif [[ "${platform}" == "vsphere" ]]; then
+          sed -i '/\/os>/a\
+ <sysinfo type="smbios">\
+   <system>\
+     <entry name="manufacturer">VMware, Inc.</entry>\
+   </system>\
+ </sysinfo>' ${tmpdomain}
+        else
+          echo "Invalid platform ${platform} for manufacturer override"
+          exit 1
+	fi
 
         sed -i '/\<os>/a\
  <smbios mode="sysinfo"/>' ${tmpdomain}
@@ -434,9 +449,9 @@ else
   configure_dnsmasq ${ip} ""
 fi
 
-if [[ "${AGENT_PLATFORM_TYPE}" == "external" ]]; then
-  set_oci master $NUM_MASTERS
-  set_oci worker $NUM_WORKERS
+if [[ "${AGENT_PLATFORM_TYPE}" == "external" ]] || [[ "${AGENT_PLATFORM_TYPE}" == "vsphere" ]]; then
+  set_device_mfg master $NUM_MASTERS ${AGENT_PLATFORM_TYPE}
+  set_device_mfg worker $NUM_WORKERS ${AGENT_PLATFORM_TYPE}
 fi
 
 generate_cluster_manifests
