@@ -1,7 +1,12 @@
 - name: Get additional trust bundle
   set_fact:
     ca_bundle_crt: "{{ lookup('file', mirror_path + '/ca-bundle.crt') | to_json }}"
-  when: mirror_images
+  when: mirror_images 
+  
+- name: Get local registry certificate
+  set_fact:
+    registry_certificate: "{{ lookup('file', registry_dir + '/certs/' + registry_crt) | to_json }}"
+  when: enable_local_registry
 
 - name: Set GoCPUArchitecture
   set_fact:

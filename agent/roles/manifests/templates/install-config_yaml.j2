@@ -85,4 +85,6 @@ imageContentSources:
   source: "registry.redhat.io/redhat"
 {% endif %}
 additionalTrustBundle: {{ ca_bundle_crt }}
+{% elif enable_local_registry %}
+additionalTrustBundle: {{ registry_certificate }}
 {% endif %}
