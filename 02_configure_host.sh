@@ -10,6 +10,29 @@ source oc_mirror.sh
 
 early_deploy_validation
 
+#
+# Manage libvirtd services based on OS
+# Get a dedicated method, making it easier to duplicate
+# or move in order to expose it to some other parts if needed.
+# This is the same method as defined in metal3-dev-env via that
+# commit:
+# https://github.com/metal3-io/metal3-dev-env/pull/1313/commits/a6a79685986f9d7cb18c4eb680ee4d2a759e99dc
+#
+manage_libvirtd() {
+  case ${DISTRO} in
+      centos9|rhel9)
+          for i in qemu network nodedev nwfilter secret storage interface; do
+              sudo systemctl enable --now virt${i}d.socket
+              sudo systemctl enable --now virt${i}d-ro.socket
+              sudo systemctl enable --now virt${i}d-admin.socket
+          done
+          ;;
+      *)
+          sudo systemctl restart libvirtd.service
+        ;;
+esac
+}
+
 # Generate user ssh key
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
     ssh-keygen -f ~/.ssh/id_rsa -P ""
@@ -141,14 +164,14 @@ fi
 ZONE="\nZONE=libvirt"
 
 # Allow local non-root-user access to libvirt
-# Restart libvirtd service to get the new group membership loaded
 if ! id $USER | grep -q libvirt; then
   sudo usermod -a -G "libvirt" $USER
+  gpasswd -a "${USER}" libvirt
 fi
 
-# Restart to see we are using firewalld and the new
-# usergroup from above
-sudo systemctl restart libvirtd
+# This method, defined in common.sh, will either ensure sockets are up'n'running
+# for CS9 and RHEL9, or restart the libvirtd.service for other DISTRO
+manage_libvirtd
 
 # As per https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#configure-default-libvirt-storage-pool
 # Usually virt-manager/virt-install creates this: https://www.redhat.com/archives/libvir-list/2008-August/msg00179.html
