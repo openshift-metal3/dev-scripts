@@ -166,7 +166,6 @@ ZONE="\nZONE=libvirt"
 # Allow local non-root-user access to libvirt
 if ! id $USER | grep -q libvirt; then
   sudo usermod -a -G "libvirt" $USER
-  gpasswd -a "${USER}" libvirt
 fi
 
 # This method, defined in common.sh, will either ensure sockets are up'n'running
