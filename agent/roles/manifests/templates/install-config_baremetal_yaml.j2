@@ -68,12 +68,9 @@ platform:
 {% set bmc_addresses = agent_nodes_bmc_addresses.split(',') %}
 {% set bmc_passwords = agent_nodes_bmc_passwords.split(',') %}
 {% set bmc_usernames = agent_nodes_bmc_usernames.split(',') %}
-{% if provisioning_network_profile == "Disabled" %}
     provisioningHostIP: {{ cluster_provisioning_ip }}
-{% else %}
     provisioningNetworkInterface: {{ cluster_provisioning_interface }}
     provisioningNetworkCIDR: {{ provisioning_network }}
-{% endif %}
     provisioningNetwork: {{ provisioning_network_profile }}
     hosts:
 {% for hostname in hostnames %}
