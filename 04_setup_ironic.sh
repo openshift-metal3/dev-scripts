@@ -171,14 +171,6 @@ for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${
     sudo podman ps --all | grep -w " $name$" && sudo podman rm $name -f
 done
 
-# Remove existing pod
-if  sudo podman pod exists ironic-pod ; then
-    sudo podman pod rm ironic-pod -f
-fi
-
-# Create pod
-sudo podman pod create -n ironic-pod
-
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
 
 for IMAGE in ${IRONIC_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
@@ -205,7 +197,7 @@ fi
 
 # cached images to the bootstrap VM
 sudo -E podman pull --authfile "${PULL_SECRET_FILE}" "${IRONIC_IMAGE}" || echo "WARNING: Could not pull latest $IRONIC_IMAGE; will try to use cached images instead"
-sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_NAME} --pod ironic-pod \
+sudo podman run -d --net host --name httpd-${PROVISIONING_NETWORK_NAME} \
      --env PROVISIONING_INTERFACE=${PROVISIONING_NETWORK_NAME} \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
@@ -214,8 +206,8 @@ if [ -n "${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-}" ];
 then
   sudo -E podman pull --authfile $PULL_SECRET_FILE $IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE
 
-  sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
-     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE} /usr/local/bin/get-resource.sh
+  sudo podman run -d --name ipa-downloader -v $IRONIC_DATA_DIR:/shared \
+      ${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE} /usr/local/bin/get-resource.sh
 
   # Units have been introduced in 2.x
   if printf '2.0.0\n%s\n' "$PODMAN_VERSION" | sort -V -C; then
@@ -242,15 +234,18 @@ if [ "$NODES_PLATFORM" = "libvirt" ]; then
         # has told us the process isn't there but sometimes when it
         # dies it leaves the file.
         sudo rm -f $WORKING_DIR/virtualbmc/vbmc/master.pid
-        sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
-             -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
-             "${VBMC_IMAGE}"
+        IPMI_PORT_RANGE="$VBMC_BASE_PORT-$VBMC_MAX_PORT"
+        sudo podman run -d -p 623:623/udp -p $IPMI_PORT_RANGE:$IPMI_PORT_RANGE/udp  \
+            -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+            --security-opt label=disable --name vbmc "${VBMC_IMAGE}"
     fi
 
     if ! is_running sushy-tools; then
-        sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
-             -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
-             "${SUSHY_TOOLS_IMAGE}"
+        # Virtual media implementation cannot reach back to the bootstrap VM
+        # without host networking.
+        sudo podman run -d --network host --security-opt label=disable --name sushy-tools \
+            -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+            "${SUSHY_TOOLS_IMAGE}"
     fi
 fi
 
