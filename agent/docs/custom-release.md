@@ -93,6 +93,18 @@ The previous example will build a new image using the `Dockerfile.assisted-servi
 `virthost.ostest.test.metalkube.org:5000/localimages/assisted-service:latest` and it will be used as `agent-installer-api-server` within the newly
 built release image.
 
+## Specify an image build arg
+
+It may also be useful to configure an additional build arg when building an image. The `<ENTRYNAME>_BUILD_ARG` could be 
+use for that:
+
+``` bash
+export INSTALLER_BAREMETAL_LOCAL_REPO=~git/installer
+export INSTALLER_BAREMETAL_DOCKERFILE=images/baremetal/Dockerfile.ci
+export INSTALLER_BAREMETAL_IMAGE=baremetal-installer
+export INSTALLER_BAREMETAL_BUILD_ARG="TAGS=\"okd libvirt baremetal\""
+```
+
 # Clean up
 
 To remove the local registry, and all of its content, use `make realclean`.
