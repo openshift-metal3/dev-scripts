@@ -40,9 +40,6 @@ dns_dualstackhost:
   - ip: "{{ baremetal_network_cidr_v6 | nthhost(5) }}"
     hostnames:
       - "api"
-  - ip: "{{ baremetal_network_cidr_v6 | nthhost(1) }}"
-    hostnames:
-      - "virthost"
 
 dns_extrahosts:
   - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
