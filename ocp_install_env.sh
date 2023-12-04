@@ -258,6 +258,12 @@ EOF
   fi
 }
 
+function override_openshift_sdn_deprecation() {
+  # OpenShiftSDN is deprecated in 4.15 and later; if the user explicitly requests it,
+  # we will override this deprecation (but not if they just defaulted to it).
+  [[ "${ORIG_NETWORK_TYPE}" = "OpenShiftSDN" ]] && printf '4.15\n%s\n' "$(openshift_version)" | sort -V -C
+}
+
 function cluster_os_image() {
   if is_lower_version $(openshift_version) 4.10; then
 cat <<EOF
@@ -287,6 +293,12 @@ function generate_ocp_install_config() {
         echo "NETWORK_TYPE must be OVNKubernetes when using IPv6"
         exit 1
       fi
+    fi
+
+    if override_openshift_sdn_deprecation; then
+      # Claim we want OVNKubernetes in install-config; we will hack the generated
+      # manifests later.
+      NETWORK_TYPE=OVNKubernetes
     fi
 
     cat > "${outdir}/install-config.yaml" << EOF

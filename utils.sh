@@ -158,6 +158,12 @@ function create_cluster() {
         sed -i s/"watchAllNamespaces: false"/"watchAllNamespaces: true"/ "${assets_dir}/openshift/99_baremetal-provisioning-config.yaml"
     fi
 
+    if override_openshift_sdn_deprecation; then
+      # We had to put `networkType: OVNKubernetes` in the install-config to make the
+      # installer happy, so fix that now.
+      sed -i 's/OVNKubernetes/OpenShiftSDN/' "${assets_dir}/manifests/cluster-network-02-config.yml"
+    fi
+
     # Preserve the assets for debugging
     mkdir -p "${assets_dir}/saved-assets"
     cp -av "${assets_dir}/openshift" "${assets_dir}/saved-assets"
