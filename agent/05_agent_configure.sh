@@ -245,6 +245,7 @@ function generate_cluster_manifests() {
     get_mirror_info
   fi
 
+  set +x
   # Set BMC info
   nodes_bmc_usernames=$(printf '%s,' "${AGENT_NODES_BMC_USERNAMES[@]}")
   export AGENT_NODES_BMC_USERNAMES_STR=${nodes_bmc_usernames::-1}
@@ -252,6 +253,7 @@ function generate_cluster_manifests() {
   export AGENT_NODES_BMC_PASSWORDS_STR=${nodes_bmc_passwords::-1}
   nodes_bmc_addresses=$(printf '%s,' "${AGENT_NODES_BMC_ADDRESSES[@]}")
   export AGENT_NODES_BMC_ADDRESSES_STR=${nodes_bmc_addresses::-1}
+  set -x
 
   # Create manifests
   ansible-playbook -vvv \
