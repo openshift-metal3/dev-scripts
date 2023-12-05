@@ -28,31 +28,9 @@ for name in dnsmasq ironic-inspector ; do
     sudo podman ps | grep -w "$name$" && sudo podman stop $name
 done
 
-
-# Default to emptyDir for image-reg storage
-if [ "${PERSISTENT_IMAGEREG}" != true ] ; then
-    oc patch configs.imageregistry.operator.openshift.io \
-        cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}},"managementState":"Managed"}}'
-else
-    oc apply -f - <<EOF
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv1
-spec:
-  capacity:
-    storage: 100Gi
-  accessModes:
-    - ReadWriteMany
-  nfs:
-    path: /opt/dev-scripts/nfsshare/1
-    server: $LOCAL_REGISTRY_DNS_NAME
-    readOnly: false
-EOF
-    oc patch configs.imageregistry.operator.openshift.io \
-        cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}},"managementState":"Managed"}}'
-fi
+# Configure storage for the image registry
+oc patch configs.imageregistry.operator.openshift.io \
+    cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}},"managementState":"Managed"}}'
 
 if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then        
     # Configure tools image registry and cluster samples operator 

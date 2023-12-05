@@ -509,10 +509,3 @@ if [[ -n "$MIRROR_IMAGES" || -z "${IP_STACK:-}" || "$IP_STACK" = "v6" || "$IP_ST
 fi
 
 export AGENT_TEST_CASES=${AGENT_TEST_CASES:-}
-
-
-export PERSISTENT_IMAGEREG=${PERSISTENT_IMAGEREG:-false}
-if [ "${OPENSHIFT_CI}" == true ] ; then
-  # Disruptive CI tests require a image-registry backed by persistent storage
-  export PERSISTENT_IMAGEREG=true
-fi

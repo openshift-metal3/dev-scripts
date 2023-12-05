@@ -67,6 +67,3 @@ sudo ebtables --flush
 
 # Kill any lingering proxy
 sudo pkill -f oc.*proxy
-
-# Remove image-reg nfsshare
-sudo rm -rf /etc/exports.d/dev-scripts.exports /opt/dev-scripts/nfsshare
