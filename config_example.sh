@@ -199,13 +199,6 @@ set -x
 #export METALLB_IMAGE_BASE=
 #export METALLB_IMAGE_TAG=
 
-# PERSISTENT_IMAGEREG
-# Default: false
-# Enables dev-scripts to setup and use nfs on the host as persistent storage
-# for the cluster image-registry
-# export PERSISTENT_IMAGEREG=true
-
-
 ################################################################################
 ## Network Settings
 ##

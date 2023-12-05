@@ -133,11 +133,6 @@ if [ -n "${KNI_INSTALL_FROM_GIT}" ]; then
     sudo dnf -y install zip
 fi
 
-# Install nfs for persistent volumes
-if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
-    sudo dnf -y install nfs-utils
-fi
-
 if [[ "${NODES_PLATFORM}" == "baremetal" ]] ; then
     sudo dnf -y install ipmitool
 fi

@@ -364,16 +364,3 @@ fi
 # stage
 sudo virsh net-list | grep ${PROVISIONING_NETWORK_NAME} || sudo virsh net-start ${PROVISIONING_NETWORK_NAME}
 sudo virsh net-list | grep ${BAREMETAL_NETWORK_NAME} || sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
-
-
-# Setup a single nfs export for image registry
-if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
-    sudo rm -rf /opt/dev-scripts/nfsshare
-    sudo mkdir -p /opt/dev-scripts/nfsshare/1
-    echo "/opt/dev-scripts/nfsshare ${EXTERNAL_SUBNET_V6:-$EXTERNAL_SUBNET_V4}(rw,sync,no_subtree_check)" | sudo dd of=/etc/exports.d/dev-scripts.exports
-    sudo chown -R nobody:nobody /opt/dev-scripts/nfsshare
-    sudo chmod -R 777 /opt/dev-scripts/nfsshare
-    sudo firewall-cmd --zone=libvirt  --add-port=2049/tcp
-    sudo systemctl start nfs-server
-    sudo exportfs -a
-fi
