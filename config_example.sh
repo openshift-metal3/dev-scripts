@@ -790,6 +790,9 @@ set -x
 # the assisted-service validations pass.
 # export AGENT_PLATFORM_TYPE=baremetal
 
+# When set to 'oci', the CloudControllerManager field is set to External in the install-config.yaml.
+# export AGENT_PLATFORM_NAME=oci
+
 # When set to 'true', configure the host settings in agent-config.yaml to
 # include the nmstate configuration when using DHCP.
 # The default is 'false', in which case the nmstate configuration will

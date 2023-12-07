@@ -52,7 +52,10 @@ platform:
   none: {}
 {% elif (platform_type == "external") %}
   external:
-    platformName: oci
+    platformName: {{ platform_name }}
+{% if (platform_name == "oci") %}
+    cloudControllerManager: External
+{% endif %}
 {% elif (platform_type == "vsphere") %}
   vsphere:
 {% set macs = agent_nodes_macs.split(',') %}

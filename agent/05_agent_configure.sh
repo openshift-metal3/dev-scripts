@@ -377,6 +377,7 @@ EOF
 function set_device_mfg() {
 
     platform=${3}
+    platformName=${4}
 
     tmpdomain=$(mktemp --tmpdir "virt-domain--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpdomain"
@@ -386,7 +387,7 @@ function set_device_mfg() {
         name=${CLUSTER_NAME}_${1}_${n}
         sudo virsh dumpxml ${name} > ${tmpdomain}
 
-        if [[ "${platform}" == "external" ]]; then
+        if [[ "${platform}" == "external" ]] && [[ "${platformName}" == "oci" ]]; then
           sed -i '/\/os>/a\
  <sysinfo type="smbios">\
    <system>\
@@ -450,8 +451,8 @@ else
 fi
 
 if [[ "${AGENT_PLATFORM_TYPE}" == "external" ]] || [[ "${AGENT_PLATFORM_TYPE}" == "vsphere" ]]; then
-  set_device_mfg master $NUM_MASTERS ${AGENT_PLATFORM_TYPE}
-  set_device_mfg worker $NUM_WORKERS ${AGENT_PLATFORM_TYPE}
+  set_device_mfg master $NUM_MASTERS ${AGENT_PLATFORM_TYPE} ${AGENT_PLATFORM_NAME}
+  set_device_mfg worker $NUM_WORKERS ${AGENT_PLATFORM_TYPE} ${AGENT_PLATFORM_NAME}
 fi
 
 generate_cluster_manifests

@@ -58,7 +58,10 @@ spec:
 {% endif %}
 {% if (platform_type == "external") %}
   external:
-    platformName: oci
+    platformName: {{ platform_name }}
+    {% if (platform_name == "oci") %}
+    cloudControllerManager: External
+    {% endif %}
 {% endif %}
   provisionRequirements:
     controlPlaneAgents: {{ num_masters }}

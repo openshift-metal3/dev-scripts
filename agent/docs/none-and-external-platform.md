@@ -11,6 +11,11 @@ To enable External platform for SNO, compact, and HA clusters:
 export AGENT_PLATFORM_TYPE=external
 ````
 
+To enable OCI as an external platform for SNO, compact, and HA clusters:
+````
+export AGENT_PLATFORM_NAME=oci
+````
+
 ### Network Configuration
 
 With None and External platforms, the user is responsible for configuring the DNS entries for
