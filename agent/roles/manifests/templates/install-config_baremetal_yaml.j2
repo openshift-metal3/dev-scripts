@@ -65,10 +65,22 @@ platform:
       - {{ ingress_vip }}
 {% endfor %}
 {% if agent_install_config_bm_hosts == "true" %}
+{% set bmc_addresses = agent_nodes_bmc_addresses.split(',') %}
+{% set bmc_passwords = agent_nodes_bmc_passwords.split(',') %}
+{% set bmc_usernames = agent_nodes_bmc_usernames.split(',') %}
+    provisioningHostIP: {{ cluster_provisioning_ip }}
+    provisioningNetworkInterface: {{ cluster_provisioning_interface }}
+    provisioningNetworkCIDR: {{ provisioning_network }}
+    provisioningNetwork: {{ provisioning_network_profile }}
     hosts:
 {% for hostname in hostnames %}
     - name: {{ hostname }}
       bootMACAddress: {{ macs[loop.index0] }}
+      bmc:
+        address: {{ bmc_addresses[loop.index0] }}
+        username: {{ bmc_usernames[loop.index0] }}
+        password: {{ bmc_passwords[loop.index0] }}
+        disableCertificateVerification: false
       networkConfig:
         interfaces:
       {{ net.interfaces("eth0", macs[loop.index0])|indent(4, True) }}

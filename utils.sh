@@ -892,4 +892,15 @@ function setup_bond() {
     done
 }
 
+function is_running() {
+    local podname="$1"
+    local ids
+
+    ids=$(sudo podman ps -a --filter "name=${podname}" --filter status=running -q)
+    if [[ -z "$ids" ]]; then
+        return 1
+    fi
+    return 0
+}
+
 trap removetmp EXIT

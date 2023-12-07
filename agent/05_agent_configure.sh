@@ -244,6 +244,16 @@ function generate_cluster_manifests() {
     get_mirror_info
   fi
 
+  set +x
+  # Set BMC info
+  nodes_bmc_usernames=$(printf '%s,' "${AGENT_NODES_BMC_USERNAMES[@]}")
+  export AGENT_NODES_BMC_USERNAMES_STR=${nodes_bmc_usernames::-1}
+  nodes_bmc_passwords=$(printf '%s,' "${AGENT_NODES_BMC_PASSWORDS[@]}")
+  export AGENT_NODES_BMC_PASSWORDS_STR=${nodes_bmc_passwords::-1}
+  nodes_bmc_addresses=$(printf '%s,' "${AGENT_NODES_BMC_ADDRESSES[@]}")
+  export AGENT_NODES_BMC_ADDRESSES_STR=${nodes_bmc_addresses::-1}
+  set -x
+
   # Create manifests
   ansible-playbook -vvv \
           -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
@@ -413,6 +423,51 @@ function set_device_mfg() {
     done
 }
 
+function node_val() {
+    local n
+    local val
+
+    n="$1"
+    val="$2"
+
+    jq -r ".nodes[${n}].${val}" $NODES_FILE
+}
+
+function get_nodes_bmc_info() {
+
+    AGENT_NODES_BMC_USERNAMES=()
+    AGENT_NODES_BMC_PASSWORDS=()
+    AGENT_NODES_BMC_ADDRESSES=()
+
+    number_nodes=$NUM_MASTERS+$NUM_WORKERS
+
+    for (( i=0; i<${number_nodes}; i++ ))
+    do
+      AGENT_NODES_BMC_USERNAMES+=($(node_val ${i} "driver_info.username"))
+      AGENT_NODES_BMC_PASSWORDS+=($(node_val ${i} "driver_info.password"))
+      AGENT_NODES_BMC_ADDRESSES+=($(node_val ${i} "driver_info.address"))
+    done
+
+    if [ "$NODES_PLATFORM" = "libvirt" ]; then
+      if ! is_running vbmc; then
+        # Force remove the pid file before restarting because podman
+        # has told us the process isn't there but sometimes when it
+        # dies it leaves the file.
+        sudo rm -f $WORKING_DIR/virtualbmc/vbmc/master.pid
+        sudo podman run -d --net host --privileged --name vbmc \
+             -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+             "${VBMC_IMAGE}"
+      fi
+
+      if ! is_running sushy-tools; then
+        sudo podman run -d --net host --privileged --name sushy-tools \
+             -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+             "${SUSHY_TOOLS_IMAGE}"
+      fi
+    fi
+
+}
+
 write_pull_secret
 
 # needed for assisted-service to run nmstatectl
@@ -421,6 +476,7 @@ sudo yum install -y nmstate
 
 get_static_ips_and_macs
 
+get_nodes_bmc_info
 
 if [[ ! -z "${MIRROR_IMAGES}" ]]; then
     if [[ ${MIRROR_COMMAND} == "oc-mirror" ]] && [[ ${AGENT_DEPLOY_MCE} == "true" ]]; then
