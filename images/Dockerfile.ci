@@ -18,9 +18,9 @@ RUN if grep "platform:el8" /etc/os-release ; then \
 
 # For RHEL9
 RUN if grep "platform:el9" /etc/os-release ; then \
-    INSTALL_PKGS="ansible-core python3-pip nss_wrapper" && \
+    INSTALL_PKGS="ansible-core python3.11-pip nss_wrapper" && \
     dnf install --disablerepo=epel -y $INSTALL_PKGS && \
-    pip3 install packet-python && \
+    pip3.11 install packet-python && \
     ansible-galaxy collection install "community.general:4.8.1" && \
     dnf clean all && \
     rm -rf /var/cache/dnf/* && \
