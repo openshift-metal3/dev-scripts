@@ -78,7 +78,11 @@ function build_local_release() {
             done
         fi
 
-        sudo podman build --network host --authfile $PULL_SECRET_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
+        # Manage an additional build arg
+        IMAGE_BUILD_ARG_VALUE=${IMAGE_VAR/_LOCAL_REPO}_BUILD_ARG
+        IMAGE_BUILD_ARG=${!IMAGE_BUILD_ARG_VALUE:-}
+
+        sudo podman build --network host --authfile $PULL_SECRET_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE --build-arg "${IMAGE_BUILD_ARG}" .
         cd -
         sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
         
@@ -104,4 +108,7 @@ export REPO_OVERRIDES=$(env | grep '_LOCAL_REPO=' | grep -o '^[^=]*')
 # Skip the step in case of no overrides
 if [[ ! -z "${REPO_OVERRIDES}" ]] ; then 
     build_local_release
+
+    # Extract openshift-install from the newly built release image, in case it was updated
+    extract_command "${OPENSHIFT_INSTALLER_CMD}" "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" "${OCP_DIR}"
 fi
