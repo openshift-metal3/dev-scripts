@@ -51,7 +51,7 @@ spec:
     readOnly: false
 EOF
     oc patch configs.imageregistry.operator.openshift.io \
-        cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}},"managementState":"Managed"}}'
+        cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}},"managementState":"Managed","replicas": 2}}'
 fi
 
 if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
