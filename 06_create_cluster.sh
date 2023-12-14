@@ -51,11 +51,11 @@ spec:
     readOnly: false
 EOF
     oc patch configs.imageregistry.operator.openshift.io \
-        cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}},"managementState":"Managed"}}'
+        cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}},"managementState":"Managed","replicas": 2}}'
 fi
 
-if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then        
-    # Configure tools image registry and cluster samples operator 
+if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+    # Configure tools image registry and cluster samples operator
     # when local image stream is enabled. These are basically to run CI tests
     # depend on tools image.
     add_local_certificate_as_trusted
