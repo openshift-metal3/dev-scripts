@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source release_info.sh
+
 function nth_ip() {
   network=$1
   idx=$2
@@ -111,6 +113,11 @@ else
   exit 1
 fi
 
+function openshift_sdn_deprecated() {
+  # OpenShiftSDN is deprecated in 4.15 and later
+  printf '4.15\n%s\n' "$(openshift_version)" | sort -V -C
+}
+
 if [[ "$IP_STACK" = "v4" ]]
 then
   export CLUSTER_SUBNET_V4=${CLUSTER_SUBNET_V4:-"10.128.0.0/14"}
@@ -119,7 +126,11 @@ then
   export CLUSTER_HOST_PREFIX_V6=""
   export SERVICE_SUBNET_V4=${SERVICE_SUBNET_V4:-"172.30.0.0/16"}
   export SERVICE_SUBNET_V6=""
+if openshift_sdn_deprecated; then
+  export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
+else
   export NETWORK_TYPE=${NETWORK_TYPE:-"OpenShiftSDN"}
+fi
 elif [[ "$IP_STACK" = "v6" ]]; then
   export CLUSTER_SUBNET_V4=""
   export CLUSTER_SUBNET_V6=${CLUSTER_SUBNET_V6:-"fd01::/48"}
