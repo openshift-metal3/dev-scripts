@@ -32,3 +32,9 @@ sudo rm ${WORKING_DIR}/haproxy.* || true
 sudo firewall-cmd --zone libvirt --remove-port=${MACHINE_CONFIG_SERVER_PORT}/tcp
 sudo firewall-cmd --zone libvirt --remove-port=${KUBE_API_PORT}/tcp
 sudo firewall-cmd --zone libvirt --remove-port=${INGRESS_ROUTER_PORT}/tcp
+
+if [[ $NUM_MASTERS == 1 && $IP_STACK == "v6" ]]; then
+    sudo sed -i "/${AGENT_NODE0_IPSV6} console-openshift-console.apps.${CLUSTER_DOMAIN}/d" /etc/hosts
+    sudo sed -i "/${AGENT_NODE0_IPSV6} oauth-openshift.apps.${CLUSTER_DOMAIN}/d" /etc/hosts
+    sudo sed -i "/${AGENT_NODE0_IPSV6} thanos-querier-openshift-monitoring.apps.${CLUSTER_DOMAIN}/d" /etc/hosts
+fi

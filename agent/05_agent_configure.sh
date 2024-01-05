@@ -33,7 +33,9 @@ function add_dns_entry {
       sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${ip}'> <hostname>${hostname}</hostname> </host>"  --live --config
     fi
 
-    if [[ $NUM_MASTERS == 1 ]]; then
+    # Add entries to etc/hosts for SNO IPV6 to sucessfully run the openshift conformance tests
+    if [[ $NUM_MASTERS == 1 && $IP_STACK == "v6" ]]; then
+      AGENT_NODE0_IPSV6=${ip}
       echo "${ip} console-openshift-console.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
       echo "${ip} oauth-openshift.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
       echo "${ip} thanos-querier-openshift-monitoring.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
