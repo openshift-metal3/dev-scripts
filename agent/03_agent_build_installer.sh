@@ -6,7 +6,6 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 LOGDIR=${SCRIPTDIR}/logs
 source $SCRIPTDIR/logging.sh
 source $SCRIPTDIR/common.sh
-source $SCRIPTDIR/ocp_install_env.sh
 source $SCRIPTDIR/agent/common.sh
 
 # Override build tags

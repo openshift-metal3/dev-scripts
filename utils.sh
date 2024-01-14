@@ -2,6 +2,8 @@
 
 set -o pipefail
 
+source release_info.sh
+
 function retry_with_timeout() {
   retries=$1
   timeout_duration=$2
@@ -808,11 +810,6 @@ function bootstrap_ip {
     echo "Unable to retrieve bootstrap IP with infinite leases enabled." 1>&2
   fi
 }
-
-function image_for() {
-    jq -r ".references.spec.tags[] | select(.name == \"$1\") | .from.name" ${OCP_DIR}/release_info.json
-}
-
 
 function wait_for_crd() {
   echo "Waiting for CRD ($1) to be defined"

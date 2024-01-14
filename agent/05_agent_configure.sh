@@ -7,10 +7,10 @@ LOGDIR=${SCRIPTDIR}/logs
 source $SCRIPTDIR/logging.sh
 source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/network.sh
+source $SCRIPTDIR/release_info.sh
 source $SCRIPTDIR/utils.sh
 source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/agent/common.sh
-source $SCRIPTDIR/ocp_install_env.sh
 source $SCRIPTDIR/oc_mirror.sh
 
 early_deploy_validation
