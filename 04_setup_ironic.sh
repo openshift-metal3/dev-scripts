@@ -6,7 +6,7 @@ source logging.sh
 source common.sh
 source network.sh
 source rhcos.sh
-source ocp_install_env.sh
+source release_info.sh
 source utils.sh
 source validation.sh
 

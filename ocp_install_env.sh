@@ -1,3 +1,5 @@
+source release_info.sh
+
 eval "$(go env)"
 
 function get_arch() {
@@ -36,27 +38,6 @@ function extract_oc() {
     _tmpfiles="$_tmpfiles $extract_dir"
     extract_command oc "$1" "${extract_dir}"
     sudo mv "${extract_dir}/oc" /usr/local/bin
-}
-
-function save_release_info() {
-    local release_image
-    local outdir
-
-    release_image="$1"
-    outdir="$2"
-
-    oc adm release info --registry-config "$PULL_SECRET_FILE" "$release_image" -o json > ${outdir}/release_info.json
-}
-
-# Gives e.g 4.7.0-0.nightly-2020-10-27-051128
-function openshift_release_version() {
-    jq -r ".metadata.version" ${OCP_DIR}/release_info.json
-}
-
-# Gives us e.g 4.7 because although OPENSHIFT_VERSION is set by users,
-# but is not set in CI
-function openshift_version() {
-    jq -r ".metadata.version" ${OCP_DIR}/release_info.json | grep -oP "\d\.\d+"
 }
 
 function extract_rhcos_json() {
@@ -261,7 +242,7 @@ EOF
 function override_openshift_sdn_deprecation() {
   # OpenShiftSDN is deprecated in 4.15 and later; if the user explicitly requests it,
   # we will override this deprecation (but not if they just defaulted to it).
-  [[ "${ORIG_NETWORK_TYPE}" = "OpenShiftSDN" ]] && printf '4.15\n%s\n' "$(openshift_version)" | sort -V -C
+  [[ "${ORIG_NETWORK_TYPE}" = "OpenShiftSDN" ]] && openshift_sdn_deprecated
 }
 
 function cluster_os_image() {
@@ -297,7 +278,7 @@ function generate_ocp_install_config() {
 
     if override_openshift_sdn_deprecation; then
       # Claim we want OVNKubernetes in install-config; we will hack the generated
-      # manifests later.
+      # manifests later if OpenShiftSDN was explicitly requested.
       NETWORK_TYPE=OVNKubernetes
     fi
 

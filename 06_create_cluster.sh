@@ -5,8 +5,8 @@ set -e
 source logging.sh
 source common.sh
 source network.sh
+source release_info.sh
 source utils.sh
-source ocp_install_env.sh
 source rhcos.sh
 source validation.sh
 
@@ -94,8 +94,10 @@ fi
 if [[ ! -z "${ENABLE_METALLB}" ]]; then
 
 	if [[ -z ${METALLB_IMAGE_BASE} ]]; then
+                # This can use any image in the release, as we are dropping
+                # the hash
 		export METALLB_IMAGE_BASE=$(\
-			jq -r .references.spec.tags[0].from.name ${OCP_DIR}/release_info.json | sed -e 's/@.*$//g')
+			image_for cli | sed -e 's/@.*$//g')
 		export METALLB_IMAGE_TAG="metallb"
 		export FRR_IMAGE_TAG="metallb-frr"
 	fi
