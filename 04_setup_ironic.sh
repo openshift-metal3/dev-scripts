@@ -68,8 +68,10 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         IMAGE_PR_VAR=${IMAGE_VAR/_LOCAL_IMAGE}_PR
         IMAGE_PR=${!IMAGE_PR_VAR:-}
         if [[ -n ${IMAGE_PR:-} ]]; then
+	    if [[ $(git rev-parse --abbrev-ref HEAD) != pr${IMAGE_PR} ]]; then
                 git fetch origin pull/${IMAGE_PR}/head:pr${IMAGE_PR}
                 git checkout pr${IMAGE_PR}
+            fi
         fi
 
         # If we want to install extra packages, we set the path to a
