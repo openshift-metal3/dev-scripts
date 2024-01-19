@@ -810,3 +810,10 @@ set -x
 # Default: "quay.io/edge-infrastructure/openshift-appliance:latest"
 #
 # export APPLIANCE_IMAGE="quay.io/edge-infrastructure/openshift-appliance:latest"
+
+# Alternative local path to the metal3-dev-env repository.
+# Optionally set this to a path to use a local dev copy of
+# metal3-dev-env, otherwise it's cloned to $WORKING_DIR
+# The location won't be synced or updated preserving any local
+# changes applied to it.
+# export METAL3_DEV_ENV=''
