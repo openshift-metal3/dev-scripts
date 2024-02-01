@@ -121,7 +121,7 @@ ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansi
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
-  -e "go_version=1.20" \
+  -e "go_version=1.21.6" \
   -e "GOARCH=$GOARCH" \
   $ALMA_PYTHON_OVERRIDE \
   -i vm-setup/inventory.ini \
