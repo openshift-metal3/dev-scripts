@@ -80,6 +80,9 @@ case $DISTRO in
     sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
     ;;
   "centos9"|"rhel9")
+    # In RHEL9/Centos9 ifup/ifdown there is no package called network-scripts
+    # ifup/ifdown are found in NetworkManager-initscripts-updown instead.    
+    sudo dnf install NetworkManager-initscripts-updown
     sudo dnf -y install python3-pip
     if [[ $DISTRO == "centos9" ]]; then
       sudo dnf config-manager --set-enabled crb
