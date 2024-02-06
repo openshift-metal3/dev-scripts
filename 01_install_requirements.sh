@@ -42,7 +42,6 @@ sudo dnf -y upgrade --nobest
 # Install additional repos as needed for each OS version
 # shellcheck disable=SC1091
 source /etc/os-release
-export DISTRO="${ID}${VERSION_ID%.*}"
 
 # NOTE(elfosardo): Hacks required for legacy and missing things due to bump in
 #metal3-dev-env commit hash.

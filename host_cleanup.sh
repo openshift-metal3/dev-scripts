@@ -41,25 +41,39 @@ else
   sudo systemctl restart NetworkManager
 fi
 
+# handle upgrade from legacy network scripts
+if [ -e /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME} ]; then
+    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+fi
+if [ -e /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} ]; then
+    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
+fi
+if [ -e /etc/sysconfig/network-scripts/ifcfg-${PRO_IF} ]; then
+    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${PRO_IF}
+fi
+if [ -e /etc/sysconfig/network-scripts/ifcfg-${INT_IF} ]; then
+    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${INT_IF}
+fi
+
 # There was a bug in this file, it may need to be recreated.
 # delete the interface as it can cause issues when not rebooting
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
-    sudo ifdown ${PROVISIONING_NETWORK_NAME} || true
+    sudo nmcli con del ${PROVISIONING_NETWORK_NAME} || true
     sudo ip link delete ${PROVISIONING_NETWORK_NAME} || true
     if [[ -d /sys/class/net/pro-ipv6-dummy ]]; then
        sudo ip link delete pro-ipv6-dummy || true
     fi
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+    sudo rm -f /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection
 fi
 # Leaving this around causes issues when the host is rebooted
 # delete the interface as it can cause issues when not rebooting
 if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
-    sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
+    sudo nmcli con del ${BAREMETAL_NETWORK_NAME} || true
     sudo ip link delete ${BAREMETAL_NETWORK_NAME} || true
     if [[ -d /sys/class/net/bm-ipv6-dummy ]]; then
        sudo ip link delete bm-ipv6-dummy || true
     fi
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
+    sudo rm -f /etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection
 fi
 
 # Drop all ebtables rules

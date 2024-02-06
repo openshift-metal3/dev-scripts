@@ -189,83 +189,125 @@ fi
 
 # shellcheck disable=SC1091
 source /etc/os-release
-export DISTRO="${ID}${VERSION_ID%.*}"
-
-case $DISTRO in
-  "centos8"|"rhel8"|"almalinux8"|"rocky8")
-    NMC="NM_CONTROLLED=no\n"
-    NET_SERVICE="network"
-    ;;
-"centos9"|"rhel9")
-    NMC=""
-    NET_SERVICE="NetworkManager"
-    ;;
-  *)
-    echo "Operating System not supported"
-    exit 1
-esac
 
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Adding an IP address in the libvirt definition for this network results in
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
-    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME} ]; then
-        if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
-            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\n${NMC}IPV6_AUTOCONF=no\nIPV6INIT=yes\nIPV6ADDR=${PROVISIONING_HOST_IP}/64${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+    if [ ! -e /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection ]; then
+        if [ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]; then
+            sudo tee -a /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection <<EOF
+[connection]
+id=${PROVISIONING_NETWORK_NAME}
+type=bridge
+interface-name=${PROVISIONING_NETWORK_NAME}
+[bridge]
+stp=false
+[ipv4]
+method=disabled
+[ipv6]
+addr-gen-mode=eui64
+address1=${PROVISIONING_HOST_IP}/64
+method=manual
+EOF
         else
-            echo -e "DEVICE=${PROVISIONING_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\n${NMC}BOOTPROTO=static\nIPADDR=$PROVISIONING_HOST_IP\nNETMASK=$PROVISIONING_NETMASK${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
+            sudo tee -a /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection <<EOF
+[connection]
+id=${PROVISIONING_NETWORK_NAME}
+type=bridge
+interface-name=${PROVISIONING_NETWORK_NAME}
+[bridge]
+stp=false
+[ipv4]
+address1=${PROVISIONING_HOST_IP}/$PROVISIONING_NETMASK
+method=manual
+[ipv6]
+addr-gen-mode=eui64
+method=disabled
+EOF
         fi
+        sudo chmod 600 /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection
+        sudo nmcli con load /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection
     fi
-    sudo ifdown ${PROVISIONING_NETWORK_NAME} || true
-    sudo ifup ${PROVISIONING_NETWORK_NAME}
+    sudo nmcli con up ${PROVISIONING_NETWORK_NAME}
 
     # Need to pass the provision interface for bare metal
     if [ "$PRO_IF" ]; then
-        echo -e "DEVICE=$PRO_IF\nTYPE=Ethernet\nONBOOT=yes\n${NMC}BRIDGE=${PROVISIONING_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$PRO_IF
-        sudo ifdown $PRO_IF || true
-        sudo ifup $PRO_IF
-        # Need to ifup the provisioning bridge again because ifdown $PRO_IF
-        # will bring down the bridge as well.
-        sudo ifup ${PROVISIONING_NETWORK_NAME}
+        sudo tee -a /etc/NetworkManager/system-connections/${PRO_IF}.nmconnection <<EOF
+[connection]
+id=${PRO_IF}
+type=ethernet
+interface-name=${PRO_IF}
+master=${PROVISIONING_NETWORK_NAME}
+slave-type=bridge
+EOF
+        sudo chmod 600 /etc/NetworkManager/system-connections/${PRO_IF}.nmconnection
+        sudo nmcli con load /etc/NetworkManager/system-connections/${PRO_IF}.nmconnection
+        sudo nmcli con up ${PRO_IF}
     fi
 fi
 
 if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Create the baremetal bridge
-    if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} ] ; then
-        echo -e "DEVICE=${BAREMETAL_NETWORK_NAME}\nTYPE=Bridge\nONBOOT=yes\n${NMC}${ZONE}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
-    fi
-    sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
-    sudo ifup ${BAREMETAL_NETWORK_NAME}
+    sudo tee /etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection <<EOF
+[connection]
+id=${BAREMETAL_NETWORK_NAME}
+type=bridge
+interface-name=${BAREMETAL_NETWORK_NAME}
+autoconnect=true
+[bridge]
+stp=false
+[ipv6]
+addr-gen-mode=stable-privacy
+method=ignore
+EOF
+    sudo chmod 600 /etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection
+    sudo nmcli con load /etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection
+    sudo nmcli con up ${BAREMETAL_NETWORK_NAME}
+fi
 
     # Add the internal interface to it if requests, this may also be the interface providing
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
-        echo -e "DEVICE=$INT_IF\nTYPE=Ethernet\nONBOOT=yes\n${NMC}BRIDGE=${BAREMETAL_NETWORK_NAME}" | sudo dd of=/etc/sysconfig/network-scripts/ifcfg-$INT_IF
+        sudo tee /etc/NetworkManager/system-connections/${INT_IF}.nmconnection <<EOF
+[connection]
+id=${INT_IF}
+type=ethernet
+interface-name=${INT_IF}
+master=${BAREMETAL_NETWORK_NAME}
+slave-type=bridge
+EOF
+        sudo chmod 600 /etc/NetworkManager/system-connections/${INT_IF}.nmconnection
+        sudo nmcli con load /etc/NetworkManager/system-connections/${INT_IF}.nmconnection
+
         if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-            grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "BOOTPROTO=none\nIPV6INIT=yes\nIPV6_AUTOCONF=yes\nDHCPV6C=yes\nDHCPV6C_OPTIONS='-D LL'\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
+            sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.addr-gen-mode eui64
+            sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.method ignore
         else
-          if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-              grep -q BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} || (echo -e "\nBOOTPROTO=dhcp\n" | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME})
-          fi
+            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
+                if [ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]; then
+                    sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.method auto
+                else
+                    sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv4.method auto
+            fi
       fi
-      sudo systemctl restart $NET_SERVICE
+      sudo nmcli con up ${INT_IF}
     fi
 fi
 
-# If there were modifications to the /etc/sysconfig/network-scripts/ifcfg-*
+# If there were modifications to the network configuration
 # files, it is required to enable the network service
 if [ "$MANAGE_INT_BRIDGE" == "y" ] || [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
-  sudo systemctl enable $NET_SERVICE
+  sudo systemctl enable NetworkManager
 fi
 
 # restart the libvirt network so it applies an ip to the bridge
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
-    sudo ifdown ${BAREMETAL_NETWORK_NAME} || true
+    sudo nmcli con del ${BAREMETAL_NETWORK_NAME}
     sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
     if [ "$INT_IF" ]; then #Need to bring UP the NIC after destroying the libvirt network
-        sudo ifup $INT_IF
+        sudo nmcli con up ${INT_IF}
     fi
 fi
 
