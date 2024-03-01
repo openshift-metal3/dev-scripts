@@ -100,6 +100,8 @@ sudo dnf -y install jq
 sudo python -m pip install yq
 yq -iy '.[3].dnf.nobest = "true"' ${METAL3_DEV_ENV_PATH}/vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
 
+GOVERSION=${GOVERSION:-1.20}
+
 GOARCH=$(uname -m)
 if [[ $GOARCH == "aarch64" ]]; then
     GOARCH="arm64"
@@ -120,7 +122,7 @@ ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansi
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
-  -e "go_version=1.20" \
+  -e "go_version=$GOVERSION" \
   -e "GOARCH=$GOARCH" \
   $ALMA_PYTHON_OVERRIDE \
   -i vm-setup/inventory.ini \
