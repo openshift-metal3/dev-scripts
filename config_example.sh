@@ -143,6 +143,11 @@ set -x
 #
 #export MAO_BRANCH="mao-fix"
 
+# Go version
+# The version of go to be installed. The default value is 1.20
+#
+#export GO_VERSION="1.21.6"
+
 ################################################################################
 ## General Settings
 ##
