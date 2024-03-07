@@ -42,17 +42,16 @@ else
 fi
 
 # handle upgrade from legacy network scripts
-if [ -e /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME} ]; then
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${PROVISIONING_NETWORK_NAME}
-fi
-if [ -e /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME} ]; then
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${BAREMETAL_NETWORK_NAME}
-fi
-if [ -e /etc/sysconfig/network-scripts/ifcfg-${PRO_IF} ]; then
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${PRO_IF}
-fi
-if [ -e /etc/sysconfig/network-scripts/ifcfg-${INT_IF} ]; then
-    sudo rm -f /etc/sysconfig/network-scripts/ifcfg-${INT_IF}
+for interface in ${PROVISIONING_NETWORK_NAME} ${BAREMETAL_NETWORK_NAME} ${PRO_IF} ${INT_IF}; do
+  interface_config=/etc/sysconfig/network-scripts/ifcfg-${interface}
+  if [ -e $interface_config ]; then
+    sudo rm -f $interface_config
+    IF_FOUND=true
+  fi
+done
+
+if [ "${IF_FOUND:-}" == "true" ]; then
+  systemctl restart network.service || true
 fi
 
 # There was a bug in this file, it may need to be recreated.
