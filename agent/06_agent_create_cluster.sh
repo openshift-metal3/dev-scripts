@@ -219,6 +219,11 @@ function wait_for_cluster_ready() {
       exit 1
   fi
 
+  if [ "${AGENT_WAIT_FOR_INSTALL_COMPLETE}" == "false" ]; then
+      echo "Skipping agent wait-for install-complete"
+      exit 0
+  fi
+
   echo "Waiting for cluster ready... "
   "${openshift_install}" --dir="${dir}" --log-level=debug agent wait-for install-complete 2>&1 | grep --line-buffered -v 'password'
   if [ ${PIPESTATUS[0]} != 0 ]; then

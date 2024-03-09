@@ -373,6 +373,9 @@ export ENABLE_LOCAL_REGISTRY=${ENABLE_LOCAL_REGISTRY:-}
 # Defaults the DISABLE_MULTICAST variable
 export DISABLE_MULTICAST=${DISABLE_MULTICAST:-false}
 
+# Defaults the AGENT_WAIT_FOR_INSTALL_COMPLETE variable
+export AGENT_WAIT_FOR_INSTALL_COMPLETE=${AGENT_WAIT_FOR_INSTALL_COMPLETE:-true}
+
 # Agent specific configuration 
 
 function invalidAgentValue() {
