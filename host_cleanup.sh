@@ -51,7 +51,7 @@ for interface in ${PROVISIONING_NETWORK_NAME} ${BAREMETAL_NETWORK_NAME} ${PRO_IF
 done
 
 if [ "${IF_FOUND:-}" == "true" ]; then
-  systemctl restart network.service || true
+  sudo systemctl restart network.service
 fi
 
 # There was a bug in this file, it may need to be recreated.
