@@ -295,7 +295,7 @@ function configure_dnsmasq() {
   ingressVips=${2}
 
   # make sure the dns_masq config file is cleaned up (add_dnsmasq_multi_entry() only appends)
-  rm -f "${PATH_CONF_DNSMASQ}"
+  sudo rm -f "${PATH_CONF_DNSMASQ}"
 
   add_dnsmasq_multi_entry "apivip" "${apiVips}"
   add_dnsmasq_multi_entry "ingressvip" "${ingressVips}"
