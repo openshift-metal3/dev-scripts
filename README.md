@@ -419,7 +419,7 @@ virsh console domain_name
 ```
 
 ### Determining your filesystem type
-If you're not sure what filesystem you have, try `df - T` and the second
+If you're not sure what filesystem you have, try `df -T` and the second
 column will include the type.
 
 ### Determining if your filesystem supports d_type
