@@ -1,6 +1,8 @@
 module github.com/openshift-metal3/dev-scripts/metal3-templater
 
-go 1.19
+go 1.22
+
+toolchain go1.22.1
 
 require (
 	github.com/apparentlymart/go-cidr v1.1.0

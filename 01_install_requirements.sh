@@ -100,7 +100,7 @@ sudo dnf -y install jq
 sudo python -m pip install yq
 yq -iy '.[3].dnf.nobest = "true"' ${METAL3_DEV_ENV_PATH}/vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
 
-GO_VERSION=${GO_VERSION:-1.21.7}
+GO_VERSION=${GO_VERSION:-1.22.1}
 
 GOARCH=$(uname -m)
 if [[ $GOARCH == "aarch64" ]]; then
