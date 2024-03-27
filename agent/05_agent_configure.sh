@@ -117,6 +117,20 @@ EOF
   if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
     cp ${SCRIPTDIR}/agent/mce/agent_mce_0_*.yaml ${EXTRA_MANIFESTS_PATH}
   fi
+
+  if [[ "${AGENT_PLATFORM_TYPE}" == "vsphere" ]]; then
+cat > "${EXTRA_MANIFESTS_PATH}/openshift-install-manifests.yaml" << EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openshift-install-manifests
+  namespace: openshift-config
+data:
+  invoker: agent-installer-vsphere-ci
+  version: v${VERSION}
+EOF
+  fi
+
 }
 
 function oc_mirror_mce() {
