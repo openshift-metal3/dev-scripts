@@ -29,6 +29,10 @@ function extract_command() {
 
     oc adm release extract --registry-config "${PULL_SECRET_FILE}" --command=$cmd --to "${extract_dir}" ${release_image}
 
+    if [[ $cmd == "oc.rhel8" ]]; then
+      cmd="oc"
+    fi
+
     mv "${extract_dir}/${cmd}" "${outdir}"
 }
 
@@ -36,7 +40,9 @@ function extract_command() {
 function extract_oc() {
     extract_dir=$(mktemp --tmpdir -d "installer--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $extract_dir"
-    extract_command oc "$1" "${extract_dir}"
+    if ! extract_command oc.rhel8 "$1" "${extract_dir}"; then
+      extract_command oc "$1" "${extract_dir}"
+    fi
     sudo mv "${extract_dir}/oc" /usr/local/bin
 }
 
