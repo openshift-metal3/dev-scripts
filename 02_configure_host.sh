@@ -20,7 +20,7 @@ early_deploy_validation
 #
 manage_libvirtd() {
   case ${DISTRO} in
-      centos9|rhel9)
+      centos9|rhel9|rocky9)
           for i in qemu network nodedev nwfilter secret storage interface; do
               sudo systemctl enable --now virt${i}d.socket
               sudo systemctl enable --now virt${i}d-ro.socket
@@ -306,6 +306,8 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
     sudo nmcli con del ${BAREMETAL_NETWORK_NAME}
     sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
+    # Needed in IPv6 on some EL9 hosts for the bootstrap VM to get an IP
+    echo 0 | sudo dd of=/proc/sys/net/ipv6/conf/${BAREMETAL_NETWORK_NAME}/addr_gen_mode
     if [ "$INT_IF" ]; then #Need to bring UP the NIC after destroying the libvirt network
         sudo nmcli con up ${INT_IF}
     fi
