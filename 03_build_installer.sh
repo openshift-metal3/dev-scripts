@@ -39,7 +39,7 @@ function extract_installer() {
     release_image="$1"
     outdir="$2"
 
-    extract_command "${OPENSHIFT_INSTALLER_CMD:-openshift-baremetal-install}" "$1" "$2"
+    extract_command "${OPENSHIFT_INSTALLER_CMD:-${DEFAULT_OPENSHIFT_INSTALL_CMD}}" "$1" "$2"
 }
 
 early_deploy_validation

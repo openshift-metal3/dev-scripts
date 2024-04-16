@@ -174,6 +174,17 @@ fi
 
 export OPENSHIFT_RELEASE_TAG=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -E 's/[[:alnum:]\/.-]*(release|okd).*://')
 
+if [[ -f ${OCP_DIR}/release_info.json ]]; then
+    release_version=$(jq -r ".metadata.version" ${OCP_DIR}/release_info.json | grep -oP "\d\.\d+")
+else
+    release_version=$(oc adm release info --registry-config "$PULL_SECRET_FILE" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r ".metadata.version" | grep -oP "\d\.\d+")
+fi
+# On 4.16+ the baremetall installer was merged into the regular installer
+export DEFAULT_OPENSHIFT_INSTALL_CMD="openshift-install"
+if is_lower_version "${release_version}" 4.16; then
+    export DEFAULT_OPENSHIFT_INSTALL_CMD="openshift-baremetal-install"
+fi
+
 # Use "ipmi" for 4.3 as it didn't support redfish, for other versions
 # use "redfish", unless its CI where we use "mixed"
 if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
@@ -206,7 +217,7 @@ if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
 fi
 
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-    export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-${OCP_DIR}/openshift-baremetal-install}
+    export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-${OCP_DIR}/${DEFAULT_OPENSHIFT_INSTALL_CMD}}
  else
     export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-$OPENSHIFT_INSTALL_PATH/bin/openshift-install}
 
