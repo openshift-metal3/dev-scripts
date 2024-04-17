@@ -5,7 +5,7 @@ set -o pipefail
 source release_info.sh
 
 function default_installer_cmd() {
-    if is_lower_version "$(openshift_version "${OCP_DIR}")" "4.16"; then
+    if is_lower_version "$(openshift_version "${OCP_DIR}")" "4.16" || [[ "${FIPS_MODE:-false}" = "true" && "${FIPS_VALIDATE:-false}" = "true" ]]; then
         printf "openshift-baremetal-install"
     else
         printf "openshift-install"
