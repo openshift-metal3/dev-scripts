@@ -6,7 +6,13 @@ function save_release_info() {
     release_image="$1"
     outdir="$2"
 
-    oc adm release info --registry-config "$PULL_SECRET_FILE" "$release_image" -o json > ${outdir}/release_info.json
+    if [[ -f "$PULL_SECRET_FILE" ]]; then
+        PULL_SECRET="${PULL_SECRET_FILE}"
+    else
+        PULL_SECRET="${PERSONAL_PULL_SECRET}"
+    fi
+
+    oc adm release info --registry-config "$PULL_SECRET" "$release_image" -o json > ${outdir}/release_info.json
 }
 
 # Gives us e.g 4.7 because although OPENSHIFT_VERSION is set by users,

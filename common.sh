@@ -113,6 +113,7 @@ export REGISTRY_BACKEND=${REGISTRY_BACKEND:-"podman"}
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 
 export OPENSHIFT_CLIENT_TOOLS_URL=https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/stable/openshift-client-linux.tar.gz
+export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 
 # Note: when changing defaults for OPENSHIFT_RELEASE_STREAM, make sure to update
 #       doc in config_example.sh
@@ -165,9 +166,22 @@ export OPENSHIFT_INSTALL_PATH="${OPENSHIFT_INSTALL_PATH:-$GOPATH/src/github.com/
 # Override the image to use for installing hive
 export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshift/hive-v4.0:hive}"
 
+export PULL_SECRET_FILE=${PULL_SECRET_FILE:-$WORKING_DIR/pull_secret.json}
+
 # CI images don't have version numbers
 export OPENSHIFT_CI=${OPENSHIFT_CI:-""}
 export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-""}
+if [[ -z "$OPENSHIFT_VERSION" ]]; then
+  source utils.sh
+  retry_with_timeout 5 60 "curl $OPENSHIFT_CLIENT_TOOLS_URL | sudo tar -U -C /usr/local/bin -xzf -"
+  sudo chmod +x /usr/local/bin/oc
+  oc version --client -o json
+  source release_info.sh
+  mkdir -p ${OCP_DIR}
+  save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
+  OPENSHIFT_VERSION=$(openshift_version)
+  export OPENSHIFT_VERSION
+fi
 if [[ -z "$OPENSHIFT_CI" ]]; then
   export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]]\.[[:digit:]]*\).*/\1/")}
 fi
@@ -309,15 +323,12 @@ export SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o C
 # Connect to system libvirt
 export LIBVIRT_DEFAULT_URI=qemu:///system
 
-export PULL_SECRET_FILE=${PULL_SECRET_FILE:-$WORKING_DIR/pull_secret.json}
-
 # Ensure a few variables are set, even if empty, to avoid undefined
 # variable errors in the next 2 checks.
 set +x
 export CI_TOKEN=${CI_TOKEN:-}
 set -x
 export CI_SERVER=${CI_SERVER:-api.ci.l2s4.p1.openshiftapps.com}
-export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 
 # Ensure working dir is always different than script dir. If not, some
 # files may get overriden during deployment process.
