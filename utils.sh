@@ -4,6 +4,10 @@ set -o pipefail
 
 source release_info.sh
 
+function default_installer_cmd() {
+    printf "openshift-baremetal-install"
+}
+
 function retry_with_timeout() {
   retries=$1
   timeout_duration=$2
@@ -458,7 +462,7 @@ function setup_legacy_release_mirror {
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
     #you must extract the installation program from the mirrored content:
     if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-      local installer="${OPENSHIFT_INSTALLER_CMD:-openshift-baremetal-install}"
+      local installer="${OPENSHIFT_INSTALLER_CMD:-$(default_installer_cmd)}"
 
       EXTRACT_DIR=$(mktemp --tmpdir -d "mirror-installer--XXXXXXXXXX")
       _tmpfiles="$_tmpfiles $EXTRACT_DIR"

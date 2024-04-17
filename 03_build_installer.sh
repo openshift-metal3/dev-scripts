@@ -33,13 +33,18 @@ function build_installer() {
 }
 
 function extract_installer() {
-    local release_image
-    local outdir
+    local release_image="$1"
+    local outdir="$2"
+    local cmd
 
-    release_image="$1"
-    outdir="$2"
+    cmd="${OPENSHIFT_INSTALLER_CMD:-$(default_installer_cmd)}"
 
-    extract_command "${OPENSHIFT_INSTALLER_CMD:-openshift-baremetal-install}" "$1" "$2"
+    extract_command "${cmd}" "${release_image}" "${outdir}"
+
+    local target="openshift-install"
+    if [ "${cmd}" != "${target}" ]; then
+        mv "${outdir}/${cmd}" "${outdir}/${target}"
+    fi
 }
 
 early_deploy_validation
