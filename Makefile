@@ -33,6 +33,9 @@ agent_gather:
 agent_tests:
 	./agent/agent_tests.sh
 
+agent_add_node:
+	./agent/07_agent_add_node.sh
+
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
 requirements:
