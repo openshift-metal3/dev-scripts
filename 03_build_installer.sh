@@ -20,7 +20,11 @@ function build_installer() {
   # Build installer
   pushd .
   cd $OPENSHIFT_INSTALL_PATH
-  TAGS="${OPENSHIFT_INSTALLER_BUILD_TAGS:-libvirt baremetal}" DEFAULT_ARCH=$(get_arch) hack/build.sh
+  local default_tags="libvirt baremetal"
+  if [[ "${FIPS_MODE:-false}" = "true" && "${FIPS_VALIDATE:-false}" = "true" ]]; then
+      default_tags="${default_tags} fipscapable"
+  fi
+  TAGS="${OPENSHIFT_INSTALLER_BUILD_TAGS:-${default_tags}}" DEFAULT_ARCH=$(get_arch) hack/build.sh
   popd
   # This is only needed in rhcos.sh for old versions which lack the
   # openshift-install coreos-print-stream-json option
@@ -33,13 +37,18 @@ function build_installer() {
 }
 
 function extract_installer() {
-    local release_image
-    local outdir
+    local release_image="$1"
+    local outdir="$2"
+    local cmd
 
-    release_image="$1"
-    outdir="$2"
+    cmd="${OPENSHIFT_INSTALLER_CMD:-$(default_installer_cmd)}"
 
-    extract_command "${OPENSHIFT_INSTALLER_CMD:-openshift-baremetal-install}" "$1" "$2"
+    extract_command "${cmd}" "${release_image}" "${outdir}"
+
+    local target="openshift-install"
+    if [ "${cmd}" != "${target}" ]; then
+        mv "${outdir}/${cmd}" "${outdir}/${target}"
+    fi
 }
 
 early_deploy_validation

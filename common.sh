@@ -206,7 +206,7 @@ if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
 fi
 
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-    export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-${OCP_DIR}/openshift-baremetal-install}
+    export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-${OCP_DIR}/openshift-install}
  else
     export OPENSHIFT_INSTALLER=${OPENSHIFT_INSTALLER:-$OPENSHIFT_INSTALL_PATH/bin/openshift-install}
 
