@@ -54,6 +54,13 @@ set -x
 # export OPENSHIFT_RELEASE_IMAGE=registry.ci.openshift.org/origin/release:4.15.0-0.okd-2023-08-29-101209
 # Default: Undefined
 
+# OPENSHIFT_RELEASE_TAG -
+# Define a specific release tag to use. Only required if OPENSHIFT_RELEASE_IMAGE
+# does not come from registry.ci.openshift.org (e.g. a custom payload on quay).
+# For example:
+# export OPENSHIFT_RELEASE_TAG=4.15.0-0.okd-2023-08-29-101209-custom
+# Default: defined from OPENSHIFT_RELEASE_IMAGE
+
 # OPENSHIFT_VERSION -
 # Set the Openshift version. If unset defaults to $OPENSHIFT_RELEASE_STREAM.
 # NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE
