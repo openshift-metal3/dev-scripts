@@ -822,6 +822,11 @@ set -x
 #
 # export APPLIANCE_IMAGE="quay.io/edge-infrastructure/openshift-appliance:latest"
 
+# Sets which extraworker node to add to cluster using the agent add-node workflow.
+# Used in "agent_add_node" make target.
+#
+# export AGENT_EXTRAWORKER_NODE_TO_ADD=0
+
 # Alternative local path to the metal3-dev-env repository.
 # Optionally set this to a path to use a local dev copy of
 # metal3-dev-env, otherwise it's cloned to $WORKING_DIR

@@ -47,22 +47,26 @@ else
   cp "$OPENSHIFT_INSTALL_PATH/bin/node-joiner" "$OCP_DIR"
 fi
 
+rm $OCP_DIR/add-node/.openshift_install_state.json | true
+
 get_static_ips_and_macs
 
 node_joiner="$(realpath "${OCP_DIR}/node-joiner")"
 
-extra_node_to_join=0
-
 $node_joiner add-nodes --dir $OCP_DIR/add-node --kubeconfig $OCP_DIR/auth/kubeconfig
 
-sudo virt-xml ${CLUSTER_NAME}_extraworker_${extra_node_to_join} --add-device --disk "${OCP_DIR}/add-node/node.x86_64.iso,device=cdrom,target.dev=sdc"
-sudo virt-xml ${CLUSTER_NAME}_extraworker_${extra_node_to_join} --edit target=sda --disk="boot_order=1"
-sudo virt-xml ${CLUSTER_NAME}_extraworker_${extra_node_to_join} --edit target=sdc --disk="boot_order=2" --start
+sudo virt-xml ${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD} --add-device --disk "${OCP_DIR}/add-node/node.x86_64.iso,device=cdrom,target.dev=sdc"
+sudo virt-xml ${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD} --edit target=sda --disk="boot_order=1"
+sudo virt-xml ${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD} --edit target=sdc --disk="boot_order=2" --start
 
 set +ex
 approve_csrs &
+approve_csrs_pid=$!
+trap 'kill -TERM ${approve_csrs_pid}; exit' INT EXIT TERM
 set -ex
 
-$node_joiner monitor-add-nodes ${AGENT_EXTRA_WORKERS_IPS[${extra_node_to_join}]} --kubeconfig $OCP_DIR/auth/kubeconfig
+$node_joiner monitor-add-nodes ${AGENT_EXTRA_WORKERS_IPS[${AGENT_EXTRAWORKER_NODE_TO_ADD}]} --kubeconfig $OCP_DIR/auth/kubeconfig
 
-oc get nodes extraworker-${extra_node_to_join} | grep Ready
+oc get nodes extraworker-${AGENT_EXTRAWORKER_NODE_TO_ADD} | grep Ready
+
+kill -TERM ${approve_csrs_pid}
