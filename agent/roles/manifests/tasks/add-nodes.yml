@@ -1,0 +1,11 @@
+- name: create add-node directory
+  ansible.builtin.file:
+    path: "{{ install_path }}/add-node"
+    state: directory
+  when: num_extra_workers != "0"
+
+- name: write the nodes-config.yaml 
+  template:
+    src: "nodes-config_yaml.j2"
+    dest: "{{ install_path }}/add-node/nodes-config.yaml"
+  when: agent_bond_config == 'none' and num_extra_workers != "0"
