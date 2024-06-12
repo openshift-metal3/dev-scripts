@@ -263,7 +263,7 @@ function generate_cluster_manifests() {
   set -x
 
   # Create manifests
-  ansible-playbook -vvv \
+  "${ANSIBLE}-playbook" -vvv \
           -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
           "${SCRIPTDIR}/agent/create-manifests-playbook.yaml"
 }
