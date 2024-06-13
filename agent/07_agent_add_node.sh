@@ -12,61 +12,50 @@ source $SCRIPTDIR/agent/common.sh
 
 early_deploy_validation
 
-function build_node_joiner() {
-  # Build installer
-  pushd .
-  cd $OPENSHIFT_INSTALL_PATH
-  TAGS="${OPENSHIFT_INSTALLER_BUILD_TAGS:-libvirt baremetal}" DEFAULT_ARCH=$(get_arch) hack/build-node-joiner.sh
-  popd
-}
-
 function approve_csrs() {
-  while true; do
+  # approve CSRs for up to 30 mins
+  timeout=$((30*60))
+  elapsed=0
+  while (( elapsed < timeout )); do
     pending_csrs=$(oc get csr | grep Pending)
     if [[ ${pending_csrs} != "" ]]; then
       echo "Approving CSRs: $pending_csrs"
       echo $pending_csrs | cut -d ' ' -f 1 | xargs oc adm certificate approve
     fi
+    elapsed=$((elapsed + 10))
     sleep 10
   done
 }
 
-if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-  # Extract node-joiner from the release image
-  baremetal_installer_image=$(oc adm release info --image-for=baremetal-installer --registry-config=$PULL_SECRET_FILE)
-  container_id=$(podman create --authfile $PULL_SECRET_FILE ${baremetal_installer_image} ls)
-  podman start $container_id
-  podman export $container_id > baremetal-installer.tar
-  tar xf baremetal-installer.tar usr/bin/node-joiner
-  cp usr/bin/node-joiner $OCP_DIR/node-joiner
-  rm -rf usr baremetal-installer.tar
-  podman rm $container_id
-else
-  # Build the node-joiner from source
-  build_node_joiner
-  cp "$OPENSHIFT_INSTALL_PATH/bin/node-joiner" "$OCP_DIR"
-fi
-
-rm $OCP_DIR/add-node/.openshift_install_state.json | true
-
 get_static_ips_and_macs
 
-node_joiner="$(realpath "${OCP_DIR}/node-joiner")"
+if [ -f node-joiner.sh ]; then
+  rm -f node-joiner.sh
+fi
+if [ -f node.x86_64.iso ]; then
+  rm -f node.x86_64.iso
+fi
+wget https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner.sh
+chmod +x node-joiner.sh
+./node-joiner.sh "$OCP_DIR/add-node/nodes-config.yaml"
 
-$node_joiner add-nodes --dir $OCP_DIR/add-node --kubeconfig $OCP_DIR/auth/kubeconfig
+sudo virt-xml "${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD}" --add-device --disk "./node.x86_64.iso,device=cdrom,target.dev=sdc"
+sudo virt-xml "${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD}" --edit target=sda --disk="boot_order=1"
+sudo virt-xml "${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD}" --edit target=sdc --disk="boot_order=2" --start
 
-sudo virt-xml ${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD} --add-device --disk "${OCP_DIR}/add-node/node.x86_64.iso,device=cdrom,target.dev=sdc"
-sudo virt-xml ${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD} --edit target=sda --disk="boot_order=1"
-sudo virt-xml ${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD} --edit target=sdc --disk="boot_order=2" --start
-
+# Disable verbose command logging (-x) for approve_csrs function.
+# "set -e" id is disabled because pending CSR checks can result in non-zero exit code
+# if there are no CSRs currently pending. This would lead the function to exit
+# before timeout is reached.
 set +ex
 approve_csrs &
 approve_csrs_pid=$!
 trap 'kill -TERM ${approve_csrs_pid}; exit' INT EXIT TERM
 set -ex
 
-$node_joiner monitor-add-nodes ${AGENT_EXTRA_WORKERS_IPS[${AGENT_EXTRAWORKER_NODE_TO_ADD}]} --kubeconfig $OCP_DIR/auth/kubeconfig
-
-oc get nodes extraworker-${AGENT_EXTRAWORKER_NODE_TO_ADD} | grep Ready
-
-kill -TERM ${approve_csrs_pid}
+if [ -f node-joiner-monitor.sh ]; then
+  rm -f node-joiner-monitor.sh
+fi
+wget https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner-monitor.sh
+chmod +x node-joiner-monitor.sh
+./node-joiner-monitor.sh "${AGENT_EXTRA_WORKERS_IPS[${AGENT_EXTRAWORKER_NODE_TO_ADD}]}"
