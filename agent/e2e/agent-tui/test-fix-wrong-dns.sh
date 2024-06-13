@@ -1,7 +1,11 @@
 #!/bin/bash
 
+source common.sh
+set +x
+
 CLUSTER_NAME=$1
 GOOD_DNS_IP=$2
+OCP_VERSION=$3
 
 ### utils function for sending various keys and/or text to the console
 
@@ -124,7 +128,15 @@ pressEnter "Reactivate 'enp2s0'"
 sleep 3
 pressTab "Goto <Back> button" 2
 pressEnter "Select '<Back>' button'"
-pressDown "Select Quit" 2
+
+# Since ocp 4.16, the nmtui has an additional menu entry "Radio" in the main panel
+# so it's necessary an additional step
+numStepsToQuit=2
+if ! is_lower_version "${OCP_VERSION}" "4.16"; then
+    numStepsToQuit=3
+fi
+pressDown "Select Quit" ${numStepsToQuit}
+
 pressEnter "Select 'Quit' menu item"
 pressEsc "Esc from network tree view"
 pressTab "Goto <Quit> button to exit agent-tui" 1
