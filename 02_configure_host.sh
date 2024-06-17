@@ -330,16 +330,12 @@ fi
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "{use_firewalld: True}" \
     -e "provisioning_interface=$PROVISIONING_NETWORK_NAME" \
-    -e "baremetal_interface=$BAREMETAL_NETWORK_NAME" \
-    -e "{provisioning_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000, ${INSTALLER_PROXY_PORT}, ${AGENT_PXE_SERVER_PORT}]}" \
+    -e "external_interface=$BAREMETAL_NETWORK_NAME" \
+    -e "{vm_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000, ${INSTALLER_PROXY_PORT}, ${AGENT_PXE_SERVER_PORT}]}" \
     -e "vbmc_port_range=$VBMC_BASE_PORT:$VBMC_MAX_PORT" \
     $ALMA_PYTHON_OVERRIDE \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/firewall.yml
-
-# FIXME(stbenjam): ansbile firewalld module doesn't seem to be doing the right thing
-sudo firewall-cmd --zone=libvirt --change-interface=provisioning
-sudo firewall-cmd --zone=libvirt --change-interface=baremetal
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
