@@ -19,13 +19,13 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset a994b1447f89e20ec9cc161700a9e829fd5d4b89 --hard
+  git reset 6a8fb0d5543970b5d628e1204a3b3d3f9f70a63f --hard
   popd
 fi
 
 # This must be aligned with the metal3-dev-env pinned version above, see
 # https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
-export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"7.1.0"}
+export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"5.9.0"}
 
 # Speed up dnf downloads
 sudo sh -c "echo 'fastestmirror=1' >> /etc/dnf/dnf.conf"
