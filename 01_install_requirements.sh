@@ -39,6 +39,9 @@ sudo dnf -y clean all
 # Update to latest packages first
 sudo dnf -y upgrade --nobest
 
+# If NetworkManager was upgraded it needs to be restarted
+sudo systemctl restart NetworkManager
+
 # Install additional repos as needed for each OS version
 # shellcheck disable=SC1091
 source /etc/os-release
