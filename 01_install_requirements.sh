@@ -97,10 +97,19 @@ case $DISTRO in
     ;;
 esac
 
+# We use yq in a few places for processing YAML but it isn't packaged
+# for CentOS/RHEL so we have to install from pip. We do not want to
+# overwrite an existing installation of the golang version, though,
+# so check if we have a yq before installing.
+if ! which yq 2>&1 >/dev/null; then
+    sudo python -m pip install 'yq>=3,<4'
+else
+    echo "Using yq from $(which yq)"
+fi
+
 # Hijack metal3-dev-env update module to use nobest
 # during dnf upgrade
 sudo dnf -y install jq
-sudo python -m pip install yq
 yq -iy '.[3].dnf.nobest = "true"' ${METAL3_DEV_ENV_PATH}/vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
 
 GO_VERSION=${GO_VERSION:-1.22.3}
@@ -144,16 +153,6 @@ fi
 
 if [[ "${NODES_PLATFORM}" == "baremetal" ]] ; then
     sudo dnf -y install ipmitool
-fi
-
-# We use yq in a few places for processing YAML but it isn't packaged
-# for CentOS/RHEL so we have to install from pip. We do not want to
-# overwrite an existing installation of the golang version, though,
-# so check if we have a yq before installing.
-if ! which yq 2>&1 >/dev/null; then
-    sudo python -m pip install 'yq>=2.10.0'
-else
-    echo "Using yq from $(which yq)"
 fi
 
 # needed if we are using locally built images
