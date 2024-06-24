@@ -259,7 +259,7 @@ function generate_cluster_manifests() {
   mkdir -p ${MANIFESTS_PATH}
 
   export MIRROR_PATH="${SCRIPTDIR}/${OCP_DIR}/mirror"
-  if [ ! -z "${MIRROR_IMAGES}" ]; then
+  if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
     mkdir -p ${MIRROR_PATH}
   fi
 
@@ -297,7 +297,7 @@ function generate_cluster_manifests() {
      export PROVISIONING_HOST_EXTERNAL_IP_DUALSTACK=$(nth_ip $EXTERNAL_SUBNET_V6 1)
   fi
 
-  if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+  if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
     # Store the certs for registry
     if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
        cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
@@ -553,7 +553,7 @@ get_static_ips_and_macs
 
 get_nodes_bmc_info
 
-if [[ ! -z "${MIRROR_IMAGES}" ]]; then
+if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
     if [[ ${MIRROR_COMMAND} == "oc-mirror" ]] && [[ ${AGENT_DEPLOY_MCE} == "true" ]]; then
         oc_mirror_mce
     fi

@@ -147,7 +147,7 @@ function create_cluster() {
     fi
 
     if [ ! -z "${ASSETS_EXTRA_FOLDER:-}" ]; then
-      if [[ ! -z "${MIRROR_IMAGES}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+      if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]] || [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
         for ASSET in $(find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -print) ; do
             ASSET_NEW=${assets_dir}/openshift/${ASSET##*/}
             cp $ASSET $ASSET_NEW
@@ -397,9 +397,9 @@ function generate_metal3_config {
 }
 
 function image_mirror_config {
-    if [[ ! -z "${MIRROR_IMAGES}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+    if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]] || [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
         INDENTED_CERT=$( cat $REGISTRY_DIR/certs/$REGISTRY_CRT | awk '{ print " ", $0 }' )
-        if [[ ! -z "${MIRROR_IMAGES}" && ! -s ${MIRROR_LOG_FILE} ]]; then
+        if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]] && [[ ! -s ${MIRROR_LOG_FILE} ]]; then
             . /tmp/mirrored_release_image
             TAGGED=$(echo $MIRRORED_RELEASE_IMAGE | sed -e 's/release://')
             RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.ci.openshift.org[^":\@]\+')
@@ -871,7 +871,7 @@ function auth_template_and_removetmp(){
 use_registry() {
   check_registry=$1
   # return true if using the local registry and the backend is quay
-  if [[ ! -z "${MIRROR_IMAGES}" || $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+  if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]] || [[ $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
      if [[ ${check_registry} == "" ]] || [[ ${check_registry} == "${REGISTRY_BACKEND}" ]]; then
         return 0
      fi

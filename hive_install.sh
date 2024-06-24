@@ -10,7 +10,7 @@ source utils.sh
 # change it if we need to mirror the image.
 export DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE}"
 
-if [ ! -z "${MIRROR_IMAGES}" ]; then
+if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
     # Mirror hive itself
     DEPLOY_IMAGE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/hive:latest"
     oc image mirror \

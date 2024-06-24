@@ -139,7 +139,7 @@ elif [[ "$IP_STACK" = "v6" ]]; then
   export SERVICE_SUBNET_V4=""
   export SERVICE_SUBNET_V6=${SERVICE_SUBNET_V6:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
-  export MIRROR_IMAGES=true
+  export MIRROR_IMAGES=${MIRROR_IMAGES:-true}
 elif [[ "$IP_STACK" = "v4v6" || "$IP_STACK" = "v6v4" ]]; then
   export CLUSTER_SUBNET_V4=${CLUSTER_SUBNET_V4:-"10.128.0.0/14"}
   export CLUSTER_SUBNET_V6=${CLUSTER_SUBNET_V6:-"fd01::/48"}
@@ -203,7 +203,7 @@ if  [[ ! -z "${INSTALLER_PROXY:-}" ]]; then
   fi
 
   # When a local registry is enabled (usually in disconnected environments), let's add it to the no proxy list
-  if [[ ! -z "${MIRROR_IMAGES}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+  if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]] || [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     NO_PROXY=$NO_PROXY,$LOCAL_REGISTRY_DNS_NAME
   fi
 fi

@@ -14,7 +14,7 @@ fi
 
 # must-gather doesn't correctly work in disconnected environment, so we
 # have to calculcate the pullspec for the image and pass it to oc
-if [ -n "${MIRROR_IMAGES}" ]; then
+if [[ -n "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
   write_pull_secret
 
   MUST_GATHER_RELEASE_IMAGE=$(image_for must-gather | cut -d '@' -f2)

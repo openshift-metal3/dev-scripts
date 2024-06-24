@@ -34,7 +34,7 @@ fi
 
 function getReleaseImage() {
     local releaseImage=${OPENSHIFT_RELEASE_IMAGE}
-    if [ ! -z "${MIRROR_IMAGES}" ]; then
+    if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
         releaseImage="${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}"
     # If not installing from src, let's use the current version from the binary
     elif [ -z "$KNI_INSTALL_FROM_GIT" ]; then

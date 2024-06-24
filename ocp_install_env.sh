@@ -183,7 +183,7 @@ EOF
 
 function additional_trust_bundle() {
   if [[ ! -z "$ADDITIONAL_TRUST_BUNDLE" ]]; then
-    if [[ -z "${MIRROR_IMAGES}" && -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+    if [[ -z "${MIRROR_IMAGES}" || "${MIRROR_IMAGES}" == "false" ]] && [[ -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
       echo "additionalTrustBundle: |"
     fi
     awk '{ print " ", $0 }' "${ADDITIONAL_TRUST_BUNDLE}"
@@ -266,7 +266,7 @@ function generate_ocp_install_config() {
 
     # when using local mirror set pull secret to just this mirror to
     # ensure we don't accidentally pull from upstream
-    if [ ! -z "${MIRROR_IMAGES}" ]; then
+    if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
         install_config_pull_secret="${REGISTRY_CREDS}"
     else
         install_config_pull_secret="${PULL_SECRET_FILE}"
