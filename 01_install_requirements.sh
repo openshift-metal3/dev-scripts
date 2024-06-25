@@ -113,16 +113,18 @@ elif [[ $GOARCH == "x86_64" ]]; then
     GOARCH="amd64"
 fi
 
+sudo python -m venv --system-site-packages "${ANSIBLE_VENV}"
+
 # Also need the 3.9 version of netaddr for ansible.netcommon
 # and lxml for the pyxpath script
-sudo python -m pip install netaddr lxml
+"${ANSIBLE_VENV}/bin/pip" install netaddr lxml
 
-sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
+"${ANSIBLE_VENV}/bin/pip" install ansible=="${ANSIBLE_VERSION}"
 
 pushd ${METAL3_DEV_ENV_PATH}
-ansible-galaxy install -r vm-setup/requirements.yml
-ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
-ANSIBLE_FORCE_COLOR=true ansible-playbook \
+"${ANSIBLE}-galaxy" install -r vm-setup/requirements.yml
+"${ANSIBLE}-galaxy" collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
+ANSIBLE_FORCE_COLOR=true "${ANSIBLE}-playbook" \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
   -e "go_version=$GO_VERSION" \

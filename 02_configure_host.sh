@@ -127,7 +127,7 @@ if [[ $(uname -m) == "aarch64" ]]; then
   echo "libvirt_cdrombus: scsi" >> vm_setup_vars.yml
 fi
 
-ansible-playbook \
+"${ANSIBLE}-playbook" \
     -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
     -e "cluster_name=${CLUSTER_NAME}" \
@@ -327,7 +327,7 @@ if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
     IPTABLES=ip6tables
 fi
 
-ANSIBLE_FORCE_COLOR=true ansible-playbook \
+ANSIBLE_FORCE_COLOR=true "${ANSIBLE}-playbook" \
     -e "{use_firewalld: True}" \
     -e "provisioning_interface=$PROVISIONING_NETWORK_NAME" \
     -e "external_interface=$BAREMETAL_NETWORK_NAME" \

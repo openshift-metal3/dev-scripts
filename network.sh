@@ -6,7 +6,7 @@ function nth_ip() {
   network=$1
   idx=$2
 
-  python -c "from ansible_collections.ansible.utils.plugins.filter import nthhost; print(nthhost.nthhost('"$network"', $idx))"
+  "${ANSIBLE_VENV}/bin/python" -c "from ansible_collections.ansible.utils.plugins.filter import nthhost; print(nthhost.nthhost('"$network"', $idx))"
 }
 
 function ipversion(){

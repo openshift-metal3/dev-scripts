@@ -15,7 +15,7 @@ fi
 
 export ANSIBLE_FORCE_COLOR=true
 
-ansible-playbook \
+"${ANSIBLE}-playbook" \
     -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
     -e "cluster_name=${CLUSTER_NAME}" \
