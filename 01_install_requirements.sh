@@ -101,7 +101,7 @@ esac
 # during dnf upgrade
 sudo dnf -y install jq
 sudo python -m pip install yq
-yq -iy '.[3].dnf.nobest = "true"' ${METAL3_DEV_ENV_PATH}/vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
+yq -i '.[3].dnf.nobest = "true"' ${METAL3_DEV_ENV_PATH}/vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
 
 GO_VERSION=${GO_VERSION:-1.22.3}
 
