@@ -430,7 +430,7 @@ fi
 # and stays degraded in disconnected.
 # This is the suggested way in
 # https://docs.openshift.com/container-platform/4.9/operators/admin/olm-managing-custom-catalogs.html#olm-restricted-networks-operatorhub_olm-managing-custom-catalogs
-if [[ -n "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
+if [[ -n "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
   oc patch OperatorHub cluster --type json \
       -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
 fi

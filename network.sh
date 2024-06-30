@@ -203,7 +203,7 @@ if  [[ ! -z "${INSTALLER_PROXY:-}" ]]; then
   fi
 
   # When a local registry is enabled (usually in disconnected environments), let's add it to the no proxy list
-  if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]] || [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
+  if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]] || [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
     NO_PROXY=$NO_PROXY,$LOCAL_REGISTRY_DNS_NAME
   fi
 fi

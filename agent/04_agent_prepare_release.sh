@@ -34,13 +34,13 @@ write_pull_secret
 
 # Release mirroring could be required by the subsequent steps
 # even if the current one will be skipped
-if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
+if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
    setup_release_mirror
 fi
 
 function build_local_release() {
     # Sanity checks
-    if [[ -z "${MIRROR_IMAGES}" || "${MIRROR_IMAGES}" == "false" ]]; then
+    if [[ -z "${MIRROR_IMAGES}" || "${MIRROR_IMAGES,,}" == "false" ]]; then
         echo "Please set MIRROR_IMAGES to rebuild a local release"
         exit 1
     fi
@@ -97,7 +97,7 @@ function build_local_release() {
     done
 
     # Publish the new release in the local registry
-    if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES}" != "false" ]]; then
+    if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
         sudo podman image build --authfile $PULL_SECRET_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
         sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
     fi
