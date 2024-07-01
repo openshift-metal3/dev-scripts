@@ -39,9 +39,14 @@ wget https://raw.githubusercontent.com/openshift/installer/master/docs/user/agen
 chmod +x node-joiner.sh
 ./node-joiner.sh "$OCP_DIR/add-node/nodes-config.yaml"
 
-sudo virt-xml "${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD}" --add-device --disk "./node.x86_64.iso,device=cdrom,target.dev=sdc"
-sudo virt-xml "${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD}" --edit target=sda --disk="boot_order=1"
-sudo virt-xml "${CLUSTER_NAME}_extraworker_${AGENT_EXTRAWORKER_NODE_TO_ADD}" --edit target=sdc --disk="boot_order=2" --start
+ips_to_monitor=""
+for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
+do
+    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --add-device --disk "./node.x86_64.iso,device=cdrom,target.dev=sdc"
+    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sda --disk="boot_order=1"
+    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sdc --disk="boot_order=2" --start
+    ips_to_monitor+=" ${AGENT_EXTRA_WORKERS_IPS[${n}]}"
+done
 
 # Disable verbose command logging (-x) for approve_csrs function.
 # "set -e" id is disabled because pending CSR checks can result in non-zero exit code
@@ -58,4 +63,4 @@ if [ -f node-joiner-monitor.sh ]; then
 fi
 wget https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner-monitor.sh
 chmod +x node-joiner-monitor.sh
-./node-joiner-monitor.sh "${AGENT_EXTRA_WORKERS_IPS[${AGENT_EXTRAWORKER_NODE_TO_ADD}]}"
+./node-joiner-monitor.sh "${ips_to_monitor}"

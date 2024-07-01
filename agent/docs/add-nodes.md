@@ -21,15 +21,11 @@ using:
 export EXTRA_WORKER_DISK=100
 ```
 
-After the cluster has been installed. To add both nodes to the cluster, run
-these commands:
+After the cluster has been installed. To add both nodes to the cluster:
 
 ```
-AGENT_EXTRAWORKER_NODE_TO_ADD=0 make agent_add_node
-AGENT_EXTRAWORKER_NODE_TO_ADD=1 make agent_add_node
+make agent_add_node
 ```
-
-The nodes will be sequentially added to the cluster.
 
 # agent_add_node target
 
