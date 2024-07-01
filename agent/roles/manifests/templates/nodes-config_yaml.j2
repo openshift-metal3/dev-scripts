@@ -1,0 +1,44 @@
+{% import 'net_macros.yaml' as net %}
+
+{% set ips = agent_extra_workers_ips.split(',') %}
+{% set ipsv6 = agent_extra_workers_ipsv6.split(',') %}
+{% set macs = agent_extra_workers_macs.split(',') %}
+{% set hostnames = agent_extra_workers_hostnames.split(',') %}
+apiVersion: v1alpha1
+metadata:
+  name: {{ cluster_name }}
+  namespace: {{ cluster_namespace }}
+{% if (agent_install_config_bm_hosts == "false") and (networking_mode != "DHCP" or agent_nmstate_dhcp == 'true') %}
+hosts:
+{% for hostname in hostnames %}
+    - hostname: {{ hostname }}
+      interfaces:
+        - name: eth0
+          macAddress: {{ macs[loop.index0] }}
+      networkConfig:
+        interfaces:
+      {{ net.interfaces("eth0", macs[loop.index0])|indent(4, True) }}
+{% if ip_stack == "v4" %}
+            ipv4:
+          {{ net.ip(networking_mode, ips[loop.index0], external_subnet_v4_prefixlen)|indent(4, True) }}
+{% if "master-0" in hostname and "bad_dns" in test_cases %}
+    {{ net.dns("192.168.123.1")|indent(4, True)  }}
+{% else %}
+    {{ net.dns(provisioning_host_external_ip)|indent(4, True)  }}
+{% endif %}
+    {{ net.route("eth0", "0.0.0.0/0", provisioning_host_external_ip)|indent(4, True) }}
+{% elif ip_stack == "v6" %}
+            ipv6:
+          {{ net.ip(networking_mode, ipsv6[loop.index0], external_subnet_v6_prefixlen)|indent(4, True) }}
+    {{ net.dns(provisioning_host_external_ip)|indent(4, True) }}
+    {{ net.route("eth0", "::/0", provisioning_host_external_ip)|indent(4, True) }}
+{% else %}
+            ipv4:
+          {{ net.ip(networking_mode, ips[loop.index0], external_subnet_v4_prefixlen)|indent(4, True) }}
+            ipv6:
+          {{ net.ip(networking_mode, ipsv6[loop.index0], external_subnet_v6_prefixlen)|indent(4, True) }}
+    {{ net.dns_dualstack(provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
+    {{ net.route_dualstack("eth0", provisioning_host_external_ip, provisioning_host_external_ip_dualstack)|indent(4, True) }}
+{% endif %}
+{% endfor %}
+{% endif %}
