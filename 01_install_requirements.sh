@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset a994b1447f89e20ec9cc161700a9e829fd5d4b89 --hard
+  git reset d9fc324e8a37935b6c1b4555b5a8724b29626259 --hard
   popd
 fi
 
@@ -113,16 +113,15 @@ elif [[ $GOARCH == "x86_64" ]]; then
     GOARCH="amd64"
 fi
 
-# Also need the 3.9 version of netaddr for ansible.netcommon
-# and lxml for the pyxpath script
-sudo python -m pip install netaddr lxml
+sudo python -m venv --system-site-packages "${ANSIBLE_VENV}"
 
-sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
+# Also need the 3.9 version of netaddr for ansible.netcommon
+"${ANSIBLE_VENV}/bin/pip" install netaddr ansible=="${ANSIBLE_VERSION}"
 
 pushd ${METAL3_DEV_ENV_PATH}
-ansible-galaxy install -r vm-setup/requirements.yml
-ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
-ANSIBLE_FORCE_COLOR=true ansible-playbook \
+"${ANSIBLE}-galaxy" install -r vm-setup/requirements.yml
+"${ANSIBLE}-galaxy" collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
+ANSIBLE_FORCE_COLOR=true "${ANSIBLE}-playbook" \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
   -e "go_version=$GO_VERSION" \
@@ -145,6 +144,9 @@ fi
 if [[ "${NODES_PLATFORM}" == "baremetal" ]] ; then
     sudo dnf -y install ipmitool
 fi
+
+# lxml is needed for our pyxpath tool
+sudo dnf -y install python3-lxml
 
 # We use yq in a few places for processing YAML but it isn't packaged
 # for CentOS/RHEL so we have to install from pip. We do not want to

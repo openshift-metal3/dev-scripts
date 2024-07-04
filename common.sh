@@ -94,6 +94,8 @@ export PROVISIONING_HOST_USER=${PROVISIONING_HOST_USER:-$USER}
 # The dev-scripts working directory
 export WORKING_DIR=${WORKING_DIR:-"/opt/dev-scripts"}
 OCP_DIR=${OCP_DIR:-ocp/${CLUSTER_NAME}}
+ANSIBLE_VENV=${ANSIBLE_VENV:-"${WORKING_DIR}/venv"}
+ANSIBLE="${ANSIBLE_VENV}/bin/ansible"
 
 # The DNS name for the registry that this cluster should use.
 export LOCAL_REGISTRY_DNS_NAME=${LOCAL_REGISTRY_DNS_NAME:-"virthost.${CLUSTER_NAME}.${BASE_DOMAIN}"}

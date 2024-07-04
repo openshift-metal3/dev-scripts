@@ -68,7 +68,7 @@ function playbook() {
 		VIRTBMC_ACTION="ignore"
 	fi
 
-	ansible-playbook \
+	"${ANSIBLE}-playbook" \
 		-e @vm_setup_vars.yml \
 		-e "ironic_prefix=${REMOTE_CLUSTER_NAME}_" \
 		-e "cluster_name=${REMOTE_CLUSTER_NAME}" \
