@@ -418,3 +418,6 @@ if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
     sudo systemctl start nfs-server
     sudo exportfs -a
 fi
+
+sudo firewall-cmd --zone=public --add-port=5000/tcp
+sudo firewall-cmd --reload
