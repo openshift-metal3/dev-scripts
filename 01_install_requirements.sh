@@ -80,6 +80,7 @@ case $DISTRO in
     sudo alternatives --set python /usr/bin/python3.9
     sudo alternatives --set python3 /usr/bin/python3.9
     sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
+    PYTHON_DEVEL="python39-devel"
     ;;
   "centos9"|"rhel9"|"rocky9")
     sudo dnf -y install python3-pip
@@ -90,6 +91,7 @@ case $DISTRO in
       sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
     fi
     sudo ln -s /usr/bin/python3 /usr/bin/python || true
+    PYTHON_DEVEL="python3-devel"
     ;;
   *)
     echo -n "CentOS or RHEL version not supported"
@@ -117,7 +119,7 @@ GO_VERSION=${GO_VERSION:-1.22.3}
 GOARCH=$(uname -m)
 if [[ $GOARCH == "aarch64" ]]; then
     GOARCH="arm64"
-    sudo dnf -y install python39-devel libxml2-devel libxslt-devel
+    sudo dnf -y install $PYTHON_DEVEL libxml2-devel libxslt-devel
 elif [[ $GOARCH == "x86_64" ]]; then
     GOARCH="amd64"
 fi
