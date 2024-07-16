@@ -33,9 +33,9 @@ fi
 if [ -f node.x86_64.iso ]; then
   rm -f node.x86_64.iso
 fi
-wget https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner.sh
-chmod +x node-joiner.sh
-./node-joiner.sh "$OCP_DIR/add-node/nodes-config.yaml"
+wget -P $OCP_DIR https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner.sh
+chmod +x $OCP_DIR/node-joiner.sh
+./${OCP_DIR}/node-joiner.sh "$OCP_DIR/add-node/nodes-config.yaml"
 
 for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
 do
@@ -57,7 +57,7 @@ set -ex
 if [ -f node-joiner-monitor.sh ]; then
   rm -f node-joiner-monitor.sh
 fi
-wget https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner-monitor.sh
-chmod +x node-joiner-monitor.sh
+wget -P $OCP_DIR https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner-monitor.sh
+chmod +x $OCP_DIR/node-joiner-monitor.sh
 source "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
-./node-joiner-monitor.sh "${EXTRA_WORKERS_IPS}"
+./${OCP_DIR}/node-joiner-monitor.sh "${EXTRA_WORKERS_IPS}"
