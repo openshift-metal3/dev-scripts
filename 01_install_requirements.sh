@@ -162,6 +162,6 @@ if sudo systemctl is-active docker-distribution.service; then
   sudo systemctl disable --now docker-distribution.service
 fi
 
-retry_with_timeout 5 60 "curl $OPENSHIFT_CLIENT_TOOLS_URL | sudo tar -U -C /usr/local/bin -xzf -"
+retry_with_timeout 5 60 "curl -L $OPENSHIFT_CLIENT_TOOLS_URL | sudo tar -U -C /usr/local/bin -xzf -"
 sudo chmod +x /usr/local/bin/oc
 oc version --client -o json
