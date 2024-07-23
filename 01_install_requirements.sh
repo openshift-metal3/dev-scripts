@@ -88,9 +88,13 @@ case $DISTRO in
       sudo dnf config-manager --set-enabled crb
       sudo dnf -y install epel-release
     elif [[ $DISTRO == "rhel9" ]]; then
-      # NOTE(elfosardo): a valid RHEL subscription is needed to be able to
-      # enable the CRB repository
-      sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
+      # NOTE(raukadah): If a system is subscribed to RHEL subscription then
+      # sudo subscription-manager identity will return exit 0 else 1.
+      if $(sudo subscription-manager identity > /dev/null 2>&1); then
+	# NOTE(elfosardo): a valid RHEL subscription is needed to be able to
+	# enable the CRB repository
+	sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
+      fi
       sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
     fi
     sudo ln -s /usr/bin/python3 /usr/bin/python || true
