@@ -90,7 +90,7 @@ case $DISTRO in
     elif [[ $DISTRO == "rhel9" ]]; then
       # NOTE(raukadah): If a system is subscribed to RHEL subscription then
       # sudo subscription-manager identity will return exit 0 else 1.
-      if $(sudo subscription-manager identity > /dev/null 2>&1); then
+      if sudo subscription-manager identity > /dev/null 2>&1; then
 	# NOTE(elfosardo): a valid RHEL subscription is needed to be able to
 	# enable the CRB repository
 	sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
