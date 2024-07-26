@@ -8,12 +8,16 @@ clouds:
   metal3:
     auth_type: {{.AuthType}}
     baremetal_endpoint_override: {{.ClusterIronicURL}}
+{{- if .OCPVersionUsesInspector }}
     baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}
+{{- end }}
     verify: false
+{{- if .OCPVersionUsesInspector }}
   metal3-inspector:
     auth_type: {{.AuthType}}
     baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}
     verify: false
+{{- end}}
 {{- else if eq .AuthType "http_basic"}}
   metal3:
     auth_type: {{.AuthType}}
@@ -22,6 +26,7 @@ clouds:
       password: {{.IronicPassword}}
     baremetal_endpoint_override: {{.ClusterIronicURL}}
     verify: false
+{{- if .OCPVersionUsesInspector }}
   metal3-inspector:
     auth_type: {{.AuthType}}
     auth:
@@ -29,4 +34,5 @@ clouds:
       password: {{.InspectorPassword}}
     baremetal_introspection_endpoint_override: {{.ClusterInspectorURL}}
     verify: false
+{{- end}}
 {{- end}}

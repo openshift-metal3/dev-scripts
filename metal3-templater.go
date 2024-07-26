@@ -21,15 +21,16 @@ type templater struct {
 	MachineOSImageURL          string
 
 	// Ironic clouds.yaml data
-	AuthType              string
-	BootstrapIronicURL    string
-	BootstrapInspectorURL string
-	ClusterIronicURL      string
-	ClusterInspectorURL   string
-	IronicUser            string
-	IronicPassword        string
-	InspectorUser         string
-	InspectorPassword     string
+	AuthType                string
+	BootstrapIronicURL      string
+	BootstrapInspectorURL   string
+	ClusterIronicURL        string
+	ClusterInspectorURL     string
+	IronicUser              string
+	IronicPassword          string
+	InspectorUser           string
+	InspectorPassword       string
+	OCPVersionUsesInspector bool
 }
 
 func main() {
@@ -45,6 +46,7 @@ func main() {
 	var provisioningNetwork string
 	var clusterIP string
 	var imageURL string
+	var ocpVersionUsesInspector bool
 
 	noauthCmd := flag.NewFlagSet("noauth", flag.ExitOnError)
 	noauthCmd.StringVar(&templateFile, "template-file", "", "Template File")
@@ -61,6 +63,7 @@ func main() {
 	httpBasicCmd.StringVar(&imageURL, "image-url", "", "Image URL")
 	httpBasicCmd.StringVar(&bootstrapIP, "bootstrap-ip", "", "Bootstrap IP address")
 	httpBasicCmd.StringVar(&clusterIP, "cluster-ip", "", "Cluster IP address")
+	httpBasicCmd.BoolVar(&ocpVersionUsesInspector, "ocp-version-uses-inspector", false, "")
 
 	ironicCred := httpBasicCmd.String("ironic-basic-auth", "", "ironic credentials <user>:<password>")
 	inspectorCred := httpBasicCmd.String("inspector-basic-auth", "", "inspector crdentials <user>:<password>")
@@ -90,10 +93,11 @@ func main() {
 		}
 
 		templateData.AuthType = "none"
+		templateData.OCPVersionUsesInspector = true
 	case "http_basic":
 		httpBasicCmd.Parse(os.Args[2:])
-		if !(httpBasicCmd.NFlag() == 8 && httpBasicCmd.NArg() == 0) {
-			fmt.Printf("Usage: <prog> http_basic -ironic-basic-auth=<user>:<password> -inspector-basic-auth=<user>:<password> -template-file=TEMPLATE_FILE -provisioning-interface=INTERFACE -provisioning-network=NETWORK -bootstrap-ip=BOOTSTRAP_IP -cluster-ip=CLUSTER_IP -image-url=IMAGE_URL\n")
+		if !(httpBasicCmd.NFlag() >= 7 && httpBasicCmd.NArg() == 0) {
+			fmt.Printf("Usage: <prog> http_basic [-ocp-version-uses-inspector] -ironic-basic-auth=<user>:<password> [-inspector-basic-auth=<user>:<password>] -template-file=TEMPLATE_FILE -provisioning-interface=INTERFACE -provisioning-network=NETWORK -bootstrap-ip=BOOTSTRAP_IP -cluster-ip=CLUSTER_IP -image-url=IMAGE_URL\n")
 			os.Exit(1)
 		}
 
@@ -101,19 +105,25 @@ func main() {
 			fmt.Printf("The value for ironic-basic-auth should contain ':' as delimiter to separate username and password")
 			os.Exit(1)
 		}
-		if !strings.Contains(*inspectorCred, ":") {
+
+		if ocpVersionUsesInspector && !strings.Contains(*inspectorCred, ":") {
 			fmt.Printf("The value for inspector-basic-auth should contain ':' as delimiter to separate username and password")
 			os.Exit(1)
 		}
 
 		ironicAuth := strings.Split(*ironicCred, ":")
-		inspectorAuth := strings.Split(*inspectorCred, ":")
 
 		templateData.AuthType = "http_basic"
 		templateData.IronicUser = ironicAuth[0]
 		templateData.IronicPassword = ironicAuth[1]
-		templateData.InspectorUser = inspectorAuth[0]
-		templateData.InspectorPassword = inspectorAuth[1]
+
+		if ocpVersionUsesInspector {
+			inspectorAuth := strings.Split(*inspectorCred, ":")
+			templateData.InspectorUser = inspectorAuth[0]
+			templateData.InspectorPassword = inspectorAuth[1]
+			templateData.OCPVersionUsesInspector = true
+		}
+
 	default:
 		fmt.Println("Expected 'bootstrap' 'noauth' or 'http_basic' subcommands\n")
 		os.Exit(1)
