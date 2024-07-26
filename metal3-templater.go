@@ -21,15 +21,11 @@ type templater struct {
 	MachineOSImageURL          string
 
 	// Ironic clouds.yaml data
-	AuthType              string
-	BootstrapIronicURL    string
-	BootstrapInspectorURL string
-	ClusterIronicURL      string
-	ClusterInspectorURL   string
-	IronicUser            string
-	IronicPassword        string
-	InspectorUser         string
-	InspectorPassword     string
+	AuthType           string
+	BootstrapIronicURL string
+	ClusterIronicURL   string
+	IronicUser         string
+	IronicPassword     string
 }
 
 func main() {
@@ -63,7 +59,6 @@ func main() {
 	httpBasicCmd.StringVar(&clusterIP, "cluster-ip", "", "Cluster IP address")
 
 	ironicCred := httpBasicCmd.String("ironic-basic-auth", "", "ironic credentials <user>:<password>")
-	inspectorCred := httpBasicCmd.String("inspector-basic-auth", "", "inspector crdentials <user>:<password>")
 
 	if len(os.Args) < 2 {
 		fmt.Printf("Expected 'bootstrap' 'noauth' or 'http_basic' subcommands\n")
@@ -81,7 +76,6 @@ func main() {
 		}
 
 		templateData.BootstrapIronicURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP, "6385"))
-		templateData.BootstrapInspectorURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP, "5050"))
 	case "noauth":
 		noauthCmd.Parse(os.Args[2:])
 		if !(noauthCmd.NFlag() == 6 && noauthCmd.NArg() == 0) {
@@ -92,8 +86,8 @@ func main() {
 		templateData.AuthType = "none"
 	case "http_basic":
 		httpBasicCmd.Parse(os.Args[2:])
-		if !(httpBasicCmd.NFlag() == 8 && httpBasicCmd.NArg() == 0) {
-			fmt.Printf("Usage: <prog> http_basic -ironic-basic-auth=<user>:<password> -inspector-basic-auth=<user>:<password> -template-file=TEMPLATE_FILE -provisioning-interface=INTERFACE -provisioning-network=NETWORK -bootstrap-ip=BOOTSTRAP_IP -cluster-ip=CLUSTER_IP -image-url=IMAGE_URL\n")
+		if !(httpBasicCmd.NFlag() == 7 && httpBasicCmd.NArg() == 0) {
+			fmt.Printf("Usage: <prog> http_basic -ironic-basic-auth=<user>:<password> -template-file=TEMPLATE_FILE -provisioning-interface=INTERFACE -provisioning-network=NETWORK -bootstrap-ip=BOOTSTRAP_IP -cluster-ip=CLUSTER_IP -image-url=IMAGE_URL\n")
 			os.Exit(1)
 		}
 
@@ -101,19 +95,12 @@ func main() {
 			fmt.Printf("The value for ironic-basic-auth should contain ':' as delimiter to separate username and password")
 			os.Exit(1)
 		}
-		if !strings.Contains(*inspectorCred, ":") {
-			fmt.Printf("The value for inspector-basic-auth should contain ':' as delimiter to separate username and password")
-			os.Exit(1)
-		}
 
 		ironicAuth := strings.Split(*ironicCred, ":")
-		inspectorAuth := strings.Split(*inspectorCred, ":")
 
 		templateData.AuthType = "http_basic"
 		templateData.IronicUser = ironicAuth[0]
 		templateData.IronicPassword = ironicAuth[1]
-		templateData.InspectorUser = inspectorAuth[0]
-		templateData.InspectorPassword = inspectorAuth[1]
 	default:
 		fmt.Println("Expected 'bootstrap' 'noauth' or 'http_basic' subcommands\n")
 		os.Exit(1)
@@ -139,13 +126,11 @@ func main() {
 
 		// BootstrapIP
 		templateData.BootstrapIronicURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP, "6385"))
-		templateData.BootstrapInspectorURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP, "5050"))
 
 		// ProvisioningIP
 		size, _ := ipnet.IPNet.Mask.Size()
 		templateData.ProvisioningIP = fmt.Sprintf("%s/%d", clusterIP, size)
 		templateData.ClusterIronicURL = fmt.Sprintf("https://%s", net.JoinHostPort(clusterIP, "6385"))
-		templateData.ClusterInspectorURL = fmt.Sprintf("https://%s", net.JoinHostPort(clusterIP, "5050"))
 
 		// URL Host
 		if strings.Contains(clusterIP, ":") {
