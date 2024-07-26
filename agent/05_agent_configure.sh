@@ -17,6 +17,7 @@ early_deploy_validation
 
 export CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
+# Functions used to determine IP addresses, MACs, and hostnames
 function add_ip_host_entry {
     ip=${1}
     hostname=${2}
@@ -42,62 +43,108 @@ function add_dns_entry {
     fi
 }
 
-function get_static_ips_and_macs() {
+function configure_node() {
+  local node_type="$1"
+  local node_num="$2"
 
+  if [[ $NETWORKING_MODE == "DHCP" ]]; then
+    base_ip=20
+  else
+    # Set outside the range used for dhcp
+    base_ip=80
+  fi
+
+  local cluster_name="${CLUSTER_NAME}_${node_type}_${node_num}"
+  local hostname="$(printf "${MASTER_HOSTNAME_FORMAT}" "${node_num}")"
+  local ip=$((base_ip + node_num))
+  if [[ "$node_type" == "worker" ]]; then
+    local hostname="$(printf "${WORKER_HOSTNAME_FORMAT}" "${node_num}")"
+    local ip=$((base_ip + ${NUM_MASTERS} + node_num))
+  fi
+  if [[ "$node_type" == "extraworker" ]]; then
+    local hostname="$(printf "${EXTRA_WORKER_HOSTNAME_FORMAT}" "${node_num}")"
+    local ip=$((base_ip + ${NUM_MASTERS} + ${NUM_WORKERS} + node_num))
+  fi
+
+  if [[ "$node_type" != "extraworker" ]]; then
+    AGENT_NODES_HOSTNAMES+=("$hostname")
+  else
+    AGENT_EXTRA_WORKERS_HOSTNAMES+=("$hostname")
+  fi
+
+  local node_ip
+  if [[ "$IP_STACK" = "v4" ]]; then
+      node_ip=$(nth_ip ${EXTERNAL_SUBNET_V4} ${ip})
+  elif [[ "$IP_STACK" = "v6" ]]; then
+      node_ip=$(nth_ip ${EXTERNAL_SUBNET_V6} ${ip})
+  else
+      # v4v6 
+      node_ip=$(nth_ip ${EXTERNAL_SUBNET_V4} ${ip})
+      ipv6=$(nth_ip ${EXTERNAL_SUBNET_V6} ${ip})
+      add_dns_entry "$ipv6" "$hostname"
+  fi
+
+  add_dns_entry "$node_ip" "$hostname"
+  add_ip_host_entry "$node_ip" "$hostname"
+
+  # Get the generated mac addresses
+  local node_mac=$(sudo virsh dumpxml "$cluster_name" | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
+  if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
+    # For a bond, a random mac is added for the 2nd interface
+    node_mac+=($(sudo virsh domiflist "${cluster_name}" | grep "${BAREMETAL_NETWORK_NAME}" | grep -v "${node_mac}" | awk '{print $5}'))
+  fi
+
+  if [[ "$node_type" != "extraworker" ]]; then
+    if [[ "$IP_STACK" = "v4" ]]; then
+      AGENT_NODES_IPS+=("$node_ip")
+    elif [[ "$IP_STACK" = "v6" ]]; then
+      AGENT_NODES_IPSV6+=("$node_ip")
+    else
+      AGENT_NODES_IPS+=("$node_ip")
+      AGENT_NODES_IPSV6+=("$ipv6")
+    fi
+    AGENT_NODES_MACS+=("$node_mac")
+  else
+      if [[ "$IP_STACK" = "v4" ]]; then
+      AGENT_EXTRA_WORKERS_IPS+=("$node_ip")
+    elif [[ "$IP_STACK" = "v6" ]]; then
+      AGENT_EXTRA_WORKERS_IPSV6+=("$node_ip")
+    else
+      AGENT_EXTRA_WORKERS_IPS+=("$node_ip")
+      AGENT_EXTRA_WORKERS_IPSV6+=("$ipv6")
+    fi
+    AGENT_EXTRA_WORKERS_MACS+=("$node_mac")
+  fi
+}
+
+function get_static_ips_and_macs() {
     AGENT_NODES_IPS=()
     AGENT_NODES_IPSV6=()
     AGENT_NODES_MACS=()
     AGENT_NODES_HOSTNAMES=()
+    AGENT_EXTRA_WORKERS_IPS=()
+    AGENT_EXTRA_WORKERS_IPSV6=()
+    AGENT_EXTRA_WORKERS_MACS=()
+    AGENT_EXTRA_WORKERS_HOSTNAMES=()
 
     if [[ "$AGENT_STATIC_IP_NODE0_ONLY" = "true" ]]; then
-        static_ips=1
+      configure_node "master" "0"
     else
-        static_ips=$NUM_MASTERS+$NUM_WORKERS
+      for (( i=0; i<${NUM_MASTERS}; i++ ))
+      do
+        configure_node "master" "$i"
+      done
+
+      for (( i=0; i<${NUM_WORKERS}; i++ ))
+      do
+        configure_node "worker" "$i"
+      done
+
+      for (( i=0; i<${NUM_EXTRA_WORKERS}; i++ ))
+      do
+        configure_node "extraworker" "$i"
+      done
     fi
-
-    if [[ $NETWORKING_MODE == "DHCP" ]]; then
-      base_ip=20
-    else
-      # Set outside the range used for dhcp
-      base_ip=80
-    fi
-
-    for (( i=0; i<${static_ips}; i++ ))
-    do
-        if [[ $i < $NUM_MASTERS ]]; then
-            AGENT_NODES_HOSTNAMES+=($(printf ${MASTER_HOSTNAME_FORMAT} ${i}))
-            cluster_name=${CLUSTER_NAME}_master_${i}
-        else
-	    worker_num=$((${i}-$NUM_MASTERS))
-            AGENT_NODES_HOSTNAMES+=($(printf ${WORKER_HOSTNAME_FORMAT} ${worker_num}))
-            cluster_name=${CLUSTER_NAME}_worker_${worker_num}
-        fi
-
-        ip=${base_ip}+${i}
-        if [[ "$IP_STACK" = "v4" ]]; then
-            AGENT_NODES_IPS+=($(nth_ip ${EXTERNAL_SUBNET_V4} ${ip}))
-            add_dns_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
-            add_ip_host_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
-        elif [[ "$IP_STACK" = "v6" ]]; then
-            AGENT_NODES_IPSV6+=($(nth_ip ${EXTERNAL_SUBNET_V6} ${ip}))
-            add_dns_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
-            add_ip_host_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
-        else
-	    # v4v6
-            AGENT_NODES_IPS+=($(nth_ip ${EXTERNAL_SUBNET_V4} ${ip}))
-            AGENT_NODES_IPSV6+=($(nth_ip $EXTERNAL_SUBNET_V6 ${ip}))
-            add_dns_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
-            add_ip_host_entry ${AGENT_NODES_IPS[i]} ${AGENT_NODES_HOSTNAMES[i]}
-            add_dns_entry ${AGENT_NODES_IPSV6[i]} ${AGENT_NODES_HOSTNAMES[i]}
-        fi
-
-        # Get the generated mac addresses
-        AGENT_NODES_MACS+=($(sudo virsh dumpxml $cluster_name | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -))
-        if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
-	   # For a bond, a random mac is added for the 2nd interface
-	   AGENT_NODES_MACS+=($(sudo virsh domiflist ${cluster_name} | grep ${BAREMETAL_NETWORK_NAME} | grep -v ${AGENT_NODES_MACS[-1]} | awk '{print $5}'))
-        fi
-    done
 }
 
 function generate_extra_cluster_manifests() {
@@ -230,6 +277,15 @@ function generate_cluster_manifests() {
   nodes_hostnames=$(printf '%s,' "${AGENT_NODES_HOSTNAMES[@]}")
   export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
 
+  extra_workers_ips=$(printf '%s,' "${AGENT_EXTRA_WORKERS_IPS[@]}")
+  export AGENT_EXTRA_WORKERS_IPS_STR=${extra_workers_ips::-1}
+  extra_workers_ipsv6=$(printf '%s,' "${AGENT_EXTRA_WORKERS_IPSV6[@]}")
+  export AGENT_EXTRA_WORKERS_IPSV6_STR=${extra_workers_ipsv6::-1}
+  extra_workers_macs=$(printf '%s,' "${AGENT_EXTRA_WORKERS_MACS[@]}")
+  export AGENT_EXTRA_WORKERS_MACS_STR=${extra_workers_macs::-1}
+  extra_workers_hostnames=$(printf '%s,' "${AGENT_EXTRA_WORKERS_HOSTNAMES[@]}")
+  export AGENT_EXTRA_WORKERS_HOSTNAMES_STR=${extra_workers_hostnames::-1}
+
   if [[ "${NUM_MASTERS}" > "1" ]]; then
      export API_VIPS=${API_VIPS}
      export INGRESS_VIPS=${INGRESS_VIPS}
@@ -266,6 +322,17 @@ function generate_cluster_manifests() {
   ansible-playbook -vvv \
           -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
           "${SCRIPTDIR}/agent/create-manifests-playbook.yaml"
+}
+
+function write_extra_workers_ips() {
+  # write extra worker IP addresses out to file, so that it can be used by 07_agent_add_node.sh
+  if [[ "$IP_STACK" = "v6" ]]; then
+    extra_workers_ips_space_delimited=$(printf '%s ' "${AGENT_EXTRA_WORKERS_IPSV6[@]}")
+  else
+    extra_workers_ips_space_delimited=$(printf '%s ' "${AGENT_EXTRA_WORKERS_IPS[@]}")
+  fi
+  mkdir -p "${SCRIPTDIR}/${OCP_DIR}/add-node/"
+  echo "EXTRA_WORKERS_IPS=\"${extra_workers_ips_space_delimited}\"" > "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
 }
 
 function add_haproxy_server_lines() {
@@ -522,3 +589,5 @@ fi
 generate_cluster_manifests
 
 generate_extra_cluster_manifests
+
+write_extra_workers_ips

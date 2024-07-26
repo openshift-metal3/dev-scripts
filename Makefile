@@ -9,6 +9,10 @@ assisted: assisted_deployment bell
 # Deploy cluster with agent installer flow
 agent: agent_requirements requirements configure agent_build_installer agent_prepare_release agent_configure agent_create_cluster
 
+# Deploy cluster with agent installer flow and adds nodes after initial install
+# Requires at least 1 extra worker node to be configured with disk size at least 100Gß
+agent_plus_add_node: agent agent_add_node
+
 agent_requirements:
 	./agent/01_agent_requirements.sh
 
@@ -32,6 +36,9 @@ agent_gather:
 
 agent_tests:
 	./agent/agent_tests.sh
+
+agent_add_node:
+	./agent/07_agent_add_node.sh
 
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 

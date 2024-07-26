@@ -32,3 +32,4 @@
     src: "agent-config_bond_yaml.j2"
     dest: "{{ install_path }}/agent-config.yaml"
   when: agent_bond_config != 'none'
+
