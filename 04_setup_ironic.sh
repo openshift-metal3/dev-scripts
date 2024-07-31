@@ -174,7 +174,7 @@ if [ ! -z "${MIRROR_IMAGES}" ]; then
     fi
 fi
 
-for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb ipa-downloader; do
+for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb; do
     sudo podman ps | grep -w " $name$" && sudo podman kill $name
     sudo podman ps --all | grep -w " $name$" && sudo podman rm $name -f
 done
@@ -217,22 +217,6 @@ sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_N
      --env PROVISIONING_INTERFACE=${PROVISIONING_NETWORK_NAME} \
      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
-# IPA Downloader - for testing
-if [ -n "${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-}" ];
-then
-  sudo -E podman pull --authfile $PULL_SECRET_FILE $IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE
-
-  sudo podman run -d --net host --privileged --name ipa-downloader --pod ironic-pod \
-     -v $IRONIC_DATA_DIR:/shared ${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE} /usr/local/bin/get-resource.sh
-
-  # Units have been introduced in 2.x
-  if printf '2.0.0\n%s\n' "$PODMAN_VERSION" | sort -V -C; then
-      sudo podman wait -i 1000ms ipa-downloader
-  else
-      sudo podman wait -i 1000 ipa-downloader
-  fi
-fi
-
 if [ "$NODES_PLATFORM" = "libvirt" ]; then
     if ! is_running vbmc; then
         # Force remove the pid file before restarting because podman
@@ -256,9 +240,3 @@ fi
 # Wait for images to be downloaded/ready
 while ! curl --fail -g http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
 while ! curl --fail -g http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
-
-if [ -n "${IRONIC_IPA_DOWNLOADER_LOCAL_IMAGE:-}" ];
-then
-  while ! curl --fail --head -g http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/ironic-python-agent.initramfs ; do sleep 1; done
-  while ! curl --fail --head -g http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/ironic-python-agent.kernel ; do sleep 1; done
-fi
