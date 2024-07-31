@@ -27,19 +27,15 @@ function approve_csrs() {
   done
 }
 
-if [ -f node-joiner.sh ]; then
-  rm -f node-joiner.sh
+if [ -f $OCP_DIR/add-node/node.iso ]; then
+  rm -f $OCP_DIR/add-node/node.iso
 fi
-if [ -f node.x86_64.iso ]; then
-  rm -f node.x86_64.iso
-fi
-wget -P $OCP_DIR https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner.sh
-chmod +x $OCP_DIR/node-joiner.sh
-./${OCP_DIR}/node-joiner.sh "$OCP_DIR/add-node/nodes-config.yaml"
+
+oc adm node-image create --dir "$OCP_DIR/add-node/"
 
 for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
 do
-    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --add-device --disk "./node.x86_64.iso,device=cdrom,target.dev=sdc"
+    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --add-device --disk "$OCP_DIR/add-node/node.iso,device=cdrom,target.dev=sdc"
     sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sda --disk="boot_order=1"
     sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sdc --disk="boot_order=2" --start
 done
@@ -54,10 +50,6 @@ approve_csrs_pid=$!
 trap 'kill -TERM ${approve_csrs_pid}; exit' INT EXIT TERM
 set -ex
 
-if [ -f node-joiner-monitor.sh ]; then
-  rm -f node-joiner-monitor.sh
-fi
-wget -P $OCP_DIR https://raw.githubusercontent.com/openshift/installer/master/docs/user/agent/add-node/node-joiner-monitor.sh
-chmod +x $OCP_DIR/node-joiner-monitor.sh
 source "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
-./${OCP_DIR}/node-joiner-monitor.sh "${EXTRA_WORKERS_IPS}"
+EXTRA_WORKERS_IPS="${EXTRA_WORKERS_IPS%% }"
+oc adm node-image monitor --ip-addresses "${EXTRA_WORKERS_IPS// /,}"  --kubeconfig "$OCP_DIR/auth/kubeconfig"
