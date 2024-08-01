@@ -304,7 +304,13 @@ fi
 # restart the libvirt network so it applies an ip to the bridge
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
+    # have some delay between disabling the network on libvirt
+    # and deleting it from NM to avoid race conditions
+    sleep 1
     sudo nmcli con del ${BAREMETAL_NETWORK_NAME}
+    # have some delay between deleting the network on NM
+    # and restarting it from libvirt to avoid race conditions
+    sleep 1
     sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
     # Needed in IPv6 on some EL9 hosts for the bootstrap VM to get an IP
     echo 0 | sudo dd of=/proc/sys/net/ipv6/conf/${BAREMETAL_NETWORK_NAME}/addr_gen_mode
