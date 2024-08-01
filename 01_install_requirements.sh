@@ -20,6 +20,10 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
   git reset ac63b3dcd04796dcec6b71d4fedd4ad8e043688f --hard
+
+  # Ref commit: 62be8305720509325000e89d2ca4d80b795421fb
+  sed -i 's/virt-rhel8.2.0/virt/' vm-setup/roles/libvirt/templates/baremetalvm.xml.j2
+
   popd
 fi
 
