@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset ac63b3dcd04796dcec6b71d4fedd4ad8e043688f --hard
+  git reset 868665523cb10ce723bce48ea4e9b22edcd68f68 --hard
   popd
 fi
 
@@ -115,11 +115,6 @@ if ! which yq 2>&1 >/dev/null; then
 else
     echo "Using yq from $(which yq)"
 fi
-
-# Hijack metal3-dev-env update module to use nobest
-# during dnf upgrade
-sudo dnf -y install jq
-yq -iy '.[3].dnf.nobest = "true"' ${METAL3_DEV_ENV_PATH}/vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
 
 GO_VERSION=${GO_VERSION:-1.22.3}
 
