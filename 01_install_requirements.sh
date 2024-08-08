@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset 4e5497b560762c8d405b36c4ea4f5788c7097df3 --hard
+  git reset 32f90c78000c60db5a72eace5f8d2eb071ebd7b7 --hard
 
   # Ref commit: 62be8305720509325000e89d2ca4d80b795421fb
   sed -i 's/virt-rhel8.2.0/virt/' vm-setup/roles/libvirt/templates/baremetalvm.xml.j2

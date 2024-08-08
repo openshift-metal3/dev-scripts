@@ -153,6 +153,13 @@ ansible-playbook \
     -i ${VM_SETUP_PATH}/inventory.ini \
     -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
 
+# NOTE(elfosardo): /usr/share/OVMF/OVMF_CODE.fd does not exist in the ovmf
+# package anymore, so we need to create a link to that until metal3-dev-env
+# fixes that, probably when switching to UEFI by default
+if ! [[ -f /usr/share/OVMF/OVMF_CODE.fd ]]; then
+  sudo ln -s /usr/share/edk2/ovmf/OVMF_CODE.fd /usr/share/OVMF/
+fi
+
 if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
   ORIG_NODES_FILE="${NODES_FILE}.orig"
   cp -f ${NODES_FILE} ${ORIG_NODES_FILE}
