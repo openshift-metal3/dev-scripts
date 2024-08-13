@@ -173,6 +173,14 @@ function setVIPs() {
     esac
 }
 
+function featureSet() {
+    if [[ -n "$FEATURE_SET" ]]; then
+cat <<EOF
+featureSet: "$FEATURE_SET"
+EOF
+    fi
+}
+
 function libvirturi() {
     if [[ "$REMOTE_LIBVIRT" -ne 0 ]]; then
 cat <<EOF
@@ -306,6 +314,7 @@ controlPlane:
   architecture: $(get_arch install_config)
   platform:
     baremetal: {}
+$(featureSet)
 platform:
   baremetal:
 $(libvirturi)
