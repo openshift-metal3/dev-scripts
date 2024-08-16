@@ -597,8 +597,8 @@ set -x
 #export REGISTRY_CREDS=${REGISTRY_CREDS:-$USER/private-mirror.json}
 
 # MIRROR_IMAGES -
-# Mirror latest ci images to local registry. This is always true for IPv6, but
-# can be turned off for an IPv4 install.
+# Mirror latest ci images to local registry. This is true by default for IPv6, but
+# can be turned on for an IPv4 install. To explicitly disable set it to false.
 # Default: true
 #
 #export MIRROR_IMAGES=true
