@@ -73,10 +73,6 @@ export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
-# For IPv6 (default case) mirror images are used since quay doesn't support IPv6
-if [[ -z "${IP_STACK:-}" || "$IP_STACK" = "v6" || "$IP_STACK" = "v6v4" ]]; then
-    export MIRROR_IMAGES=${MIRROR_IMAGES:-true}
-fi
 
 # identify the command used to mirror images, either 'oc-adm' or 'oc-mirror'
 export MIRROR_COMMAND=${MIRROR_COMMAND:-oc-adm}
