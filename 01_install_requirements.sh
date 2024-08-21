@@ -31,7 +31,6 @@ export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"8.0.0"}
 # Speed up dnf downloads
 sudo sh -c "echo 'fastestmirror=1' >> /etc/dnf/dnf.conf"
 sudo sh -c "echo 'max_parallel_downloads=8' >> /etc/dnf/dnf.conf"
-
 # Refresh dnf data
 # We could also use --refresh to just force metadata update
 # in the upgrade command,but this is more explicit and complete
