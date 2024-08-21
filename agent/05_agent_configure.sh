@@ -89,10 +89,6 @@ function configure_node() {
 
   # Get the generated mac addresses
   local node_mac=$(sudo virsh dumpxml "$cluster_name" | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
-  if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
-    # For a bond, a random mac is added for the 2nd interface
-    node_mac+=($(sudo virsh domiflist "${cluster_name}" | grep "${BAREMETAL_NETWORK_NAME}" | grep -v "${node_mac}" | awk '{print $5}'))
-  fi
 
   if [[ "$node_type" != "extraworker" ]]; then
     if [[ "$IP_STACK" = "v4" ]]; then
@@ -104,6 +100,10 @@ function configure_node() {
       AGENT_NODES_IPSV6+=("$ipv6")
     fi
     AGENT_NODES_MACS+=("$node_mac")
+    if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
+      # For a bond, a random mac is added for the 2nd interface
+      AGENT_NODES_MACS+=($(sudo virsh domiflist "${cluster_name}" | grep "${BAREMETAL_NETWORK_NAME}" | grep -v "${node_mac}" | awk '{print $5}'))
+    fi
   else
       if [[ "$IP_STACK" = "v4" ]]; then
       AGENT_EXTRA_WORKERS_IPS+=("$node_ip")
