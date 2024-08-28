@@ -318,6 +318,12 @@ function generate_cluster_manifests() {
   export AGENT_NODES_BMC_ADDRESSES_STR=${nodes_bmc_addresses::-1}
   set -x
 
+  if [[ ! -z "$INSTALLER_PROXY" ]]; then
+    export AGENT_HTTP_PROXY=${HTTP_PROXY}
+    export AGENT_HTTPS_PROXY=${HTTPS_PROXY}
+    export AGENT_NO_PROXY=${NO_PROXY}
+  fi
+
   # Create manifests
   ansible-playbook -vvv \
           -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \
