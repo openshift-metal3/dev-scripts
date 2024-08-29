@@ -156,7 +156,7 @@ ansible-playbook \
 # NOTE(elfosardo): /usr/share/OVMF/OVMF_CODE.fd does not exist in the ovmf
 # package anymore, so we need to create a link to that until metal3-dev-env
 # fixes that, probably when switching to UEFI by default
-if ! [[ -f /usr/share/OVMF/OVMF_CODE.fd ]]; then
+if ! [[ -f /usr/share/OVMF/OVMF_CODE.fd || -L /usr/share/OVMF/OVMF_CODE.fd ]]; then
   sudo ln -s /usr/share/edk2/ovmf/OVMF_CODE.fd /usr/share/OVMF/
 fi
 
