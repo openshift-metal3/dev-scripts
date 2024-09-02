@@ -448,15 +448,8 @@ function setup_legacy_release_mirror {
         mkdir $REGISTRY_DIR
     fi
 
-    # Explicitly request that manifest lists arn't unpacked (causing digests of the images to change)
-    # Not supported by oc <= 4.10
-    OCEXTRAPARAMS=
-    if echo -e "4.11\n$(oc version -o json | jq .releaseClientVersion -r)" | sort -V -C ; then
-        OCEXTRAPARAMS="--keep-manifest-list=true"
-    fi
-
     oc adm release mirror \
-        --insecure=true $OCEXTRAPARAMS \
+        --insecure=true --keep-manifest-list=true \
         -a ${PULL_SECRET_FILE}  \
         --from ${OPENSHIFT_RELEASE_IMAGE} \
         --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
