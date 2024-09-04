@@ -20,7 +20,7 @@ early_deploy_validation
 #
 manage_libvirtd() {
   case ${DISTRO} in
-      centos9|rhel9|rocky9)
+      centos9|rhel9|almalinux9|rocky9)
           for i in qemu interface network nodedev nwfilter secret storage proxy; do
               sudo systemctl enable --now virt${i}d.socket
               sudo systemctl enable --now virt${i}d-ro.socket
