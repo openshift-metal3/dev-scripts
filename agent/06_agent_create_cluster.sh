@@ -137,7 +137,7 @@ function attach_appliance_diskimage() {
         sudo cp "${appliance_disk_image}" "${disk_image}"
 
         # Attach the appliance disk image and the config ISO 
-        sudo virt-xml ${name} --remove-device --disk 1
+        sudo virt-xml ${name} --remove-device --disk all
         sudo virt-xml ${name} --add-device --disk "${disk_image}",device=disk,target.dev=sda
         sudo virt-xml ${name} --add-device --disk "${config_image_dir}/agentconfig.noarch.iso",device=cdrom,target.dev=${config_image_drive}
         
