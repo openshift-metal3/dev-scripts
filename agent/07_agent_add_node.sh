@@ -33,14 +33,32 @@ if [ -f $OCP_DIR/add-node/node.iso ]; then
   rm -f $OCP_DIR/add-node/node.iso
 fi
 
-oc adm node-image create --dir "$OCP_DIR/add-node/" --registry-config "${PULL_SECRET_FILE}" --loglevel=2
+if [ -f $OCP_DIR/add-node/.openshift_install_state.json ]; then
+  rm -f $OCP_DIR/add-node/.openshift_install_state.json
+fi
 
-for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
-do
-    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --add-device --disk "$OCP_DIR/add-node/node.x86_64.iso,device=cdrom,target.dev=sdc"
-    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sda --disk="boot_order=1"
-    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sdc --disk="boot_order=2" --start
-done
+case "${AGENT_E2E_TEST_BOOT_MODE}" in
+  "ISO" )
+    oc adm node-image create --dir $OCP_DIR/add-node/ --registry-config "${PULL_SECRET_FILE}" --loglevel=2
+
+    for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
+    do
+        sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --add-device --disk "$OCP_DIR/add-node//node.x86_64.iso,device=cdrom,target.dev=sdc"
+        sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sda --disk="boot_order=1"
+        sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sdc --disk="boot_order=2" --start
+    done
+    ;;
+
+  "PXE" )
+    oc adm node-image create --pxe --dir $OCP_DIR/add-node/ --registry-config "${PULL_SECRET_FILE}" --loglevel=2
+    # Copy the generated PXE artifacts in the tftp server location
+    # The local http server should be running and was started by
+    # day 1 installtion.
+    cp $OCP_DIR/add-node//boot-artifacts/* ${PXE_SERVER_DIR}
+
+    agent_pxe_boot extraworker $NUM_EXTRA_WORKERS
+    ;;
+esac
 
 # Disable verbose command logging (-x) for approve_csrs function.
 # "set -e" id is disabled because pending CSR checks can result in non-zero exit code
