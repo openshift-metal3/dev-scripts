@@ -35,7 +35,7 @@ oc adm node-image create --dir "$OCP_DIR/add-node/"
 
 for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
 do
-    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --add-device --disk "$OCP_DIR/add-node/node.iso,device=cdrom,target.dev=sdc"
+    sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --add-device --disk "$OCP_DIR/add-node/node.x86_64.iso,device=cdrom,target.dev=sdc"
     sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sda --disk="boot_order=1"
     sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sdc --disk="boot_order=2" --start
 done
