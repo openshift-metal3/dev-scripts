@@ -50,6 +50,8 @@ spec:
     path: /opt/dev-scripts/nfsshare/1
     server: $LOCAL_REGISTRY_DNS_NAME
     readOnly: false
+  mountOptions:
+    - noac
 EOF
     oc patch configs.imageregistry.operator.openshift.io \
         cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}},"managementState":"Managed","replicas": 2}}'
