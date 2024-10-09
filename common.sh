@@ -114,6 +114,10 @@ export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 
 export OPENSHIFT_CLIENT_TOOLS_URL=https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/stable/openshift-client-linux.tar.gz
 
+# Set this variable to extract and use oc from the current release image,
+# instead of using the one retrieved from $OPENSHIFT_CLIENT_TOOLS_URL
+export OPENSHIFT_CLIENT_FROM_RELEASE=${OPENSHIFT_CLIENT_FROM_RELEASE:-false}
+
 # Note: when changing defaults for OPENSHIFT_RELEASE_STREAM, make sure to update
 #       doc in config_example.sh
 export OPENSHIFT_RELEASE_TYPE=${OPENSHIFT_RELEASE_TYPE:-nightly}

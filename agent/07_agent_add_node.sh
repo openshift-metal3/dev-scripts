@@ -31,7 +31,7 @@ if [ -f $OCP_DIR/add-node/node.iso ]; then
   rm -f $OCP_DIR/add-node/node.iso
 fi
 
-oc adm node-image create --dir "$OCP_DIR/add-node/"
+oc adm node-image create --dir "$OCP_DIR/add-node/" --registry-config "${PULL_SECRET_FILE}"
 
 for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
 do
@@ -52,4 +52,4 @@ set -ex
 
 source "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
 EXTRA_WORKERS_IPS="${EXTRA_WORKERS_IPS%% }"
-oc adm node-image monitor --ip-addresses "${EXTRA_WORKERS_IPS// /,}"  --kubeconfig "$OCP_DIR/auth/kubeconfig"
+oc adm node-image monitor --ip-addresses "${EXTRA_WORKERS_IPS// /,}"  --kubeconfig "$OCP_DIR/auth/kubeconfig" --registry-config "${PULL_SECRET_FILE}"
