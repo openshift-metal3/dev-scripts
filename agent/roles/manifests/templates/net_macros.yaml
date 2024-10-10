@@ -5,6 +5,28 @@
         mac-address: {{ mac }}
 {%- endmacro %}
 
+{# interfacesmacid sets the identifier field in the interface definition which can be used to set the interface name #}
+{%- macro interfacesmacid(name, mac) -%}
+      - name: {{ name }}
+        type: ethernet
+        state: up
+        identifier: mac-address
+        mac-address: {{ mac }}
+{%- endmacro %}
+
+{# interfacesdisabled can be used to include a disabled interface in the nm config section without a mac address in the interface table #}
+{%- macro interfacesdisabled(name) -%}
+      - name: {{ name }}
+        type: ethernet
+        state: up
+        ipv4:
+          enabled: false
+          dhcp: false
+        ipv6:
+          enabled: false
+          dhcp: false
+{%- endmacro %}
+
 {% macro bond(name, mode) -%}
       - name: {{ name }}
         type: bond
