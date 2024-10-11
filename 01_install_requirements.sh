@@ -6,7 +6,6 @@ source logging.sh
 source common.sh
 source sanitychecks.sh
 source utils.sh
-source ocp_install_env.sh
 source validation.sh
 
 early_deploy_validation true
@@ -171,8 +170,3 @@ fi
 retry_with_timeout 5 60 "curl -L $OPENSHIFT_CLIENT_TOOLS_URL | sudo tar -U -C /usr/local/bin -xzf -"
 sudo chmod +x /usr/local/bin/oc
 oc version --client -o json
-
-if [ "${OPENSHIFT_CLIENT_FROM_RELEASE}" == "true" ]; then
-  extract_oc "${OPENSHIFT_RELEASE_IMAGE}"
-  oc version --client -o json
-fi
