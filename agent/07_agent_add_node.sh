@@ -3,6 +3,8 @@ set -euxo pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
+LOGDIR=${SCRIPTDIR}/logs
+source $SCRIPTDIR/logging.sh
 source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/network.sh
 source $SCRIPTDIR/ocp_install_env.sh
