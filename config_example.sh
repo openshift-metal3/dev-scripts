@@ -210,11 +210,6 @@ set -x
 # for the cluster image-registry
 # export PERSISTENT_IMAGEREG=true
 
-# OPENSHIFT_CLIENT_FROM_RELEASE
-# Default: false
-# Installs the oc cli tool from the currently configured OCP release image.
-# export OPENSHIFT_CLIENT_FROM_RELEASE=true
-
 ################################################################################
 ## Network Settings
 ##
