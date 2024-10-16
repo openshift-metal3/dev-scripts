@@ -111,6 +111,7 @@ if [[ ! -z "${INSTALLER_PROXY}" ]]; then
     --volume ${WORKING_DIR}/squid.conf:/etc/squid/squid.conf \
     --name ds-squid \
     --dns 127.0.0.1 \
+    --add-host=virthost.ostest.test.metalkube.org:$PROVISIONING_HOST_EXTERNAL_IP \
     quay.io/sameersbn/squid:latest
 fi
 
