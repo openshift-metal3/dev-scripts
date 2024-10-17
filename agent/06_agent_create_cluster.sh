@@ -321,17 +321,7 @@ function setup_pxe_server() {
 
     # Run a local http server to provide all the necessary PXE artifacts
     echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${PXE_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${AGENT_PXE_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${PXE_SERVER_DIR}/agentpxeserver.go
-    nohup go run ${PXE_SERVER_DIR}/agentpxeserver.go >/dev/null 2>&1 &
-}
-
-# Configure the instances for PXE booting
-function agent_pxe_boot() {
-    for (( n=0; n<${2}; n++ ))
-      do
-          name=${CLUSTER_NAME}_${1}_${n}
-          sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
-          sudo virt-xml ${name} --edit source=${BAREMETAL_NETWORK_NAME} --network="boot_order=2" --start
-      done
+    nohup go run ${PXE_SERVER_DIR}/agentpxeserver.go > ${PXE_SERVER_DIR}/agentpxeserver.log 2>&1 &
 }
 
 function create_appliance() {
