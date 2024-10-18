@@ -17,6 +17,15 @@ if [[ ! -z "$INSTALLER_PROXY" ]]; then
   export HTTP_PROXY=${HTTP_PROXY}
   export HTTPS_PROXY=${HTTPS_PROXY}
   export NO_PROXY=${NO_PROXY}
+  # Update libvirt firewalld policy to allow the VM to connect to the proxy
+  sudo firewall-cmd --policy=libvirt-to-host --add-port=$INSTALLER_PROXY_PORT/tcp
+  # Allow ironic to talk directly to the virt BMC's without proxy
+  sudo firewall-cmd --policy=libvirt-to-host --add-port=8000/tcp
+  sudo firewall-cmd --policy=libvirt-to-host --add-port=6230-6240/udp
+  # And NFS if used
+  if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
+    sudo firewall-cmd --policy=libvirt-to-host --add-port=2049/tcp
+  fi
 fi
 
 # Call openshift-installer to deploy the bootstrap node and masters
