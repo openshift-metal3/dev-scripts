@@ -831,6 +831,17 @@ set -x
 #
 # export APPLIANCE_IMAGE="quay.io/edge-infrastructure/openshift-appliance:latest"
 
+# AGENT_MINIMAL_ISO
+# Default: false
+#
+# Setting this to true will cause the the 'openshift-install agent create image'
+# command to create a minimal ISO without the rootfs. If MIRROR_IMAGES is set,
+# the bootArtifactsBaseURL must also be set so that the rootfs will be
+# downloaded from a local http server during boot. If MIRROR_IMAGES is not set,
+# then the rootfs can be downloaded from mirror.openshift.com.
+#
+# export AGENT_MINIMAL_ISO=true
+
 # Alternative local path to the metal3-dev-env repository.
 # Optionally set this to a path to use a local dev copy of
 # metal3-dev-env, otherwise it's cloned to $WORKING_DIR

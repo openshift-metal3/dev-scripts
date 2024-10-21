@@ -13,8 +13,8 @@ rendezvousIP: {{ ips[0] }}
 {% else %}
 rendezvousIP: {{ ipsv6[0] }}
 {% endif %}
-{% if boot_mode == "PXE" %}
-bootArtifactsBaseURL: {{ pxe_server_url }}
+{% if (boot_mode == "PXE") or (agent_minimal_iso == "true" and mirror_images %}
+bootArtifactsBaseURL: {{ boot_server_url }}
 {% endif %}
 hosts:
 {% for hostname in hostnames %}

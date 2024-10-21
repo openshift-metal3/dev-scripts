@@ -13,6 +13,8 @@ export AGENT_PLATFORM_NAME=${AGENT_PLATFORM_NAME:-"oci"}
 
 export AGENT_BM_HOSTS_IN_INSTALL_CONFIG=${AGENT_BM_HOSTS_IN_INSTALL_CONFIG:-"false"}
 
+export AGENT_MINIMAL_ISO=${AGENT_MINIMAL_ISO:-"false"}
+
 export BOND_CONFIG=${BOND_CONFIG:-"none"}
 
 # Image reference for OpenShift-based Appliance Builder.
@@ -25,10 +27,14 @@ export OPENSHIFT_INSTALLER_CMD="openshift-install"
 # Location of extra manifests
 export EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
 
-# Set required config vars for PXE boot mode
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
-  export PXE_SERVER_DIR=${WORKING_DIR}/boot-artifacts
-  export PXE_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_PXE_SERVER_PORT}
+# Set required config vars for the http boot server
+# The necessary files will be copied to boot-artifacts by the installer for either:
+# 1. PXE, when the 'openshift-install agent create pxe-files' command is run
+# 2. Minimal ISO, when the 'openshift-install agent create image' command is run and bootArtifacts is set
+#    in install-config.yaml
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" || "${AGENT_MINIMAL_ISO}" == "true" ]]; then
+  export BOOT_SERVER_DIR=${WORKING_DIR}/boot-artifacts
+  export BOOT_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_BOOT_SERVER_PORT}
   export PXE_BOOT_FILE=agent.x86_64.ipxe
 fi
 

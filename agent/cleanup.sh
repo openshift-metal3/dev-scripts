@@ -15,17 +15,16 @@ early_cleanup_validation
 rm -rf "${OCP_DIR}/manifests"
 rm -rf "${OCP_DIR}/output"
 
-case "${AGENT_E2E_TEST_BOOT_MODE}" in
-  "PXE" )
-    sudo pkill agentpxeserver || true
-    rm -rf ${WORKING_DIR}/boot-artifacts
-    ;;
-  "DISKIMAGE" )
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "DISKIMAGE" ]]; then
     sudo rm -rf "${OCP_DIR}/cache"
     sudo rm -rf "${OCP_DIR}/temp"
     sudo podman rmi -f ${APPLIANCE_IMAGE} || true
-    ;;
-esac
+fi
+
+if [[ -d ${BOOT_SERVER_DIR} ]]; then
+   sudo pkill agentpxeserver || true
+   rm -rf ${BOOT_SERVER_DIR}
+fi
 
 sudo podman rm -f extlb || true
 sudo rm ${WORKING_DIR}/haproxy.* || true
