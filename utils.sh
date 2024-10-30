@@ -455,12 +455,25 @@ function setup_legacy_release_mirror {
         mkdir $REGISTRY_DIR
     fi
 
-    oc adm release mirror \
-        --insecure=true --keep-manifest-list=true \
-        -a ${PULL_SECRET_FILE}  \
-        --from ${OPENSHIFT_RELEASE_IMAGE} \
-        --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
-        --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image 2>&1 | tee ${MIRROR_LOG_FILE}
+    for ((i=1; i<=5; i++)); do
+        if oc adm release mirror \
+                --insecure=true --keep-manifest-list=true \
+                -a ${PULL_SECRET_FILE}  \
+                --from ${OPENSHIFT_RELEASE_IMAGE} \
+                --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
+                --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image >${MIRROR_LOG_FILE} 2>&1; then
+            echo "Release payload mirror success."
+            exit_code="0"
+            break
+        fi
+        exit_code="$?"
+        echo "Release payload mirror failure. Retrying in 60 seconds..."
+	      sleep 60
+    done
+    cat ${MIRROR_LOG_FILE}
+    if [[ "$exit_code" != "0" ]]; then
+      exit $exit_code
+    fi
     echo "export MIRRORED_RELEASE_IMAGE=$OPENSHIFT_RELEASE_IMAGE" > /tmp/mirrored_release_image
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
