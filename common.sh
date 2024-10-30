@@ -413,6 +413,20 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   fi
 
   case "$SCENARIO" in
+      "5CONTROL" )
+          export NUM_MASTERS=5
+          export MASTER_VCPU=4
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          ;;
+      "4CONTROL" )
+          export NUM_MASTERS=4
+          export MASTER_VCPU=4
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          ;;
       "COMPACT" )
           export NUM_MASTERS=3
           export MASTER_VCPU=4
