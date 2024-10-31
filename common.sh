@@ -417,14 +417,14 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=5
           export MASTER_VCPU=4
           export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_MEMORY=16384
           export NUM_WORKERS=0
           ;;
       "4CONTROL" )
           export NUM_MASTERS=4
           export MASTER_VCPU=4
           export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_MEMORY=16384
           export NUM_WORKERS=0
           ;;
       "COMPACT" )
