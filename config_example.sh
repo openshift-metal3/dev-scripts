@@ -714,10 +714,19 @@ set -x
 # export AGENT_STATIC_IP_NODE0_ONLY="true"
 
 # Set a single config variable AGENT_E2E_TEST_SCENARIO to create a cluster for the different scenarios
-# i.e. Single Node Openshift(SNO), Highly Available (HA) or Compact cluster.
+# i.e. Single Node Openshift(SNO), Highly Available (HA), Compact cluster, control plane with 5 replicas
+# and no workers (5CONTROL), or control plane with 4 replicas and no workers (4CONTROL).
 # The boot mode for the agent machines can only be set to ISO or PXE.
 # For backward compatibility of CI jobs, the default boot mode is ISO.
 # The only supported values for AGENT_E2E_TEST_SCENARIO are
+# - 4CONTROL_IPV4
+# - 4CONTROL_IPV6
+# - 4CONTROL_IPV4_DHCP
+# - 4CONTROL_IPV6_DHCP
+# - 5CONTROL_IPV4
+# - 5CONTROL_IPV6
+# - 5CONTROL_IPV4_DHCP
+# - 5CONTROL_IPV6_DHCP
 # - COMPACT_IPV4
 # - COMPACT_IPV6
 # - COMPACT_IPV4_DHCP
