@@ -33,5 +33,5 @@ fi
 # Generate the assets for extra worker VMs
 if [ -f "${EXTRA_NODES_FILE}" ]; then
     jq '.nodes' "${EXTRA_NODES_FILE}" | tee "${EXTRA_BAREMETALHOSTS_FILE}"
-    generate_ocp_host_manifest ${OCP_DIR} ${EXTRA_BAREMETALHOSTS_FILE} extra_host_manifests.yaml openshift-machine-api
+    generate_ocp_host_manifest ${OCP_DIR} ${EXTRA_BAREMETALHOSTS_FILE} extra_host_manifests.yaml ${EXTRA_WORKERS_NAMESPACE}
 fi

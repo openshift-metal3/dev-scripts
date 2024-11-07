@@ -523,6 +523,9 @@ set -x
 #
 #export EXTRA_WORKERS_ONLINE_STATUS=true
 
+# EXTRA_WORKERS_NAMESPACE -
+# export EXTRA_WORKERS_NAMESPACE="openshift-machine-api"
+
 # APPLY_EXTRA_WORKERS -
 # Apply extra workers to the cluster if NUM_EXTRA_WORKERS is set
 # Default is unset.
