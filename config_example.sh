@@ -452,6 +452,16 @@ set -x
 #
 #export NODES_PLATFORM=baremetal
 
+# ENABLE_ARBITER -
+# Set to any non zero length string value to enable the creation of an arbiter node.
+# Arbiter nodes take the place of a master node but run only critical containers to maintain HA for the cluster,
+# it is a TechPreview feature so `export FEATURE_SET="TechPreviewNoUpgrade"` must be set.
+#
+# Furthermore, since an Arbiter node takes the place of a master node the NUM_MASTERS count
+# must be set to `export NUM_MASTERS=2` and not the default `3` to avoid even number etcd members.
+#
+#export ENABLE_ARBITER=1
+
 # MASTER_HOSTNAME_FORMAT -
 # Set a custom hostname format for masters. This is a format string that should
 # include one %d field, which will be replaced with the number of the node.
@@ -475,6 +485,17 @@ set -x
 #export MASTER_MEMORY=16384
 #export MASTER_DISK=40
 #export MASTER_VCPU=8
+
+# ARBITER_MEMORY, ARBITER_DISK, ARBITER_VCPU -
+# Change VM resources for arbiters
+## Defaults:
+## ARBITER_DISK=50
+## ARBITER_MEMORY=8192
+## ARBITER_VCPU=4
+#
+#export ARBITER_MEMORY=8192
+#export ARBITER_DISK=50
+#export ARBITER_VCPU=2
 
 # WORKER_HOSTNAME_FORMAT -
 # Set a custom hostname format for workers. This is a format string that should
