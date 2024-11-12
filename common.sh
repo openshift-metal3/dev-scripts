@@ -74,6 +74,13 @@ export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
 
+is_mirroring () {
+  if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
+    return 0
+  fi
+  return 1
+}
+
 # identify the command used to mirror images, either 'oc-adm' or 'oc-mirror'
 export MIRROR_COMMAND=${MIRROR_COMMAND:-oc-adm}
 
@@ -388,10 +395,10 @@ export AGENT_E2E_TEST_SCENARIO=${AGENT_E2E_TEST_SCENARIO:-}
 export NETWORKING_MODE=${NETWORKING_MODE:-}
 export AGENT_E2E_TEST_BOOT_MODE=${AGENT_E2E_TEST_BOOT_MODE:-"ISO"}
 
-# PXE server port used by agent (when AGENT_E2E_TEST_BOOT_MODE is "PXE")
+# HTTP boot server port used by the agent installer for PXE and minimal ISO
 # Needed to be defined here since it's required also by the shared step 02_configure_host.sh
 # to open a firewall port
-export AGENT_PXE_SERVER_PORT=${AGENT_PXE_SERVER_PORT:-8089}
+export AGENT_BOOT_SERVER_PORT=${AGENT_BOOT_SERVER_PORT:-8089}
 
 # Enable MCE deployment
 export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}

@@ -300,15 +300,15 @@ function run_agent_test_cases() {
 
 # Setup the environment to allow iPXE booting, by reusing libvirt native features
 # to configure dnsmaq tftp server and pxe boot file
-function setup_pxe_server() {
-    mkdir -p ${PXE_SERVER_DIR}
+function setup_pxe_boot() {
+    mkdir -p ${BOOT_SERVER_DIR}
 
     # Configure the DHCP options for PXE, based on the network type
     sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} > ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
 
-    local DHCP_PXE_OPTS="dhcp-boot=${PXE_SERVER_URL}/${PXE_BOOT_FILE}"
+    local DHCP_PXE_OPTS="dhcp-boot=${BOOT_SERVER_URL}/${PXE_BOOT_FILE}"
     if [[ "${IP_STACK}" = "v6" ]]; then
-      DHCP_PXE_OPTS="dhcp-option=option6:bootfile-url,${PXE_SERVER_URL}/${PXE_BOOT_FILE}"
+      DHCP_PXE_OPTS="dhcp-option=option6:bootfile-url,${BOOT_SERVER_URL}/${PXE_BOOT_FILE}"
     fi
     sudo sed -i "/<\/dnsmasq:options>/i   <dnsmasq:option value='${DHCP_PXE_OPTS}'/>" ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
     
@@ -316,12 +316,17 @@ function setup_pxe_server() {
     sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
     sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
 
-    # Copy the generated PXE artifacts in the tftp server location
-    cp ${SCRIPTDIR}/${OCP_DIR}/boot-artifacts/* ${PXE_SERVER_DIR}
+    setup_boot_server
+}
 
-    # Run a local http server to provide all the necessary PXE artifacts
-    echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${PXE_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${AGENT_PXE_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${PXE_SERVER_DIR}/agentpxeserver.go
-    nohup go run ${PXE_SERVER_DIR}/agentpxeserver.go >/dev/null 2>&1 &
+# Set up a local http server for files needed for PXE or minimal ISO
+function setup_boot_server() {
+    # Copy the generated artifacts to the http server location
+    cp ${SCRIPTDIR}/${OCP_DIR}/boot-artifacts/* ${BOOT_SERVER_DIR}
+
+    # Run a local http server to provide the necessary artifacts
+    echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${BOOT_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${AGENT_BOOT_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${BOOT_SERVER_DIR}/agentpxeserver.go
+    nohup go run ${BOOT_SERVER_DIR}/agentpxeserver.go >${BOOT_SERVER_DIR}/agentpxeserver.log 2>&1 &
 }
 
 # Configure the instances for PXE booting
@@ -353,13 +358,23 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
       disable_automated_installation
     fi
 
+    # When using minimal ISO with a mirror, set up an http server for boot artifacts,
+    # which in this case will just be the rootfs
+    if [[ "${AGENT_MINIMAL_ISO}" == "true" ]]; then
+      if is_mirroring; then
+         mkdir -p ${BOOT_SERVER_DIR}
+         setup_boot_server
+      fi
+    fi
+
     attach_agent_iso master $NUM_MASTERS
     attach_agent_iso worker $NUM_WORKERS
+
     ;;
 
   "PXE" )
     create_pxe_files ${asset_dir} ${openshift_install}
-    setup_pxe_server
+    setup_pxe_boot
 
     agent_pxe_boot master $NUM_MASTERS
     agent_pxe_boot worker $NUM_WORKERS
