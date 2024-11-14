@@ -32,10 +32,10 @@ export EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
 # 1. PXE, when the 'openshift-install agent create pxe-files' command is run
 # 2. Minimal ISO, when the 'openshift-install agent create image' command is run and bootArtifacts is set
 #    in install-config.yaml
+export BOOT_SERVER_DIR=${WORKING_DIR}/boot-artifacts
+export PXE_BOOT_FILE=agent.x86_64.ipxe
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" || "${AGENT_MINIMAL_ISO}" == "true" ]]; then
-  export BOOT_SERVER_DIR=${WORKING_DIR}/boot-artifacts
   export BOOT_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_BOOT_SERVER_PORT}
-  export PXE_BOOT_FILE=agent.x86_64.ipxe
 fi
 
 # Configure the instances for PXE booting
