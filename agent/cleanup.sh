@@ -21,7 +21,7 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "DISKIMAGE" ]]; then
     sudo podman rmi -f ${APPLIANCE_IMAGE} || true
 fi
 
-if [[ -d ${BOOT_SERVER_DIR} ]]; then
+if [[ -n ${BOOT_SERVER_DIR:-} && -d ${BOOT_SERVER_DIR} ]]; then
    sudo pkill agentpxeserver || true
    rm -rf ${BOOT_SERVER_DIR}
 fi
