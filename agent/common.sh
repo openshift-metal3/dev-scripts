@@ -38,6 +38,16 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" || "${AGENT_MINIMAL_ISO}" == "true"
   export PXE_BOOT_FILE=agent.x86_64.ipxe
 fi
 
+# Configure the instances for PXE booting
+function agent_pxe_boot() {
+    for (( n=0; n<${2}; n++ ))
+      do
+          name=${CLUSTER_NAME}_${1}_${n}
+          sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
+          sudo virt-xml ${name} --edit source=${BAREMETAL_NETWORK_NAME} --network="boot_order=2" --start
+      done
+}
+
 function getReleaseImage() {
     local releaseImage=${OPENSHIFT_RELEASE_IMAGE}
     if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
