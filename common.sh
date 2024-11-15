@@ -532,3 +532,5 @@ if [ "${OPENSHIFT_CI}" == true ] ; then
   # Disruptive CI tests require a image-registry backed by persistent storage
   export PERSISTENT_IMAGEREG=true
 fi
+
+export ENABLE_CAPI_E2E=${ENABLE_CAPI_E2E:-}
