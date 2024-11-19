@@ -123,6 +123,10 @@ if [[ ! -z "${ENABLE_VIRTUAL_MEDIA_VIA_EXTERNAL_NETWORK}" ]]; then
     oc patch provisioning provisioning-configuration --type merge -p "{\"spec\":{\"virtualMediaViaExternalNetwork\":true}}"
 fi
 
+if [[ -n "${ENABLE_CAPI_E2E}" ]]; then
+  ./setup_capi_e2e.sh
+fi
+
 echo "Cluster up, you can interact with it via oc --kubeconfig ${KUBECONFIG} <command>"
 echo "To avoid using the --kubeconfig flag on each command, set KUBECONFIG variable with: export KUBECONFIG=${KUBECONFIG}"
 
