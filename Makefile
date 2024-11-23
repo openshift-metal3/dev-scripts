@@ -11,7 +11,7 @@ agent: agent_requirements requirements configure agent_build_installer agent_pre
 
 # Deploy cluster with agent installer flow and adds nodes after initial install
 # Requires at least 1 extra worker node to be configured with disk size at least 100Gß
-agent_plus_add_node: agent agent_add_node
+agent_plus_add_node: agent agent_add_extraworker_nodes
 
 agent_requirements:
 	./agent/01_agent_requirements.sh
@@ -37,8 +37,11 @@ agent_gather:
 agent_tests:
 	./agent/agent_tests.sh
 
-agent_add_node:
-	./agent/07_agent_add_node.sh
+agent_add_extraworker_nodes:
+	./agent/07_agent_add_extraworker_nodes.sh
+
+agent_remove_extraworker_nodes:
+	./agent/agent_remove_all_extraworker_nodes.sh
 
 agent_post_install_validation:
 	./agent/agent_post_install_validation.sh
