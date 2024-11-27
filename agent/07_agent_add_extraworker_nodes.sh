@@ -60,7 +60,7 @@ fi
 
 case "${AGENT_E2E_TEST_BOOT_MODE}" in
   "ISO" )
-    oc adm node-image create --dir $OCP_DIR/add-node/ --registry-config "${PULL_SECRET_FILE}" --loglevel=2
+    oc adm node-image create --dir $OCP_DIR/add-node/ --registry-config "${PULL_SECRET_FILE}"
 
     for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
     do
@@ -71,7 +71,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     ;;
 
   "PXE" )
-    oc adm node-image create --pxe --dir $OCP_DIR/add-node/ --registry-config "${PULL_SECRET_FILE}" --loglevel=2
+    oc adm node-image create --pxe --dir $OCP_DIR/add-node/ --registry-config "${PULL_SECRET_FILE}"
     # Copy the generated PXE artifacts in the tftp server location
     # The local http server should be running and was started by
     # day 1 installtion.
@@ -93,4 +93,4 @@ set -ex
 
 source "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
 EXTRA_WORKERS_IPS="${EXTRA_WORKERS_IPS%% }"
-oc adm node-image monitor --ip-addresses "${EXTRA_WORKERS_IPS// /,}" --registry-config "${PULL_SECRET_FILE}" --loglevel=2
+oc adm node-image monitor --ip-addresses "${EXTRA_WORKERS_IPS// /,}" --registry-config "${PULL_SECRET_FILE}"
