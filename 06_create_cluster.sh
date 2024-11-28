@@ -19,9 +19,10 @@ if [[ ! -z "$INSTALLER_PROXY" ]]; then
   export NO_PROXY=${NO_PROXY}
   # Update libvirt firewalld policy to allow the VM to connect to the proxy
   sudo firewall-cmd --policy=libvirt-to-host --add-port=$INSTALLER_PROXY_PORT/tcp
-  # Allow ironic to talk directly to the virt BMC's without proxy
-  sudo firewall-cmd --policy=libvirt-to-host --add-port=8000/tcp
-  sudo firewall-cmd --policy=libvirt-to-host --add-port=6230-6240/udp
+  # Allow the bootstrap VM to talk directly to services on the bootstrap host
+  sudo firewall-cmd --policy=libvirt-to-host --add-port=8000/tcp      # sushy
+  sudo firewall-cmd --policy=libvirt-to-host --add-port=6230-6240/udp # vbmc
+  sudo firewall-cmd --policy=libvirt-to-host --add-port=123/udp       # ntp
   # And NFS if used
   if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
     sudo firewall-cmd --policy=libvirt-to-host --add-port=2049/tcp
