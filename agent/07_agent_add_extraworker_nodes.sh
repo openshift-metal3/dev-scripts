@@ -50,6 +50,13 @@ function approve_csrs() {
   done
 }
 
+# oc node-image commands are supported only in 4.17+
+if is_lower_version "$(openshift_version "${OCP_DIR}")" "4.17" ]]; then
+  echo "Skipping extraworker add nodes step"    
+  exit 0
+fi
+
+
 if [ -f $OCP_DIR/add-node/node.iso ]; then
   rm -f $OCP_DIR/add-node/node.iso
 fi
@@ -88,7 +95,7 @@ esac
 set +ex
 approve_csrs &
 approve_csrs_pid=$!
-trap 'kill -TERM ${approve_csrs_pid}; exit' INT EXIT TERM
+trap 'echo "Stopping approve csrs"; kill -TERM ${approve_csrs_pid} 2>/dev/null || true; exit; echo "Done"' INT EXIT TERM
 set -ex
 
 source "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
