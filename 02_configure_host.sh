@@ -292,12 +292,10 @@ EOF
             sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.addr-gen-mode eui64
             sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.method ignore
         else
-            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
                 if [ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]; then
                     sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.method auto
                 else
                     sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv4.method auto
-            fi
       fi
       sudo nmcli con up ${INT_IF}
     fi
