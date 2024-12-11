@@ -83,9 +83,9 @@ case $DISTRO in
     sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
     PYTHON_DEVEL="python39-devel"
     ;;
-  "centos9"|"rhel9"|"rocky9")
+  "centos9"|"rhel9"|"almalinux9"|"rocky9")
     sudo dnf -y install python3-pip
-    if [[ $DISTRO == "centos9" ]] ||[[ $DISTRO == "rocky9" ]] ; then
+    if [[ $DISTRO == "centos9" || $DISTRO == "almalinux9" || $DISTRO == "rocky9" ]]; then
       sudo dnf config-manager --set-enabled crb
       sudo dnf -y install epel-release
     elif [[ $DISTRO == "rhel9" ]]; then
