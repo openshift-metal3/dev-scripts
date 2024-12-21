@@ -324,6 +324,10 @@ function generate_cluster_manifests() {
     export AGENT_NO_PROXY=${NO_PROXY}
   fi
 
+  if [[ ${AGENT_E2E_TEST_BOOT_MODE} == ISCSI ]]; then
+    export AGENT_ROOT_DEVICE_HINTS=${ISCSI_DEVICE_NAME}
+  fi
+
   # Create manifests
   ansible-playbook -vvv \
           -e install_path=${SCRIPTDIR}/${INSTALL_CONFIG_PATH} \

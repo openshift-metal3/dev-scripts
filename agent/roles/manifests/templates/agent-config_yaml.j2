@@ -28,6 +28,10 @@ minimalISO: true
 hosts:
 {% for hostname in hostnames %}
     - hostname: {{ hostname }}
+{% if agent_root_device_hints %}
+      rootDeviceHints:
+        deviceName: {{ agent_root_device_hints }}
+{% endif %}
       interfaces:
         - name: eth0
           macAddress: {{ macs[loop.index0] }}
