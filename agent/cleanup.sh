@@ -37,3 +37,19 @@ if [[ $NUM_MASTERS == 1 && $IP_STACK == "v6" ]]; then
     sudo sed -i "/${AGENT_NODE0_IPSV6} oauth-openshift.apps.${CLUSTER_DOMAIN}/d" /etc/hosts
     sudo sed -i "/${AGENT_NODE0_IPSV6} thanos-querier-openshift-monitoring.apps.${CLUSTER_DOMAIN}/d" /etc/hosts
 fi
+
+# Remove network created for ISCSI
+iscsi_network=$(sudo virsh net-list)
+if echo ${iscsi_network} | grep -q "${ISCSI_NETWORK}"; then
+    sudo virsh net-destroy ${ISCSI_NETWORK}
+fi
+
+iscsi_inactive=$(sudo virsh net-list --inactive)
+if echo ${iscsi_inactive} | grep -q "${ISCSI_NETWORK}"; then
+   sudo virsh net-undefine ${ISCSI_NETWORK}
+fi
+
+# Remove iscsi targets
+if [[ -x "$(command -v targetcli)" ]] ; then
+    sudo targetcli clearconfig confirm=True
+fi
