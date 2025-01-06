@@ -64,6 +64,11 @@ function agent_create_iscsi_target() {
     # Allow access to initiator
     sudo targetcli /iscsi/iqn.2023-01.com.example:$name/tpg1/acls create iqn.2023-01.com.example:initiator01
 
+    # Override iscsi timeout value. Not setting this can result in the error:
+    #   Unable to recover from DataOut timeout while in ERL=0, closing iSCSI connection
+    sudo targetcli /iscsi/iqn.2023-01.com.example:$name/tpg1/acls/iqn.2023-01.com.example:initiator01 set attribute dataout_timeout=60
+    sudo targetcli /iscsi/iqn.2023-01.com.example:$name/tpg1/acls/iqn.2023-01.com.example:initiator01 set attribute dataout_timeout_retries=10
+
     # Save configuration.
     sudo targetcli / saveconfig
 
