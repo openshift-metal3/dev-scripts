@@ -851,3 +851,13 @@ set -x
 # The location won't be synced or updated preserving any local
 # changes applied to it.
 # export METAL3_DEV_ENV=''
+
+# AGENT_ROOT_DEVICE_HINTS
+# Default: Undefined
+#
+# Setting this to a non-empty string will set the RootDeviceHint value for the
+# assisted-installer to use on the node when installing the final image. When
+# the boot mode is ISCSI, the ISCSI_DEVICE_NAME will be used for the hint.
+# be used.
+#
+# export AGENT_ROOT_DEVICE_HINTS=""

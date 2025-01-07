@@ -360,15 +360,8 @@ function agent_setup_iscsi_boot() {
     # Start server iscsid
     sudo systemctl enable --now iscsid
 
-    tmpiscsi_network=$(mktemp --tmpdir "iscsi-network--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $tmpiscsi_network"
-
     # Create the separate network used for iSCSI booting
-    agent_create_iscsi_network > ${tmpiscsi_network}
-    sudo virsh net-create ${tmpiscsi_network} 
-
-    # Setup firewall to allow access to the iscsi target
-    sudo firewall-cmd --zone libvirt --add-port=3260/tcp
+    agent_create_iscsi_network
 }
 
 # Create the iscsi targets
@@ -381,7 +374,7 @@ function agent_iscsi_targets() {
           local name=${1}-${n}
           iscsi_disk=${SCRIPTDIR}/"iscsi-${name}"
           agent_create_iscsi_target ${name} ${agent_iso} ${iscsi_disk}
-          agent_create_iscsi_pxe_file ${name} ${BOOT_SERVER_DIR}
+          agent_create_iscsi_pxe_file ${BOOT_SERVER_DIR}
       done
 }
 
@@ -390,7 +383,13 @@ function agent_iscsi_update_nodes() {
     for (( n=0; n<${2}; n++ ))
       do
           local domain_name=${CLUSTER_NAME}_${1}_${n}
-          agent_add_iscsi_network_to_domain ${domain_name}
+          local name=${1}-${n}
+          local index=${n}
+          if [[ ${1} == "worker" ]]; then
+	      index=$((${NUM_MASTERS} + $index))
+          fi
+
+          agent_add_iscsi_network_to_domain ${domain_name} ${name} ${index}
           domain_running=$(sudo virsh list)
           if echo ${domain_running} | grep -q "${domain_name}"; then
               sudo virsh destroy ${domain_name}

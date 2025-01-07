@@ -345,7 +345,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "{use_firewalld: True}" \
     -e "provisioning_interface=$PROVISIONING_NETWORK_NAME" \
     -e "external_interface=$BAREMETAL_NETWORK_NAME" \
-    -e "{vm_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000, ${INSTALLER_PROXY_PORT}, ${AGENT_BOOT_SERVER_PORT}]}" \
+    -e "{vm_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000, ${INSTALLER_PROXY_PORT}, ${AGENT_BOOT_SERVER_PORT}, 3260]}" \
     -e "vbmc_port_range=$VBMC_BASE_PORT:$VBMC_MAX_PORT" \
     $ALMA_PYTHON_OVERRIDE \
     -i ${VM_SETUP_PATH}/inventory.ini \
