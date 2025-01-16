@@ -331,13 +331,18 @@ function generate_cluster_manifests() {
 }
 
 function write_extra_workers_ips() {
+  # not required in case no additional workers were defined
+  if [ "${NUM_EXTRAWORKERS:-0}" -eq 0 ]; then
+    return
+  fi
+
   # write extra worker IP addresses out to file, so that it can be used by 07_agent_add_node.sh
   if [[ "$IP_STACK" = "v6" ]]; then
     extra_workers_ips_space_delimited=$(printf '%s ' "${AGENT_EXTRA_WORKERS_IPSV6[@]}")
   else
     extra_workers_ips_space_delimited=$(printf '%s ' "${AGENT_EXTRA_WORKERS_IPS[@]}")
   fi
-  mkdir -p "${SCRIPTDIR}/${OCP_DIR}/add-node/"
+  
   echo "EXTRA_WORKERS_IPS=\"${extra_workers_ips_space_delimited}\"" > "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
 }
 
