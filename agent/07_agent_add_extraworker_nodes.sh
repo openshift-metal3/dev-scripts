@@ -50,6 +50,11 @@ function approve_csrs() {
   done
 }
 
+# not required in case no additional workers were defined
+if [ "${NUM_EXTRAWORKERS:-0}" -eq 0 ]; then
+  exit 0
+fi
+
 # oc node-image commands are supported only in 4.17+
 if is_lower_version "$(openshift_version "${OCP_DIR}")" "4.17" ]]; then
   echo "Skipping extraworker add nodes step"    
