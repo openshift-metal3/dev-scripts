@@ -19,3 +19,4 @@ assets/templates/99_master-chronyd-redhat.yaml
 assets/templates/99_worker-chronyd-redhat.yaml
 
 pull_secret.json
+tools/metal-support/metal-support
