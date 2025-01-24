@@ -10,12 +10,17 @@ export AGENT_USE_APPLIANCE_MODEL=${AGENT_USE_APPLIANCE_MODEL:-"false"}
 export AGENT_APPLIANCE_HOTPLUG=${AGENT_APPLIANCE_HOTPLUG:-"false"}
 export AGENT_PLATFORM_TYPE=${AGENT_PLATFORM_TYPE:-"baremetal"}
 export AGENT_PLATFORM_NAME=${AGENT_PLATFORM_NAME:-"oci"}
+export AGENT_ROOT_DEVICE_HINTS=${AGENT_ROOT_DEVICE_HINTS:-""}
 
 export AGENT_BM_HOSTS_IN_INSTALL_CONFIG=${AGENT_BM_HOSTS_IN_INSTALL_CONFIG:-"false"}
 
 export AGENT_MINIMAL_ISO=${AGENT_MINIMAL_ISO:-"false"}
 
 export BOND_CONFIG=${BOND_CONFIG:-"none"}
+
+export ISCSI_NETWORK="iscsi"
+export ISCSI_NETWORK_SUBNET=${ISCSI_NETWORK_SUBNET:-"192.168.145"}
+export ISCSI_DEVICE_NAME=${ISCSI_DEVICE_NAME:-"/dev/sdb"}
 
 # Image reference for OpenShift-based Appliance Builder.
 # See: https://github.com/openshift/appliance
@@ -31,12 +36,11 @@ export EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
 # The necessary files will be copied to boot-artifacts by the installer for either:
 # 1. PXE, when the 'openshift-install agent create pxe-files' command is run
 # 2. Minimal ISO, when the 'openshift-install agent create image' command is run and bootArtifacts is set
-#    in install-config.yaml
+#    in install-config.yaml, OR
+# 3. ISCSI, to contain the iPXE file needed for iSCSI booting
 export BOOT_SERVER_DIR=${WORKING_DIR}/boot-artifacts
 export PXE_BOOT_FILE=agent.x86_64.ipxe
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" || "${AGENT_MINIMAL_ISO}" == "true" ]]; then
-  export BOOT_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_BOOT_SERVER_PORT}
-fi
+export BOOT_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_BOOT_SERVER_PORT}
 
 # Configure the instances for PXE booting
 function agent_pxe_boot() {

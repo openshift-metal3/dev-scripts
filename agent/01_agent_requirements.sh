@@ -45,3 +45,8 @@ if [[ "${MIRROR_COMMAND}" == oc-mirror ]]; then
       rm -f ${oc_mirror_file}
    fi
 fi
+
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" ]]; then
+    # Install shell to administer local storage
+    sudo dnf -y install targetcli
+fi

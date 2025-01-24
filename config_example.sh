@@ -719,7 +719,7 @@ set -x
 # Set a single config variable AGENT_E2E_TEST_SCENARIO to create a cluster for the different scenarios
 # i.e. Single Node Openshift(SNO), Highly Available (HA), Compact cluster, control plane with 5 replicas
 # and no workers (5CONTROL), or control plane with 4 replicas and no workers (4CONTROL).
-# The boot mode for the agent machines can only be set to ISO or PXE.
+# The boot mode for the agent machines can be set to ISO, PXE, or ISCSI.
 # For backward compatibility of CI jobs, the default boot mode is ISO.
 # The only supported values for AGENT_E2E_TEST_SCENARIO are
 # - 4CONTROL_IPV4
@@ -851,3 +851,13 @@ set -x
 # The location won't be synced or updated preserving any local
 # changes applied to it.
 # export METAL3_DEV_ENV=''
+
+# AGENT_ROOT_DEVICE_HINTS
+# Default: Undefined
+#
+# Setting this to a non-empty string will set the RootDeviceHint value for the
+# assisted-installer to use on the node when installing the final image. When
+# the boot mode is ISCSI, the ISCSI_DEVICE_NAME will be used for the hint.
+# be used.
+#
+# export AGENT_ROOT_DEVICE_HINTS=""

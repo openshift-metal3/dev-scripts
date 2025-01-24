@@ -486,18 +486,18 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
 
   # We're interested in booting a plain iPXE, so setting back the libivirt 
   # firmware to the default 
-  if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]]; then
+  if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]] || [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" ]]; then
     LIBVIRT_FIRMWARE=bios
   fi
 fi
 
 if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then
   case "$AGENT_E2E_TEST_BOOT_MODE" in
-    "ISO" | "PXE" | "DISKIMAGE")
+    "ISO" | "PXE" | "DISKIMAGE" | "ISCSI")
       # Valid value
       ;;
     *)
-      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE."
+      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, or ISCSI."
       exit 1
       ;;
   esac

@@ -11,6 +11,7 @@ source $SCRIPTDIR/utils.sh
 source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/release_info.sh
 source $SCRIPTDIR/agent/common.sh
+source $SCRIPTDIR/agent/iscsi_utils.sh
 
 early_deploy_validation
 
@@ -95,14 +96,19 @@ function set_file_acl() {
   fi
 }
 
-function attach_agent_iso() {
-
-    set_file_acl
-
+function get_agent_iso() {
     local agent_iso="${OCP_DIR}/agent.$(uname -p).iso"
     if [ ! -f "${agent_iso}" -a -f "${OCP_DIR}/agent.iso" ]; then
         agent_iso="${OCP_DIR}/agent.iso"
     fi
+    echo "${agent_iso}"
+}
+
+function attach_agent_iso() {
+
+    set_file_acl
+
+    agent_iso=$(get_agent_iso)
 
     for (( n=0; n<${2}; n++ ))
     do
@@ -321,8 +327,11 @@ function setup_pxe_boot() {
 
 # Set up a local http server for files needed for PXE or minimal ISO
 function setup_boot_server() {
+    boot_artifacts_dir=${SCRIPTDIR}/${OCP_DIR}/boot-artifacts
+    if [[ -d ${boot_artifacts_dir} ]] && [[ "$(ls -A ${boot_artifacts_dir})" ]]; then
     # Copy the generated artifacts to the http server location
-    cp ${SCRIPTDIR}/${OCP_DIR}/boot-artifacts/* ${BOOT_SERVER_DIR}
+        cp ${boot_artifacts_dir}/* ${BOOT_SERVER_DIR}
+    fi
 
     # Run a local http server to provide the necessary artifacts
     echo "package main; import (\"net/http\"); func main() { http.Handle(\"/\", http.FileServer(http.Dir(\"${BOOT_SERVER_DIR}\"))); if err := http.ListenAndServe(\":${AGENT_BOOT_SERVER_PORT}\", nil); err != nil { panic(err) } }" > ${BOOT_SERVER_DIR}/agentpxeserver.go
@@ -336,6 +345,56 @@ function agent_pxe_boot() {
           name=${CLUSTER_NAME}_${1}_${n}
           sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
           sudo virt-xml ${name} --edit source=${BAREMETAL_NETWORK_NAME} --network="boot_order=2" --start
+      done
+}
+
+# Configure the instances for booting off an iSCSI disk
+function agent_setup_iscsi_boot() {
+    set_file_acl
+
+    # The boot server is started since iSCSI uses a similar mechanism to
+    # retrieve the file for iSCSI boot
+    mkdir -p ${BOOT_SERVER_DIR}
+    setup_boot_server
+
+    # Start server iscsid
+    sudo systemctl enable --now iscsid
+
+    # Create the separate network used for iSCSI booting
+    agent_create_iscsi_network
+}
+
+# Create the iscsi targets
+function agent_iscsi_targets() {
+    agent_iso=$(get_agent_iso)
+
+    for (( n=0; n<${2}; n++ ))
+      do
+          # Note that name use for target must not have an underscore
+          local name=${1}-${n}
+          iscsi_disk=${SCRIPTDIR}/"iscsi-${name}"
+          agent_create_iscsi_target ${name} ${agent_iso} ${iscsi_disk}
+          agent_create_iscsi_pxe_file ${BOOT_SERVER_DIR}
+      done
+}
+
+# Add the network to the domain and restart to boot the nodes
+function agent_iscsi_update_nodes() {
+    for (( n=0; n<${2}; n++ ))
+      do
+          local domain_name=${CLUSTER_NAME}_${1}_${n}
+          local name=${1}-${n}
+          local index=${n}
+          if [[ ${1} == "worker" ]]; then
+	      index=$((${NUM_MASTERS} + $index))
+          fi
+
+          agent_add_iscsi_network_to_domain ${domain_name} ${name} ${index}
+          domain_running=$(sudo virsh list)
+          if echo ${domain_running} | grep -q "${domain_name}"; then
+              sudo virsh destroy ${domain_name}
+          fi
+          sudo virsh start ${domain_name}
       done
 }
 
@@ -378,6 +437,20 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     agent_pxe_boot master $NUM_MASTERS
     agent_pxe_boot worker $NUM_WORKERS
+    ;;
+
+  "ISCSI" )
+    # TODO - check that MINIMAL_ISO is set
+    create_image ${asset_dir} ${openshift_install}
+
+    agent_setup_iscsi_boot
+
+    agent_iscsi_targets master $NUM_MASTERS
+    agent_iscsi_targets worker $NUM_WORKERS
+
+    # Update the nodes and restart
+    agent_iscsi_update_nodes master $NUM_MASTERS
+    agent_iscsi_update_nodes worker $NUM_WORKERS
     ;;
 
   "DISKIMAGE" )
