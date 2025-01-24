@@ -356,7 +356,7 @@ set -x
 
 # Extra Network(s)
 # Provision one or more extra networks for each host.
-# Each new network will be connected to an addition interface on each host.
+# Each new network will be connected to an additional interface on each host.
 # The hosts will automatically name the interface(s) connected to the network.
 # EXTRA_NETWORK_NAMES array may contain any name you wish and each new
 # network name must have a corresponding subnet.
@@ -372,7 +372,7 @@ set -x
 # The value selected is based off the value of HOST_IP_STACK.
 #
 # v4 Default:
-#export EXTERNAL_SUBNET_V4="11.0.0.0/24"
+#export EXTERNAL_SUBNET_V4="192.168.111.0/24"
 #export EXTERNAL_SUBNET_V6=""
 #
 # v6 Default:
@@ -380,7 +380,7 @@ set -x
 #export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/120"
 #
 # v4v6 Default:
-#export EXTERNAL_SUBNET_V4="11.0.0.0/24"
+#export EXTERNAL_SUBNET_V4="192.168.111.0/24"
 #export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/120"
 
 # ENABLE_BOOTSTRAP_STATIC_IP -
@@ -755,7 +755,7 @@ set -x
 # export AGENT_USE_ZTP_MANIFESTS=false
 
 # Uncomment and set the following value to "true" to disable the automated
-# deployment systemd services of the Agent based installation. This is
+# deployment of systemd services of the Agent based installation. This is
 # particularly useful for WebUI development.
 # export AGENT_DISABLE_AUTOMATED=false
 
