@@ -85,6 +85,7 @@ function custom_ntp(){
   if [ -n "$NTP_SERVERS" ]; then
     cp assets/templates/98_worker-chronyd-custom.yaml.optional assets/generated/98_worker-chronyd-custom.yaml
     cp assets/templates/98_master-chronyd-custom.yaml.optional assets/generated/98_master-chronyd-custom.yaml
+    cp assets/templates/98_arbiter-chronyd-custom.yaml.optional assets/generated/98_arbiter-chronyd-custom.yaml
     NTPFILECONTENT=$(cat assets/files/etc/chrony.conf)
     for ntp in $(echo $NTP_SERVERS | tr ";" "\n"); do
       NTPFILECONTENT="${NTPFILECONTENT}"$'\n'"pool ${ntp} iburst"
@@ -224,7 +225,7 @@ function node_map_to_install_config_hosts() {
     start_idx="$2"
     role="$3"
 
-    for ((idx=$start_idx;idx<$(($1 + $start_idx));idx++)); do
+    for ((idx=$start_idx;idx<$(($num_hosts + $start_idx));idx++)); do
       name=$(node_val ${idx} "name")
       mac=$(node_val ${idx} "ports[0].address")
 
@@ -266,7 +267,7 @@ EOF
         # FIXME(stbenjam) Worker code in installer should accept
         # "default" as well -- currently the mapping doesn't work,
         # so we use the raw value for BMO's default which is "unknown"
-        if [[ "$role" == "master" ]]; then
+        if [[ "$role" == "master" ]] || [[ "$role" == "arbiter" ]] ; then
             if [ -z "${MASTER_HARDWARE_PROFILE:-}" ]; then
                 cat <<EOF
         rootDeviceHints:

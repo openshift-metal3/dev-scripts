@@ -271,6 +271,7 @@ export CONTAINER_RUNTIME="podman"
 
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"2"}
+export NUM_ARBITERS=${NUM_ARBITERS:-"0"}
 export NUM_EXTRA_WORKERS=${NUM_EXTRA_WORKERS:-"0"}
 export EXTRA_WORKERS_ONLINE_STATUS=${EXTRA_WORKERS_ONLINE_STATUS:-"true"}
 export EXTRA_WORKERS_NAMESPACE=${EXTRA_WORKERS_NAMESPACE:-"openshift-machine-api"}
@@ -278,12 +279,17 @@ export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 export VM_EXTRADISKS_LIST=${VM_EXTRADISKS_LIST:-"vdb"}
 export VM_EXTRADISKS_SIZE=${VM_EXTRADISKS_SIZE:-"8G"}
 export MASTER_HOSTNAME_FORMAT=${MASTER_HOSTNAME_FORMAT:-"master-%d"}
+export ARBITER_HOSTNAME_FORMAT=${ARBITER_HOSTNAME_FORMAT:-"arbiter-%d"}
 export WORKER_HOSTNAME_FORMAT=${WORKER_HOSTNAME_FORMAT:-"worker-%d"}
 export EXTRA_WORKER_HOSTNAME_FORMAT=${EXTRA_WORKER_HOSTNAME_FORMAT:-"extraworker-%d"}
 
 export MASTER_MEMORY=${MASTER_MEMORY:-16384}
 export MASTER_DISK=${MASTER_DISK:-50}
 export MASTER_VCPU=${MASTER_VCPU:-8}
+
+export ARBITER_MEMORY=${MASTER_MEMORY:-8192}
+export ARBITER_DISK=${MASTER_DISK:-30}
+export ARBITER_VCPU=${MASTER_VCPU:-4}
 
 export WORKER_MEMORY=${WORKER_MEMORY:-8192}
 export WORKER_DISK=${WORKER_DISK:-50}
@@ -302,7 +308,7 @@ export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
 export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
 export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
-export VBMC_MAX_PORT=$((VBMC_BASE_PORT + NUM_MASTERS + NUM_WORKERS + NUM_EXTRA_WORKERS - 1))
+export VBMC_MAX_PORT=$((VBMC_BASE_PORT + NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS + NUM_EXTRA_WORKERS - 1))
 export REDFISH_EMULATOR_IGNORE_BOOT_DEVICE="${REDFISH_EMULATOR_IGNORE_BOOT_DEVICE:-False}"
 
 # Which docker registry image should we use?
@@ -440,6 +446,17 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_VCPU=4
           export MASTER_DISK=100
           export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          ;;
+      "ARBITER" )
+          export NUM_MASTERS=2
+          export MASTER_VCPU=4
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export NUM_ARBITERS=1
+          export ARBITER_VCPU=2
+          export ARBITER_DISK=50
+          export ARBITER_MEMORY=8192
           export NUM_WORKERS=0
           ;;
       "HA" )

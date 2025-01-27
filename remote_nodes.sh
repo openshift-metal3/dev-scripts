@@ -82,6 +82,7 @@ function playbook() {
 		-e "virtualbmc_base_port=$VBMC_BASE_PORT" \
 		-e "virtbmc_action=$VIRTBMC_ACTION" \
 		-e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
+    	-e "arbiter_hostname_format=$ARBITER_HOSTNAME_FORMAT" \
 		-e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
 		-e "provisioning_network_name=noprov" \
 		-e "num_masters=$REMOTE_CLUSTER_NUM_MASTERS" \

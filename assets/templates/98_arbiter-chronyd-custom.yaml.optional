@@ -1,0 +1,20 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: arbiter
+  name: 00-arbiter-chronyd-custom
+spec:
+  config:
+    ignition:
+      version: IGNITION_VERSION
+    storage:
+      files:
+      - contents:
+          verification: {}
+          source: 'data:text/plain;charset=utf-8;base64,NTPFILECONTENT'
+        filesystem: root
+        mode: 0644
+        path: /etc/chrony.conf
+        overwrite: true

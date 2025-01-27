@@ -13,3 +13,6 @@
 - ip: 192.168.111.114
   hostnames:
     - "worker-1"
+- ip: 192.168.111.115
+  hostnames:
+    - "arbiter-0"

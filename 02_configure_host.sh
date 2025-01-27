@@ -136,6 +136,7 @@ ansible-playbook \
     -e "baremetal_network_name=${BAREMETAL_NETWORK_NAME}" \
     -e "working_dir=$WORKING_DIR" \
     -e "num_masters=$NUM_MASTERS" \
+    -e "num_arbiters=$NUM_ARBITERS" \
     -e "num_workers=$NUM_WORKERS" \
     -e "num_extraworkers=$NUM_EXTRA_WORKERS" \
     -e "libvirt_firmware=$LIBVIRT_FIRMWARE" \
@@ -147,6 +148,7 @@ ansible-playbook \
     -e "nodes_file=$NODES_FILE" \
     -e "virtualbmc_base_port=$VBMC_BASE_PORT" \
     -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
+    -e "arbiter_hostname_format=$ARBITER_HOSTNAME_FORMAT" \
     -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
     -e "libvirt_arch=$(uname -m)" \
     -e "enable_vnc_console=$VNC_CONSOLE" \
@@ -165,7 +167,7 @@ if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
   ORIG_NODES_FILE="${NODES_FILE}.orig"
   cp -f ${NODES_FILE} ${ORIG_NODES_FILE}
   sudo chown -R $USER:$GROUP ${NODES_FILE}
-  jq "{nodes: .nodes[:$((NUM_MASTERS + NUM_WORKERS))]}" ${ORIG_NODES_FILE} | tee ${NODES_FILE}
+  jq "{nodes: .nodes[:$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS))]}" ${ORIG_NODES_FILE} | tee ${NODES_FILE}
   jq "{nodes: .nodes[-${NUM_EXTRA_WORKERS}:]}" ${ORIG_NODES_FILE} | tee ${EXTRA_NODES_FILE}
 fi
 
@@ -410,6 +412,7 @@ fi
 if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
 
     setup_bond master $NUM_MASTERS
+    setup_bond arbiter $NUM_ARBITERS
     setup_bond worker $NUM_WORKERS
 fi
 

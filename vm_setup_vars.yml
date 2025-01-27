@@ -8,6 +8,7 @@ ironic_prefix: "{{ ironic_prefix }}"
 # We enable more memory and masters in dev-scripts compared to the minimal setup
 # in metal3-dev-env
 num_masters: 3
+num_arbiters: 0
 num_workers: 1
 num_extraworkers: 0
 extradisks_list: "{{ lookup('env', 'VM_EXTRADISKS_LIST').split(' ') | default(['vdb']) }}"
@@ -17,6 +18,12 @@ flavors:
     memory: "{{ lookup('env', 'MASTER_MEMORY') }}"
     disk: "{{ lookup('env', 'MASTER_DISK') }}"
     vcpu: "{{ lookup('env', 'MASTER_VCPU') }}"
+    extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
+
+  arbiter:
+    memory: "{{ lookup('env', 'ARBITER_MEMORY') }}"
+    disk: "{{ lookup('env', 'ARBITER_DISK') }}"
+    vcpu: "{{ lookup('env', 'ARBITER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
 
   worker:

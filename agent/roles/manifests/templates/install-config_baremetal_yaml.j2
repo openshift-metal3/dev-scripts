@@ -11,6 +11,11 @@ controlPlane:
   hyperthreading: Enabled
   name: master
   replicas: {{ num_masters }} 
+arbiter:
+  architecture: {{ goCPUArchitecture }}
+  hyperthreading: Enabled
+  name: arbiter
+  replicas: {{ num_arbiters }}
 fips: {{ fips_mode }}
 metadata:
   name: {{ cluster_name }} 

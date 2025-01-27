@@ -44,7 +44,7 @@ options:
     cluster_topology:
         description: Cluster topology defines the number cluster nodes.
         default: ha
-        choices: ['ha', 'compact', 'sno']
+        choices: ['ha', 'compact', 'sno', 'arbiter']
         type: str
     resource_profile:
         description: Resource profile controls resource size of each node.
@@ -99,7 +99,7 @@ def main():
             openshift_version=dict(type='str'),
             cluster_name=dict(type='str', default='ostest'),
             base_domain=dict(type='str', default='test.metalkube.org'),
-            cluster_topology=dict(type='str', default='ha', choices=['ha', 'compact', 'sno']),
+            cluster_topology=dict(type='str', default='ha', choices=['ha', 'compact', 'sno', 'arbiter']),
             resource_profile=dict(type='str', default='minimal', choices=['minimal', 'recommended']),
             extra_workers_profile=dict(type='str', default='none', choices=['none', 'day2active', 'day2inactive']),
             ip_stack=dict(type='str', default='v6', choices=['v4', 'v6', 'v4v6']),
@@ -231,8 +231,9 @@ def generate_preset_base(home_dir, ci_token, ci_server, working_dir, ssh_pub_key
     return facts
 
 def determine_cluster_topology(cluster_topology, resource_profile, extra_workers_profile):
-    num_masters, num_workers, num_extra_workers = 0, 0, 0
+    num_masters, num_arbiters, num_workers, num_extra_workers = 0, 0, 0, 0
     master_memory, master_disk, master_vcpu = None, None, None
+    arbiter_memory, arbiter_disk, arbiter_vcpu = None, None, None
     worker_memory, worker_disk, worker_vcpu = None, None, None
     extra_worker_memory, extra_worker_disk, extra_worker_vcpu = None, None, None
     apply_extra_workers = None
@@ -240,11 +241,13 @@ def determine_cluster_topology(cluster_topology, resource_profile, extra_workers
 
     # Define the number of nodes based off topology
     if cluster_topology == 'ha':
-        num_masters, num_workers = 3, 2
+        num_masters, num_arbiters, num_workers = 3, 0, 2
     elif cluster_topology == 'compact':
-        num_masters, num_workers = 3, 0
+        num_masters, num_arbiters, num_workers = 3, 0, 0
+    elif cluster_topology == 'arbiter':
+        num_masters, num_arbiters, num_workers = 2, 1, 0
     elif cluster_topology == 'sno':
-        num_masters, num_workers = 1, 0
+        num_masters, num_arbiters, num_workers = 1, 0, 0
 
     if extra_workers_profile == 'none':
         num_extra_workers, apply_extra_workers = 0, None
@@ -272,6 +275,15 @@ def determine_cluster_topology(cluster_topology, resource_profile, extra_workers
                 master_memory, master_disk, master_vcpu = '16384', '120', '8'
             else:
                 pass
+    # Define the worker node resources
+    if num_arbiters > 0:
+        cluster_topology = 'arbiter'
+        if resource_profile == 'minimal':
+            arbiter_memory, arbiter_disk, arbiter_vcpu = '8192', '20', '2'
+        elif resource_profile == 'recommended':
+            arbiter_memory, arbiter_disk, arbiter_vcpu = '16384', '120', '4'
+        else:
+            pass
 
     # Define the worker node resources
     if num_workers > 0:
@@ -301,6 +313,10 @@ def determine_cluster_topology(cluster_topology, resource_profile, extra_workers
         'master_memory': master_memory,
         'master_disk': master_disk,
         'master_vcpu': master_vcpu,
+        'num_arbiters': str(num_arbiters),
+        'arbiter_memory': arbiter_memory,
+        'arbiter_disk': arbiter_disk,
+        'arbiter_vcpu': arbiter_vcpu,
         'worker_memory': worker_memory,
         'worker_disk': worker_disk,
         'worker_vcpu': worker_vcpu,

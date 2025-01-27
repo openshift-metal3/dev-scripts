@@ -17,8 +17,8 @@ set_api_and_ingress_vip
 if [ ! -f ${OCP_DIR}/install-config.yaml ]; then
     # Validate there are enough nodes to avoid confusing errors later..
     NODES_LEN=$(jq '.nodes | length' ${NODES_FILE})
-    if (( $NODES_LEN < ( $NUM_MASTERS + $NUM_WORKERS ) )); then
-        echo "ERROR: ${NODES_FILE} contains ${NODES_LEN} nodes, but ${NUM_MASTERS} masters and ${NUM_WORKERS} workers requested"
+    if (( $NODES_LEN < ( $NUM_MASTERS + $NUM_ARBITERS + $NUM_WORKERS ) )); then
+        echo "ERROR: ${NODES_FILE} contains ${NODES_LEN} nodes, but ${NUM_MASTERS} masters, ${NUM_ARBITERS} arbiter and ${NUM_WORKERS} workers requested"
         exit 1
     fi
 
