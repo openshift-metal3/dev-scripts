@@ -181,6 +181,20 @@ EOF
     fi
 }
 
+function arbiterStanza() {
+    if [[ ! -z "${ENABLE_ARBITER:-}" ]]; then
+cat <<EOF
+arbiter:
+  name: arbiter
+  replicas: 1
+  hyperthreading: Enabled
+  architecture: $(get_arch install_config)
+  platform:
+    baremetal: {}
+EOF
+    fi
+}
+
 function libvirturi() {
     if [[ "$REMOTE_LIBVIRT" -ne 0 ]]; then
 cat <<EOF
@@ -314,6 +328,7 @@ controlPlane:
   architecture: $(get_arch install_config)
   platform:
     baremetal: {}
+$(arbiterStanza)
 $(featureSet)
 platform:
   baremetal:
