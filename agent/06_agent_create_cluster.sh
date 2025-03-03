@@ -406,6 +406,31 @@ function create_appliance() {
     sudo podman run -it --rm --pull newer --privileged --net=host -v ${asset_dir}:/assets:Z ${APPLIANCE_IMAGE} build --debug-base-ignition
 }
 
+# scp a file with list of operators to the rendezvous node so that operators can be registered with assisted-service
+function put_operator_file() {
+  tmpoperatorfile=$(mktemp --tmpdir "operators--XXXXXXXXXX")
+  _tmpfiles="$_tmpfiles $tmpoperatorfile"
+
+  # get operator list from comma-separate string
+  IFS=',' read -ra array <<< "${AGENT_OPERATORS}"
+  for value in "${array[@]}"; do
+    echo "- name: $value" >> $tmpoperatorfile
+  done
+  unset IFS
+
+  node0_ip=$(get_node0_ip)
+  ssh_opts=(-o 'StrictHostKeyChecking=no' -q core@${node0_ip})
+
+  until ssh "${ssh_opts[@]}" "[[ -f /etc/hosts ]]"
+  do
+    echo "Waiting for rendezvous host at $node0_ip to be up in order to set operator file"
+    sleep 30s;
+  done
+
+  scp $tmpoperatorfile core@${node0_ip}:/home/core/operators.yaml
+  ssh "${ssh_opts[@]}" "sudo cp /home/core/operators.yaml /etc/assisted/manifests/."
+}
+
 asset_dir="${1:-${OCP_DIR}}"
 config_image_dir="${1:-${OCP_DIR}/configimage}"
 openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
@@ -493,6 +518,10 @@ if [[ "${AGENT_USE_APPLIANCE_MODEL}" == true ]] && [[ "${AGENT_APPLIANCE_HOTPLUG
 
     set_device_config_image master $NUM_MASTERS
     set_device_config_image worker $NUM_WORKERS
+fi
+
+if [[ ! -z $AGENT_OPERATORS ]]; then
+    put_operator_file
 fi
 
 wait_for_cluster_ready

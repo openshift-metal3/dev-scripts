@@ -882,3 +882,11 @@ set -x
 # be used.
 #
 # export AGENT_ROOT_DEVICE_HINTS=""
+
+# AGENT_OPERATORS
+# Default: Undefined
+#
+# This takes a comma-separated list of operators to install which will be configured
+# when registering the assisted-service.
+#
+# export AGENT_OPERATORS=""
