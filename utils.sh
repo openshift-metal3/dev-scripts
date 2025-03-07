@@ -237,7 +237,7 @@ function node_map_to_install_config_hosts() {
       name=$(node_val ${idx} "name")
       mac=$(node_val ${idx} "ports[0].address")
       local node_role=$role
-      if [[ ! -z "${ENABLE_ARBITER:-}" && $name =~ "arbiter" && "$role" == "master" ]]; then
+      if [[ ! -z "${ENABLE_ARBITER:-}" && $idx -eq $(($num_hosts + $start_idx - 1)) && "$role" == "master" ]]; then
         node_role=arbiter
       fi
 
