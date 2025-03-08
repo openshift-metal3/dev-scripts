@@ -409,6 +409,9 @@ export AGENT_BOOT_SERVER_PORT=${AGENT_BOOT_SERVER_PORT:-8089}
 # Enable MCE deployment
 export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
 
+# Test of agent operators
+export AGENT_OPERATORS=${AGENT_OPERATORS:-""}
+
 if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   IFS='_'
   read -a arr <<<"$AGENT_E2E_TEST_SCENARIO"
@@ -473,6 +476,10 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
       *)
         invalidAgentValue
   esac
+
+  if [[ "$AGENT_OPERATORS" =~ "mtv" ]]; then
+     export MASTER_VCPU=9
+  fi
 
   if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
     # Assisted service will require at least two local volumes
