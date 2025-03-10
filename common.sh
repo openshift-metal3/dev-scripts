@@ -168,6 +168,7 @@ if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="${OPENSHIFT_INSTALL_PATH:-$GOPATH/src/github.com/openshift/installer}"
+export OPENSHIFT_AGENT_INSTALER_UTILS_PATH="${OPENSHIFT_AGENT_INSTALER_UTILS_PATH:-$GOPATH/src/github.com/openshift/agent-installer-utils}"
 
 # Override the image to use for installing hive
 export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshift/hive-v4.0:hive}"
