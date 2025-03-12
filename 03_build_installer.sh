@@ -12,7 +12,7 @@ source validation.sh
 function clone_installer() {
   # Clone repo, if not already present
   if [[ ! -d $OPENSHIFT_INSTALL_PATH ]]; then
-    sync_repo_and_patch go/src/github.com/openshift/installer https://github.com/openshift/installer.git
+    sync_repo_and_patch "$(realpath -m --relative-to "${REPO_PATH:-$HOME}" "${OPENSHIFT_INSTALL_PATH}")" https://github.com/openshift/installer.git
   fi
 }
 
