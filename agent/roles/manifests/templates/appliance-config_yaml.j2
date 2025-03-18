@@ -2,11 +2,8 @@ apiVersion: v1beta1
 kind: ApplianceConfig
 ocpRelease:
   version: {{ version }}
-  channel: candidate
-  cpuArchitecture: {{ ansible_architecture }}
+  url: {{ image }} 
 diskSizeGB: 200
 pullSecret: {{ pull_secret_contents }}
 sshKey: {{ ssh_pub_key }}
-imageRegistry:
-  uri: quay.io/libpod/registry:2.8
 userCorePass: core
