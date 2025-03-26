@@ -13,6 +13,9 @@ agent: agent_requirements requirements configure agent_build_installer agent_pre
 # Requires at least 1 extra worker node to be configured with disk size at least 100Gß
 agent_plus_add_node: agent agent_add_extraworker_nodes
 
+# Creates agent OVE ISO with agent-tui, assisted-install-ui and release images for disconnected installations embeded into it.
+agent_ove_iso: requirements agent_build_ove_iso
+
 agent_requirements:
 	./agent/01_agent_requirements.sh
 
@@ -45,6 +48,9 @@ agent_remove_extraworker_nodes:
 
 agent_post_install_validation:
 	./agent/agent_post_install_validation.sh
+
+agent_build_ove_iso:
+	./agent/08_agent_build_agent_installer_utils.sh
 
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
@@ -83,13 +89,16 @@ ironic_cleanup:
 host_cleanup:
 	./host_cleanup.sh
 
-realclean: clean cache_cleanup workingdir_cleanup podman_cleanup registry_cleanup
+realclean: tmpdir_cleanup clean cache_cleanup workingdir_cleanup podman_cleanup registry_cleanup
 
 cache_cleanup:
 	./cache_cleanup.sh
 
 registry_cleanup:
 	./registry_cleanup.sh
+
+tmpdir_cleanup:
+	sudo rm -rf /tmp/iso_builder
 
 workingdir_cleanup:
 	./workingdir_cleanup.sh

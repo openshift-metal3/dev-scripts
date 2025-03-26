@@ -15,6 +15,9 @@ early_cleanup_validation
 rm -rf "${OCP_DIR}/manifests"
 rm -rf "${OCP_DIR}/output"
 
+rm -rf /tmp/iso_builder/ove-iso
+rm -rf "${OPENSHIFT_AGENT_INSTALER_UTILS_PATH}/tools/iso_builder/ove-assets" 
+
 function agent_remove_iscsi_disks() {
     for (( n=0; n<${2}; n++ ))
       do
