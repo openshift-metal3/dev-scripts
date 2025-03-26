@@ -181,8 +181,8 @@ EOF
     fi
 }
 
-function arbiterStanza() {
-    if [[ ! -z "${ENABLE_ARBITER:-}" ]]; then
+function arbiter_stanza() {
+    if [[ -n "${ENABLE_ARBITER:-}" ]]; then
 cat <<EOF
 arbiter:
   name: arbiter
@@ -193,6 +193,14 @@ arbiter:
     baremetal: {}
 EOF
     fi
+}
+
+function workload_partitioning() {
+  if [[ -n "${ENABLE_WORKLOAD_PARTITIONING}" ]]; then
+cat <<EOF
+cpuPartitioningMode: AllNodes
+EOF
+  fi
 }
 
 function libvirturi() {
@@ -313,6 +321,7 @@ function generate_ocp_install_config() {
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
+$(workload_partitioning)
 networking:
   networkType: ${NETWORK_TYPE}
 $(cluster_network)
@@ -328,7 +337,7 @@ controlPlane:
   architecture: $(get_arch install_config)
   platform:
     baremetal: {}
-$(arbiterStanza)
+$(arbiter_stanza)
 $(featureSet)
 platform:
   baremetal:

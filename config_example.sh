@@ -462,6 +462,16 @@ set -x
 #
 #export ENABLE_ARBITER=1
 
+# ENABLE_WORKLOAD_PARTITIONING -
+# Set to any non zero length string value to enable workload partitioning in the install config.
+#
+# Workload partitioning allows for workloads to be pinned to specific CPUSets with Performance Profiles
+# from the Node Tuning Operator.
+# For more info see:
+# https://github.com/openshift/cluster-node-tuning-operator/blob/main/docs/performanceprofile/performance_profile.md
+#
+#export ENABLE_WORKLOAD_PARTITIONING=true
+
 # MASTER_HOSTNAME_FORMAT -
 # Set a custom hostname format for masters. This is a format string that should
 # include one %d field, which will be replaced with the number of the node.
