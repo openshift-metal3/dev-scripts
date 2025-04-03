@@ -337,6 +337,7 @@ controlPlane:
   architecture: $(get_arch install_config)
   platform:
     baremetal: {}
+$(node_map_to_install_config_fencing_credentials)
 $(arbiter_stanza)
 $(featureSet)
 platform:
