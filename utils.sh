@@ -303,6 +303,29 @@ EOF
     done
 }
 
+function node_map_to_install_config_fencing_credentials() {
+  if  [[ -z "${ENABLE_ARBITER:-}" ]] && [[ "${NUM_MASTERS}" -eq 2 ]]; then
+	cat <<EOF
+  fencing:
+    credentials:
+EOF
+    for ((idx=0;idx<$(($NUM_MASTERS));idx++)); do
+      name=$(node_val ${idx} "name")
+      username=$(node_val ${idx} "driver_info.username")
+      password=$(node_val ${idx} "driver_info.password")
+      address=$(node_val ${idx} "driver_info.address")
+
+      cat <<EOF
+    - hostname: ${name}
+      address: ${address}
+      username: ${username}
+      password: ${password}
+      sslInsecure: true
+EOF
+	done
+	fi
+}
+
 function sync_repo_and_patch {
     REPO_PATH=${REPO_PATH:-$HOME}
     DEST="${REPO_PATH}/$1"
