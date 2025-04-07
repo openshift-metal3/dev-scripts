@@ -558,6 +558,24 @@ function get_nodes_bmc_info() {
 
 }
 
+function enable_isolated_baremetal_network() {
+  if [ "${AGENT_ISOLATED_NETWORK}" == true ] ; then
+    echo "Enabling isolated network"
+
+    sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} > ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
+    # Remove the forward block
+    sudo sed -i "/<forward\( [^>]*\)\?>/,/<\/forward>/d" ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
+    # Add a default route (will be required by assisted-service pre-flight validations)
+    sudo sed -i "/<\/dnsmasq:options>/i   <dnsmasq:option value='dhcp-option=3,${PROVISIONING_HOST_EXTERNAL_IP}'/>" ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
+    
+    # Update the baremetal network
+    sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-undefine ${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-define ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
+  fi
+}
+
 write_pull_secret
 
 # needed for assisted-service to run nmstatectl
@@ -606,3 +624,5 @@ generate_cluster_manifests
 generate_extra_cluster_manifests
 
 write_extra_workers_ips
+
+enable_isolated_baremetal_network

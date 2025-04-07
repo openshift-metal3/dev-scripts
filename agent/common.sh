@@ -70,3 +70,6 @@ export MACHINE_CONFIG_SERVER_PORT=22623
 export KUBE_API_PORT=6443
 export INGRESS_ROUTER_PORT=443
 export AGENT_NODE0_IPSV6=${AGENT_NODE0_IPSV6:-}
+
+# Modifies the baremetal network to be fully isolated.
+export AGENT_ISOLATED_NETWORK=${AGENT_ISOLATED_NETWORK:-"false"}
