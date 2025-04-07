@@ -336,7 +336,7 @@ function generate_cluster_manifests() {
 
 function write_extra_workers_ips() {
   # not required in case no additional workers were defined
-  if [ "${NUM_EXTRAWORKERS:-0}" -eq 0 ]; then
+  if [ "${NUM_EXTRA_WORKERS:-0}" -eq 0 ]; then
     return
   fi
 
