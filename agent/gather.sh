@@ -21,3 +21,11 @@ do
     fi
 done < "${OCP_DIR}"/hosts
 
+num_screenshots=$(find "${OCP_DIR}" -type f -name "*.ppm" | wc -l)
+if [[ "$num_screenshots" -gt 0 ]]; then
+    archive_name="agent-gather-console-screenshots.tar.xz"
+    echo "Gathering console screenshots to $archive_name"
+    tar -cJf $archive_name ${OCP_DIR}/*.ppm
+else
+    echo "No console screenshots found. Skipping screenshot gather."
+fi

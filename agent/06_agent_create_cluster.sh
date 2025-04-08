@@ -300,6 +300,10 @@ function run_agent_test_cases() {
     local version="$(openshift_version ${OCP_DIR})"
     ./agent/e2e/agent-tui/test-fix-wrong-dns.sh $CLUSTER_NAME $PROVISIONING_HOST_EXTERNAL_IP $version
 
+    # Take screenshot of the console after fixing DNS to see if the agent_tui
+    # has exited.
+    sudo virsh screenshot $name "${OCP_DIR}/${name}_console_screenshot_after_dns_fix.ppm"
+
     echo "Finished fixing DNS through agent-tui"
   fi
 }
