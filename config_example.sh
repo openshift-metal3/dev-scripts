@@ -784,7 +784,9 @@ set -x
 # This config variable is used only by the agent based installer and is optional.
 # The default value for AGENT_E2E_TEST_BOOT_MODE is 'ISO'.
 # For the openshift-appliance flow, set the boot mode to 'DISKIMAGE'.
-# AGENT_E2E_TEST_BOOT_MODE=PXE
+# To generate PXE assets, set the boot mode to 'PXE'.
+# To generate OVE ISO, set the boot mode to 'ISO_NO_REGISTRY'.
+# AGENT_E2E_TEST_BOOT_MODE=ISO
 
 # Uncomment and set the following value to "true" to enable a test scenario
 # where the DNS is disabled on the hosts by setting its IP address to an incorrect value.

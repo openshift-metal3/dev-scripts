@@ -499,11 +499,11 @@ fi
 
 if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then
   case "$AGENT_E2E_TEST_BOOT_MODE" in
-    "ISO" | "PXE" | "DISKIMAGE" | "ISCSI")
+    "ISO" | "PXE" | "DISKIMAGE" | "ISCSI" | "ISO_NO_REGISTRY")
       # Valid value
       ;;
     *)
-      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, or ISCSI."
+      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, ISCSI, or ISO_NO_REGISTRY."
       exit 1
       ;;
   esac
