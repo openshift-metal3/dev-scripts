@@ -558,6 +558,36 @@ function get_nodes_bmc_info() {
 
 }
 
+function block_insecure_machine_config_server_port() {
+    existing_filter=$(sudo virsh nwfilter-list)
+    if [[ "$existing_filter" == *"block-insecure-machine-config-server"* ]]; then
+        sudo virsh nwfilter-undefine block-insecure-machine-config-server
+    fi
+    tmpfilter=$(mktemp --tmpdir "block-insecure-mcs--XXXXXXXXXX")
+    _tmpfiles="$_tmpfiles $tmpfilter"
+    echo "<filter name='block-insecure-machine-config-server' chain='root'>
+  <uuid>aaaaaaaa-aaaa-aaaa-aaaa-000000000001</uuid>
+  <rule action='drop' direction='in' priority='500'>
+    <tcp match='yes' dstportstart='22624' dstportend='22624'/>
+  </rule>
+</filter>" > $tmpfilter
+    sudo virsh nwfilter-define $tmpfilter
+
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        tmpdomain=$(mktemp --tmpdir "${name}--XXXXXXXXXX")
+        _tmpfiles="$_tmpfiles $tmpdomain"
+        sudo virsh dumpxml ${name} > ${tmpdomain}
+
+        sed -i '/interface type=\([^>]*\)>/a\
+      <filterref filter="block-insecure-machine-config-server"/>\' ${tmpdomain}
+
+        sudo virsh define ${tmpdomain}
+    done
+}
+
+
 write_pull_secret
 
 # needed for assisted-service to run nmstatectl
@@ -600,6 +630,8 @@ if [[ "${AGENT_PLATFORM_TYPE}" == "external" ]] || [[ "${AGENT_PLATFORM_TYPE}" =
   set_device_mfg master $NUM_MASTERS ${AGENT_PLATFORM_TYPE} ${AGENT_PLATFORM_NAME}
   set_device_mfg worker $NUM_WORKERS ${AGENT_PLATFORM_TYPE} ${AGENT_PLATFORM_NAME}
 fi
+
+block_insecure_machine_config_server_port extraworker $NUM_EXTRA_WORKERS
 
 generate_cluster_manifests
 
