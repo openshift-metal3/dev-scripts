@@ -890,3 +890,11 @@ set -x
 # when registering the assisted-service.
 #
 # export AGENT_OPERATORS=""
+
+# AGENT_ISOLATED_NETWORK
+# Default: false
+#
+# When enabled, it reconfigures the current baremetal network to ensure
+# a complete isolation.
+#
+# export AGENT_ISOLATED_NETWORK=""
