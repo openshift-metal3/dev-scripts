@@ -12,6 +12,7 @@ source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/release_info.sh
 source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/agent/iscsi_utils.sh
+source $SCRIPTDIR/agent/e2e/agent-tui/utils.sh
 
 early_deploy_validation
 
@@ -78,6 +79,15 @@ function create_config_image() {
 
     # Copy the auth files to OCP_DIR so wait-for command can access it
     cp -r ${config_image_dir}/auth ${asset_dir}
+}
+
+function create_agent_iso_no_registry() {
+  # Create agent ISO without registry a.k.a. OVE ISO
+  local asset_dir=${1}
+  pushd .
+  cd $OPENSHIFT_AGENT_INSTALER_UTILS_PATH/tools/iso_builder
+  ./hack/build-ove-image.sh --pull-secret-file "${PULL_SECRET_FILE}" --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" --dir "${asset_dir}"
+  popd
 }
 
 function set_device_config_image() {
@@ -150,6 +160,40 @@ function attach_appliance_diskimage() {
         # Boot machine from the appliance disk image
         sudo virt-xml ${name} --edit target=sda --disk="boot_order=1" --start
     done
+}
+
+function attach_agent_iso_no_registry() {
+    set_file_acl
+
+    local base_dir=$SCRIPTDIR/$OCP_DIR
+    local iso_name="agent-ove.$(uname -p).iso"
+    local agent_iso_no_registry=$(find "$base_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
+
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        sudo virt-xml ${name} --add-device --disk "${agent_iso_no_registry}",device=cdrom,target.dev=sdc
+        sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
+        sudo virt-xml ${name} --edit target=sdc --disk="boot_order=2" --start
+        echo "Waiting for 3 mins to arrive at agent-tui screen"
+        sleep 180
+        ./agent/e2e/agent-tui/test-no-registry-agent-tui.sh $name
+        echo "Finished configuring the rendezvousIP via agent-tui for $name"
+    done
+}
+
+function check_assisted_install_UI(){
+  local rendezvousIP=$(getRendezvousIP)
+  local url="http://$rendezvousIP:3001"
+  while true; do
+    if curl -s -o /dev/null -w "%{http_code}" "$url" | grep -q "^200$"; then
+      echo "Assisted install UI is up: $url"
+      break
+    else
+      echo "Assisted install UI not ready, retrying in 5 seconds..."
+      sleep 5
+    fi
+  done
 }
 
 function get_node0_ip() {
@@ -435,9 +479,11 @@ function put_operator_file() {
   ssh "${ssh_opts[@]}" "sudo cp /home/core/operators.yaml /etc/assisted/manifests/."
 }
 
-asset_dir="${1:-${OCP_DIR}}"
-config_image_dir="${1:-${OCP_DIR}/configimage}"
-openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]]; then
+  asset_dir="${1:-${OCP_DIR}}"
+  config_image_dir="${1:-${OCP_DIR}/configimage}"
+  openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+fi
 
 case "${AGENT_E2E_TEST_BOOT_MODE}" in
   "ISO" )
@@ -499,6 +545,23 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     # (to avoid storage overconsumption on the CI machine)
     sudo rm -f "${OCP_DIR}/appliance.raw"
     ;;
+  "ISO_NO_REGISTRY" )
+    # Build an (OVE) image which does not need registry setup 
+    # Run a script from agent-installer-utils which internally uses openshift-appliance
+    asset_dir=$SCRIPTDIR/$OCP_DIR/iso_builder
+    mkdir -p ${asset_dir}
+    create_agent_iso_no_registry ${asset_dir}
+
+    attach_agent_iso_no_registry master $NUM_MASTERS
+    attach_agent_iso_no_registry worker $NUM_WORKERS
+
+    # In case of SNO, wait for additional 3 minutes for the node
+    # to finish booting up and make sure UI is up
+    if [[ "${NUM_MASTERS}" == "1" ]]; then
+      sleep 180
+    fi
+    check_assisted_install_UI
+    ;;
 esac
 
 if [ ! -z "${AGENT_TEST_CASES:-}" ]; then
@@ -528,17 +591,24 @@ if [[ ! -z $AGENT_OPERATORS ]]; then
     put_operator_file
 fi
 
-wait_for_cluster_ready
+# Current goal is to only verify if the nodes are booted fine,
+# TUI sets the rendezvous IP correctly and UI is accessible.
+# The next goal is to simulate adding the cluster details via UI
+# and complete the cluster installation.
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]]; then
+    wait_for_cluster_ready
+fi
 
 if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
   mce_complete_deployment
 fi
 
 # e2e test configuration
-
-# Configure storage for the image registry
-oc patch configs.imageregistry.operator.openshift.io \
-    cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}},"managementState":"Managed"}}'
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]]; then
+  # Configure storage for the image registry
+  oc patch configs.imageregistry.operator.openshift.io \
+      cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}},"managementState":"Managed"}}'
+fi
 
 if [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then        
     # Configure tools image registry and cluster samples operator 
