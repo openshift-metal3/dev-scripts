@@ -15,7 +15,7 @@ fi
 if [ -d ${OCP_DIR} ]; then
     ${OCP_DIR}/openshift-install --dir ${OCP_DIR} --log-level=debug destroy bootstrap
     ${OCP_DIR}/openshift-install --dir ${OCP_DIR} --log-level=debug destroy cluster
-    rm -rf ${OCP_DIR}
+    sudo rm -rf "${OCP_DIR}"
 fi
 
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf

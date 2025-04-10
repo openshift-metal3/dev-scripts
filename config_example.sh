@@ -794,7 +794,27 @@ set -x
 # This config variable is used only by the agent based installer and is optional.
 # The default value for AGENT_E2E_TEST_BOOT_MODE is 'ISO'.
 # For the openshift-appliance flow, set the boot mode to 'DISKIMAGE'.
-# AGENT_E2E_TEST_BOOT_MODE=PXE
+# To generate PXE assets, set the boot mode to 'PXE'.
+# To generate an ISO that can be used in a disconnected environment 
+# without using a registry a.k.a. OVE ISO, set the boot mode to 'ISO_NO_REGISTRY'.
+# export AGENT_E2E_TEST_BOOT_MODE=ISO
+
+# AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is an optional environment variable used to trigger
+# cleanup of cached files and other artifacts during local development and is useful when
+# AGENT_E2E_TEST_BOOT_MODE is set to ISO_NO_REGISTRY.
+# AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is useful for reclaiming disk space when building agent OVE ISO locally
+# by deleting all the files from the working directory, example ocp/ostest/iso_builder except the generated OVE ISO.
+# Set to 'true' to enable the cleanup. 
+# Default behavior (unset or any value other than 'yes') is to skip cleanup.
+# Recommended to set to true for local dev/test purposes and unset in CI.
+# export AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV=false
+
+# Specifies the hostname of the node that should be identified and set as the rendezvous node 
+# during the OVE cluster installation process. This node acts as the bootstrap node in the cluster.
+# Accepts only master nodes.
+# Defaults to "${CLUSTER_NAME}_master_0" where the default CLUSTER_NAME is ostest.
+# export AGENT_RENDEZVOUS_NODE_HOSTNAME="${CLUSTER_NAME:-ostest}_master_1"
+
 
 # Uncomment and set the following value to "true" to enable a test scenario
 # where the DNS is disabled on the hosts by setting its IP address to an incorrect value.

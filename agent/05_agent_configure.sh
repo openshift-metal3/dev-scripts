@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euxo pipefail
+shopt -s nocasematch
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
@@ -14,6 +15,7 @@ source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/oc_mirror.sh
 
 early_deploy_validation
+mkdir -p $OCP_DIR
 
 export CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
@@ -619,10 +621,11 @@ if [[ "${AGENT_PLATFORM_TYPE}" == "external" ]] || [[ "${AGENT_PLATFORM_TYPE}" =
   set_device_mfg worker $NUM_WORKERS ${AGENT_PLATFORM_TYPE} ${AGENT_PLATFORM_NAME}
 fi
 
-generate_cluster_manifests
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]] ; then
+  generate_cluster_manifests
 
-generate_extra_cluster_manifests
+  generate_extra_cluster_manifests
 
-write_extra_workers_ips
-
+  write_extra_workers_ips
+fi
 enable_isolated_baremetal_network

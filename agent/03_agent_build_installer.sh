@@ -8,6 +8,11 @@ source $SCRIPTDIR/logging.sh
 source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/agent/common.sh
 
+# Temporarily skip building the agent installer in case of OVE ISO
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+    exit 0
+fi
+
 # Override build tags
 export OPENSHIFT_INSTALLER_BUILD_TAGS=" "
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euxo pipefail
+shopt -s nocasematch
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
@@ -12,6 +13,7 @@ source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/release_info.sh
 source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/agent/iscsi_utils.sh
+source $SCRIPTDIR/agent/e2e/agent-tui/utils.sh
 
 early_deploy_validation
 
@@ -78,6 +80,38 @@ function create_config_image() {
 
     # Copy the auth files to OCP_DIR so wait-for command can access it
     cp -r ${config_image_dir}/auth ${asset_dir}
+}
+
+function create_agent_iso_no_registry() {
+  # Create agent ISO without registry a.k.a. OVE ISO
+  local asset_dir=${1}
+  pushd .
+  cd $OPENSHIFT_AGENT_INSTALER_UTILS_PATH/tools/iso_builder
+  ./hack/build-ove-image.sh --pull-secret-file "${PULL_SECRET_FILE}" --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" --ssh-key-file "${SSH_KEY_FILE}" --dir "${asset_dir}"
+  popd
+}
+
+# Deletes all files and directories under asset_dir
+# example, ocp/ostest/iso_builder/4.19.* 
+# except the final generated ISO file (agent-ove.x86_64.iso), 
+# to free up disk space while preserving the built artifact.
+# Note: This optional cleanup is relevant only when the
+# AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is set as as true, 
+function cleanup_diskspace_agent_iso_noregistry() {
+ local asset_dir=${1%/}  # Remove trailing slash if present
+
+  # Iterate over all versioned directories matching 4.19.*
+  for dir in "$asset_dir"/4.19.*; do
+    [ -d "$dir" ] || continue
+
+    echo "Cleaning up directory: $dir"
+
+    # Delete all files and symlinks except the agent-ove.x86_64.iso
+    sudo find "$dir" \( -type f -o -type l \) ! -name 'agent-ove.x86_64.iso' -print -delete
+
+    # Remove any empty directories left behind
+    sudo find "$dir" -type d -empty -print -delete
+  done
 }
 
 function set_device_config_image() {
@@ -150,6 +184,52 @@ function attach_appliance_diskimage() {
         # Boot machine from the appliance disk image
         sudo virt-xml ${name} --edit target=sda --disk="boot_order=1" --start
     done
+}
+
+function attach_agent_iso_no_registry() {
+    set_file_acl
+
+    local base_dir=$SCRIPTDIR/$OCP_DIR
+    local iso_name="agent-ove.$(uname -p).iso"
+    local agent_iso_no_registry=$(find "$base_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
+
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        sudo virt-xml ${name} --add-device --disk "${agent_iso_no_registry}",device=cdrom,target.dev=sdc
+        sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
+        sudo virt-xml ${name} --edit target=sdc --disk="boot_order=2" --start
+    done
+}
+
+function automate_rendezvousIP_selection(){
+  for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        # Take screenshots of console before running the automation that configures the rendezvousIP. 
+        # The screenshot may help us see if agent-tui has reached the expected success state.
+        sudo virsh screenshot $name "${OCP_DIR}/${name}_console_screenshot_before_automation_configures_rendezvousIP.ppm"
+
+        ./agent/e2e/agent-tui/automate-no-registry-agent-tui.sh $name
+
+         # Take screenshot of the console after running the automation that configures the rendezvousIP.
+         sudo virsh screenshot $name "${OCP_DIR}/${name}_console_screenshot_after_automation_configures_rendezvousIP.ppm"
+        echo "Finished configuring the rendezvousIP via agent-tui for $name"
+    done
+}
+
+function check_assisted_install_UI(){
+  local rendezvousIP=$(getRendezvousIP)
+  local url="http://$rendezvousIP:3001"
+  while true; do
+    if curl -s -o /dev/null -w "%{http_code}" "$url" | grep -q "^200$"; then
+      echo "Assisted install UI is up: $url"
+      break
+    else
+      echo "Assisted install UI not ready, retrying in 30 seconds..."
+      sleep 30
+    fi
+  done
 }
 
 function get_node0_ip() {
@@ -435,9 +515,11 @@ function put_operator_file() {
   ssh "${ssh_opts[@]}" "sudo cp /home/core/operators.yaml /etc/assisted/manifests/."
 }
 
-asset_dir="${1:-${OCP_DIR}}"
-config_image_dir="${1:-${OCP_DIR}/configimage}"
-openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]]; then
+  asset_dir="${1:-${OCP_DIR}}"
+  config_image_dir="${1:-${OCP_DIR}/configimage}"
+  openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+fi
 
 case "${AGENT_E2E_TEST_BOOT_MODE}" in
   "ISO" )
@@ -499,7 +581,37 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     # (to avoid storage overconsumption on the CI machine)
     sudo rm -f "${OCP_DIR}/appliance.raw"
     ;;
+  "ISO_NO_REGISTRY" )
+    # Build an (OVE) image which does not need registry setup 
+    # Run a script from agent-installer-utils which internally uses openshift-appliance
+    asset_dir=$SCRIPTDIR/$OCP_DIR/iso_builder
+    mkdir -p ${asset_dir}
+    create_agent_iso_no_registry ${asset_dir}
+
+    if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
+      # reclaim disk space by deleting unwanted cache, other files
+      cleanup_diskspace_agent_iso_noregistry ${asset_dir}
+    fi
+
+    attach_agent_iso_no_registry master $NUM_MASTERS
+    attach_agent_iso_no_registry worker $NUM_WORKERS
+
+    echo "Waiting for 2 mins to arrive at agent-tui screen"
+    sleep 120
+    automate_rendezvousIP_selection master $NUM_MASTERS
+    automate_rendezvousIP_selection worker $NUM_WORKERS
+
+    check_assisted_install_UI
+    ;;
 esac
+
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+    # Current goal is to only verify if the nodes are booted fine,
+    # TUI sets the rendezvous IP correctly and UI is accessible.
+    # The next goal is to simulate adding the cluster details via UI
+    # and complete the cluster installation.
+    exit 0
+fi
 
 if [ ! -z "${AGENT_TEST_CASES:-}" ]; then
   run_agent_test_cases
@@ -527,6 +639,7 @@ fi
 if [[ ! -z $AGENT_OPERATORS ]]; then
     put_operator_file
 fi
+
 
 wait_for_cluster_ready
 
