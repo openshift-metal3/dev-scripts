@@ -13,6 +13,12 @@ agent: agent_requirements requirements configure agent_build_installer agent_pre
 # Requires at least 1 extra worker node to be configured with disk size at least 100Gß
 agent_plus_add_node: agent agent_add_extraworker_nodes
 
+# Create an agent (OVE) ISO that includes agent-tui, assisted-install-ui, and release images,
+# enabling cluster installation in disconnected environments without requiring a registry.
+# TODO: Enhance agent_create_cluster to programmatically interact with the UI to initiate cluster installation.
+# Currently, agent_create_cluster boots the agent OVE ISO, configures the rendezvousIP and verifies if UI is running.
+agent_iso_no_registry: agent_requirements requirements configure agent_configure agent_create_cluster
+
 agent_requirements:
 	./agent/01_agent_requirements.sh
 
@@ -45,6 +51,7 @@ agent_remove_extraworker_nodes:
 
 agent_post_install_validation:
 	./agent/agent_post_install_validation.sh
+
 
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 

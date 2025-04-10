@@ -168,6 +168,7 @@ if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="${OPENSHIFT_INSTALL_PATH:-$GOPATH/src/github.com/openshift/installer}"
+export OPENSHIFT_AGENT_INSTALER_UTILS_PATH="${OPENSHIFT_AGENT_INSTALER_UTILS_PATH:-$GOPATH/src/github.com/openshift/agent-installer-utils}"
 
 # Override the image to use for installing hive
 export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshift/hive-v4.0:hive}"
@@ -505,11 +506,11 @@ fi
 
 if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then
   case "$AGENT_E2E_TEST_BOOT_MODE" in
-    "ISO" | "PXE" | "DISKIMAGE" | "ISCSI")
+    "ISO" | "PXE" | "DISKIMAGE" | "ISCSI"| "ISO_NO_REGISTRY")
       # Valid value
       ;;
     *)
-      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, or ISCSI."
+      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, ISCSI, or ISO_NO_REGISTRY."
       exit 1
       ;;
   esac
