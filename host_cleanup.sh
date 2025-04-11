@@ -40,6 +40,7 @@ if systemctl is-active --quiet NetworkManager; then
 else
   sudo systemctl restart NetworkManager
 fi
+mv /etc/resolv.conf.dev-scripts.backup /etc/resolv.conf
 
 # handle upgrade from legacy network scripts
 for interface in ${PROVISIONING_NETWORK_NAME} ${BAREMETAL_NETWORK_NAME} ${PRO_IF} ${INT_IF}; do
