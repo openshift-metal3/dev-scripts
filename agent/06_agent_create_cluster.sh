@@ -298,7 +298,7 @@ function run_agent_test_cases() {
     echo "Fixing DNS through agent-tui"
     # call script to fix DNS IP address on master-0
     local version="$(openshift_version ${OCP_DIR})"
-    ./agent/e2e/agent-tui/test-fix-wrong-dns.sh $CLUSTER_NAME $PROVISIONING_HOST_EXTERNAL_IP $version
+    ./agent/e2e/agent-tui/test-fix-wrong-dns.sh $PROVISIONING_HOST_EXTERNAL_IP $version
 
     # Take screenshot of the console after fixing DNS to see if the agent_tui
     # has exited.
