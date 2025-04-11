@@ -29,6 +29,10 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "DISKIMAGE" ]]; then
     sudo podman rmi -f ${APPLIANCE_IMAGE} || true
 fi
 
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+    sudo rm -rf "${OCP_DIR}/iso_builder"
+fi
+
 if [[ -d ${BOOT_SERVER_DIR} ]]; then
    sudo pkill agentpxeserver || true
    rm -rf ${BOOT_SERVER_DIR}
