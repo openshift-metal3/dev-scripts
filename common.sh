@@ -191,7 +191,7 @@ if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
 elif [[ -z "$OPENSHIFT_CI" ]]; then
   export BMC_DRIVER=${BMC_DRIVER:-redfish}
 else
-  export BMC_DRIVER=${BMC_DRIVER:-mixed}
+  export BMC_DRIVER=${BMC_DRIVER:-redfish}
 fi
 
 if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
