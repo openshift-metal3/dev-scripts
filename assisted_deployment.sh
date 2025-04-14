@@ -253,6 +253,13 @@ spec:
   resources:
    requests:
     storage: 8Gi
+ imageStorage:
+  storageClassName: assisted-service
+  accessModes:
+  - ReadWriteOnce
+  resources:
+   requests:
+    storage: 10Gi
 EOF
 }
 
