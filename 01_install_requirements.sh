@@ -137,7 +137,7 @@ pushd ${METAL3_DEV_ENV_PATH}
 ansible-galaxy install -r vm-setup/requirements.yml
 # Let's temporarily pin these collections to the latest compatible with ansible-2.15
 #ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
-ansible-galaxy collection install 'ansible.netcommon<=7.2.0' ansible.posix 'ansible.utils<=5.1.2' community.general
+ansible-galaxy collection install 'ansible.netcommon:<=7.2.0' ansible.posix 'ansible.utils:<=5.1.2' community.general
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
