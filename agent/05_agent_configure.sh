@@ -14,6 +14,7 @@ source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/oc_mirror.sh
 
 early_deploy_validation
+mkdir -p $OCP_DIR
 
 export CLUSTER_NAMESPACE=${CLUSTER_NAMESPACE:-"cluster0"}
 
