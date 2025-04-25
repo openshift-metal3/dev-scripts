@@ -49,73 +49,21 @@ function setup_quay_mirror_registry() {
    popd
 }
 
-function create_registry_imageset() {
-
-   imageset=$1
-
-   cat > "${imageset}" << EOF
-apiVersion: mirror.openshift.io/v1alpha2
-kind: ImageSetConfiguration
-archiveSize: 4
-storageConfig:
-  registry:
-    imageURL: ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/origin:latest
-    skipTLS: true
-mirror:
-  platform:
-    architectures:
-      - "amd64"
-    channels:
-    - name: candidate-${OPENSHIFT_RELEASE_STREAM}
-      type: ocp
-  additionalImages:
-  - name: registry.redhat.io/ubi8/ubi:latest
-EOF
-
-}
-
 function create_file_imageset() {
 
    imageset=$1
 
-   latest_release=$(oc-mirror list releases --channel candidate-${OPENSHIFT_RELEASE_STREAM}| tail -n1)
-
-   # Note that the archiveSize defines the maximum size, in GiB, of each file within the image set.
-   # This must be large enough to include all images in one file for the publish.
    cat > "${imageset}" << EOF
-apiVersion: mirror.openshift.io/v1alpha2
 kind: ImageSetConfiguration
-archiveSize: 16
-storageConfig:
-  local:
-    path: metadata
+apiVersion: mirror.openshift.io/v2alpha1
 mirror:
   platform:
-    architectures:
-      - "amd64"
-    channels:
-      - name: candidate-${OPENSHIFT_RELEASE_STREAM}
-        minVersion: $latest_release
-        maxVersion: $latest_release
-        type: ocp
+    graph: true
+    release: $OPENSHIFT_RELEASE_IMAGE
   additionalImages:
   - name: registry.redhat.io/ubi8/ubi:latest
 EOF
 
-}
-
-# Mirror the upstream channel directly to the local registry
-function mirror_to_mirror_publish() {
-
-   # Create imageset containing the local URL and the OCP release to mirror
-   tmpimageset=$(mktemp --tmpdir "imageset--XXXXXXXXXX")
-   _tmpfiles="$_tmpfiles $tmpimageset"
-
-   create_registry_imageset $tmpimageset
-
-   pushd ${WORKING_DIR}
-   oc mirror --dest-skip-tls --config ${tmpimageset} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
-   popd
 }
 
 # Use the oc-mirror command to generate a tar file of the release image
@@ -124,18 +72,16 @@ function mirror_to_file() {
    config=${1}
 
    pushd ${WORKING_DIR}
-   oc_mirror_dir=$(mktemp --tmpdir -d "oc-mirror-files--XXXXXXXXXX")
-   _tmpfiles="$_tmpfiles $oc_mirror_dir"
-   oc-mirror --config ${config} file://${oc_mirror_dir} --ignore-history
-   archive_file="$(ls ${oc_mirror_dir}/mirror_seq*)"
+   oc-mirror --v2 --config ${config} file://${WORKING_DIR}
    popd
-
 }
 
 function publish_image() {
 
+   config=${1}
+
    pushd ${WORKING_DIR}
-   oc-mirror --from $archive_file docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --dest-skip-tls --skip-metadata-check
+   oc-mirror --v2 --config ${config} --from file://${WORKING_DIR} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
    popd
 
 }
@@ -146,16 +92,15 @@ function setup_oc_mirror() {
 
    update_docker_config
 
-   if [ -z "${OC_MIRROR_TO_FILE}" ]; then
-       mirror_to_mirror_publish
-   else
-       tmpimageset=$(mktemp --tmpdir "imageset--XXXXXXXXXX")
-       _tmpfiles="$_tmpfiles $tmpimageset"
+   tmpimageset=$(mktemp --tmpdir "imageset--XXXXXXXXXX")
+   _tmpfiles="$_tmpfiles $tmpimageset"
 
-       create_file_imageset $tmpimageset
+   create_file_imageset $tmpimageset
 
-       mirror_to_file $tmpimageset
+   mirror_to_file $tmpimageset
 
-       publish_image
-   fi
+   publish_image $tmpimageset
+
+   # remove interim file
+   rm ${WORKING_DIR}/mirror_*.tar
 }
