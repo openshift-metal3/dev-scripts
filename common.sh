@@ -1,5 +1,6 @@
 #!/bin/bash
 
+shopt -s nocasematch
 export PATH="/usr/local/go/bin:$HOME/.local/bin:$PATH"
 
 # Set a PS4 value which logs the script name and line #.
@@ -70,6 +71,7 @@ export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-${CLUSTER_NAME}bm}
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
+export SSH_KEY_FILE="${SSH_KEY_FILE:-$HOME/.ssh/id_rsa.pub}"
 
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
@@ -168,6 +170,7 @@ if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
 export OPENSHIFT_INSTALL_PATH="${OPENSHIFT_INSTALL_PATH:-$GOPATH/src/github.com/openshift/installer}"
+export OPENSHIFT_AGENT_INSTALER_UTILS_PATH="${OPENSHIFT_AGENT_INSTALER_UTILS_PATH:-$GOPATH/src/github.com/openshift/agent-installer-utils}"
 
 # Override the image to use for installing hive
 export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshift/hive-v4.0:hive}"
@@ -400,6 +403,8 @@ function invalidAgentValue() {
 export AGENT_E2E_TEST_SCENARIO=${AGENT_E2E_TEST_SCENARIO:-}
 export NETWORKING_MODE=${NETWORKING_MODE:-}
 export AGENT_E2E_TEST_BOOT_MODE=${AGENT_E2E_TEST_BOOT_MODE:-"ISO"}
+export AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV=${AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV:-"false"}
+export AGENT_RENDEZVOUS_NODE_HOSTNAME=${AGENT_RENDEZVOUS_NODE_HOSTNAME:-${CLUSTER_NAME}_master_0}
 
 # HTTP boot server port used by the agent installer for PXE and minimal ISO
 # Needed to be defined here since it's required also by the shared step 02_configure_host.sh
@@ -412,6 +417,7 @@ export AGENT_DEPLOY_MCE=${AGENT_DEPLOY_MCE:-}
 # Test of agent operators
 export AGENT_OPERATORS=${AGENT_OPERATORS:-""}
 
+SCENARIO=""
 if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   IFS='_'
   read -a arr <<<"$AGENT_E2E_TEST_SCENARIO"
@@ -477,8 +483,20 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
         invalidAgentValue
   esac
 
-  if [[ "$AGENT_OPERATORS" =~ "mtv" ]]; then
-     export MASTER_VCPU=9
+  # Increase master vCPU for agent OVE ISO installs or when certain operators like 'mtv' are used,
+  # as some operators require more CPUs.
+  if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]; then
+    export MASTER_VCPU=9
+    if [ "${SCENARIO}" == "SNO" ]; then
+       export MASTER_VCPU=16
+    fi
+    if [ "${SCENARIO}" == "HA" ]; then
+       export WORKER_VCPU=5
+    fi
+  fi
+
+  if [ "$AGENT_OPERATORS" =~ "mtv" ]; then
+    export MASTER_VCPU=9
   fi
 
   if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
@@ -505,14 +523,27 @@ fi
 
 if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then
   case "$AGENT_E2E_TEST_BOOT_MODE" in
-    "ISO" | "PXE" | "DISKIMAGE" | "ISCSI")
+    "ISO" | "PXE" | "DISKIMAGE" | "ISCSI"| "ISO_NO_REGISTRY")
       # Valid value
       ;;
     *)
-      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, or ISCSI."
+      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, ISCSI, or ISO_NO_REGISTRY."
       exit 1
       ;;
   esac
+fi
+
+if [[ ! "$AGENT_RENDEZVOUS_NODE_HOSTNAME" =~ ^${CLUSTER_NAME}_master_[0-9]+$ ]]; then
+  echo "Found invalid value \"$AGENT_RENDEZVOUS_NODE_HOSTNAME\" for AGENT_RENDEZVOUS_NODE_HOSTNAME. Supported values must follow the pattern '${CLUSTER_NAME}_master_<NUMBER>'."
+  exit 1
+fi
+
+if [[ "${SCENARIO}" == "SNO" ]]; then
+  rendezvous_hostname="${CLUSTER_NAME}_master_0"
+  if [[ "${AGENT_RENDEZVOUS_NODE_HOSTNAME}" != "${rendezvous_hostname}" ]]; then
+    echo "Found invalid value \"$AGENT_RENDEZVOUS_NODE_HOSTNAME\" for AGENT_RENDEZVOUS_NODE_HOSTNAME.  When AGENT_E2E_TEST_SCENARIO=SNO_IPV4, AGENT_RENDEZVOUS_NODE_HOSTNAME must be '${rendezvous_hostname}', but got '${AGENT_RENDEZVOUS_NODE_HOSTNAME}'."
+    exit 1
+  fi
 fi
 
 if [[ "${MIRROR_IMAGES,,}" != "false" ]] && [[ "${MIRROR_IMAGES,,}" == "true" || -z "${IP_STACK:-}" || "$IP_STACK" = "v6" ]]; then

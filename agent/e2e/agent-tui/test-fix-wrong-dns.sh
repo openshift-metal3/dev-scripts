@@ -1,7 +1,6 @@
 #!/bin/bash
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../.." && pwd )"
-
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../../" && pwd )"
 source $SCRIPTDIR/common.sh
 source $SCRIPTDIR/agent/e2e/agent-tui/utils.sh
 set +x

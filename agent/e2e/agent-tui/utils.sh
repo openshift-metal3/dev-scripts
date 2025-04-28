@@ -1,11 +1,18 @@
+#!/bin/bash
+
+set +x
 
 ### utils function for sending various keys and/or text to the console
 
 function _pressKey() {
-  local keyCode=$@
+  local keyCode=$1
+  local node_name=$2
 
-  name=${CLUSTER_NAME}_master_0
-  sudo virsh send-key $name $keyCode
+  # If no node name passed, use default
+  if [ -z "$node_name" ]; then
+    node_name="${CLUSTER_NAME}_master_0"
+  fi
+  sudo virsh send-key $node_name $keyCode
 
   # On some CI instances, the sequence of events appears to be too fast
   # for the console refresh, leading the test in the wrong state.
@@ -24,14 +31,15 @@ function pressKey() {
   else
     echo $msg
   fi	
-  
+
+  local node_name=$4
   for i in $(seq 1 $numReps); do
-    _pressKey $keyCode
+    _pressKey $keyCode $node_name
   done
 }
 
 function pressEnter() {
-  pressKey "$1" KEY_ENTER "$2"
+  pressKey "$1" KEY_ENTER "$2" "$3"
 }
 
 function pressTab() {
@@ -39,7 +47,7 @@ function pressTab() {
 }	
 
 function pressDown() {
-  pressKey "$1" KEY_DOWN "$2"
+  pressKey "$1" KEY_DOWN "$2" "$3"
 }
 
 function pressBackspace() {
@@ -54,8 +62,13 @@ function pressEsc() {
 function pressKeys(){
   local msg=$1
   local text=$2
+  local node=$3
 
-  echo $msg
+  if [[ -n "$VAR" ]]; then
+    echo "$msg $ip on node $node"
+  else
+   echo $msg
+  fi
 
   local reNumber='[0-9]'
   local reUpperText='[A-Z]'
@@ -71,6 +84,12 @@ function pressKeys(){
     fi
 
     local keyCode="KEY_"$c
-    _pressKey $keyCode
+    _pressKey $keyCode $node
   done
+}
+
+function getRendezvousIP() {
+    node_zero_mac_address=$(sudo virsh domiflist ${AGENT_RENDEZVOUS_NODE_HOSTNAME} | awk '$3 == "ostestbm" {print $5}')
+    rendezvousIP=$(ip neigh | grep $node_zero_mac_address | awk '{print $1}')
+    echo $rendezvousIP
 }

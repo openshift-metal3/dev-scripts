@@ -13,6 +13,11 @@ source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/ocp_install_env.sh
 source $SCRIPTDIR/oc_mirror.sh
 
+# Temporarily skip preparing the custom local release in case of OVE ISO
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+    exit 0
+fi
+
 # To replace an image entry in the openshift release image, set <ENTRYNAME>_LOCAL_REPO so that:
 # - ENTRYNAME matches an uppercase version of the name in the release image with "-" converted to "_" 
 # - The var value must point to an already locally cloned repo

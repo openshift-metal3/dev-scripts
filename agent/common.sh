@@ -73,3 +73,9 @@ export AGENT_NODE0_IPSV6=${AGENT_NODE0_IPSV6:-}
 
 # Modifies the baremetal network to be fully isolated.
 export AGENT_ISOLATED_NETWORK=${AGENT_ISOLATED_NETWORK:-"false"}
+
+# Set isolated network to true for truely disconnected OVE env
+# in case of agent ISO with no registry 
+if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
+    export AGENT_ISOLATED_NETWORK=true
+fi
