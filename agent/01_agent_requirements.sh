@@ -66,8 +66,5 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
     
    early_deploy_validation
 
-   # Extract an updated client tools from the release image
-   extract_oc "${OPENSHIFT_RELEASE_IMAGE}"
-
    clone_agent_installer_utils
 fi
