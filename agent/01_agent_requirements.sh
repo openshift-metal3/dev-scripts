@@ -63,8 +63,6 @@ fi
 
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
    sudo dnf -y install xorriso coreos-installer syslinux skopeo
-    
-   early_deploy_validation
 
    clone_agent_installer_utils
 fi
