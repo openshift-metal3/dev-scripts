@@ -83,6 +83,10 @@ function create_config_image() {
 }
 
 function create_agent_iso_no_registry() {
+  # Clone agent-installer-utils
+  if [[ ! -d $OPENSHIFT_AGENT_INSTALER_UTILS_PATH ]]; then
+    sync_repo_and_patch go/src/github.com/openshift/agent-installer-utils https://github.com/openshift/agent-installer-utils.git
+  fi
   # Create agent ISO without registry a.k.a. OVE ISO
   local asset_dir=${1}
   pushd .
