@@ -404,11 +404,13 @@ function generate_ocp_host_manifest() {
     rm -f "${outdir}/extras/*"
 
     worker_index=0
-    jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address' $host_input \
-       | while read name mac username password address ; do
+    jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address + " " + .driver_info.redfish_verify_ca' $host_input \
+       | while read name mac username password address verify_ca; do
 
         encoded_username=$(echo -n "$username" | base64)
         encoded_password=$(echo -n "$password" | base64)
+        # Heads up, "verify_ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
+        disableCertificateVerification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
 
         secret="---
 apiVersion: v1
@@ -432,7 +434,8 @@ spec:
   bootMACAddress: $mac
   bmc:
     address: $address
-    credentialsName: ${name}-bmc-secret"
+    credentialsName: ${name}-bmc-secret
+    disableCertificateVerification: ${disableCertificateVerification}"
 
         echo "${secret}${bmh}" >> "${outdir}/${host_output}"
 
