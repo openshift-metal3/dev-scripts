@@ -318,6 +318,8 @@ function generate_cluster_manifests() {
   export AGENT_NODES_BMC_PASSWORDS_STR=${nodes_bmc_passwords::-1}
   nodes_bmc_addresses=$(printf '%s,' "${AGENT_NODES_BMC_ADDRESSES[@]}")
   export AGENT_NODES_BMC_ADDRESSES_STR=${nodes_bmc_addresses::-1}
+  nodes_bmc_verify_cas=$(printf '%s,' "${AGENT_NODES_BMC_VERIFY_CAS[@]}")
+  export AGENT_NODES_BMC_VERIFY_CAS_STR=${nodes_bmc_verify_cas::-1}
   set -x
 
   if [[ ! -z "$INSTALLER_PROXY" ]]; then
@@ -530,6 +532,7 @@ function get_nodes_bmc_info() {
     AGENT_NODES_BMC_USERNAMES=()
     AGENT_NODES_BMC_PASSWORDS=()
     AGENT_NODES_BMC_ADDRESSES=()
+    AGENT_NODES_BMC_VERIFY_CAS=()
 
     number_nodes=$NUM_MASTERS+$NUM_WORKERS
 
@@ -538,6 +541,7 @@ function get_nodes_bmc_info() {
       AGENT_NODES_BMC_USERNAMES+=($(node_val ${i} "driver_info.username"))
       AGENT_NODES_BMC_PASSWORDS+=($(node_val ${i} "driver_info.password"))
       AGENT_NODES_BMC_ADDRESSES+=($(node_val ${i} "driver_info.address"))
+      AGENT_NODES_BMC_VERIFY_CAS+=($(node_val ${i} "driver_info.redfish_verify_ca"))
     done
 
     if [ "$NODES_PLATFORM" = "libvirt" ]; then

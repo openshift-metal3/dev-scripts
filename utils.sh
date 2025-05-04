@@ -246,13 +246,15 @@ function node_map_to_install_config_hosts() {
           driver_prefix=ipmi
       elif [ $driver == "idrac" ] ; then
           driver_prefix=drac
+      else
+          driver_prefix=redfish
       fi
 
       port=$(node_val ${idx} "driver_info.port // \"\"")
       username=$(node_val ${idx} "driver_info.username")
       password=$(node_val ${idx} "driver_info.password")
       address=$(node_val ${idx} "driver_info.address")
-      disable_certificate_verification=$(node_val ${idx} "driver_info.disable_certificate_verification")
+
       boot_mode=$(node_val ${idx} "properties.boot_mode")
       if [[ "$boot_mode" == "null" ]]; then
              boot_mode="UEFI"
@@ -261,14 +263,25 @@ function node_map_to_install_config_hosts() {
       cat << EOF
       - name: ${name}
         role: ${node_role}
+        bootMACAddress: ${mac}
+        bootMode: ${boot_mode}
         bmc:
           address: ${address}
           username: ${username}
           password: ${password}
-          disableCertificateVerification: ${disable_certificate_verification}
-        bootMACAddress: ${mac}
-        bootMode: ${boot_mode}
 EOF
+
+      if [[ "$driver_prefix" == "redfish" ]]; then
+          # Set disableCertificateVerification
+          # Heads up, "verify ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
+          verify_ca=$(node_val ${idx} "driver_info.redfish_verify_ca")
+          disable_certificate_verification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
+          cat << EOF
+          disableCertificateVerification: ${disable_certificate_verification}
+EOF
+      fi
+
+
         if [ -n "${NETWORK_CONFIG_FOLDER:-}" ]; then
             node_network_config="${NETWORK_CONFIG_FOLDER}/${name}.yaml"
             if [ -e "$node_network_config" ]; then
