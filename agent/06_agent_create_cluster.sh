@@ -606,6 +606,31 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     automate_rendezvousIP_selection worker $NUM_WORKERS
 
     check_assisted_install_UI
+
+    # Temporarily create a dummy kubeconfig and kubeadmin-password file for the CI
+    auth_dir=$SCRIPTDIR/$OCP_DIR/auth
+    mkdir -p $auth_dir
+    cfg=$auth_dir/kubeconfig 
+    cat << EOF >> ${cfg}
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBGSUNBVLS0tLQo=
+    server: https://api.test.redhat.com:6443
+  name: test
+contexts:
+- context:
+    cluster: test
+    user: admin
+  name: admin
+current-context: admin
+preferences: {}
+users:
+- name: admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBNBVEUtLS0tLQo=
+    client-key-data: LS0tLS1CRUdJTiURSBVktLS0tLQo=
+EOF
+    echo "dummy-kubeadmin-password" > $auth_dir/kubeadmin-password
     ;;
 esac
 
