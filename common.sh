@@ -126,7 +126,7 @@ export OPENSHIFT_CLIENT_TOOLS_URL=https://mirror.openshift.com/pub/openshift-v4/
 # Note: when changing defaults for OPENSHIFT_RELEASE_STREAM, make sure to update
 #       doc in config_example.sh
 export OPENSHIFT_RELEASE_TYPE=${OPENSHIFT_RELEASE_TYPE:-nightly}
-export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.18}
+export OPENSHIFT_RELEASE_STREAM=${OPENSHIFT_RELEASE_STREAM:-4.20}
 if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
     if [[ -z "$OPENSHIFT_VERSION" ]]; then
       error "OPENSHIFT_VERSION is required with OPENSHIFT_RELEASE_TYPE=ga"
