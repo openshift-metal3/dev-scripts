@@ -170,7 +170,7 @@ function attach_appliance_diskimage() {
     set_file_acl
 
     local config_image_drive="sdd"
-    local appliance_disk_image="${OCP_DIR}/appliance.raw"
+    local appliance_disk_image="${WORKING_DIR}/appliance.raw"
 
     for (( n=0; n<${2}; n++ ))
     do

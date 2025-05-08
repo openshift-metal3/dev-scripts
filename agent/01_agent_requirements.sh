@@ -57,3 +57,8 @@ fi
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
    sudo dnf -y install xorriso coreos-installer syslinux skopeo
 fi
+
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "DISKIMAGE" ]]; then
+   MIN_SPACE_REQUIRED=300
+   source $SCRIPTDIR/sanitychecks.sh
+fi
