@@ -37,11 +37,16 @@ sudo sh -c "echo 'max_parallel_downloads=8' >> /etc/dnf/dnf.conf"
 # in the upgrade command,but this is more explicit and complete
 sudo dnf -y clean all
 
+old_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
+
 # Update to latest packages first
 sudo dnf -y upgrade --nobest
 
+new_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
 # If NetworkManager was upgraded it needs to be restarted
-sudo systemctl restart NetworkManager
+if [ "$old_version" != "$new_version" ]; then
+  sudo systemctl restart NetworkManager
+fi
 
 # Install additional repos as needed for each OS version
 # shellcheck disable=SC1091
