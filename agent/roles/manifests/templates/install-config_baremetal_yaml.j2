@@ -68,6 +68,7 @@ platform:
 {% set bmc_addresses = agent_nodes_bmc_addresses.split(',') %}
 {% set bmc_passwords = agent_nodes_bmc_passwords.split(',') %}
 {% set bmc_usernames = agent_nodes_bmc_usernames.split(',') %}
+{% set bmc_verify_cas = agent_nodes_bmc_verify_cas.split(',') %}
     provisioningHostIP: {{ cluster_provisioning_ip }}
     provisioningNetworkInterface: {{ cluster_provisioning_interface }}
     provisioningNetworkCIDR: {{ provisioning_network }}
@@ -80,7 +81,7 @@ platform:
         address: {{ bmc_addresses[loop.index0] }}
         username: {{ bmc_usernames[loop.index0] }}
         password: {{ bmc_passwords[loop.index0] }}
-        disableCertificateVerification: false
+        disableCertificateVerification: {% if bmc_verify_cas[loop.index0] == "False" %}true{% else %}false{% endif %}
       networkConfig:
         interfaces:
       {{ net.interfaces("eth0", macs[loop.index0])|indent(4, True) }}
