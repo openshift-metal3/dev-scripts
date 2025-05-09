@@ -56,9 +56,7 @@ platform:
   baremetal:
     apiVIPs:
 {% set a_vips = api_vips.split(',') %}
-{% for api_vip in a_vips %}
-      - {{ api_vip }}
-{% endfor %}
+      - {{ a_vips[0] }}
     ingressVIPs:
 {% set i_vips = ingress_vips.split(',') %}
 {% for ingress_vip in i_vips %}
