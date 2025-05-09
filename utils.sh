@@ -304,13 +304,20 @@ EOF
 }
 
 function node_map_to_install_config_fencing_credentials() {
+  TNF_ENABLED_RELEASE=4.19
+
+  # If we didn't support TNF in this release, we skip rendering the fencing block
+  if is_lower_version "$(openshift_version "${OCP_DIR}")" "$TNF_ENABLED_RELEASE"; then
+    return 0
+  fi
+
   if  [[ -z "${ENABLE_ARBITER:-}" ]] && [[ "${NUM_MASTERS}" -eq 2 ]]; then
 	cat <<EOF
   fencing:
     credentials:
 EOF
     for ((idx=0;idx<$(($NUM_MASTERS));idx++)); do
-      name=$(node_val ${idx} "name")
+      name="$(printf $MASTER_HOSTNAME_FORMAT ${idx})"
       username=$(node_val ${idx} "driver_info.username")
       password=$(node_val ${idx} "driver_info.password")
       address=$(node_val ${idx} "driver_info.address")
@@ -320,7 +327,15 @@ EOF
       address: ${address}
       username: ${username}
       password: ${password}
-      sslInsecure: true
+EOF
+      # We don't support overriding certificateVerification in 4.19
+      if [ $(openshift_version "${OCP_DIR}") == "$TNF_ENABLED_RELEASE" ]; then
+        continue
+      fi
+      declare -l redfish_verify_ca=$(node_val ${idx} "driver_info.redfish_verify_ca")
+      certificate_verification=$(["${redfish_verify_ca}" == "true" ] && echo -n "Enabled" || echo -n "Disabled")
+      cat <<EOF
+      certificateVerification: ${certificate_verification}
 EOF
 	done
 	fi
