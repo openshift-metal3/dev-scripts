@@ -581,9 +581,11 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     attach_appliance_diskimage master $NUM_MASTERS
     attach_appliance_diskimage worker $NUM_WORKERS
 
-    # Delete the unused appliance.raw file
+    # Delete the unused appliance.raw file and cache/temp directories
     # (to avoid storage overconsumption on the CI machine)
     sudo rm -f "${OCP_DIR}/appliance.raw"
+    sudo rm -rf "${OCP_DIR}/cache"
+    sudo rm -rf "${OCP_DIR}/temp"
     ;;
   "ISO_NO_REGISTRY" )
     # Build an (OVE) image which does not need registry setup 
