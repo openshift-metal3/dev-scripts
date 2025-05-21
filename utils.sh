@@ -153,9 +153,17 @@ function create_cluster() {
             cp $ASSET $ASSET_NEW
             for IMAGE in $(yq '.. | objects | select(has("containers")) | .containers[].image' $ASSET -r | sort | uniq) ; do
                 IMAGE_SHORT=${IMAGE##*/}
+                [[ $IMAGE_SHORT =~ "@" ]] && DIGEST=${IMAGE_SHORT##*@}
+                # Remove digest from the short name for podman push
+                IMAGE_SHORT=${IMAGE_SHORT%@*}
                 IMAGE_MIRRORED=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/assets/${IMAGE_SHORT}
                 sudo -E podman pull --authfile $PULL_SECRET_FILE $IMAGE
                 sudo podman push --tls-verify=false --remove-signatures --authfile $PULL_SECRET_FILE $IMAGE $IMAGE_MIRRORED
+                if [[ -n ${DIGEST:-} ]]; then
+                  # Get digest of the pushed image
+                  DIGEST=$(podman inspect --format "{{.Digest}}" $IMAGE_MIRRORED)
+                  IMAGE_MIRRORED="${IMAGE_MIRRORED}@${DIGEST}"
+                fi
                 sed -i -e "s%${IMAGE}%${IMAGE_MIRRORED}%g" $ASSET_NEW
             done
         done
