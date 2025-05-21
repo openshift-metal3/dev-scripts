@@ -809,6 +809,10 @@ set -x
 # Defaults to "${CLUSTER_NAME}_master_0" where the default CLUSTER_NAME is ostest.
 # export AGENT_RENDEZVOUS_NODE_HOSTNAME="${CLUSTER_NAME:-ostest}_master_1"
 
+# Specifies the expected ISO size in GB for OVE - ISO with no registry.
+# As the size of the ISO increases in future, increase the expected ISO size accordingly.
+# export AGENT_OVE_ISO_SIZE=40
+
 
 # Uncomment and set the following value to "true" to enable a test scenario
 # where the DNS is disabled on the hosts by setting its IP address to an incorrect value.
