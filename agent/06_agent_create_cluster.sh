@@ -95,6 +95,24 @@ function create_agent_iso_no_registry() {
   popd
 }
 
+function assert_agent_no_registry_iso_size(){
+  base_dir=$SCRIPTDIR/$OCP_DIR
+  iso_name="agent-ove.$(uname -p).iso"
+  agent_iso_no_registry=$(find "$base_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
+  iso_size=$(stat -c%s "$agent_iso_no_registry")
+  
+  # With 4.19 tech preview, the expected ISO size is approximately 36GB
+  iso_threshold=40
+  iso_size_limit=$((iso_threshold * 1024 * 1024 * 1024))
+
+  if (( iso_size > iso_size_limit )); then
+    echo "Error: OVE ISO size of $agent_iso_no_registry exceeds ${iso_threshold}GB"
+    exit 1
+  else
+    echo "OVE ISO size is within the acceptable limit."
+  fi
+}
+
 # Deletes all files and directories under asset_dir
 # example, ocp/ostest/iso_builder/4.19.* 
 # except the final generated ISO file (agent-ove.x86_64.iso), 
@@ -593,6 +611,8 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     asset_dir=$SCRIPTDIR/$OCP_DIR/iso_builder
     mkdir -p ${asset_dir}
     create_agent_iso_no_registry ${asset_dir}
+
+    assert_agent_no_registry_iso_size
 
     if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
       # reclaim disk space by deleting unwanted cache, other files
