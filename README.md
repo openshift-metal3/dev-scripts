@@ -253,9 +253,10 @@ There are two ways to achieve this, by using `sshuttle` or `xinetd`.
 
 1. On your local machine install `sshuttle`
 
-2. Add entry to `/etc/hosts`
+2. Add the entries from `/etc/NetworkManager/dnsmasq.d/openshift-ostest.conf` to `/etc/hosts`
 
     ```
+   # Example:
     192.168.111.4 console-openshift-console.apps.ostest.test.metalkube.org console openshift-authentication-openshift-authentication.apps.ostest.test.metalkube.org prometheus-k8s-openshift-monitoring.apps.ostest.test.metalkube.org alertmanager-main-openshift-monitoring.apps.ostest.test.metalkube.org kubevirt-web-ui.apps.ostest.test.metalkube.org oauth-openshift.apps.ostest.test.metalkube.org grafana-openshift-monitoring.apps.ostest.test.metalkube.org
     192.168.111.5 api.ostest.test.metalkube.org
    ```
