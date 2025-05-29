@@ -64,6 +64,7 @@ pressDown "Select Quit" ${numStepsToQuit}
 
 pressEnter "Select 'Quit' menu item"
 pressEsc "Esc from network tree view"
+sleep 3
 pressTab "Goto <Quit> button to exit agent-tui" 1
 
 # wait for check to update, to visually see the release image
