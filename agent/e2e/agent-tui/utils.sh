@@ -14,6 +14,9 @@ function _pressKey() {
   fi
   sudo virsh send-key $node_name $keyCode
 
+  timestamp=$(date +"%Y-%m-%d--%H:%M:%S")
+  sudo virsh screenshot $node_name "${OCP_DIR}/${timestamp}-${node_name}_after_${keyCode}.ppm"
+
   # On some CI instances, the sequence of events appears to be too fast
   # for the console refresh, leading the test in the wrong state.
   # Let's add a small pause between one keypress event and the subsequent
