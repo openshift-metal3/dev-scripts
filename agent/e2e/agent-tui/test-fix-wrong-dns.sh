@@ -63,7 +63,7 @@ fi
 pressDown "Select Quit" ${numStepsToQuit}
 
 pressEnter "Select 'Quit' menu item"
-pressEsc "Esc from network tree view"
+pressEsc "Esc from network tree view" 2
 sleep 3
 pressTab "Goto <Quit> button to exit agent-tui" 1
 
