@@ -496,6 +496,13 @@ set -x
 #export MASTER_DISK=40
 #export MASTER_VCPU=8
 
+# ARBITER_HOSTNAME_FORMAT -
+# Set a custom hostname format for arbiters. This is a format string that should
+# include one %d field, which will be replaced with the number of the node.
+# Default: "arbiter-%d"
+#
+#export ARBITER_HOSTNAME_FORMAT=arbiter-%d
+
 # ARBITER_MEMORY, ARBITER_DISK, ARBITER_VCPU -
 # Change VM resources for arbiters
 ## Defaults:
@@ -759,6 +766,10 @@ set -x
 # - COMPACT_IPV6
 # - COMPACT_IPV4_DHCP
 # - COMPACT_IPV6_DHCP
+# - TNA_IPV4
+# - TNA_IPV6
+# - TNA_IPV4_DHCP
+# - TNA_IPV6_DHCP
 # - HA_IPV4
 # - HA_IPV6
 # - HA_IPV4_DHCP

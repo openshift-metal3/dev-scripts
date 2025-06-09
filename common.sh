@@ -282,6 +282,7 @@ export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 export VM_EXTRADISKS_LIST=${VM_EXTRADISKS_LIST:-"vdb"}
 export VM_EXTRADISKS_SIZE=${VM_EXTRADISKS_SIZE:-"8G"}
 export MASTER_HOSTNAME_FORMAT=${MASTER_HOSTNAME_FORMAT:-"master-%d"}
+export ARBITER_HOSTNAME_FORMAT=${ARBITER_HOSTNAME_FORMAT:-"arbiter-%d"}
 export WORKER_HOSTNAME_FORMAT=${WORKER_HOSTNAME_FORMAT:-"worker-%d"}
 export EXTRA_WORKER_HOSTNAME_FORMAT=${EXTRA_WORKER_HOSTNAME_FORMAT:-"extraworker-%d"}
 
@@ -395,7 +396,7 @@ export AGENT_WAIT_FOR_INSTALL_COMPLETE=${AGENT_WAIT_FOR_INSTALL_COMPLETE:-true}
 # Agent specific configuration 
 
 function invalidAgentValue() {
-  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', 'SNO_IPXX', '4CONTROL_IPXX', or '5CONTROL_IPXX', where XX is 'V4', 'V6', or 'V4V6'"
+  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', 'SNO_IPXX', 'TNA_IPXX', '4CONTROL_IPXX', or '5CONTROL_IPXX', where XX is 'V4', 'V6', or 'V4V6'"
   exit 1
 }
 
@@ -454,6 +455,17 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_VCPU=4
           export MASTER_DISK=100
           export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          ;;
+      "TNA" )
+          export ENABLE_ARBITER="true"
+          export NUM_MASTERS=2
+          export MASTER_VCPU=4
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export ARBITER_VCPU=2
+          export ARBITER_MEMORY=16384
+          export ARBITER_DISK=100
           export NUM_WORKERS=0
           ;;
       "HA" )

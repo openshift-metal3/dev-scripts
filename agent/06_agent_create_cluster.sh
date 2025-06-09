@@ -543,6 +543,9 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     attach_agent_iso master $NUM_MASTERS
     attach_agent_iso worker $NUM_WORKERS
+    if [[ ! -z "${ENABLE_ARBITER:-}" ]]; then
+      attach_agent_iso arbiter 1
+    fi
 
     ;;
 
@@ -601,6 +604,9 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     attach_agent_iso_no_registry master $NUM_MASTERS
     attach_agent_iso_no_registry worker $NUM_WORKERS
+    if [[ ! -z "${ENABLE_ARBITER:-}" ]]; then
+      attach_agent_iso arbiter 1
+    fi
 
     echo "Waiting for 2 mins to arrive at agent-tui screen"
     sleep 120

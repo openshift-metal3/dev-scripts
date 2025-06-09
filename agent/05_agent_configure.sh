@@ -63,6 +63,10 @@ function configure_node() {
     local hostname="$(printf "${WORKER_HOSTNAME_FORMAT}" "${node_num}")"
     local ip=$((base_ip + ${NUM_MASTERS} + node_num))
   fi
+  if [[ "$node_type" == "arbiter" ]]; then
+    local hostname="$(printf "${ARBITER_HOSTNAME_FORMAT}" "${node_num}")"
+    local ip=$((base_ip + ${NUM_MASTERS} + ${NUM_WORKERS} + ${NUM_EXTRA_WORKERS} + node_num))
+  fi
   if [[ "$node_type" == "extraworker" ]]; then
     local hostname="$(printf "${EXTRA_WORKER_HOSTNAME_FORMAT}" "${node_num}")"
     local ip=$((base_ip + ${NUM_MASTERS} + ${NUM_WORKERS} + node_num))
@@ -136,6 +140,10 @@ function get_static_ips_and_macs() {
       do
         configure_node "master" "$i"
       done
+
+      if [[ ! -z "${ENABLE_ARBITER:-}" ]]; then
+        configure_node "arbiter" "0"
+      fi
 
       for (( i=0; i<${NUM_WORKERS}; i++ ))
       do
