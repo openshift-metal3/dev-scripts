@@ -395,7 +395,7 @@ export AGENT_WAIT_FOR_INSTALL_COMPLETE=${AGENT_WAIT_FOR_INSTALL_COMPLETE:-true}
 # Agent specific configuration 
 
 function invalidAgentValue() {
-  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', 'SNO_IPXX', '4CONTROL_IPXX', or '5CONTROL_IPXX', where XX is 'V4', 'V6', or 'V4V6'"
+  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', 'SNO_IPXX', 'TWONODE', '4CONTROL_IPXX', or '5CONTROL_IPXX', where XX is 'V4', 'V6', or 'V4V6'"
   exit 1
 }
 
@@ -451,6 +451,13 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           ;;
       "COMPACT" )
           export NUM_MASTERS=3
+          export MASTER_VCPU=4
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          ;;
+      "TWONODE" )
+          export NUM_MASTERS=2
           export MASTER_VCPU=4
           export MASTER_DISK=100
           export MASTER_MEMORY=32768
