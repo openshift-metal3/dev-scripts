@@ -7,6 +7,8 @@ source $SCRIPTDIR/common.sh
 
 # Temp code skip the execution flow as cluster is not really installed
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+ # To Do: Using export KUBECONFIG="${SCRIPTDIR}/ocp/$CLUSTER_NAME/auth/kubeconfig" which is set after downloading the kubeconfig, 
+ # wait untill we get nodes and cluster is completely installed
   exit 0
 fi
 
