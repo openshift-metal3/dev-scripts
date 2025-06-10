@@ -65,9 +65,8 @@ pressDown "Select Quit" ${numStepsToQuit}
 pressEnter "Select 'Quit' menu item"
 pressEsc "Esc from network tree view" 2
 sleep 3
-pressTab "Goto <Quit> button to exit agent-tui" 1
 
 # wait for check to update, to visually see the release image
 # check change to passing.
 sleep 10
-pressEnter "Exit agent-tui"
+pressKeys "Exit agent-tui" "qq"
