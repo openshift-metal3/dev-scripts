@@ -47,6 +47,10 @@ function pressEnter() {
 
 function pressTab() {
   pressKey "$1" KEY_TAB "$2"
+}
+
+function pressLeft() {
+  pressKey "$1" KEY_LEFT "$2"
 }	
 
 function pressDown() {
@@ -56,7 +60,6 @@ function pressDown() {
 function pressBackspace() {
   pressKey "$1" KEY_BACKSPACE "$2"
 }
-
 
 function pressEsc() {
   pressKey "$1" KEY_ESC "$2"
