@@ -79,3 +79,9 @@ export AGENT_ISOLATED_NETWORK=${AGENT_ISOLATED_NETWORK:-"false"}
 if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
     export AGENT_ISOLATED_NETWORK=true
 fi
+
+function getRendezvousIP() {
+    node_zero_mac_address=$(sudo virsh domiflist ${AGENT_RENDEZVOUS_NODE_HOSTNAME} | awk '$3 == "ostestbm" {print $5}')
+    rendezvousIP=$(ip neigh | grep $node_zero_mac_address | awk '{print $1}')
+    echo $rendezvousIP
+}

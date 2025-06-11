@@ -13,7 +13,6 @@ source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/release_info.sh
 source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/agent/iscsi_utils.sh
-source $SCRIPTDIR/agent/e2e/agent-tui/utils.sh
 
 early_deploy_validation
 
