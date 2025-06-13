@@ -95,6 +95,19 @@ function create_agent_iso_no_registry() {
   popd
 }
 
+function assert_agent_no_registry_iso_size(){
+  agent_iso_no_registry=$(get_agent_iso_no_registry)
+  iso_size=$(stat -c%s "$agent_iso_no_registry")
+  
+  # With 4.19 tech preview, the expected ISO size is approximately 36GB
+  iso_size_limit=$(($AGENT_OVE_ISO_SIZE * 1024 * 1024 * 1024))
+
+  if (( iso_size > iso_size_limit )); then
+    echo "Error: OVE ISO size of $agent_iso_no_registry is ${iso_size}, which exceeds the ${AGENT_OVE_ISO_SIZE}GB limit."
+    exit 1
+  fi
+}
+
 # Deletes all files and directories under asset_dir
 # example, ocp/ostest/iso_builder/4.19.* 
 # except the final generated ISO file (agent-ove.x86_64.iso), 
@@ -140,6 +153,17 @@ function get_agent_iso() {
         agent_iso="${OCP_DIR}/agent.iso"
     fi
     echo "${agent_iso}"
+}
+
+function get_agent_iso_no_registry() {
+    local base_dir=$SCRIPTDIR/$OCP_DIR
+    local iso_name="agent-ove.$(uname -p).iso"
+    local agent_iso_no_registry=$(find "$base_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
+    if [ -z "$agent_iso_no_registry" ]; then
+      echo "Error: No agent OVE ISO found matching ${iso_name} in ${base_dir}" >&2
+      exit 1
+    fi
+    echo "${agent_iso_no_registry}"
 }
 
 function attach_agent_iso() {
@@ -193,9 +217,7 @@ function attach_appliance_diskimage() {
 function attach_agent_iso_no_registry() {
     set_file_acl
 
-    local base_dir=$SCRIPTDIR/$OCP_DIR
-    local iso_name="agent-ove.$(uname -p).iso"
-    local agent_iso_no_registry=$(find "$base_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
+    agent_iso_no_registry=$(get_agent_iso_no_registry)
 
     for (( n=0; n<${2}; n++ ))
     do
@@ -593,6 +615,8 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     asset_dir=$SCRIPTDIR/$OCP_DIR/iso_builder
     mkdir -p ${asset_dir}
     create_agent_iso_no_registry ${asset_dir}
+
+    assert_agent_no_registry_iso_size
 
     if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
       # reclaim disk space by deleting unwanted cache, other files
