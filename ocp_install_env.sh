@@ -181,6 +181,31 @@ EOF
     fi
 }
 
+function capabilities_stanza() {
+    if [[ -n "$BASELINE_CAPABILITY_SET" ]]; then
+cat <<EOF
+capabilities:
+  baselineCapabilitySet: "$BASELINE_CAPABILITY_SET"
+EOF
+    fi
+
+    if [[ -n "$BASELINE_CAPABILITY_SET" ]] && [[ -n "$ADDITIONAL_CAPABILITIES" ]]; then
+cat << EOF
+  additionalEnabledCapabilities:
+EOF
+
+      for cap in ${ADDITIONAL_CAPABILITIES//,/ }; do
+cat << EOF
+  - ${cap}
+EOF
+      done
+
+    elif [[ -n "$ADDITIONAL_CAPABILITIES" ]] && [[ -z "$BASELINE_CAPABILITY_SET" ]]; then
+      echo "Additional capabilities is set to: $ADDITIONAL_CAPABILITIES, but no desired BASELINE_CAPABILITY_SET is set"
+      exit 1
+    fi
+}
+
 function arbiter_stanza() {
     if [[ -n "${ENABLE_ARBITER:-}" ]]; then
 cat <<EOF
@@ -340,6 +365,7 @@ controlPlane:
 $(node_map_to_install_config_fencing_credentials)
 $(arbiter_stanza)
 $(featureSet)
+$(capabilities_stanza)
 platform:
   baremetal:
 $(libvirturi)
