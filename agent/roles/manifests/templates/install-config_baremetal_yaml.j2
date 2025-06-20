@@ -6,6 +6,16 @@ compute:
   name: worker
   replicas: {{ num_workers }} 
   architecture: {{ goCPUArchitecture }}
+{% if enable_arbiter %}
+arbiter:
+  architecture: {{ goCPUArchitecture }}
+  hyperthreading: Enabled
+  name: arbiter
+  replicas: 1
+{% endif %}
+{% if feature_set %}
+featureSet: {{ feature_set }}
+{% endif %}
 controlPlane:
   architecture: {{ goCPUArchitecture }}
   hyperthreading: Enabled
