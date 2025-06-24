@@ -274,7 +274,7 @@ export CONTAINER_RUNTIME="podman"
 
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"2"}
-export ENABLE_ARBITER=${ENABLE_ARBITER:-}
+export NUM_ARBITERS=${NUM_ARBITERS:-"0"}
 export NUM_EXTRA_WORKERS=${NUM_EXTRA_WORKERS:-"0"}
 export EXTRA_WORKERS_ONLINE_STATUS=${EXTRA_WORKERS_ONLINE_STATUS:-"true"}
 export EXTRA_WORKERS_NAMESPACE=${EXTRA_WORKERS_NAMESPACE:-"openshift-machine-api"}
@@ -311,7 +311,7 @@ export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
 export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
 export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
-export VBMC_MAX_PORT=$((VBMC_BASE_PORT + NUM_MASTERS + NUM_WORKERS + NUM_EXTRA_WORKERS - 1))
+export VBMC_MAX_PORT=$((VBMC_BASE_PORT + NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS + NUM_EXTRA_WORKERS - 1))
 export REDFISH_EMULATOR_IGNORE_BOOT_DEVICE="${REDFISH_EMULATOR_IGNORE_BOOT_DEVICE:-False}"
 
 # Which docker registry image should we use?
@@ -357,6 +357,16 @@ mkdir -p "$WORKING_DIR/$CLUSTER_NAME"
 if [ ! -d "$IRONIC_IMAGES_DIR" ]; then
   error "Creating Ironic Images Dir"
   sudo mkdir -p "$IRONIC_IMAGES_DIR"
+fi
+
+if [[ ${NUM_ARBITERS} -gt 1 ]]; then
+  error "Creating a cluster with more than 1 arbiter is currently not supported"
+  exit 1
+fi
+
+if [[ ${NUM_ARBITERS} -eq 1 ]] && [[ ${NUM_MASTERS} -ne 2 ]]; then
+  error "Creating a cluster with 1 arbiter and ${NUM_MASTERS} masters is not supported, please use 2 masters"
+  exit 1
 fi
 
 # Previously the directory was owned by root, we need to alter
@@ -458,11 +468,11 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_WORKERS=0
           ;;
       "TNA" )
-          export ENABLE_ARBITER="true"
           export NUM_MASTERS=2
           export MASTER_VCPU=4
           export MASTER_DISK=100
           export MASTER_MEMORY=32768
+          export NUM_ARBITERS=1
           export ARBITER_VCPU=2
           export ARBITER_MEMORY=16384
           export ARBITER_DISK=100
