@@ -452,16 +452,6 @@ set -x
 #
 #export NODES_PLATFORM=baremetal
 
-# ENABLE_ARBITER -
-# Set to any non zero length string value to enable the creation of an arbiter node.
-# Arbiter nodes take the place of a master node but run only critical containers to maintain HA for the cluster,
-# it is a TechPreview feature so `export FEATURE_SET="TechPreviewNoUpgrade"` must be set.
-#
-# Furthermore, since an Arbiter node takes the place of a master node the NUM_MASTERS count
-# must be set to `export NUM_MASTERS=2` and not the default `3` to avoid even number etcd members.
-#
-#export ENABLE_ARBITER=1
-
 # ENABLE_WORKLOAD_PARTITIONING -
 # Set to any non zero length string value to enable workload partitioning in the install config.
 #
@@ -502,6 +492,19 @@ set -x
 # Default: "arbiter-%d"
 #
 #export ARBITER_HOSTNAME_FORMAT=arbiter-%d
+
+# NUM_ARBITERS -
+# Indicate number of arbiter nodes to deploy.
+# Arbiter nodes take the place of a master node but run only critical containers to maintain HA for the cluster,
+# it is a TechPreview for OCP 4.19, so `export FEATURE_SET="TechPreviewNoUpgrade"` must be set.
+# Default: 0
+#
+# Furthermore, since an Arbiter node takes the place of a master node the NUM_MASTERS count
+# must be set to `export NUM_MASTERS=2` and not the default `3` to avoid even number etcd members.
+#
+# This script will currently only support 1 arbiter node and 2 masters.
+#
+#export NUM_ARBITERS=0
 
 # ARBITER_MEMORY, ARBITER_DISK, ARBITER_VCPU -
 # Change VM resources for arbiters
