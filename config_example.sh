@@ -472,6 +472,28 @@ set -x
 #
 #export ENABLE_WORKLOAD_PARTITIONING=true
 
+# BASELINE_CAPABILITY_SET -
+# Set a baseline capability set for optional components when deploying a cluster.
+#
+# Baseline capabilities allow users to be more selective about which operators to include during install to lesson the consumption
+# of the OpenShift cluster.
+# For more info see:
+# https://github.com/openshift/enhancements/blob/master/enhancements/installer/component-selection.md
+#
+#BASELINE_CAPABILITY_SET=None
+
+# ADDITIONAL_CAPABILITIES -
+# Set a additional capabilities to be added to the cluster. You MUST provide a BASELINE_CAPABILITY_SET if ADDITIONAL_CAPABILITIES is set.
+#
+# ADDITIONAL_CAPABILITIES must be provided as a comma separated list.
+# Additional capabilities allow users to be more selective about which operators to include during install additional to the base capability set.
+#
+# For more info see:
+# https://github.com/openshift/enhancements/blob/master/enhancements/installer/component-selection.md#install-configuration
+# https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/installation_overview/cluster-capabilities#cluster-capabilities
+#
+#ADDITIONAL_CAPABILITIES=baremetal,Console
+
 # MASTER_HOSTNAME_FORMAT -
 # Set a custom hostname format for masters. This is a format string that should
 # include one %d field, which will be replaced with the number of the node.
