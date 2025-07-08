@@ -81,7 +81,11 @@ platform:
         address: {{ bmc_addresses[loop.index0] }}
         username: {{ bmc_usernames[loop.index0] }}
         password: {{ bmc_passwords[loop.index0] }}
-        disableCertificateVerification: {% if bmc_verify_cas[loop.index0] == "False" %}true{% else %}false{% endif %}
+{% if bmc_verify_cas[loop.index0] == "False" %}
+        disableCertificateVerification: true
+{% else %}
+        disableCertificateVerification: false
+{% endif %}
       networkConfig:
         interfaces:
       {{ net.interfaces("eth0", macs[loop.index0])|indent(4, True) }}
