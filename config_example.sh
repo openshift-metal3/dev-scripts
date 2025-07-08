@@ -18,6 +18,19 @@ set -x
 #
 #export CI_SERVER=api.ci.l2s4.p1.openshiftapps.com
 
+# OPENSHIFT_CI
+# This variable is intended to indicate that dev-scripts is running in a CI environment,
+# simplifying authentication and adapting to the needs of this environment. The following changes will apply:
+#
+#  common.sh -> Skip version extraction, use mixed BMC driver. Persistent storage for image registry
+#  utils.sh -> Skip personal pull secret fetch and merge with registry credentials
+#  validation.sh -> Bypass CI_TOKEN validation
+#  agent/06_agent_create_cluster.sh -> Set ACL permissions for qemu
+#
+# For more details on the exact changes, check the corresponding files
+#
+# export OPENSHIFT_CI=true
+
 # WORKING_DIR -
 # By default, dev-scripts' working directory is set to `/opt/dev-scripts`.
 # Make sure that the filesystem has at least 80GB of free space: `df -h /`.

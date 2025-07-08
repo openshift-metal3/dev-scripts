@@ -71,7 +71,7 @@ Save the secret obtained from [cloud.openshift.com](https://cloud.redhat.com/ope
 
 There are variable defaults set in both the `common.sh` and the `ocp_install_env.sh`
 scripts, which may be important to override for your particular environment. You can
-set override values in your `config_$USER.sh` script.
+set override values in your `config_$USER.sh` script. For more documentation on available options, see [config_example.sh](config_example.sh)
 
 ### Configuration for 64-bit ARM 
 64-bit ARM systems are supported for agent and BMIPI on 64-bit ARM hosts, emulating ARM on x86 (or vice versa) is not supported. You will also need to explictly set `OPENSHIFT_RELEASE_IMAGE` with a 64-bit ARM payload from https://arm64.ocp.releases.ci.openshift.org/ 
