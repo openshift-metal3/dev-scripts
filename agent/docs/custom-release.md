@@ -120,6 +120,10 @@ To remove the local registry, and all of its content, use `make realclean`.
 | agent-installer-orchestrator | https://github.com/openshift/assisted-installer | Dockerfile.assisted-installer.ocp |
 | agent-installer-node-agent | https://github.com/openshift/assisted-installer-agent | Dockerfile.ocp |
 | agent-installer-utils | https://github.com/openshift/agent-installer-utils | Dockerfile.ocp |
+| agent-installer-web-ui | https://github.com/openshift-assisted/assisted-installer-ui | https://github.com/openshift-assisted/assisted-installer-ui/blob/master/apps/assisted-disconnected-ui/Containerfile.ocp |
+| agent-installer-console| https://github.com/openshift-assisted/assisted-installer-ui | https://github.com/openshift-assisted/assisted-installer-ui/blob/master/apps/assisted-disconnected-ui/Containerfile.ocp |
+| agent-installer-web-console| https://github.com/openshift-assisted/assisted-installer-ui | https://github.com/openshift-assisted/assisted-installer-ui/blob/master/apps/assisted-disconnected-ui/Containerfile.ocp |
+
 
 ## Installer exception
 
