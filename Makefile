@@ -111,3 +111,6 @@ assisted_deployment:
 
 assisted_deployment_requirements:
 	./assisted_deployment.sh install_prerequisites_assisted_service
+
+capi_e2e:
+	./run_capi_e2e.sh
