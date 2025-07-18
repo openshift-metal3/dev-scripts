@@ -207,11 +207,11 @@ EOF
 }
 
 function arbiter_stanza() {
-    if [[ -n "${ENABLE_ARBITER:-}" ]]; then
+    if [[ ${NUM_ARBITERS} -gt 0 ]]; then
 cat <<EOF
 arbiter:
   name: arbiter
-  replicas: 1
+  replicas: ${NUM_ARBITERS}
   hyperthreading: Enabled
   architecture: $(get_arch install_config)
   platform:
@@ -384,9 +384,11 @@ EOF
     cat >> "${outdir}/install-config.yaml" << EOF
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 $(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
+$(node_map_to_install_config_hosts $NUM_ARBITERS $(( NUM_MASTERS + NUM_WORKERS )) arbiter)
 EOF
   else
     cat >> "${outdir}/install-config.yaml" << EOF
+$(node_map_to_install_config_hosts $NUM_ARBITERS $(( NUM_MASTERS + NUM_WORKERS )) arbiter)
 $(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 EOF

@@ -564,6 +564,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     attach_agent_iso master $NUM_MASTERS
     attach_agent_iso worker $NUM_WORKERS
+    attach_agent_iso arbiter $NUM_ARBITERS
 
     ;;
 
@@ -573,6 +574,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     agent_pxe_boot master $NUM_MASTERS
     agent_pxe_boot worker $NUM_WORKERS
+    agent_pxe_boot arbiter $NUM_ARBITERS
     ;;
 
   "ISCSI" )
@@ -583,10 +585,12 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     agent_iscsi_targets master $NUM_MASTERS
     agent_iscsi_targets worker $NUM_WORKERS
+    agent_iscsi_targets arbiter $NUM_ARBITERS
 
     # Update the nodes and restart
     agent_iscsi_update_nodes master $NUM_MASTERS
     agent_iscsi_update_nodes worker $NUM_WORKERS
+    agent_iscsi_update_nodes arbiter $NUM_ARBITERS
     ;;
 
   "DISKIMAGE" )
@@ -601,6 +605,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     # Attach the diskimage to nodes
     attach_appliance_diskimage master $NUM_MASTERS
     attach_appliance_diskimage worker $NUM_WORKERS
+    attach_appliance_diskimage arbiter $NUM_ARBITERS
 
     # Delete the unused appliance.raw file and cache/temp directories
     # (to avoid storage overconsumption on the CI machine)
@@ -624,11 +629,13 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     attach_agent_iso_no_registry master $NUM_MASTERS
     attach_agent_iso_no_registry worker $NUM_WORKERS
+    attach_agent_iso_no_registry arbiter $NUM_ARBITERS
 
     echo "Waiting for 2 mins to arrive at agent-tui screen"
     sleep 120
     automate_rendezvousIP_selection master $NUM_MASTERS
     automate_rendezvousIP_selection worker $NUM_WORKERS
+    automate_rendezvousIP_selection arbiter $NUM_ARBITERS
 
     check_assisted_install_UI
 
