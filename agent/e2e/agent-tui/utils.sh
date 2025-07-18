@@ -66,8 +66,8 @@ function pressKeys(){
   local text=$2
   local node=$3
 
-  if [[ -n "$VAR" ]]; then
-    echo "$msg $ip on node $node"
+  if [[ -n "$node" ]]; then
+    echo "$msg $text on node $node"
   else
    echo $msg
   fi
