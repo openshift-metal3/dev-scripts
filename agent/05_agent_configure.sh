@@ -59,13 +59,17 @@ function configure_node() {
   local cluster_name="${CLUSTER_NAME}_${node_type}_${node_num}"
   local hostname="$(printf "${MASTER_HOSTNAME_FORMAT}" "${node_num}")"
   local ip=$((base_ip + node_num))
+  if [[ "$node_type" == "arbiter" ]]; then
+    local hostname="$(printf "${ARBITER_HOSTNAME_FORMAT}" "${node_num}")"
+    local ip=$((base_ip + ${NUM_MASTERS} + node_num))
+  fi
   if [[ "$node_type" == "worker" ]]; then
     local hostname="$(printf "${WORKER_HOSTNAME_FORMAT}" "${node_num}")"
-    local ip=$((base_ip + ${NUM_MASTERS} + node_num))
+    local ip=$((base_ip + ${NUM_MASTERS} + ${NUM_ARBITERS} + node_num))
   fi
   if [[ "$node_type" == "extraworker" ]]; then
     local hostname="$(printf "${EXTRA_WORKER_HOSTNAME_FORMAT}" "${node_num}")"
-    local ip=$((base_ip + ${NUM_MASTERS} + ${NUM_WORKERS} + node_num))
+    local ip=$((base_ip + ${NUM_MASTERS} + ${NUM_ARBITERS} + ${NUM_WORKERS} + node_num))
   fi
 
   if [[ "$node_type" != "extraworker" ]]; then
@@ -135,6 +139,11 @@ function get_static_ips_and_macs() {
       for (( i=0; i<${NUM_MASTERS}; i++ ))
       do
         configure_node "master" "$i"
+      done
+
+      for (( i=0; i<${NUM_ARBITERS}; i++ ))
+      do
+        configure_node "arbiter" "$i"
       done
 
       for (( i=0; i<${NUM_WORKERS}; i++ ))

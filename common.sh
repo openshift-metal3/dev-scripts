@@ -274,7 +274,7 @@ export CONTAINER_RUNTIME="podman"
 
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
 export NUM_WORKERS=${NUM_WORKERS:-"2"}
-export ENABLE_ARBITER=${ENABLE_ARBITER:-}
+export NUM_ARBITERS=${NUM_ARBITERS:-"0"}
 export NUM_EXTRA_WORKERS=${NUM_EXTRA_WORKERS:-"0"}
 export EXTRA_WORKERS_ONLINE_STATUS=${EXTRA_WORKERS_ONLINE_STATUS:-"true"}
 export EXTRA_WORKERS_NAMESPACE=${EXTRA_WORKERS_NAMESPACE:-"openshift-machine-api"}
@@ -282,6 +282,7 @@ export VM_EXTRADISKS=${VM_EXTRADISKS:-"false"}
 export VM_EXTRADISKS_LIST=${VM_EXTRADISKS_LIST:-"vdb"}
 export VM_EXTRADISKS_SIZE=${VM_EXTRADISKS_SIZE:-"8G"}
 export MASTER_HOSTNAME_FORMAT=${MASTER_HOSTNAME_FORMAT:-"master-%d"}
+export ARBITER_HOSTNAME_FORMAT=${ARBITER_HOSTNAME_FORMAT:-"arbiter-%d"}
 export WORKER_HOSTNAME_FORMAT=${WORKER_HOSTNAME_FORMAT:-"worker-%d"}
 export EXTRA_WORKER_HOSTNAME_FORMAT=${EXTRA_WORKER_HOSTNAME_FORMAT:-"extraworker-%d"}
 
@@ -310,7 +311,7 @@ export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
 export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
 export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
-export VBMC_MAX_PORT=$((VBMC_BASE_PORT + NUM_MASTERS + NUM_WORKERS + NUM_EXTRA_WORKERS - 1))
+export VBMC_MAX_PORT=$((VBMC_BASE_PORT + NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS + NUM_EXTRA_WORKERS - 1))
 export REDFISH_EMULATOR_IGNORE_BOOT_DEVICE="${REDFISH_EMULATOR_IGNORE_BOOT_DEVICE:-False}"
 
 # Which docker registry image should we use?
@@ -358,6 +359,16 @@ if [ ! -d "$IRONIC_IMAGES_DIR" ]; then
   sudo mkdir -p "$IRONIC_IMAGES_DIR"
 fi
 
+if [[ ${NUM_ARBITERS} -gt 1 ]]; then
+  error "Creating a cluster with more than 1 arbiter is currently not supported"
+  exit 1
+fi
+
+if [[ ${NUM_ARBITERS} -eq 1 ]] && [[ ${NUM_MASTERS} -ne 2 ]]; then
+  error "Creating a cluster with 1 arbiter and ${NUM_MASTERS} masters is not supported, please use 2 masters"
+  exit 1
+fi
+
 # Previously the directory was owned by root, we need to alter
 # permissions to be owned by the user running dev-scripts.
 if [ ! -f "$IRONIC_IMAGES_DIR/.permissions" ]; then
@@ -395,7 +406,7 @@ export AGENT_WAIT_FOR_INSTALL_COMPLETE=${AGENT_WAIT_FOR_INSTALL_COMPLETE:-true}
 # Agent specific configuration 
 
 function invalidAgentValue() {
-  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', 'SNO_IPXX', '4CONTROL_IPXX', or '5CONTROL_IPXX', where XX is 'V4', 'V6', or 'V4V6'"
+  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', 'SNO_IPXX', 'TNA_IPXX', '4CONTROL_IPXX', or '5CONTROL_IPXX', where XX is 'V4', 'V6', or 'V4V6'"
   exit 1
 }
 
@@ -455,6 +466,17 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_VCPU=4
           export MASTER_DISK=100
           export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          ;;
+      "TNA" )
+          export NUM_MASTERS=2
+          export MASTER_VCPU=4
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export NUM_ARBITERS=1
+          export ARBITER_VCPU=2
+          export ARBITER_MEMORY=16384
+          export ARBITER_DISK=100
           export NUM_WORKERS=0
           ;;
       "HA" )
