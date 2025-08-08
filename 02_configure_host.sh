@@ -161,6 +161,12 @@ if ! [[ -f /usr/share/OVMF/OVMF_CODE.fd || -L /usr/share/OVMF/OVMF_CODE.fd ]]; t
   sudo ln -s /usr/share/edk2/ovmf/OVMF_CODE.fd /usr/share/OVMF/
 fi
 
+# TODO(dtantsur): move this to metal3-dev-env
+if [ ${IP_STACK} = "v6v4" ]; then
+    # Make sure that BMC's use IPv6 on v6-primary stack
+    sed -i "/address/s|//[0-9.]*:|//[${PROVISIONING_HOST_EXTERNAL_IP}]:|" "${NODES_FILE}"
+fi
+
 if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
   ORIG_NODES_FILE="${NODES_FILE}.orig"
   cp -f ${NODES_FILE} ${ORIG_NODES_FILE}
