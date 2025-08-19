@@ -28,6 +28,35 @@ function retry_with_timeout() {
   return $(( exit_code ))
 }
 
+# Run a dnf command with retries and cache cleaning
+dnf_with_retries() {
+    local max_retries=5
+    local delay=15
+    local attempt=1
+
+    while (( attempt <= max_retries )); do
+        echo "Attempt $attempt of $max_retries: sudo dnf $*"
+
+        if sudo dnf "$@"; then
+            echo "sudo dnf $* succeeded."
+            return 0
+        fi
+
+        echo "sudo dnf $* failed on attempt $attempt."
+        if (( attempt < max_retries )); then
+            echo "Cleaning DNF cache and retrying after $delay seconds..."
+            sudo dnf clean all || true
+            sudo rm -rf /var/cache/dnf/* || true
+            sleep "$delay"
+        fi
+
+        (( attempt++ ))
+    done
+
+    echo "ERROR: sudo dnf $* failed after $max_retries attempts."
+    return 1
+}
+
 function generate_assets() {
   rm -rf assets/generated && mkdir assets/generated
   for file in $(find assets/templates/ -iname '*.yaml' -type f -printf "%P\n"); do

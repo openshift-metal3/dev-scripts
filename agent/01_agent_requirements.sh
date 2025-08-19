@@ -51,9 +51,9 @@ fi
 
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" ]]; then
     # Install shell to administer local storage
-    sudo dnf -y install targetcli
+    dnf_with_retries -y --nobest install targetcli
 fi
 
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
-   sudo dnf -y install xorriso coreos-installer syslinux skopeo
+   dnf_with_retries -y --nobest install xorriso coreos-installer syslinux skopeo
 fi
