@@ -40,7 +40,30 @@ sudo dnf -y clean all
 old_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
 
 # Update to latest packages first
-sudo dnf -y upgrade --nobest
+# Number of attempts
+MAX_RETRIES=5
+# Delay between attempts (in seconds)
+_YUM_RETRY_BACKOFF=15
+
+attempt=1
+while (( attempt <= MAX_RETRIES )); do
+    if sudo dnf -y upgrade --nobest; then
+        echo "System upgraded successfully."
+        break
+    else
+        echo "Upgrade failed (attempt $attempt). Cleaning cache and retrying..."
+        sudo dnf clean all
+        sudo rm -rf /var/cache/dnf/*
+        sleep $(( _YUM_RETRY_BACKOFF * attempt ))
+    fi
+
+    (( attempt++ ))
+done
+
+if (( attempt > MAX_RETRIES )); then
+    echo "ERROR: Failed to upgrade system after $MAX_RETRIES attempts."
+    exit 1
+fi
 
 new_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
 # If NetworkManager was upgraded it needs to be restarted
