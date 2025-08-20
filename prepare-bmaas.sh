@@ -4,8 +4,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "Installing ORAS CLI for bare-metal as a service preparation..."
+echo "Setting up bare-metal as a service (BMaaS) configuration..."
 
-ansible-playbook -i localhost, -c local "${SCRIPT_DIR}/install-oras.yml"
+ansible-playbook -i localhost, -c local "${SCRIPT_DIR}/install-bmaas.yml"
 
-echo "ORAS CLI installation completed."
+echo "BMaaS setup completed successfully."

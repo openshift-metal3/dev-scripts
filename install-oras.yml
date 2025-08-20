@@ -1,6 +1,0 @@
----
-- name: Install ORAS CLI
-  hosts: localhost
-  become: yes
-  roles:
-    - oras
