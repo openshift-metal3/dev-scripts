@@ -19,15 +19,33 @@ function extract_command() {
     local cmd
     local outdir
     local extract_dir
+    local MAX_RETRIES=5
+    local SLEEP_BETWEEN=10
 
     cmd="$1"
     release_image="$2"
     outdir="$3"
 
-    extract_dir=$(mktemp --tmpdir -d "installer--XXXXXXXXXX")
-    _tmpfiles="$_tmpfiles $extract_dir"
+    # Retry loop for oc adm release extract to handle quay.io blips
+    for attempt in $(seq 1 $MAX_RETRIES); do
+        extract_dir=$(mktemp --tmpdir -d "installer--XXXXXXXXXX")
 
-    oc adm release extract --registry-config "${PULL_SECRET_FILE}" --command=$cmd --to "${extract_dir}" ${release_image}
+        if oc adm release extract --registry-config "${PULL_SECRET_FILE}" --command="$cmd" --to "${extract_dir}" "${release_image}"; then
+            echo "Successfully extracted $cmd"
+            break
+        fi
+
+        if [[ $attempt -lt $MAX_RETRIES ]]; then
+            echo "Extraction failed, retrying in ${SLEEP_BETWEEN}s..."
+            rm -rf "${extract_dir}"
+            sleep "${SLEEP_BETWEEN}"
+        else
+            echo "Failed to extract $cmd from ${release_image} after $MAX_RETRIES attempts"
+            return 1
+        fi
+    done
+
+    _tmpfiles="$_tmpfiles $extract_dir"
 
     if [[ $cmd == "oc.rhel8" ]]; then
       cmd="oc"

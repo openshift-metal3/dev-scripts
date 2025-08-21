@@ -39,8 +39,8 @@ sudo dnf -y clean all
 
 old_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
 
-# Update to latest packages first
-sudo dnf -y upgrade --nobest
+dnf_with_retries -y upgrade --nobest
+echo "System upgraded successfully."
 
 new_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
 # If NetworkManager was upgraded it needs to be restarted
@@ -57,7 +57,7 @@ source /etc/os-release
 # All of those are needed because we're still behind for OS support.
 # passlib needs to be installed as system dependency
 if [[ -x "/usr/libexec/platform-python" ]]; then
-  sudo /usr/libexec/platform-python -m pip install passlib || sudo dnf -y install python3-pip && sudo /usr/libexec/platform-python -m pip install passlib
+  sudo /usr/libexec/platform-python -m pip install passlib || sudo dnf_with_retries -y install --nobest python3-pip && sudo /usr/libexec/platform-python -m pip install passlib
 fi
 
 # Install ansible, other packages are installed via
@@ -65,16 +65,16 @@ fi
 case $DISTRO in
   "centos8"|"rhel8"|"almalinux8"|"rocky8")
     # install network-scripts package to be able to use legacy network commands
-    sudo dnf install -y network-scripts
+    dnf_with_retries install -y --nobest network-scripts
     if [[ $DISTRO == "centos8" ]] && [[ "$NAME" != *"Stream"* ]]; then
         echo "CentOS is not supported, please switch to CentOS Stream / RHEL / Rocky / Alma"
         exit 1
     fi
     if [[ $DISTRO == "centos8" || $DISTRO == "almalinux8" || $DISTRO == "rocky8" ]]; then
-      sudo dnf -y install epel-release dnf --enablerepo=extras
+      dnf_with_retries -y install --nobest epel-release dnf --enablerepo=extras
     elif [[ $DISTRO == "rhel8" ]]; then
       # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
-      sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+      dnf_with_retries dnf -y install --nobest https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
       if sudo subscription-manager repos --list-enabled 2>&1 | grep "ansible-2-for-rhel-8-$(uname -m)-rpms"; then
         # The packaged 2.x ansible is too old for compatibility with metal3-dev-env
         sudo dnf erase -y ansible
@@ -82,17 +82,17 @@ case $DISTRO in
       fi
     fi
     # Note recent ansible needs python >= 3.8 so we install 3.9 here
-    sudo dnf -y install python39
+    dnf_with_retries -y install --nobest python39
     sudo alternatives --set python /usr/bin/python3.9
     sudo alternatives --set python3 /usr/bin/python3.9
     sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
     PYTHON_DEVEL="python39-devel"
     ;;
   "centos9"|"rhel9"|"almalinux9"|"rocky9")
-    sudo dnf -y install python3-pip
+    dnf_with_retries -y install --nobest python3-pip
     if [[ $DISTRO == "centos9" || $DISTRO == "almalinux9" || $DISTRO == "rocky9" ]] ; then
       sudo dnf config-manager --set-enabled crb
-      sudo dnf -y install epel-release
+      dnf_with_retries -y install --nobest epel-release
     elif [[ $DISTRO == "rhel9" ]]; then
       # NOTE(raukadah): If a system is subscribed to RHEL subscription then
       # sudo subscription-manager identity will return exit 0 else 1.
@@ -101,7 +101,7 @@ case $DISTRO in
 	# enable the CRB repository
 	sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
       fi
-      sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+      dnf_with_retries -y install --nobest https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
     fi
     sudo ln -s /usr/bin/python3 /usr/bin/python || true
     PYTHON_DEVEL="python3-devel"
@@ -127,7 +127,7 @@ GO_VERSION=${GO_VERSION:-1.22.3}
 GOARCH=$(uname -m)
 if [[ $GOARCH == "aarch64" ]]; then
     GOARCH="arm64"
-    sudo dnf -y install $PYTHON_DEVEL libxml2-devel libxslt-devel
+    dnf_with_retries -y install --nobest $PYTHON_DEVEL libxml2-devel libxslt-devel
 elif [[ $GOARCH == "x86_64" ]]; then
     GOARCH="amd64"
 fi
@@ -155,16 +155,16 @@ popd
 
 if [ -n "${KNI_INSTALL_FROM_GIT}" ]; then
     # zip is required for building the installer from source
-    sudo dnf -y install zip
+    dnf_with_retries -y --nobest install zip
 fi
 
 # Install nfs for persistent volumes
 if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
-    sudo dnf -y install nfs-utils
+    dnf_with_retries -y --nobest install nfs-utils
 fi
 
 if [[ "${NODES_PLATFORM}" == "baremetal" ]] ; then
-    sudo dnf -y install ipmitool
+    dnf_with_retries -y --nobest install ipmitool
 fi
 
 # needed if we are using locally built images
