@@ -40,13 +40,13 @@ values to to achieve the above cluster topologies.
 | NUM_WORKERS         |    2    |           2+          |    0    |              0              |
 | NUM_EXTRA_WORKERS   |    0    |           0           |    0    |              0              |
 | MASTER_MEMORY       |  16384  |         16384         |  16384  |            32768            |
-| MASTER_DISK         |    30   |          120          |   120   |             120             |
+| MASTER_DISK         |    60   |          120          |   120   |             120             |
 | MASTER_VCPU         |    8    |           8           |    8    |              8              |
 | WORKER_MEMORY       |   8192  |         16384         |         |                             |
-| WORKER_DISK         |    30   |          120          |         |                             |
+| WORKER_DISK         |    60   |          120          |         |                             |
 | WORKER_VCPU         |    4    |           4           |         |                             |
 | EXTRA_WORKER_MEMORY |   8192  |         16384         |         |                             |
-| EXTRA_WORKER_DISK   |    30   |          120          |         |                             |
+| EXTRA_WORKER_DISK   |    60   |          120          |         |                             |
 | EXTRA_WORKER_VCPU   |    4    |           4           |         |                             |
 
 ## Defining the Network Topology
