@@ -512,13 +512,15 @@ set -x
 
 # MASTER_MEMORY, MASTER_DISK, MASTER_VCPU -
 # Change VM resources for masters
+# The provided defaults are really bare minimum: if possible, you should
+# always increase them.
 ## Defaults:
-## MASTER_DISK=30
+## MASTER_DISK=60
 ## MASTER_MEMORY=16384
 ## MASTER_VCPU=8
 #
 #export MASTER_MEMORY=16384
-#export MASTER_DISK=40
+#export MASTER_DISK=60
 #export MASTER_VCPU=8
 
 # ARBITER_HOSTNAME_FORMAT -
@@ -567,13 +569,15 @@ set -x
 
 # WORKER_MEMORY, WORKER_DISK, WORKER_VCPU -
 # Change VM resources for workers.
+# The provided defaults are really bare minimum: if possible, you should
+# always increase them.
 ## Defaults:
-## WORKER_DISK=30
+## WORKER_DISK=60
 ## WORKER_MEMORY=8192
 ## WORKER_VCPU=4
 #
 #export WORKER_MEMORY=8192
-#export WORKER_DISK=30
+#export WORKER_DISK=60
 #export WORKER_VCPU=4
 
 # NUM_EXTRA_WORKERS - Indicate number of extra VMs to create but not deploy.
@@ -585,12 +589,12 @@ set -x
 # Change VM resources for extra workers. If not supplied defaults to the
 # regular workers specs.
 ## Defaults:
-## EXTRA_WORKER_DISK=30
+## EXTRA_WORKER_DISK=60
 ## EXTRA_WORKER_MEMORY=8192
 ## EXTRA_WORKER_VCPU=4
 #
 #export EXTRA_WORKER_MEMORY=8192
-#export EXTRA_WORKER_DISK=30
+#export EXTRA_WORKER_DISK=60
 #export EXTRA_WORKER_VCPU=4
 
 # EXTRA_WORKERS_ONLINE_STATUS -

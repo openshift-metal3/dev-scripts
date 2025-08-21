@@ -438,17 +438,17 @@ by the [vm_setup_vars.yml](vm_setup_vars.yml) file, which sets some dev-scripts
 variables that override the defaults in metal3-dev-env.
 
 The VM resources can be overridden by setting the following environment variables
-in `config_$USER.sh`:
+in `config_$USER.sh` (check `config_example.sh` for recommended defaults):
 
 ```
 # Change VM resources for masters
 #export MASTER_MEMORY=16384
-#export MASTER_DISK=20
+#export MASTER_DISK=60
 #export MASTER_VCPU=8
 
 # Change VM resources for workers
 #export WORKER_MEMORY=8192
-#export WORKER_DISK=20
+#export WORKER_DISK=60
 #export WORKER_VCPU=4
 ```
 
