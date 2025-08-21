@@ -1,0 +1,40 @@
+---
+- name: Install dependencies
+  community.general.ansible_galaxy_install:
+    type: both
+    requirements_file: "{{ metal3_dev_env_path }}/vm-setup/requirements.yml"
+
+- name: Install collection community.network
+  community.general.ansible_galaxy_install:
+    type: collection
+    name: 'ansible.netcommon<8.0.0'
+
+- name: Install collection community.network
+  community.general.ansible_galaxy_install:
+    type: collection
+    name: ansible.posix
+
+- name: Install collection community.network
+  community.general.ansible_galaxy_install:
+    type: collection
+    name: 'ansible.utils<6.0.0'
+
+- name: Install collection community.network
+  community.general.ansible_galaxy_install:
+    type: collection
+    name: community.general
+
+# Run Metal3 package installation playbook
+- name: Run install-package-playbook.yml
+  shell: |
+    ansible-playbook \
+      -e "working_dir={{ working_dir }}" \
+      -e "virthost={{ ansible_hostname }}" \
+      -e "go_version={{ go_version }}" \
+      -e "GOARCH={{ goarch }}" \
+      {{ alma_python_override if alma_python_override else '' }} \
+      -i {{ metal3_dev_env_path }}/vm-setup/inventory.ini \
+      -b -vvv {{ metal3_dev_env_path }}/vm-setup/install-package-playbook.yml
+  environment:
+    ANSIBLE_FORCE_COLOR: "true"
+    CONTAINER_RUNTIME: "{{ container_runtime }}"

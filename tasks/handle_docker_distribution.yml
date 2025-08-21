@@ -1,0 +1,16 @@
+---
+# Handle docker-distribution service
+- name: Check if docker-distribution service is active
+  systemd:
+    name: docker-distribution.service
+  register: docker_dist_service
+  failed_when: false
+
+- name: Disable and stop docker-distribution service if active
+  systemd:
+    name: docker-distribution.service
+    enabled: no
+    state: stopped
+  when: 
+    - docker_dist_service.status is defined
+    - docker_dist_service.status.ActiveState == "active"

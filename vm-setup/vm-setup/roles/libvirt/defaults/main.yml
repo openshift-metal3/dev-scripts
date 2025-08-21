@@ -1,0 +1,41 @@
+# When libvirt_action==teardown we destroy the existing configuration
+libvirt_action: setup
+
+# For some external testing we set this to "external" so that only the
+# libvirt networking is configured, not the nodes
+vm_platform: libvirt
+
+# Which libvirt session should we use?  Using `qemu://session` does
+# not require privileged access (but does require the setup performed by the
+# `environment/setup` role).
+libvirt_volume_pool: oooq_pool
+libvirt_diskdev: sda
+libvirt_cdromdev: sdb
+libvirt_diskbus: scsi
+libvirt_cdrombus: sata
+libvirt_arch: x86_64
+libvirt_cpu_mode: host-model
+libvirt_firmware: uefi
+libvirt_secure_boot: false
+
+# Where to log serial console output
+libvirt_log_path: "/var/log/libvirt/qemu"
+
+# how many disks should be created when using extradisks
+extradisks_list:
+  - vdb
+
+# size of the disks to create when using extradisks
+extradisks_size: 8G
+
+# The name of the libvirt service.
+libvirtd_service: libvirtd
+
+# The host that has images for provisioning, this should be in the
+# format of a URL host, e.g. with IPv6, it should be surrounded
+# by brackets
+provisioning_url_host: "{{ lookup('env', 'BARE_METAL_PROVISIONER_NETWORK') | default('172.22.0.1', true) }}"
+
+# BMC credentials
+vbmc_username: "admin"
+vbmc_password: "password"

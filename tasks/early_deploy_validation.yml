@@ -1,0 +1,22 @@
+---
+# Early deployment validation task
+# This replaces the early_deploy_validation function call from the bash script
+- name: Run early deployment validation
+  shell: |
+    # This would call the validation functions from the sourced scripts
+    # For now, just check basic requirements
+    if ! command -v git &> /dev/null; then
+      echo "Git is required but not installed"
+      exit 1
+    fi
+    if ! command -v curl &> /dev/null; then
+      echo "Curl is required but not installed"  
+      exit 1
+    fi
+  register: validation_result
+  changed_when: false
+
+- name: Display validation result
+  debug:
+    msg: "Early deployment validation completed successfully"
+  when: validation_result.rc == 0

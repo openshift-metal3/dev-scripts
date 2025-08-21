@@ -1,0 +1,28 @@
+---
+# Install passlib with platform-python if available
+- name: Check if platform-python exists
+  stat:
+    path: /usr/libexec/platform-python
+  register: platform_python_stat
+
+- name: Install passlib with platform-python
+  shell: /usr/libexec/platform-python -m pip install passlib
+  register: passlib_install
+  failed_when: false
+  when: platform_python_stat.stat.exists and platform_python_stat.stat.executable
+
+- name: Install python3-pip if passlib installation failed
+  dnf:
+    name: python3-pip
+    state: present
+  when: 
+    - platform_python_stat.stat.exists 
+    - platform_python_stat.stat.executable
+    - passlib_install.rc != 0
+
+- name: Retry passlib installation after installing pip
+  shell: /usr/libexec/platform-python -m pip install passlib
+  when: 
+    - platform_python_stat.stat.exists 
+    - platform_python_stat.stat.executable
+    - passlib_install.rc != 0

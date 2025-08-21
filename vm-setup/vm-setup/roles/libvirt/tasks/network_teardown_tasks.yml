@@ -1,0 +1,33 @@
+- name: Stop libvirt networks
+  virt_net:
+    command: destroy
+    name: "{{ item.name }}"
+    state: inactive
+  with_items: "{{ networks }}"
+  become: true
+
+- name: Delete libvirt networks
+  virt_net:
+    command: undefine
+    state: absent
+    name: "{{ item.name }}"
+  with_items: "{{ networks }}"
+  become: true
+
+- name: Delete libvirt network hooks
+  ansible.builtin.file:
+    path: "/etc/libvirt/hooks/network.d/"
+    state: absent
+
+# TODO: Replace with ansible community.general.nmcli?
+- name: Delete bridges and veth interfaces on Ubuntu
+  shell: |
+     sudo ip link set external down
+     sudo ip link set provisioning down
+     sudo ip link set ironicendpoint down
+     brctl delbr external || true
+     brctl delbr provisioning || true
+     sudo ip link del ironicendpoint || true
+  when:
+    - ansible_distribution == 'Ubuntu'
+  become: yes

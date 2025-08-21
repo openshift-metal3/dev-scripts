@@ -1,0 +1,94 @@
+---
+- name: Install Metal3 Development Environment Requirements
+  hosts: localhost
+  become: yes
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+  gather_facts: yes
+  vars:
+    ansible_version: "{{ ansible_version_override | default('8.0.0') }}"
+    go_version: "{{ go_version_override | default('1.22.3') }}"
+    metal3_dev_env_commit: "c60510f410173ddf01a29b87c889249b0f263c9f"
+    metal3_dev_env_repo: "https://github.com/metal3-io/metal3-dev-env.git"
+    working_dir: "{{ lookup('env', 'WORKING_DIR') | default(ansible_env.HOME + '/metal3') }}"
+    metal3_dev_env_path: "{{ lookup('env', 'METAL3_DEV_ENV_PATH') | default(working_dir + '/metal3-dev-env') }}"
+    metal3_dev_env: "{{ lookup('env', 'METAL3_DEV_ENV') }}"
+    openshift_client_tools_url: "{{ lookup('env', 'OPENSHIFT_CLIENT_TOOLS_URL') }}"
+    kni_install_from_git: "{{ lookup('env', 'KNI_INSTALL_FROM_GIT') }}"
+    persistent_imagereg: "{{ lookup('env', 'PERSISTENT_IMAGEREG') | bool }}"
+    nodes_platform: "{{ lookup('env', 'NODES_PLATFORM') | default('libvirt') }}"
+    alma_python_override: "{{ lookup('env', 'ALMA_PYTHON_OVERRIDE') }}"
+    container_runtime: "{{ lookup('env', 'CONTAINER_RUNTIME') | default('podman') }}"
+
+  pre_tasks:
+    - name: Load OS information
+      setup:
+        gather_subset: distribution
+
+    - name: Set distribution facts
+      set_fact:
+        distro: "{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}"
+        arch: "{{ ansible_architecture }}"
+
+    - name: Set Go architecture
+      set_fact:
+        goarch: "{{ 'arm64' if arch == 'aarch64' else 'amd64' }}"
+
+    - name: Fail if unsupported OS
+      fail:
+        msg: "CentOS or RHEL version not supported"
+      when: distro not in ['centos8', 'rhel8', 'almalinux8', 'rocky8', 'centos9', 'rhel9', 'almalinux9', 'rocky9']
+
+    - name: Check for CentOS 8 (non-Stream) and fail
+      fail:
+        msg: "CentOS is not supported, please switch to CentOS Stream / RHEL / Rocky / Alma"
+      when: 
+        - distro == "centos8"
+        - '"Stream" not in ansible_distribution_version'
+
+  tasks:
+    - name: Run early deployment validation
+      include_tasks: tasks/early_deploy_validation.yml
+      when: lookup('env', 'SKIP_VALIDATION') != 'true'
+
+    - name: Setup Metal3 development environment repository
+      include_tasks: tasks/setup_metal3_repo.yml
+      when: metal3_dev_env == ""
+
+    - name: Configure DNF for faster downloads
+      include_tasks: tasks/configure_dnf.yml
+
+    - name: Upgrade system packages and handle NetworkManager restart
+      include_tasks: tasks/upgrade_packages.yml
+
+    - name: Install passlib with platform-python if available
+      include_tasks: tasks/install_passlib.yml
+
+    - name: Configure repositories and Python for RHEL/CentOS 8
+      include_tasks: tasks/setup_rhel8_repos.yml
+      when: distro in ['centos8', 'rhel8', 'almalinux8', 'rocky8']
+
+    - name: Configure repositories and Python for RHEL/CentOS 9
+      include_tasks: tasks/setup_rhel9_repos.yml
+      when: distro in ['centos9', 'rhel9', 'almalinux9', 'rocky9']
+
+    - name: Install yq if not present
+      include_tasks: tasks/install_yq.yml
+
+    - name: Install architecture-specific development packages
+      include_tasks: tasks/install_dev_packages.yml
+
+    - name: Install Python packages
+      include_tasks: tasks/install_python_packages.yml
+
+    - name: Run Metal3 package installation playbook
+      include_tasks: tasks/run_metal3_playbook.yml
+
+    - name: Install optional packages based on environment
+      include_tasks: tasks/install_optional_packages.yml
+
+    - name: Handle docker-distribution service
+      include_tasks: tasks/handle_docker_distribution.yml
+
+    - name: Install OpenShift client tools
+      include_tasks: tasks/install_oc_tools.yml

@@ -1,0 +1,59 @@
+- name: "firewalld: Firewalld service"
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- ansible.posix.firewalld:
+    zone: libvirt
+    interface: "{{ item }}"
+    permanent: yes
+    state: "{{ firewalld_rule_state }}"
+    immediate: yes
+  loop:
+    - "{{ provisioning_interface }}"
+    - "{{ bare_metal_provisioner_interface }}"
+    - "{{ external_interface }}"
+
+- name: "firewalld: Provisioning host ports"
+  ansible.posix.firewalld:
+    zone: libvirt
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: "{{ firewalld_rule_state }}"
+    immediate: yes
+  loop: "{{ vm_host_ports }}"
+
+- name: "firewalld: Ironic Ports"
+  ansible.posix.firewalld:
+    zone: libvirt
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: "{{ firewalld_rule_state }}"
+    immediate: yes
+  loop: "{{ ironic_ports }}"
+
+- name: "firewalld: PXE Ports"
+  ansible.posix.firewalld:
+    zone: libvirt
+    port: "{{ item }}/udp"
+    permanent: yes
+    state: "{{ firewalld_rule_state }}"
+    immediate: yes
+  loop: "{{ pxe_udp_ports }}"
+
+- name: "firewalld: VBMC Ports"
+  ansible.posix.firewalld:
+    zone: libvirt
+    port: "{{ vbmc_port_range | regex_replace(':', '-') }}/udp"
+    permanent: yes
+    state: "{{ firewalld_rule_state }}"
+    immediate: yes
+
+- name: "firewalld: sushy Port"
+  ansible.posix.firewalld:
+    zone: libvirt
+    port: "{{ sushy_port }}/tcp"
+    permanent: yes
+    state: "{{ firewalld_rule_state }}"
+    immediate: yes

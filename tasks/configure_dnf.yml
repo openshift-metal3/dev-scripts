@@ -1,0 +1,17 @@
+---
+# Configure DNF for faster downloads
+- name: Configure DNF for fastest mirror
+  lineinfile:
+    path: /etc/dnf/dnf.conf
+    line: "fastestmirror=1"
+    create: yes
+
+- name: Configure DNF for parallel downloads
+  lineinfile:
+    path: /etc/dnf/dnf.conf
+    line: "max_parallel_downloads=8"
+    create: yes
+
+- name: Clean DNF cache
+  shell: dnf clean all
+  changed_when: true

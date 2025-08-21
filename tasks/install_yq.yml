@@ -1,0 +1,18 @@
+---
+# Install yq if not present
+- name: Check if yq is already installed
+  shell: which yq
+  register: yq_check
+  failed_when: false
+  changed_when: false
+
+- name: Install yq from pip if not present
+  pip:
+    name: "yq>=3,<4"
+    executable: pip3
+  when: yq_check.rc != 0
+
+- name: Display yq location if already installed
+  debug:
+    msg: "Using yq from {{ yq_check.stdout }}"
+  when: yq_check.rc == 0

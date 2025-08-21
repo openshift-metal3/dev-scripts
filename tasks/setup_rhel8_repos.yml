@@ -1,0 +1,64 @@
+---
+# Configure repositories and Python for RHEL/CentOS 8
+- name: Install network-scripts package for legacy network commands
+  dnf:
+    name: network-scripts
+    state: present
+
+- name: Install EPEL repository for CentOS/AlmaLinux/Rocky 8
+  dnf:
+    name: 
+      - epel-release
+      - dnf
+    enablerepo: extras
+    state: present
+  when: distro in ['centos8', 'almalinux8', 'rocky8']
+
+- name: Install EPEL repository for RHEL 8
+  block:
+    - name: Install EPEL release RPM for RHEL 8
+      dnf:
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+        state: present
+
+    - name: Check if ansible-2 repository is enabled
+      shell: subscription-manager repos --list-enabled 2>&1 | grep "ansible-2-for-rhel-8-$(uname -m)-rpms"
+      register: ansible2_repo_check
+      failed_when: false
+      changed_when: false
+
+    - name: Remove old ansible package if ansible-2 repo is enabled
+      dnf:
+        name: ansible
+        state: absent
+      when: ansible2_repo_check.rc == 0
+
+    - name: Disable ansible-2 repository
+      shell: subscription-manager repos --disable=ansible-2-for-rhel-8-$(uname -m)-rpms
+      when: ansible2_repo_check.rc == 0
+
+  when: distro == 'rhel8'
+
+- name: Install Python 3.9 for RHEL/CentOS 8
+  dnf:
+    name: python39
+    state: present
+
+- name: Set Python 3.9 as default python
+  alternatives:
+    name: python
+    path: /usr/bin/python3.9
+    link: /usr/bin/python
+
+- name: Set Python 3.9 as default python3
+  alternatives:
+    name: python3
+    path: /usr/bin/python3.9
+    link: /usr/bin/python3
+
+- name: Set pip3.9 as default pip3
+  shell: update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
+
+- name: Set Python development package variable
+  set_fact:
+    python_devel: "python39-devel"

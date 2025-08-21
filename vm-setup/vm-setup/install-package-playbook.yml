@@ -1,0 +1,12 @@
+- name: Install packages needed for the Dev-env
+  hosts: virthost
+  connection: local
+  gather_facts: true
+  tasks:
+  - import_role:
+      name: packages_installation
+  - import_role:
+      name: fubarhouse.golang
+    vars:
+      go_version: 1.24.3
+      go_install_clean: true

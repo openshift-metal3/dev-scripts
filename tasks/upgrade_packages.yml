@@ -1,0 +1,23 @@
+---
+# Upgrade system packages and handle NetworkManager restart
+- name: Get current NetworkManager version
+  shell: dnf info NetworkManager | grep Version | cut -d ':' -f 2
+  register: old_networkmanager_version
+  changed_when: false
+
+- name: Upgrade all packages
+  dnf:
+    name: "*"
+    state: latest
+    nobest: yes
+
+- name: Get new NetworkManager version
+  shell: dnf info NetworkManager | grep Version | cut -d ':' -f 2
+  register: new_networkmanager_version
+  changed_when: false
+
+- name: Restart NetworkManager if upgraded
+  systemd:
+    name: NetworkManager
+    state: restarted
+  when: old_networkmanager_version.stdout != new_networkmanager_version.stdout

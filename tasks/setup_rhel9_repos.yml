@@ -1,0 +1,48 @@
+---
+# Configure repositories and Python for RHEL/CentOS 9
+- name: Install python3-pip for RHEL/CentOS 9
+  dnf:
+    name: python3-pip
+    state: present
+
+- name: Configure repositories for CentOS/AlmaLinux/Rocky 9
+  block:
+    - name: Enable CRB repository
+      shell: dnf config-manager --set-enabled crb
+
+    - name: Install EPEL repository
+      dnf:
+        name: epel-release
+        state: present
+
+  when: distro in ['centos9', 'almalinux9', 'rocky9']
+
+- name: Configure repositories for RHEL 9
+  block:
+    - name: Check if system has valid RHEL subscription
+      shell: subscription-manager identity > /dev/null 2>&1
+      register: rhel_subscription_check
+      failed_when: false
+      changed_when: false
+
+    - name: Enable CodeReady Builder repository if subscribed
+      shell: subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
+      when: rhel_subscription_check.rc == 0
+
+    - name: Install EPEL repository for RHEL 9
+      dnf:
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        state: present
+
+  when: distro == 'rhel9'
+
+- name: Create python symlink
+  file:
+    src: /usr/bin/python3
+    dest: /usr/bin/python
+    state: link
+  ignore_errors: yes
+
+- name: Set Python development package variable
+  set_fact:
+    python_devel: "python3-devel"

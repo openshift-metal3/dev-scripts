@@ -1,0 +1,8 @@
+---
+# Install Python packages
+- name: Install netaddr and lxml for ansible.netcommon and pyxpath
+  pip:
+    name:
+      - netaddr
+      - lxml
+    executable: pip3
