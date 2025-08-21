@@ -1,0 +1,19 @@
+---
+# Install optional packages based on environment
+- name: Install zip for KNI installation from git
+  dnf:
+    name: zip
+    state: present
+  when: kni_install_from_git != ""
+
+- name: Install nfs-utils for persistent image registry
+  dnf:
+    name: nfs-utils
+    state: present
+  when: persistent_imagereg | bool
+
+- name: Install ipmitool for baremetal platform
+  dnf:
+    name: ipmitool
+    state: present
+  when: nodes_platform == "baremetal"

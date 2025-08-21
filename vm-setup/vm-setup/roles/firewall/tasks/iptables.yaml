@@ -1,0 +1,144 @@
+- name: "iptables: Firewalld service stopped"
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+  ignore_errors: True
+
+- name: "iptables: VBMC Ports"
+  iptables:
+    chain: INPUT
+    action: insert
+    in_interface: "{{ external_interface }}"
+    protocol: udp
+    match: udp
+    destination_port: "{{ vbmc_port_range }}"
+    jump: ACCEPT
+    state: "{{ firewall_rule_state }}"
+
+- name: "iptables: sushy Port"
+  iptables:
+    chain: INPUT
+    action: insert
+    in_interface: "{{ external_interface }}"
+    protocol: tcp
+    match: tcp
+    destination_port: "{{ sushy_port }}"
+    jump: ACCEPT
+    state: "{{ firewall_rule_state }}"
+
+- name: "iptables: Established and related"
+  iptables:
+    chain: FORWARD
+    in_interface: "{{ provisioning_interface }}"
+    match: conntrack
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+    state: "{{ firewall_rule_state }}"
+
+- name: "iptables: Ironic Ports"
+  iptables:
+    chain: "{{ item[0].chain }}"
+    action: insert
+    in_interface: "{{ item[0].interface }}"
+    protocol: tcp
+    match: tcp
+    destination_port: "{{ item[1] }}"
+    jump: ACCEPT
+    state: "{{ firewall_rule_state }}"
+  vars:
+    interfaces:
+      - chain: INPUT
+        interface: "{{ provisioning_interface }}"
+      - chain: INPUT
+        interface: "{{ bare_metal_provisioner_interface }}"
+      - chain: FORWARD
+        interface: "{{ provisioning_interface }}"
+  loop: "{{ interfaces | product(ironic_ports) | list }}"
+
+- name: "iptables: Provisioning host ports"
+  iptables:
+    chain: INPUT
+    action: insert
+    in_interface: "{{ external_interface}}"
+    protocol: tcp
+    match: tcp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+    state: "{{ firewall_rule_state }}"
+  loop: "{{ vm_host_ports }}"
+
+- name: "iptables: PXE Ports"
+  iptables:
+    chain: "{{ item[0].chain }}"
+    action: insert
+    in_interface: "{{ item[0].interface }}"
+    protocol: udp
+    match: udp
+    destination_port: "{{ item[1] }}"
+    jump: ACCEPT
+    state: "{{ firewall_rule_state }}"
+  vars:
+    interfaces:
+      - chain: INPUT
+        interface: "{{ provisioning_interface }}"
+      - chain: INPUT
+        interface: "{{ bare_metal_provisioner_interface }}"
+      - chain: FORWARD
+        interface: "{{ provisioning_interface }}"
+  loop: "{{ interfaces | product(pxe_udp_ports) | list }}"
+
+- name: "iptables: Ironic Endpoint Keepalived"
+  iptables:
+    chain: FORWARD
+    in_interface: "{{ provisioning_interface }}"
+    protocol: "{{ item }}"
+    jump: ACCEPT
+    state: "{{ firewall_rule_state }}"
+  loop: "{{ ironic_keepalived_proto }}"
+
+- block:
+    - name: "iptables: Allow access to external network from kind"
+      iptables:
+        chain: INPUT
+        action: insert
+        protocol: tcp
+        match: tcp
+        destination: "{{ external_subnet_v4 }}"
+        destination_port: "{{ item }}"
+        jump: ACCEPT
+        state: "{{ firewall_rule_state }}"
+      loop: "{{ vm_host_ports }}"
+
+    - name: "iptables: Allow access to bare metal provisioner network from kind"
+      iptables:
+        chain: INPUT
+        action: insert
+        protocol: tcp
+        match: tcp
+        destination: "{{ bare_metal_provisioner_subnet_v4 }}"
+        destination_port: "{{ item }}"
+        jump: ACCEPT
+        state: "{{ firewall_rule_state }}"
+      loop: "{{ ironic_ports }}"
+
+    - name: "iptables: Allow access to Kubernetes API from kind"
+      iptables:
+        chain: INPUT
+        action: insert
+        protocol: tcp
+        match: tcp
+        destination: "{{ kind_subnet }}"
+        destination_port: "{{ cluster_api_port }}"
+        jump: ACCEPT
+        state: "{{ firewall_rule_state }}"
+
+    - name: "iptables: Allow forwarding to baremetal network from kind"
+      iptables:
+        chain: FORWARD
+        action: insert
+        out_interface: "{{ external_interface }}"
+        destination: "{{ external_subnet_v4 }}"
+        jump: ACCEPT
+        state: "{{ firewall_rule_state }}"
+  when: (EPHEMERAL_CLUSTER == "kind")

@@ -1,0 +1,90 @@
+<domain type='{{ libvirt_domain_type }}'>
+  <name>{{ item.name }}</name>
+  <memory unit='MiB'>{{ flavors[item.flavor].memory }}</memory>
+  <vcpu>{{ flavors[item.flavor].vcpu }}</vcpu>
+
+  {{baremetal_vm_xml|default('')}}
+
+{% if libvirt_arch != 'aarch64' %}
+  <os>
+    <type arch='{{ libvirt_arch }}' machine='q35'>hvm</type>
+{% if libvirt_firmware  == 'uefi' %}
+{% if libvirt_secure_boot|bool %}
+     <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>
+{% elif host_os == 'centos' or host_os == 'rhel' %}
+     <loader readonly='yes' type='pflash'>/usr/share/edk2/ovmf/OVMF_CODE.fd</loader>
+{% elif host_distro == 'ubuntu24' %}
+     <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>
+{% else %}
+     <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.fd</loader>
+{% endif %}
+{% endif %}
+    <boot dev='network'/>
+    <bootmenu enable='no'/>
+    <bios useserial='yes' rebootTimeout='10000'/>
+  </os>
+{% else %}
+<os firmware='efi'>
+  <type arch='aarch64' machine='virt'>hvm</type>
+</os>
+{% endif %}
+
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+{% if libvirt_domain_type == 'qemu' %}
+  <cpu mode='host-model'/>
+{% else %}
+  <cpu mode='host-passthrough'/>
+{% endif %}
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <disk type="file" device="cdrom">
+      <target dev='{{ libvirt_cdromdev }}' bus='{{ libvirt_cdrombus }}'/>
+      <readonly/>
+    </disk>
+    <disk type='volume' device='disk'>
+      <driver name='qemu' type='qcow2' cache='unsafe'/>
+      <source pool='{{ libvirt_volume_pool }}' volume='{{ item.name }}.qcow2'/>
+      <target dev='{{ libvirt_diskdev }}' bus='{{ libvirt_diskbus }}'/>
+    </disk>
+{% if libvirt_diskbus == 'scsi' %}
+  <controller type='scsi' model='virtio-scsi' />
+{% endif %}
+{% if tpm_emulator|bool %}
+    <tpm model='tpm-tis'>
+      <backend type='emulator' version='2.0'/>
+    </tpm>
+{% endif %}
+{% for network in networks %}
+    <interface type='bridge'>
+      <mac address='{{ node_mac_map.get(item.name).get(network.name) }}'/>
+      <source bridge='{{ network.bridge }}'/>
+      <model type='{{ libvirt_nic_model }}'/>
+{% if network.virtualport_type is defined %}
+      <virtualport type='{{ network.virtualport_type }}'/>
+{% endif %}
+    </interface>
+{% endfor %}
+    <serial type='pty'>
+      <log file="{{ libvirt_log_path }}/{{ item.name }}-serial0.log" append="on"/>
+    </serial>
+    <console type='pty'/>
+
+{% if enable_vnc_console|bool %}
+    <input type='mouse' bus='ps2'/>
+    <graphics type='vnc' port='-1' autoport='yes'/>
+    <video>
+      <model type='virtio' vram='9216' heads='1'/>
+    </video>
+{% endif %}
+
+    {{baremetal_vm_device_xml|default('')}}
+
+  </devices>
+</domain>

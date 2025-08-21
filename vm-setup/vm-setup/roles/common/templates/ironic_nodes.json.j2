@@ -1,0 +1,75 @@
+{% set lvars = { 'host_ip' : 'NOTSET', 'pxe_network' : False} %}
+{% for network in networks %}
+  {% if (not (network.forward_mode is defined and network.forward_mode == 'nat') and lvars['pxe_network'] == False) %}
+    {% if lvars.update({'pxe_network' : network.name}) %}{% endif %}
+  {% endif %}
+  {% if network.address_v4 is defined and network.address_v4 != '' and lvars['host_ip'] == 'NOTSET' %}
+    {% if lvars.update({'host_ip' : network.address_v4}) %}{% endif %}
+  {% endif %}
+  {% if network.address_v6 is defined and network.address_v6 != '' and lvars['host_ip'] == 'NOTSET' %}
+    {% if lvars.update({'host_ip' : network.address_v6}) %}{% endif %}
+  {% endif %}
+{% endfor %}
+{% if lvars['pxe_network'] == False %}
+  {% if lvars.update({'pxe_network': networks[0].name}) %}{% endif %}
+{% endif %}
+{
+  "nodes": [
+  {% for node in vm_nodes %}
+
+    {% set vm_driver_tmp = vm_driver -%}
+    {# If vm_driver == mixed we alternate between ipmi, refish and refish-virtualmedia to test both #}
+    {% if vm_driver == 'mixed' -%}
+      {# For extraworker always use redfish #}
+      {% if 'extraworker' in node.name -%}
+        {% set vm_driver_tmp = 'redfish' -%}
+      {% elif loop.index % 3 == 0 -%}
+        {% set vm_driver_tmp = 'redfish-virtualmedia' -%}
+      {% elif loop.index % 3 == 1 -%}
+        {% set vm_driver_tmp = 'ipmi' -%}
+      {% else -%}
+        {% set vm_driver_tmp = 'redfish' -%}
+      {% endif -%}
+    {% endif -%}
+
+    {
+      "name": "{{ node.name|replace('_', '-') }}",
+      "driver": "{{ vm_driver_tmp }}",
+      "resource_class": "baremetal",
+      "driver_info": {
+        "username": "{{ vbmc_username }}",
+        "password": "{{ vbmc_password }}",
+        {% if vm_driver_tmp =='redfish' -%}
+        "port": "8000",
+        "address": "{{vm_driver_tmp}}+https://{{ lvars['host_ip'] | ansible.utils.ipwrap }}:8000/redfish/v1/Systems/{{vm_id[node.name]}}",
+        "redfish_verify_ca": "False",
+        {% elif vm_driver_tmp == 'redfish-virtualmedia' -%}
+        "port": "8000",
+        "address": "{{vm_driver_tmp}}+https://{{ lvars['host_ip'] | ansible.utils.ipwrap }}:8000/redfish/v1/Systems/{{vm_id[node.name]}}",
+        "redfish_verify_ca": "False",
+        {% elif vm_driver_tmp == 'redfish-uefihttp' -%}
+        "port": "8000",
+        "address": "{{vm_driver_tmp}}+https://{{ lvars['host_ip'] | ansible.utils.ipwrap }}:8000/redfish/v1/Systems/{{vm_id[node.name]}}",
+        "redfish_verify_ca": "False",
+        {% else -%}
+        "port": "{{ node.virtualbmc_port }}",
+        "address": "{{vm_driver_tmp}}://{{lvars['host_ip'] | ansible.utils.ipwrap }}:{{node.virtualbmc_port}}",
+        {% endif -%}
+        "deploy_kernel": "http://{{ provisioning_url_host }}/images/ironic-python-agent.kernel",
+        "deploy_ramdisk": "http://{{ provisioning_url_host }}/images/ironic-python-agent.initramfs"
+      },
+      "ports": [{
+        "address": "{{ node_mac_map.get(node.name).get(lvars['pxe_network']) }}",
+        "pxe_enabled": true
+      }],
+      "properties": {
+        "local_gb": "{{ flavors[node.flavor].disk }}",
+        "cpu_arch": "{{ libvirt_arch }}"
+      }
+    }
+    {% if not loop.last %}
+    ,
+    {% endif %}
+  {% endfor %}
+  ]
+}

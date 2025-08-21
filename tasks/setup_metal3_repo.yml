@@ -1,0 +1,26 @@
+---
+# Setup Metal3 development environment repository
+- name: Ensure working directory exists
+  file:
+    path: "{{ working_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Clone metal3-dev-env repository
+  git:
+    repo: "{{ metal3_dev_env_repo }}"
+    dest: "{{ metal3_dev_env_path }}"
+    force: yes
+  register: git_clone_result
+
+- name: Pin to specific metal3-dev-env commit
+  git:
+    repo: "{{ metal3_dev_env_repo }}"
+    dest: "{{ metal3_dev_env_path }}"
+    version: "{{ metal3_dev_env_commit }}"
+    force: yes
+  when: git_clone_result is succeeded
+
+- name: Set REPO_PATH environment variable
+  set_fact:
+    repo_path: "{{ working_dir }}"

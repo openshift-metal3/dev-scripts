@@ -1,0 +1,30 @@
+---
+# Install OpenShift client tools
+- name: Download and install OpenShift client tools
+  shell: |
+    for i in {1..5}; do
+      if timeout 60 curl -L "{{ openshift_client_tools_url }}" | tar -U -C /usr/local/bin -xzf -; then
+        break
+      fi
+      echo "Attempt $i failed, retrying..."
+      sleep 10
+    done
+  when: openshift_client_tools_url != ""
+
+- name: Make oc executable
+  file:
+    path: /usr/local/bin/oc
+    mode: '0755'
+  when: openshift_client_tools_url != ""
+
+- name: Verify oc installation
+  shell: oc version --client -o json
+  register: oc_version
+  when: openshift_client_tools_url != ""
+
+- name: Display oc version
+  debug:
+    var: oc_version.stdout
+  when: 
+    - openshift_client_tools_url != ""
+    - oc_version is succeeded

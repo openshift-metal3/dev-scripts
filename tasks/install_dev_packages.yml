@@ -1,0 +1,17 @@
+---
+# Install architecture-specific development packages
+- name: Install development packages for ARM64
+  dnf:
+    name:
+      - "{{ python_devel }}"
+      - libxml2-devel
+      - libxslt-devel
+    state: present
+  when: arch == "aarch64"
+
+- name: Install development packages for x86_64
+  dnf:
+    name:
+      - "{{ python_devel | default('python3-devel') }}"
+    state: present
+  when: arch == "x86_64"

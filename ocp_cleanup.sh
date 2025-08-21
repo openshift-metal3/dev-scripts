@@ -74,5 +74,7 @@ fi
 sudo sed -ie '/^allow /d' /etc/chrony.conf
 
 # Restore file after workaround
-cd ${METAL3_DEV_ENV_PATH}
-git checkout vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
+if [ -d ${METAL3_DEV_ENV_PATH} ]; then
+  cd ${METAL3_DEV_ENV_PATH}
+  git checkout vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
+fi
