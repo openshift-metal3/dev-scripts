@@ -617,6 +617,25 @@ EOF
     if [[ "$reg_state" != "running" || $restart_registry -eq 1 ]]; then
         sudo podman rm registry -f || true
 
+        MAX_RETRIES=5
+        _PULL_RETRY_DELAY=10
+
+        # Try pulling the image first to tolerate quay.io errors like 504s.
+        for attempt in $(seq 1 $MAX_RETRIES); do
+            if sudo podman pull "${DOCKER_REGISTRY_IMAGE}"; then
+                echo "Successfully pulled ${DOCKER_REGISTRY_IMAGE}"
+                break
+            fi
+
+            if [[ $attempt -lt $MAX_RETRIES ]]; then
+                echo "Pull failed, retrying in ${_PULL_RETRY_DELAY}s..."
+                sleep "${_PULL_RETRY_DELAY}"
+            else
+                echo "Failed to pull ${DOCKER_REGISTRY_IMAGE} after $MAX_RETRIES attempts"
+                exit 1
+            fi
+        done
+
         sudo podman run -d --name registry --net=host --privileged \
             -v ${REGISTRY_DIR}/data:/var/lib/registry:z \
             -v ${REGISTRY_DIR}/auth:/auth:z \
