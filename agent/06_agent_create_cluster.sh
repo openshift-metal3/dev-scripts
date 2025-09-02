@@ -3,6 +3,7 @@ set -euxo pipefail
 shopt -s nocasematch
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+ARCH=$(uname -m)
 
 LOGDIR=${SCRIPTDIR}/logs
 source $SCRIPTDIR/logging.sh
@@ -59,9 +60,9 @@ function create_factory_image() {
     "${openshift_install}" --dir="${asset_dir}" --log-level=debug agent create unconfigured-ignition
     base_iso_url=$(oc adm release info --registry-config "$PULL_SECRET_FILE" --image-for=machine-os-images --insecure=true $OPENSHIFT_RELEASE_IMAGE)
     mkdir -p $HOME/.cache/agent/image_cache
-    oc image extract --path /coreos/coreos-$(uname -m).iso:$HOME/.cache/agent/image_cache --registry-config "$PULL_SECRET_FILE" --confirm $base_iso_url
+    oc image extract --path /coreos/coreos-${ARCH}.iso:$HOME/.cache/agent/image_cache --registry-config "$PULL_SECRET_FILE" --confirm $base_iso_url
     local agent_iso_abs_path="$(realpath "${OCP_DIR}")"
-    podman run --pull=newer --privileged --rm -v /run/udev:/run/udev -v "${agent_iso_abs_path}:${agent_iso_abs_path}" -v "$HOME/.cache/agent/image_cache/:$HOME/.cache/agent/image_cache/" quay.io/coreos/coreos-installer:release iso ignition embed -f -i "${agent_iso_abs_path}/unconfigured-agent.ign" -o "${agent_iso_abs_path}/agent.iso" $HOME/.cache/agent/image_cache/coreos-$(uname -m).iso
+    podman run --pull=newer --privileged --rm -v /run/udev:/run/udev -v "${agent_iso_abs_path}:${agent_iso_abs_path}" -v "$HOME/.cache/agent/image_cache/:$HOME/.cache/agent/image_cache/" quay.io/coreos/coreos-installer:release iso ignition embed -f -i "${agent_iso_abs_path}/unconfigured-agent.ign" -o "${agent_iso_abs_path}/agent.iso" $HOME/.cache/agent/image_cache/coreos-${ARCH}.iso
 
     if [ "${AGENT_APPLIANCE_HOTPLUG}" != true ]; then
         create_config_image
@@ -90,7 +91,13 @@ function create_agent_iso_no_registry() {
   local asset_dir=${1}
   pushd .
   cd $OPENSHIFT_AGENT_INSTALER_UTILS_PATH/tools/iso_builder
-  ./hack/build-ove-image.sh --pull-secret-file "${PULL_SECRET_FILE}" --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" --ssh-key-file "${SSH_KEY_FILE}" --dir "${asset_dir}"
+  # Build the ISO in the container image
+  make build-ove-iso-container PULL_SECRET_FILE="${PULL_SECRET_FILE}" RELEASE_IMAGE_URL="${OPENSHIFT_RELEASE_IMAGE}" ARCH=${ARCH}
+  # Retrieve ISO from container
+  ./hack/iso-from-container.sh
+  local iso_name="agent-ove.${ARCH}.iso"
+  echo "Moving ${iso_name} to ${asset_dir}"
+  mv ./output-iso/${iso_name} "${asset_dir}"
   popd
 }
 
@@ -147,7 +154,7 @@ function set_file_acl() {
 }
 
 function get_agent_iso() {
-    local agent_iso="${OCP_DIR}/agent.$(uname -p).iso"
+    local agent_iso="${OCP_DIR}/agent.${ARCH}.iso"
     if [ ! -f "${agent_iso}" -a -f "${OCP_DIR}/agent.iso" ]; then
         agent_iso="${OCP_DIR}/agent.iso"
     fi
@@ -156,7 +163,7 @@ function get_agent_iso() {
 
 function get_agent_iso_no_registry() {
     local base_dir=$SCRIPTDIR/$OCP_DIR
-    local iso_name="agent-ove.$(uname -p).iso"
+    local iso_name="agent-ove.${ARCH}.iso"
     local agent_iso_no_registry=$(find "$base_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
     if [ -z "$agent_iso_no_registry" ]; then
       echo "Error: No agent OVE ISO found matching ${iso_name} in ${base_dir}" >&2
@@ -289,7 +296,7 @@ function force_mirror_disconnect() {
 }
 
 function disable_automated_installation() {
-  local agent_iso_abs_path="$(realpath "${OCP_DIR}/agent.$(uname -p).iso")"
+  local agent_iso_abs_path="$(realpath "${OCP_DIR}/agent.${ARCH}.iso")"
   local ign_temp_path="$(mktemp --directory)"
   _tmpfiles="$_tmpfiles $ign_temp_path"
   echo "Extracting ISO ignition..."
