@@ -470,13 +470,13 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           ;;
       "TNA" )
           export NUM_MASTERS=2
-          export MASTER_VCPU=4
+          export MASTER_VCPU=8
           export MASTER_DISK=100
           export MASTER_MEMORY=32768
           export NUM_ARBITERS=1
           export ARBITER_VCPU=2
-          export ARBITER_MEMORY=16384
-          export ARBITER_DISK=100
+          export ARBITER_MEMORY=8192
+          export ARBITER_DISK=50
           export NUM_WORKERS=0
           ;;
       "HA" )
