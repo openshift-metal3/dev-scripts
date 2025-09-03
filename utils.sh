@@ -318,13 +318,18 @@ function node_map_to_install_config_fencing_credentials() {
     credentials:
 EOF
     for ((idx=0;idx<$(($NUM_MASTERS));idx++)); do
-      name="$(printf $MASTER_HOSTNAME_FORMAT ${idx})"
+      hostname="$(printf $MASTER_HOSTNAME_FORMAT ${idx})"
+      # IP V6 and DualStack will force FQDN hostname for the VMs, we need to update
+      # this here to correctly set the hostname for the fencing credentials.
+      if [[ $IP_STACK != 'v4' ]]; then
+        hostname="${hostname}.${CLUSTER_DOMAIN}"
+      fi
       username=$(node_val ${idx} "driver_info.username")
       password=$(node_val ${idx} "driver_info.password")
       address=$(node_val ${idx} "driver_info.address")
 
       cat <<EOF
-    - hostname: ${name}
+    - hostname: ${hostname}
       address: ${address}
       username: ${username}
       password: ${password}
