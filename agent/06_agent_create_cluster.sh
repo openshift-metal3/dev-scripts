@@ -90,7 +90,17 @@ function create_agent_iso_no_registry() {
   local asset_dir=${1}
   pushd .
   cd $OPENSHIFT_AGENT_INSTALER_UTILS_PATH/tools/iso_builder
-  ./hack/build-ove-image.sh --pull-secret-file "${PULL_SECRET_FILE}" --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" --ssh-key-file "${SSH_KEY_FILE}" --dir "${asset_dir}"
+  if [ "${AGENT_OVE_ISO_FROM_CONTAINER}" == false ]; then
+    ./hack/build-ove-image.sh --pull-secret-file "${PULL_SECRET_FILE}" --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" --ssh-key-file "${SSH_KEY_FILE}" --dir "${asset_dir}"
+  else
+    # Build the ISO in the container image
+    make build-ove-iso-container PULL_SECRET_FILE="${PULL_SECRET_FILE}" RELEASE_IMAGE_URL="${OPENSHIFT_RELEASE_IMAGE}"
+    # Retrieve ISO from container
+    ./hack/iso-from-container.sh
+    local iso_name="agent-ove.$(uname -p).iso"
+    echo "Moving ${iso_name} to ${asset_dir}"
+    mv ./output-iso/${iso_name} "${asset_dir}"
+  fi
   popd
 }
 

@@ -80,6 +80,10 @@ if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
     export AGENT_ISOLATED_NETWORK=true
 fi
 
+# When set to true, build the OVE UI ISO in a container.
+# When set to false, use build-ove-image.sh to build the ISO.
+export AGENT_OVE_ISO_FROM_CONTAINER=${AGENT_OVE_ISO_FROM_CONTAINER:-"false"}
+
 function getRendezvousIP() {
     node_zero_mac_address=$(sudo virsh domiflist ${AGENT_RENDEZVOUS_NODE_HOSTNAME} | awk '$3 == "ostestbm" {print $5}')
     rendezvousIP=$(ip neigh | grep $node_zero_mac_address | awk '{print $1}')
