@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"errors"
 	"strings"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
-	"github.com/go-rod/rod/lib/utils" 
+	"github.com/go-rod/rod/lib/utils"
 
 	"github.com/sirupsen/logrus"
 )
@@ -105,7 +106,10 @@ func main() {
 	}
 	logrus.Info("Cluster installation started successfully.")
 
-	waitForClusterConsoleLink(page, filepath.Join(screenshotPath, "09-installation-progress.png"))
+	err = waitForClusterConsoleLink(page, filepath.Join(screenshotPath, "09-installation-progress.png"))
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
 }
 
 func clusterDetails(page *rod.Page, path string) error {
@@ -215,13 +219,14 @@ func startInstallation(page *rod.Page, client *resty.Client, path string) error 
 
 func waitForClusterConsoleLink(page *rod.Page, path string) error {
 	for {
-		failMsg, _ := page.Timeout(5 * time.Second).ElementR("div.pf-v5-c-empty-state__body", `Failed on`)
+		failMsg, _ := page.Timeout(5 * time.Second).ElementR("#cluster-progress-status-value", `Failed on`)
 		if failMsg != nil {
-			logrus.Error("Cluster installation failed.")
-			if err := saveFullPageScreenshot(page, path); err != nil {
-				return err
+			if visible, _ := failMsg.Visible(); visible {
+				if err := saveFullPageScreenshot(page, path); err != nil {
+					return err
+				}
+				return errors.New("cluster installation failed")
 			}
-			return fmt.Errorf("cluster installation failed")
 		}
 
 		consoleURL, _ := page.Timeout(5 * time.Second).ElementR("button.pf-v5-c-button", `https://console-openshift-console.apps.abi-ove-isobuilder.redhat.com`)
