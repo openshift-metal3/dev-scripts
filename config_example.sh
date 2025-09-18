@@ -979,3 +979,11 @@ set -x
 # a complete isolation.
 #
 # export AGENT_ISOLATED_NETWORK=""
+
+# AGENT_OVE_ISO_FROM_CONTAINER
+# Default: false
+#
+# When enabled, uses buildah to create a container image
+# for the OVE UI ISO
+#
+# export AGENT_OVE_ISO_FROM_CONTAINER=""
