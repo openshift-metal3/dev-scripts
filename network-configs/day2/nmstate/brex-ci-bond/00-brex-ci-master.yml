@@ -1,0 +1,17 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 00-brex-ci-master
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    storage:
+      files:
+        - contents:
+            source: data:text/plain;charset=utf-8;base64,aW50ZXJmYWNlczoNCi0gbmFtZTogZW5wMnMwDQogIHR5cGU6IGV0aGVybmV0DQogIHN0YXRlOiB1cA0KICBpcHY0Og0KICAgIGVuYWJsZWQ6IGZhbHNlDQogIGlwdjY6DQogICAgZW5hYmxlZDogZmFsc2UNCi0gbmFtZTogZW5wM3MwDQogIHR5cGU6IGV0aGVybmV0DQogIHN0YXRlOiB1cA0KICBpcHY0Og0KICAgIGVuYWJsZWQ6IGZhbHNlDQogIGlwdjY6DQogICAgZW5hYmxlZDogZmFsc2UNCi0gbmFtZTogYnItZXgNCiAgdHlwZTogb3ZzLWJyaWRnZQ0KICBzdGF0ZTogdXANCiAgaXB2NDoNCiAgICBlbmFibGVkOiBmYWxzZQ0KICAgIGRoY3A6IGZhbHNlDQogIGlwdjY6DQogICAgZW5hYmxlZDogZmFsc2UNCiAgICBkaGNwOiBmYWxzZQ0KICBicmlkZ2U6DQogICAgcG9ydDoNCiAgICAtIG5hbWU6IGVucDJzMA0KICAgIC0gbmFtZTogYnItZXgNCi0gbmFtZTogYnItZXgNCiAgdHlwZTogb3ZzLWludGVyZmFjZQ0KICBzdGF0ZTogdXANCiAgY29weS1tYWMtZnJvbTogZW5wMnMwDQogIGlwdjQ6DQogICAgZW5hYmxlZDogdHJ1ZQ0KICAgIGRoY3A6IHRydWUNCiAgaXB2NjoNCiAgICBlbmFibGVkOiBmYWxzZQ0KICAgIGRoY3A6IGZhbHNl
+          mode: 0644
+          overwrite: true
+          path: /etc/nmstate/openshift/cluster.yml

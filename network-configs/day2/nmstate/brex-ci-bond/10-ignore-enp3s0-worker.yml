@@ -1,0 +1,17 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 10-ignore-enp3s0-worker
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    storage:
+      files:
+        - contents:
+            source: data:text/plain;charset=utf-8;base64,W2RldmljZS1lbnAzczBdCm1hdGNoLWRldmljZT1pbnRlcmZhY2UtbmFtZTplbnAzczAKa2VlcC1jb25maWd1cmF0aW9uPW5vCmFsbG93ZWQtY29ubmVjdGlvbnM9ZXhjZXB0Om9yaWdpbjpubS1pbml0cmQtZ2VuZXJhdG9y
+          mode: 0644
+          overwrite: true
+          path: /etc/NetworkManager/conf.d/10-ignore-enp3s0.conf
