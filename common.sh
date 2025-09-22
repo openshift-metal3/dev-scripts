@@ -479,6 +479,13 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export ARBITER_DISK=50
           export NUM_WORKERS=0
           ;;
+      "TNF" )
+          export NUM_MASTERS=2
+          export MASTER_VCPU=8
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          ;;
       "HA" )
           export NUM_MASTERS=3
           export MASTER_VCPU=4

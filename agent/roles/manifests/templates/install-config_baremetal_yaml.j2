@@ -21,6 +21,20 @@ controlPlane:
   hyperthreading: Enabled
   name: master
   replicas: {{ num_masters }} 
+{% if num_arbiters == "0" and num_masters == "2" %}
+{% set hostnames = agent_nodes_hostnames.split(',') %}
+{% set bmc_addresses = agent_nodes_bmc_addresses.split(',') %}
+{% set bmc_passwords = agent_nodes_bmc_passwords.split(',') %}
+{% set bmc_usernames = agent_nodes_bmc_usernames.split(',') %}
+  fencing:
+    credentials:
+{% for hostname in hostnames %}
+    - hostname: {{hostname}}
+      address: {{ bmc_addresses[loop.index0] }}
+      username: {{ bmc_usernames[loop.index0] }}
+      password: {{ bmc_passwords[loop.index0] }}
+{% endfor %}
+{% endif %}
 fips: {{ fips_mode }}
 metadata:
   name: {{ cluster_name }} 
