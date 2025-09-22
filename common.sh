@@ -397,6 +397,22 @@ fi
 
 export ENABLE_LOCAL_REGISTRY=${ENABLE_LOCAL_REGISTRY:-}
 
+# Helper variable for TNF, normally not meant to be configurable by user.
+# When two node fencing is detected we set this variable because the installer
+# validation will fail if fencing credentials are not present when two masters
+# and no arbiter are set.
+# Skip on agent scenarios to avoid accidental overrides.
+export ENABLE_TWO_NODE_FENCING=${ENABLE_TWO_NODE_FENCING:-false}
+if [[ -z ${AGENT_E2E_TEST_SCENARIO:-} ]] && [[ ${NUM_ARBITERS} -eq 0 ]] && [[ ${NUM_MASTERS} -eq 2 ]]; then
+  export ENABLE_TWO_NODE_FENCING="true"
+fi
+
+# Only redfish BMC driver is supported for two node fencing
+if [[ "${BMC_DRIVER}" != "redfish" ]] && [[ "${ENABLE_TWO_NODE_FENCING:-}" == "true" ]]; then
+  printf "Only redfish BMC driver is supported for Two Node Fencing deployments: BMC_DRIVER=${BMC_DRIVER}, ENABLE_TWO_NODE_FENCING=${ENABLE_TWO_NODE_FENCING}"
+  exit 1
+fi
+
 # Defaults the DISABLE_MULTICAST variable
 export DISABLE_MULTICAST=${DISABLE_MULTICAST:-false}
 
@@ -478,6 +494,14 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export ARBITER_MEMORY=8192
           export ARBITER_DISK=50
           export NUM_WORKERS=0
+          ;;
+      "TNF" )
+          export NUM_MASTERS=2
+          export MASTER_VCPU=8
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          export ENABLE_TWO_NODE_FENCING="true"
           ;;
       "HA" )
           export NUM_MASTERS=3
