@@ -55,5 +55,7 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" ]]; then
 fi
 
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+   curl -O https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+   sudo dnf install -y ./google-chrome-stable_current_x86_64.rpm
    sudo dnf -y install xorriso coreos-installer syslinux skopeo
 fi
