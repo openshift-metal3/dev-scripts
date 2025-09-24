@@ -30,7 +30,7 @@ var (
 
 func main() {
 	logrus.Info("Launching headless browser...")
-	url := launcher.New().Headless(true).MustLaunch()
+	url := launcher.NewUserMode().Headless(true).MustLaunch()
 	browser := rod.New().ControlURL(url).MustConnect()
 
 	defer browser.MustClose()
