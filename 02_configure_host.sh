@@ -35,7 +35,7 @@ esac
 
 # Generate user ssh key
 if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
-    ssh-keygen -f ~/.ssh/id_rsa -P ""
+    ssh-keygen -f ~/.ssh/id_rsa -t rsa -P ""
 fi
 
 # root needs a private key to talk to libvirt
