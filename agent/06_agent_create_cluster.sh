@@ -88,10 +88,40 @@ function create_agent_iso_no_registry() {
   fi
   # Create agent ISO without registry a.k.a. OVE ISO
   local asset_dir=${1}
+  local max_retries=3
+  local attempt=1
+  local success=0
+
   pushd .
   cd $OPENSHIFT_AGENT_INSTALER_UTILS_PATH/tools/iso_builder
-  ./hack/build-ove-image.sh --pull-secret-file "${PULL_SECRET_FILE}" --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" --ssh-key-file "${SSH_KEY_FILE}" --dir "${asset_dir}"
+
+  # Image registry flakes can interfere with image builds.
+  # Allow some retries.
+  while [[ $attempt -le $max_retries ]]; do
+    echo "Attempt $attempt to run build-ove-image.sh"
+    if ./hack/build-ove-image.sh \
+        --pull-secret-file "${PULL_SECRET_FILE}" \
+        --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" \
+        --ssh-key-file "${SSH_KEY_FILE}" \
+        --dir "${asset_dir}"; then
+      success=1
+      break
+    else
+      echo "build-ove-image.sh failed (attempt $attempt), cleaning up asset_dir..."
+      rm -rf "${asset_dir}"
+      mkdir -p "${asset_dir}"
+    fi
+
+    ((attempt++))
+    sleep 5
+  done
+
   popd
+
+  if [[ $success -ne 1 ]]; then
+    echo "build-ove-image.sh failed after $max_retries attempts"
+    return 1
+  fi
 }
 
 function assert_agent_no_registry_iso_size(){
