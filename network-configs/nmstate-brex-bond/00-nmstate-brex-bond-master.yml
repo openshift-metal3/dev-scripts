@@ -1,9 +1,10 @@
+# This manifest is configuring enp2s0 and enp3s0 to form a br-ex bond.
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
   labels:
-    machineconfiguration.openshift.io/role: worker
-  name: 00-brex-ci-worker
+    machineconfiguration.openshift.io/role: master
+  name: 00-nmstate-brex-bond-master
 spec:
   config:
     ignition:
