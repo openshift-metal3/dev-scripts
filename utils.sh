@@ -312,7 +312,7 @@ function node_map_to_install_config_fencing_credentials() {
     return 0
   fi
 
-  if  [[ ${NUM_ARBITERS} -eq 0 ]] && [[ "${NUM_MASTERS}" -eq 2 ]]; then
+  if  [ "${ENABLE_TWO_NODE_FENCING:-}" == "true" ]; then
 	cat <<EOF
   fencing:
     credentials:
