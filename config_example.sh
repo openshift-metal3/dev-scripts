@@ -161,6 +161,11 @@ set -x
 #
 #export GO_VERSION="1.21.6"
 
+# Go download mirror to use
+# The url to use to download the golang binary. The default value is https://go.dev/dl
+#
+#export GO_CUSTOM_MIRROR="https://go.dev/dl"
+
 ################################################################################
 ## General Settings
 ##

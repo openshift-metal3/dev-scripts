@@ -146,6 +146,7 @@ else
 fi
 
 GO_VERSION=${GO_VERSION:-1.22.3}
+GO_CUSTOM_MIRROR=${GO_CUSTOM_MIRROR:-"https://go.dev/dl"}
 
 GOARCH=$(uname -m)
 if [[ $GOARCH == "aarch64" ]]; then
@@ -170,6 +171,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
   -e "go_version=$GO_VERSION" \
+  -e "go_custom_mirror=$GO_CUSTOM_MIRROR" \
   -e "GOARCH=$GOARCH" \
   $ALMA_PYTHON_OVERRIDE \
   -i vm-setup/inventory.ini \
