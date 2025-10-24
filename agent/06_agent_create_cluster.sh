@@ -91,15 +91,11 @@ function create_agent_iso_no_registry() {
   local asset_dir=${1}
   pushd .
   cd $OPENSHIFT_AGENT_INSTALER_UTILS_PATH/tools/iso_builder
-  # Build the ISO in the container image
-  make build-ove-iso-container PULL_SECRET_FILE="${PULL_SECRET_FILE}" RELEASE_IMAGE_URL="${OPENSHIFT_RELEASE_IMAGE}" ARCH=${ARCH}
-  # Retrieve ISO from container
-  ./hack/iso-from-container.sh
-  local iso_name="agent-ove.${ARCH}.iso"
-  echo "Moving ${iso_name} to ${asset_dir}"
-  mv ./output-iso/${iso_name} "${asset_dir}"
+  ./hack/build-ove-image.sh --pull-secret-file "${PULL_SECRET_FILE}" --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" --ssh-key-file "${SSH_KEY_FILE}" --dir "${asset_dir}"
   popd
 }
+
+
 
 function assert_agent_no_registry_iso_size(){
   agent_iso_no_registry=$(get_agent_iso_no_registry)
@@ -124,7 +120,7 @@ function cleanup_diskspace_agent_iso_noregistry() {
  local asset_dir=${1%/}  # Remove trailing slash if present
 
   # Iterate over all versioned directories matching 4.19.*
-  for dir in "$asset_dir"/4.19.*; do
+  for dir in "$asset_dir"/4.21.*; do
     [ -d "$dir" ] || continue
 
     echo "Cleaning up directory: $dir"
