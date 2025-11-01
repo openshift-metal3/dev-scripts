@@ -34,7 +34,7 @@ controlPlane:
       address: {{ bmc_addresses[loop.index0] }}
       username: {{ bmc_usernames[loop.index0] }}
       password: {{ bmc_passwords[loop.index0] }}
-      certificateVerification: {{ 'Enabled' if bmc_verify_cas[loop.index0] else 'Disabled' }}
+      certificateVerification: {{ 'Disabled' if bmc_verify_cas[loop.index0] == "False" else 'Enabled' }}
 {% endfor %}
 {% endif %}
 fips: {{ fips_mode }}
