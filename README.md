@@ -495,7 +495,31 @@ export IGNITION_EXTRA="ignition/file_example.ign"
 
 ### Testing with extra workers
 
-It is possible to specify additional workers, which are not used in the initial
+#### Option 1: Add Workers Post-Installation (No Pre-Planning Required)
+
+You can add worker nodes **after** your cluster is deployed without requiring pre-configuration:
+
+```bash
+# Add a worker node
+./add_worker_node.sh my-worker-1
+
+# Apply the generated manifest
+oc apply -f ocp/ostest/my-worker-1_bmh.yaml
+
+# Scale the machineset to provision it
+oc scale machineset <cluster-name>-worker-0 --replicas=<N+1> -n openshift-machine-api
+```
+
+Or using Make:
+```bash
+make add_worker WORKER_NAME=my-worker-1
+```
+
+See [WORKER_QUICK_START.md](WORKER_QUICK_START.md) for a quick guide or [docs/add-worker-post-install.md](docs/add-worker-post-install.md) for complete documentation.
+
+#### Option 2: Pre-Configure Extra Workers (Traditional Method)
+
+You can specify additional workers during initial deployment, which are not used in the initial
 deployment, and can then later be used e.g to test scale-out. The default online
 status of the extra workers is true, but can be changed to false using
 EXTRA_WORKERS_ONLINE_STATUS.
