@@ -17,6 +17,14 @@ source $SCRIPTDIR/agent/iscsi_utils.sh
 
 early_deploy_validation
 
+# The OCP version used in agent-installer-utils/tools/iso_builder/hack/helper.sh.
+# https://github.com/openshift/agent-installer-utils/blob/6422958144e27dbbe31c7fe98b514d43c988bcfb/tools/iso_builder/hack/helper.sh#L90
+# It is slightly different than OPENSHIFT_VERSION.
+# dev-scripts may need to create the working directory for the appliance if a custom openshift-install
+# binary is built. The same version string is used to be consistent with what is passed to
+# build-ove-image.sh in agent-installer-utils.
+full_ocp_version=$(skopeo inspect --authfile $PULL_SECRET_FILE docker://$OPENSHIFT_RELEASE_IMAGE | jq -r '.Labels["io.openshift.release"]')
+
 function create_pxe_files() {
     local asset_dir=${1}
     local openshift_install=${2}
@@ -87,6 +95,16 @@ function create_agent_iso_no_registry() {
   if [[ ! -d $OPENSHIFT_AGENT_INSTALER_UTILS_PATH ]]; then
     sync_repo_and_patch go/src/github.com/openshift/agent-installer-utils https://github.com/openshift/agent-installer-utils.git
   fi
+
+  # If the openshift-install binary was built from source, copy it to the appliance's 
+  # asset directory. This allows it to be used by the appliance to generate the 
+  # unconfigured-ignition instead of the appliance downloading the binary from 
+  # the release.
+  if [ ! -z "$KNI_INSTALL_FROM_GIT" -a -f "${OCP_DIR}/openshift-install" ]; then
+      mkdir -p "${OCP_DIR}/iso_builder/${full_ocp_version}/appliance/"
+      cp "${OCP_DIR}/openshift-install" "${OCP_DIR}/iso_builder/${full_ocp_version}/appliance/"
+  fi
+ 
   # Create agent ISO without registry a.k.a. OVE ISO
   local asset_dir=${1}
   pushd .
@@ -123,8 +141,8 @@ function assert_agent_no_registry_iso_size(){
 function cleanup_diskspace_agent_iso_noregistry() {
  local asset_dir=${1%/}  # Remove trailing slash if present
 
-  # Iterate over all versioned directories matching 4.19.*
-  for dir in "$asset_dir"/4.19.*; do
+  # Iterate over all versioned directories matching ${full_ocp_version}*
+  for dir in "$asset_dir"/${full_ocp_version}*; do
     [ -d "$dir" ] || continue
 
     echo "Cleaning up directory: $dir"
