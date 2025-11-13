@@ -4,7 +4,7 @@ shopt -s nocasematch
 export PATH="/usr/local/go/bin:$HOME/.local/bin:$PATH"
 
 # Set a PS4 value which logs the script name and line #.
-export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+export PS4='+ $(date "+%Y-%m-%d %H:%M:%S") (${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 eval "$(go env)"
 

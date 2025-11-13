@@ -55,5 +55,6 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" ]]; then
 fi
 
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
-   sudo dnf -y install xorriso coreos-installer syslinux skopeo
+   sudo dnf -y install epel-release
+   sudo dnf -y install chromium skopeo
 fi
