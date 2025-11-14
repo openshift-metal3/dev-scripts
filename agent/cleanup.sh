@@ -67,6 +67,6 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" ]]; then
     agent_remove_iscsi_disks worker $NUM_WORKERS
 fi
 
-if sudo buildah images --storage-driver vfs | grep -q "localhost/appliance-test"; then
-    sudo buildah rmi -f --storage-driver vfs localhost/appliance-test
+if [[ -d "$(sudo buildah info --format '{{.store.GraphRoot}}')/vfs" ]] ; then
+    sudo buildah rmi -f --storage-driver vfs localhost/appliance-test >/dev/null 2>&1 || true
 fi
