@@ -1,0 +1,18 @@
+# This manifest is configuring enp2s0 as the only port of br-ex.
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 00-nmstate-brex-worker
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    storage:
+      files:
+        - contents:
+            source: data:text/plain;charset=utf-8;base64,aW50ZXJmYWNlczoKLSBuYW1lOiBlbnAyczAKICB0eXBlOiBldGhlcm5ldAogIHN0YXRlOiB1cAogIGlwdjQ6CiAgICBlbmFibGVkOiBmYWxzZQogIGlwdjY6CiAgICBlbmFibGVkOiBmYWxzZQotIG5hbWU6IGJyLWV4CiAgdHlwZTogb3ZzLWJyaWRnZQogIHN0YXRlOiB1cAogIGlwdjQ6CiAgICBlbmFibGVkOiBmYWxzZQogICAgZGhjcDogZmFsc2UKICBpcHY2OgogICAgZW5hYmxlZDogZmFsc2UKICAgIGRoY3A6IGZhbHNlCiAgYnJpZGdlOgogICAgcG9ydDoKICAgIC0gbmFtZTogZW5wMnMwCiAgICAtIG5hbWU6IGJyLWV4Ci0gbmFtZTogYnItZXgKICB0eXBlOiBvdnMtaW50ZXJmYWNlCiAgc3RhdGU6IHVwCiAgY29weS1tYWMtZnJvbTogZW5wMnMwCiAgaXB2NDoKICAgIGVuYWJsZWQ6IHRydWUKICAgIGRoY3A6IHRydWUKICBpcHY2OgogICAgZW5hYmxlZDogdHJ1ZQogICAgZGhjcDogdHJ1ZQo=
+          mode: 0644
+          overwrite: true
+          path: /etc/nmstate/openshift/cluster.yml
