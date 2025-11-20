@@ -646,40 +646,14 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     check_assisted_install_UI
 
-    # Temporarily create a dummy kubeconfig and kubeadmin-password file for the CI
-    auth_dir=$SCRIPTDIR/$OCP_DIR/auth
-    mkdir -p $auth_dir
-    cfg=$auth_dir/kubeconfig 
-    cat << EOF >> ${cfg}
-clusters:
-- cluster:
-    certificate-authority-data: LS0tLS1CRUdJTiBGSUNBVLS0tLQo=
-    server: https://api.test.redhat.com:6443
-  name: test
-contexts:
-- context:
-    cluster: test
-    user: admin
-  name: admin
-current-context: admin
-preferences: {}
-users:
-- name: admin
-  user:
-    client-certificate-data: LS0tLS1CRUdJTiBNBVEUtLS0tLQo=
-    client-key-data: LS0tLS1CRUdJTiURSBVktLS0tLQo=
-EOF
-    echo "dummy-kubeadmin-password" > $auth_dir/kubeadmin-password
+    mkdir -p $OCP_DIR/auth
+    rendezvousIP=$(getRendezvousIP)
+    get_vips
+    # Simulate user actions as done on the webUI and start cluster installation
+    CLUSTER_NAME=$CLUSTER_NAME BASE_DOMAIN=$BASE_DOMAIN RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$OCP_DIR INGRESS_VIP=$INGRESS_VIPS API_VIP=$API_VIPS go run agent/isobuilder/ui_driven_cluster_installation/main.go
+    exit 0
     ;;
 esac
-
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
-    # Current goal is to only verify if the nodes are booted fine,
-    # TUI sets the rendezvous IP correctly and UI is accessible.
-    # The next goal is to simulate adding the cluster details via UI
-    # and complete the cluster installation.
-    exit 0
-fi
 
 if [ ! -z "${AGENT_TEST_CASES:-}" ]; then
   run_agent_test_cases
