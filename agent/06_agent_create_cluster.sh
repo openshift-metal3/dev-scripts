@@ -650,7 +650,10 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     rendezvousIP=$(getRendezvousIP)
     get_vips
     # Simulate user actions as done on the webUI and start cluster installation
-    CLUSTER_NAME=$CLUSTER_NAME BASE_DOMAIN=$BASE_DOMAIN RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$OCP_DIR INGRESS_VIP=$INGRESS_VIPS API_VIP=$API_VIPS go run agent/isobuilder/ui_driven_cluster_installation/main.go
+    ocp_dir_abs_path="$(realpath "${OCP_DIR}")"
+    pushd agent/isobuilder/ui_driven_cluster_installation
+    CLUSTER_NAME=$CLUSTER_NAME BASE_DOMAIN=$BASE_DOMAIN RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$ocp_dir_abs_path INGRESS_VIP=$INGRESS_VIPS API_VIP=$API_VIPS go run main.go
+    popd
     exit 0
     ;;
 esac

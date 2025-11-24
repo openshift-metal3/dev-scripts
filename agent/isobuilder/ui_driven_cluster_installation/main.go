@@ -48,7 +48,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	screenshotPath := filepath.Join(cwd, ocpDir)
+	var screenshotPath string
+	if filepath.IsAbs(ocpDir) {
+			screenshotPath = ocpDir
+	} else {
+			screenshotPath = filepath.Join(cwd, ocpDir)
+	}
 
 	logrus.Info("Enter cluster details")
 	err = clusterDetails(page, filepath.Join(screenshotPath, "01-cluster-details.png"))
