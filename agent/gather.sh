@@ -21,11 +21,17 @@ do
     fi
 done < "${OCP_DIR}"/hosts
 
-num_screenshots=$(find "${OCP_DIR}" -type f -name "*.ppm" | wc -l)
+num_tui_screenshots=$(find "${OCP_DIR}" -type f -name "*.ppm" | wc -l)
+num_ui_screenshots=$(find "${OCP_DIR}" -type f -name "*.png" | wc -l)
+num_screenshots=$(($num_tui_screenshots + $num_ui_screenshots))
 if [[ "$num_screenshots" -gt 0 ]]; then
     archive_name="agent-gather-console-screenshots.tar.xz"
     echo "Gathering screenshots to $archive_name"
-    tar -cJf $archive_name ${OCP_DIR}/*.ppm ${OCP_DIR}/*.png
+    if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]] && compgen -G "${OCP_DIR}/*.png" > /dev/null; then
+        tar -cJf $archive_name ${OCP_DIR}/*.ppm ${OCP_DIR}/*.png
+    else
+        tar -cJf $archive_name ${OCP_DIR}/*.ppm
+    fi
 else
     echo "No screenshots found. Skipping screenshot gather."
 fi
