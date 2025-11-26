@@ -35,3 +35,6 @@ if [[ "$num_screenshots" -gt 0 ]]; then
 else
     echo "No screenshots found. Skipping screenshot gather."
 fi
+
+echo "Download OVE ISO"
+tar -cJf "agent-ove-iso.tar.xz" ${OCP_DIR}/iso_builder/agent-ove.x86_64.iso
