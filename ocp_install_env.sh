@@ -401,13 +401,13 @@ EOF
   if [ -z "${HOSTS_SWAP_DEFINITION:-}" ]; then
     cat >> "${outdir}/install-config.yaml" << EOF
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
-$(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
-$(node_map_to_install_config_hosts $NUM_ARBITERS $(( NUM_MASTERS + NUM_WORKERS )) arbiter)
+$(node_map_to_install_config_hosts $NUM_ARBITERS $NUM_MASTERS arbiter)
+$(node_map_to_install_config_hosts $NUM_WORKERS $(( NUM_MASTERS + NUM_ARBITERS )) worker)
 EOF
   else
     cat >> "${outdir}/install-config.yaml" << EOF
-$(node_map_to_install_config_hosts $NUM_ARBITERS $(( NUM_MASTERS + NUM_WORKERS )) arbiter)
-$(node_map_to_install_config_hosts $NUM_WORKERS $NUM_MASTERS worker)
+$(node_map_to_install_config_hosts $NUM_WORKERS $(( NUM_MASTERS + NUM_ARBITERS )) worker)
+$(node_map_to_install_config_hosts $NUM_ARBITERS $NUM_MASTERS arbiter)
 $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 EOF
   fi
