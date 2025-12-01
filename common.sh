@@ -457,28 +457,28 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=5
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-24576}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "4CONTROL" )
           export NUM_MASTERS=4
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-24576}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "COMPACT" )
           export NUM_MASTERS=3
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "TNA" )
           export NUM_MASTERS=2
           export MASTER_VCPU=${MASTER_VCPU:-8}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_ARBITERS=1
           export ARBITER_VCPU=${ARBITER_VCPU:-2}
           export ARBITER_MEMORY=${ARBITER_MEMORY:-8192}
@@ -489,7 +489,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=2
           export MASTER_VCPU=${MASTER_VCPU:-8}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           export ENABLE_TWO_NODE_FENCING="true"
           ;;
@@ -497,7 +497,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=3
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=2
           export WORKER_VCPU=4
           export WORKER_DISK=${WORKER_DISK:-100}
@@ -507,7 +507,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=1
           export MASTER_VCPU=${MASTER_VCPU:-8}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           export NETWORK_TYPE="OVNKubernetes"
           export AGENT_PLATFORM_TYPE="${AGENT_PLATFORM_TYPE:-"none"}"
