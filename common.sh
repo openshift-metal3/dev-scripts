@@ -472,28 +472,28 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=5
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-24576}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "4CONTROL" )
           export NUM_MASTERS=4
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-24576}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "COMPACT" )
           export NUM_MASTERS=3
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "TNA" )
           export NUM_MASTERS=2
           export MASTER_VCPU=${MASTER_VCPU:-8}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_ARBITERS=1
           export ARBITER_VCPU=${ARBITER_VCPU:-2}
           export ARBITER_MEMORY=${ARBITER_MEMORY:-8192}
@@ -505,7 +505,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=2
           export MASTER_VCPU=${MASTER_VCPU:-8}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=${NUM_WORKERS:-0}
           export WORKER_DISK=${WORKER_DISK:-100}
           export ENABLE_TWO_NODE_FENCING="true"
@@ -514,17 +514,17 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=3
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-24576}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=2
           export WORKER_VCPU=${WORKER_VCPU:-4}
           export WORKER_DISK=${WORKER_DISK:-100}
-          export WORKER_MEMORY=${WORKER_MEMORY:-16384}
+          export WORKER_MEMORY=${WORKER_MEMORY:-8192}
           ;;
       "SNO" )
           export NUM_MASTERS=1
           export MASTER_VCPU=${MASTER_VCPU:-8}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           export NETWORK_TYPE="OVNKubernetes"
           export AGENT_PLATFORM_TYPE="${AGENT_PLATFORM_TYPE:-"none"}"
@@ -541,7 +541,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=1
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           export NETWORK_TYPE="OVNKubernetes"
           export AGENT_PLATFORM_TYPE="${AGENT_PLATFORM_TYPE:-"none"}"
@@ -560,12 +560,24 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     if ((MASTER_VCPU < 10)); then
       export MASTER_VCPU=10
     fi
+    if ((MASTER_MEMORY < 17658)); then
+      # CNV requires 150MiB
+      # MTV requires 1024MiB
+      # LVM requires 100MiB (compact/SNO only)
+      export MASTER_MEMORY=17658
+    fi
     if [ "${SCENARIO}" == "SNO" ]; then
        if ((MASTER_VCPU < 16)); then
         export MASTER_VCPU=16
       fi
     fi
     if [ "${SCENARIO}" == "HA" ]; then
+       if ((WORKER_MEMORY < 9676)); then
+         # CNV requires 360MiB
+         # MTV requires 1024MiB
+         # LVM requires 100MiB
+         export WORKER_MEMORY=9676
+       fi
        if ((WORKER_VCPU < 5)); then
         export WORKER_VCPU=5
       fi
