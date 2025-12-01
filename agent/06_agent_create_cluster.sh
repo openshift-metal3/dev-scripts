@@ -83,14 +83,13 @@ function create_config_image() {
 }
 
 function create_agent_iso_no_registry() {
-  # Clone agent-installer-utils
-  if [[ ! -d $OPENSHIFT_AGENT_INSTALER_UTILS_PATH ]]; then
-    sync_repo_and_patch go/src/github.com/openshift/agent-installer-utils https://github.com/openshift/agent-installer-utils.git
-  fi
-  # Create agent ISO without registry a.k.a. OVE ISO
   local asset_dir=${1}
+
+  id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") &&  podman cp "${id}":/src "${asset_dir}" &&  podman rm "${id}"
+
+  # Create agent ISO without registry a.k.a. OVE ISO
   pushd .
-  cd $OPENSHIFT_AGENT_INSTALER_UTILS_PATH/tools/iso_builder
+  cd "${asset_dir}"/src
   # Build the ISO in the container image
   make build-ove-iso-container PULL_SECRET_FILE="${PULL_SECRET_FILE}" RELEASE_IMAGE_URL="${OPENSHIFT_RELEASE_IMAGE}" ARCH=${ARCH}
   # Retrieve ISO from container
@@ -98,6 +97,7 @@ function create_agent_iso_no_registry() {
   local iso_name="agent-ove.${ARCH}.iso"
   echo "Moving ${iso_name} to ${asset_dir}"
   mv ./output-iso/${iso_name} "${asset_dir}"
+  rm -rf "${asset_dir}"/src
   popd
 }
 

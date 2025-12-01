@@ -23,10 +23,15 @@ function agent_remove_iscsi_disks() {
       done
 }
 
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "DISKIMAGE" ]]; then
+if [[ -d "${OCP_DIR}/cache" && -d "${OCP_DIR}/temp" ]]; then
     sudo rm -rf "${OCP_DIR}/cache"
     sudo rm -rf "${OCP_DIR}/temp"
     sudo podman rmi -f ${APPLIANCE_IMAGE} || true
+fi
+
+if [[ -d "${OCP_DIR}/iso_builder" ]]; then
+    sudo rm -rf "${OCP_DIR}/iso_builder"
+    sudo podman rmi -f ${AGENT_ISO_BUILDER_IMAGE} || true
 fi
 
 if [[ -d ${BOOT_SERVER_DIR} ]]; then
