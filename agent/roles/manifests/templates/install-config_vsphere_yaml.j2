@@ -103,9 +103,13 @@ imageContentSources:
     - "{{ local_registry_dns_name }}:{{ local_registry_port }}/redhat"
   source: "registry.redhat.io/redhat"
 {% endif %}
+{% if not registry_insecure %}
 additionalTrustBundle: {{ ca_bundle_crt }}
+{% endif %}
 {% elif enable_local_registry %}
+{% if not registry_insecure %}
 additionalTrustBundle: {{ registry_certificate }}
+{% endif %}
 {% endif %}
 {% if http_proxy or https_proxy or no_proxy %}
 proxy:

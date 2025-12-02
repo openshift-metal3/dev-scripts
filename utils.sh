@@ -541,7 +541,13 @@ function setup_legacy_release_mirror {
       EXTRACT_DIR=$(mktemp --tmpdir -d "mirror-installer--XXXXXXXXXX")
       _tmpfiles="$_tmpfiles $EXTRACT_DIR"
 
+      INSECURE_FLAG=""
+      if [[ ! -z "${REGISTRY_INSECURE}" && "${REGISTRY_INSECURE,,}" == "true" ]]; then
+          INSECURE_FLAG="--insecure"
+      fi
+
       oc adm release extract --registry-config "${PULL_SECRET_FILE}" \
+        ${INSECURE_FLAG} \
         --command=$installer --to "${EXTRACT_DIR}" \
         "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG}"
 
@@ -611,8 +617,11 @@ EOF
 
     htpasswd -bBc ${REGISTRY_DIR}/auth/htpasswd ${REGISTRY_USER} ${REGISTRY_PASS}
 
-    sudo cp ${REGISTRY_DIR}/certs/${REGISTRY_CRT} /etc/pki/ca-trust/source/anchors/
-    sudo update-ca-trust
+    # Add certificate to system trust store (skip if using insecure mode)
+    if [[ -z "${REGISTRY_INSECURE}" || "${REGISTRY_INSECURE,,}" == "false" ]]; then
+        sudo cp ${REGISTRY_DIR}/certs/${REGISTRY_CRT} /etc/pki/ca-trust/source/anchors/
+        sudo update-ca-trust
+    fi
 
     reg_state=$(sudo podman inspect registry --format  "{{.State.Status}}" || echo "error")
 

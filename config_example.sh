@@ -705,6 +705,16 @@ set -x
 # "virthost.ostest.test.metalkube.org:LOCAL_REGISTRY_PORT=": { "auth": "<auth string>" },
 #export DOCKER_CONFIG_FILE=$HOME/.docker/config.json
 
+# REGISTRY_INSECURE -
+# When set to true, configures the mirrored registry backend to not require
+# certificate validation. This skips adding certificates to the system trust store,
+# omits additionalTrustBundle from install-config.yaml, and adds insecure=true
+# to all registry mirror configurations.
+# Note: The registry backend still uses HTTPS with self-signed certificates,
+# but clients will skip certificate verification.
+# Default: false
+#export REGISTRY_INSECURE=true
+
 # MIRROR_OLM -
 # Comma-separated list of OLM operators to mirror into the local registry. This
 # has no effect if MIRROR_IMAGES is false. This will not work for releases that
