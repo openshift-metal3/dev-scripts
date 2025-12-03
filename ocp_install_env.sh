@@ -361,8 +361,6 @@ function generate_ocp_install_config() {
       NETWORK_TYPE=OVNKubernetes
     fi
 
-    OCP_VERSION=$(openshift_version $OCP_DIR)
-
     cat > "${outdir}/install-config.yaml" << EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
@@ -464,12 +462,8 @@ function generate_ocp_host_manifest() {
 
         encoded_username=$(echo -n "$username" | base64)
         encoded_password=$(echo -n "$password" | base64)
-        if is_lower_version "$(openshift_version $OCP_DIR)" "4.21"; then
-          # Heads up, "verify_ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
-          disableCertificateVerification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
-        else
-          disableCertificateVerification=false
-        fi
+        # Heads up, "verify_ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
+        disableCertificateVerification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
 
         secret="---
 apiVersion: v1
