@@ -191,6 +191,15 @@ function setVIPs() {
     esac
 }
 
+function loadbalancer_type() {
+    if [ -n "$EXTERNAL_LOADBALANCER" ]; then
+cat <<EOF
+    loadBalancer:
+      type: UserManaged
+EOF
+    fi
+}
+
 function featureSet() {
     if [[ -n "$FEATURE_SET" ]]; then
 cat <<EOF
@@ -395,6 +404,7 @@ $(cluster_os_image)
 $(setVIPs apivips)
 $(setVIPs ingressvips)
 $(dnsvip)
+$(loadbalancer_type)
     hosts:
 EOF
 
