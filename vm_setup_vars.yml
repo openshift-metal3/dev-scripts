@@ -59,6 +59,13 @@ dns_extrahosts:
     hostnames:
       - "virthost"
 
+dns_externalhosts:
+  - ip: "{{ baremetal_network_cidr | nthhost(1) }}"
+    hostnames:
+      - "virthost"
+      - "api"
+      - "api-int"
+
 network_config_folder: "{{ lookup('env', 'NETWORK_CONFIG_FOLDER') | default(false) }}"
 hosts_config: "{{ lookup('template', network_config_folder + '/hosts.yaml', errors='ignore') | default('[]', true) | from_yaml }}"
 dns_customhosts: "{{ [] if not network_config_folder else hosts_config }}"
@@ -88,7 +95,7 @@ external_network:
       - 65535
     domain: "{{ cluster_domain }}"
     dns:
-      hosts: "{{ dns_extrahosts + dns_customhosts + dns_dualstackhost if lookup('env', 'EXTERNAL_SUBNET_V6') else dns_extrahosts + dns_customhosts }}"
+      hosts: "{{ dns_externalhosts + dns_customhosts if lookup('env', 'EXTERNAL_LOADBALANCER') else dns_extrahosts + dns_customhosts + dns_dualstackhost if lookup('env', 'EXTERNAL_SUBNET_V6') else dns_extrahosts + dns_customhosts }}"
       forwarders:
         - domain: "apps.{{ cluster_domain }}"
           addr: "127.0.0.1"

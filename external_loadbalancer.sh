@@ -9,6 +9,7 @@ source utils.sh
 
 sudo firewall-cmd --zone=libvirt --add-port=6443/tcp
 sudo firewall-cmd --zone=libvirt --add-port=8080/tcp
+sudo firewall-cmd --zone=libvirt --add-port=22623/tcp
 
 haproxy_config="${WORKING_DIR}/haproxy.cfg"
 echo $haproxy_config
@@ -21,6 +22,7 @@ then
      master2=$(nth_ip $EXTERNAL_SUBNET_V6 22)
      worker0=$(nth_ip $EXTERNAL_SUBNET_V6 23)
      worker1=$(nth_ip $EXTERNAL_SUBNET_V6 24)
+     bootstrap=$(nth_ip $EXTERNAL_SUBNET_V6 9)
 else
 
      master0=$(nth_ip $EXTERNAL_SUBNET_V4 20)
@@ -28,6 +30,7 @@ else
      master2=$(nth_ip $EXTERNAL_SUBNET_V4 22)
      worker0=$(nth_ip $EXTERNAL_SUBNET_V4 23)
      worker1=$(nth_ip $EXTERNAL_SUBNET_V4 24)
+     bootstrap=$(nth_ip $EXTERNAL_SUBNET_V4 9)
 fi
 
 cat << EOF > "$haproxy_config"
@@ -43,6 +46,15 @@ frontend main
 frontend ingress
     bind :::8080  v4v6
     default_backend ingress
+frontend https
+    bind :::443 v4v6
+    default_backend https
+frontend mcs
+    bind :::22623 v4v6
+    default_backend mcs
+frontend ironic
+    bind :::6385 v4v6
+    default_backend ironic
 backend api
     option  httpchk GET /readyz HTTP/1.0
     option  log-health-checks
@@ -50,6 +62,7 @@ backend api
     server master-0 ${master0}:6443 check check-ssl inter 1s fall 2 rise 3 verify none
     server master-1 ${master1}:6443 check check-ssl inter 1s fall 2 rise 3 verify none
     server master-2 ${master2}:6443 check check-ssl inter 1s fall 2 rise 3 verify none
+    server bootstrap ${bootstrap}:6443 check check-ssl inter 1s fall 2 rise 3 verify none
 backend ingress
     option  httpchk GET /healthz/ready  HTTP/1.0
     option  log-health-checks
@@ -59,6 +72,36 @@ backend ingress
     server master-2 ${master2}:80 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
     server w-0 ${worker0}:80 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
     server w-1 ${worker1}:80 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
+backend https
+    option  httpchk GET /healthz/ready  HTTP/1.0
+    option  log-health-checks
+    balance roundrobin
+    server master-0 ${master0}:443 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
+    server master-1 ${master1}:443 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
+    server master-2 ${master2}:443 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
+    server w-0 ${worker0}:443 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
+    server w-1 ${worker1}:443 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
+    server bootstrap ${bootstrap}:443 check check-ssl port 1936 inter 1s fall 2 rise 3 verify none
+backend mcs
+    option  httpchk GET /config/master  HTTP/1.0
+    option  log-health-checks
+    balance roundrobin
+    server master-0 ${master0}:22623 check check-ssl inter 1s fall 2 rise 3 verify none
+    server master-1 ${master1}:22623 check check-ssl inter 1s fall 2 rise 3 verify none
+    server master-2 ${master2}:22623 check check-ssl inter 1s fall 2 rise 3 verify none
+    server w-0 ${worker0}:22623 check check-ssl inter 1s fall 2 rise 3 verify none
+    server w-1 ${worker1}:22623 check check-ssl inter 1s fall 2 rise 3 verify none
+    server bootstrap ${bootstrap}:22623 check check-ssl inter 1s fall 2 rise 3 verify none
+backend ironic
+    option  httpchk GET /v1  HTTP/1.0
+    option  log-health-checks
+    balance roundrobin
+    server master-0 ${master0}:6385 check check-ssl inter 30s fall 2 rise 3 verify none
+    server master-1 ${master1}:6385 check check-ssl inter 30s fall 2 rise 3 verify none
+    server master-2 ${master2}:6385 check check-ssl inter 30s fall 2 rise 3 verify none
+    server w-0 ${worker0}:6385 check check-ssl inter 1s fall 2 rise 3 verify none
+    server w-1 ${worker1}:6385 check check-ssl inter 1s fall 2 rise 3 verify none
+    server bootstrap ${bootstrap}:6385 check check-ssl inter 30s fall 2 rise 3 verify none
 EOF
 
 sudo podman run -d  --net host -v "${WORKING_DIR}":/etc/haproxy/:z --entrypoint bash --name extlb quay.io/openshift/origin-haproxy-router  -c 'haproxy -f /etc/haproxy/haproxy.cfg'

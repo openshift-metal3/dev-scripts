@@ -386,6 +386,13 @@ export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
 # (Currently this just expects a non-empty value, the IP is fixed to .9)
 export ENABLE_BOOTSTRAP_STATIC_IP=${ENABLE_BOOTSTRAP_STATIC_IP:-}
 
+export EXTERNAL_LOADBALANCER=${EXTERNAL_LOADBALANCER:-}
+
+if [ -n "$EXTERNAL_LOADBALANCER" -a -z "$ENABLE_BOOTSTRAP_STATIC_IP" ]; then
+  error "EXTERNAL_LOADBALANCER requires ENABLE_BOOTSTRAP_STATIC_IP to be set as well"
+  exit 1
+fi
+
 # TODO(bnemec): Once https://github.com/ansible/ansible/pull/75537 merges this
 # can be removed.
 ALMA_PYTHON_OVERRIDE=
