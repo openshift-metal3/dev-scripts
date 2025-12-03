@@ -268,15 +268,13 @@ function node_map_to_install_config_hosts() {
 EOF
 
       if [[ "$driver_prefix" == "redfish" ]]; then
-          # Set disableCertificateVerification on older versions
-          if is_lower_version "$(openshift_version $OCP_DIR)" "4.21"; then
-              # Heads up, "verify ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
-              verify_ca=$(node_val ${idx} "driver_info.redfish_verify_ca")
-              disable_certificate_verification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
-              cat << EOF
+          # Set disableCertificateVerification
+          # Heads up, "verify ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
+          verify_ca=$(node_val ${idx} "driver_info.redfish_verify_ca")
+          disable_certificate_verification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
+          cat << EOF
           disableCertificateVerification: ${disable_certificate_verification}
 EOF
-          fi
       fi
 
 

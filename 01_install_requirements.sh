@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset cb83ca7ae9cfabe827d7a784b28e537e098070ae --hard
+  git reset 01530d036cce1ff0b4675768777af7a6c6de7487 --hard
 
   popd
 fi
