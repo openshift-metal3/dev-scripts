@@ -66,6 +66,12 @@ install_config:
 ocp_run:
 	./06_create_cluster.sh
 
+add_worker:
+	./add_worker_node.sh $(WORKER_NAME)
+
+remove_worker:
+	./remove_worker_node.sh $(WORKER_NAME)
+
 gather:
 	./must_gather.sh
 
