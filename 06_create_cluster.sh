@@ -29,6 +29,10 @@ if [[ ! -z "$INSTALLER_PROXY" ]]; then
   fi
 fi
 
+if [ -n "$EXTERNAL_LOADBALANCER" ]; then
+  ./external_loadbalancer.sh &
+fi
+
 # Call openshift-installer to deploy the bootstrap node and masters
 create_cluster ${OCP_DIR}
 

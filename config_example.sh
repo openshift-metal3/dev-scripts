@@ -427,6 +427,16 @@ set -x
 # When set to any value this will cause dev-scripts to include duplicate nics
 # on the primary network. This is intended for testing bonded network configs
 # and may not work without a bond config.
+# export BOND_PRIMARY_INTERFACE=1
+
+# EXTERNAL_LOADBALANCER -
+# When set to any value this will cause dev-scripts to configure an haproxy
+# loadbalancer on the host and configure the cluster to use it instead of the
+# internal loadbalancer.
+# Because of the way the loadbalancer config is written, this only works when
+# using single stack (either ipv4 or ipv6) and a static bootstrap IP (see the
+# ENABLE_BOOTSTRAP_STATIC_IP option above).
+# export EXTERNAL_LOADBALANCER=1
 
 ################################################################################
 ## VM Settings
