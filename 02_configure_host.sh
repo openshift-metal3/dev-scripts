@@ -371,7 +371,12 @@ if use_registry "podman"; then
     # blank authfile with a "assignment to entry in nil map" error
     rm -f ${REGISTRY_CREDS}
     # create authfile for local registry
+    TLS_VERIFY_FLAG=""
+    if [[ ! -z "${REGISTRY_INSECURE}" && "${REGISTRY_INSECURE,,}" == "true" ]]; then
+        TLS_VERIFY_FLAG="--tls-verify=false"
+    fi
     sudo podman login --authfile ${REGISTRY_CREDS} \
+        ${TLS_VERIFY_FLAG} \
         -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
         ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
 elif ! use_registry "quay"; then

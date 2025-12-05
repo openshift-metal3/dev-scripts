@@ -309,11 +309,13 @@ function generate_cluster_manifests() {
   fi
 
   if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
-    # Store the certs for registry
-    if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
-       cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
-    else
-       cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem ${MIRROR_PATH}/ca-bundle.crt
+    # Store the certs for registry (skip if using insecure mode)
+    if [[ -z "${REGISTRY_INSECURE}" || "${REGISTRY_INSECURE,,}" == "false" ]]; then
+      if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+         cp $REGISTRY_DIR/certs/$REGISTRY_CRT ${MIRROR_PATH}/ca-bundle.crt
+      else
+         cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem ${MIRROR_PATH}/ca-bundle.crt
+      fi
     fi
 
     get_mirror_info

@@ -72,7 +72,7 @@ function mirror_to_file() {
    config=${1}
 
    pushd ${WORKING_DIR}
-   oc-mirror --v2 --config ${config} file://${WORKING_DIR}
+   oc-mirror --v2 --config ${config} file://${WORKING_DIR} --ignore-release-signature
    popd
 }
 
@@ -80,9 +80,42 @@ function publish_image() {
 
    config=${1}
 
+   # Workaround: oc-mirror v2 doesn't respect registries.conf insecure setting
+   # Temporarily add cert to system trust store for oc-mirror, then remove it
+   cert_temporarily_added=false
+   if [[ ! -z "${REGISTRY_INSECURE}" && "${REGISTRY_INSECURE,,}" == "true" ]]; then
+      echo "WORKAROUND: Temporarily adding certificate to system trust for oc-mirror v2"
+
+      if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+         if [[ -f "${REGISTRY_DIR}/certs/${REGISTRY_CRT}" ]]; then
+            sudo cp ${REGISTRY_DIR}/certs/${REGISTRY_CRT} /etc/pki/ca-trust/source/anchors/
+            sudo update-ca-trust
+            cert_temporarily_added=true
+         fi
+      else
+         # quay backend
+         if [[ -f "${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem" ]]; then
+            sudo cp ${WORKING_DIR}/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/
+            sudo update-ca-trust
+            cert_temporarily_added=true
+         fi
+      fi
+   fi
+
    pushd ${WORKING_DIR}
-   oc-mirror --v2 --config ${config} --from file://${WORKING_DIR} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
+   oc-mirror --v2 --config ${config} --from file://${WORKING_DIR} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --ignore-release-signature
    popd
+
+   # Remove the temporarily added certificate
+   if [[ "${cert_temporarily_added}" == "true" ]]; then
+      echo "WORKAROUND: Removing temporarily added certificate from system trust"
+      if [[ "${REGISTRY_BACKEND}" = "podman" ]]; then
+         sudo rm -f /etc/pki/ca-trust/source/anchors/${REGISTRY_CRT}
+      else
+         sudo rm -f /etc/pki/ca-trust/source/anchors/rootCA.pem
+      fi
+      sudo update-ca-trust
+   fi
 
 }
 

@@ -10,6 +10,9 @@ mirror-by-digest-only = false
 
 [[registry.mirror]]
 location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/multicluster-engine"
+{% if registry_insecure %}
+insecure = true
+{% endif %}
 
 [[registry]]
 prefix = ""
@@ -18,6 +21,9 @@ mirror-by-digest-only = false
 
 [[registry.mirror]]
 location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/rhel8"
+{% if registry_insecure %}
+insecure = true
+{% endif %}
 
 [[registry]]
 prefix = ""
@@ -26,5 +32,8 @@ mirror-by-digest-only = false
 
 [[registry.mirror]]
 location = "{{ local_registry_dns_name }}:{{ local_registry_port }}/redhat"
+{% if registry_insecure %}
+insecure = true
+{% endif %}
 {% endif %}
 {% endif %}
