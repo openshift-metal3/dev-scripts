@@ -163,10 +163,29 @@ sudo python -m pip install netaddr lxml
 sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
 
 pushd ${METAL3_DEV_ENV_PATH}
-ansible-galaxy install -r vm-setup/requirements.yml
+
+# Check if requirements.yml exists before attempting installation
+if [[ ! -f vm-setup/requirements.yml ]]; then
+  echo "ERROR: requirements.yml file not found in vm-setup directory." >&2
+  exit 1
+fi
+
+# Install roles from requirements.yml with retry logic
+# retries default to 5, no timeout limit
+RETRY_DELAY=${ANSIBLE_GALAXY_RETRY_DELAY:-15} \
+  EXPONENTIAL_BACKOFF=true \
+  retry_with_timeout ${ANSIBLE_GALAXY_MAX_RETRIES:-5} 0 \
+  "ansible-galaxy install -r vm-setup/requirements.yml"
+
 # Let's temporarily pin these collections to the latest compatible with ansible-2.15
 #ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
-ansible-galaxy collection install 'ansible.netcommon<8.0.0' ansible.posix 'ansible.utils<6.0.0' community.general
+# Install collections with retry logic
+# retries default to 5, no timeout limit
+RETRY_DELAY=${ANSIBLE_GALAXY_RETRY_DELAY:-15} \
+  EXPONENTIAL_BACKOFF=true \
+  retry_with_timeout ${ANSIBLE_GALAXY_MAX_RETRIES:-5} 0 \
+  "ansible-galaxy collection install 'ansible.netcommon<8.0.0' ansible.posix 'ansible.utils<6.0.0' community.general"
+
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
