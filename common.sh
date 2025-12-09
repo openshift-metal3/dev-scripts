@@ -431,7 +431,7 @@ export NETWORKING_MODE=${NETWORKING_MODE:-}
 export AGENT_E2E_TEST_BOOT_MODE=${AGENT_E2E_TEST_BOOT_MODE:-"ISO"}
 export AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV=${AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV:-"false"}
 export AGENT_RENDEZVOUS_NODE_HOSTNAME=${AGENT_RENDEZVOUS_NODE_HOSTNAME:-${CLUSTER_NAME}_master_0}
-export AGENT_OVE_ISO_SIZE=${AGENT_OVE_ISO_SIZE:-50}
+export AGENT_OVE_ISO_SIZE=${AGENT_OVE_ISO_SIZE:-70}
 
 # HTTP boot server port used by the agent installer for PXE and minimal ISO
 # Needed to be defined here since it's required also by the shared step 02_configure_host.sh
