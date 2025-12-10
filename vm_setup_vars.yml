@@ -11,6 +11,7 @@ num_masters: 3
 num_workers: 1
 num_arbiters: "{{ lookup('env', 'NUM_ARBITERS') | default(0) }}"
 num_extraworkers: 0
+num_armworkers: 0
 extradisks_list: "{{ lookup('env', 'VM_EXTRADISKS_LIST').split(' ') | default(['vdb']) }}"
 extradisks_size: "{{ lookup('env', 'VM_EXTRADISKS_SIZE') | default(['8G']) }}"
 flavors:
@@ -19,24 +20,35 @@ flavors:
     disk: "{{ lookup('env', 'MASTER_DISK') }}"
     vcpu: "{{ lookup('env', 'MASTER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
+    architecture: "{{ libvirt_arch }}"
 
   arbiter:
     memory: "{{ lookup('env', 'ARBITER_MEMORY') }}"
     disk: "{{ lookup('env', 'ARBITER_DISK') }}"
     vcpu: "{{ lookup('env', 'ARBITER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
+    architecture: "{{ libvirt_arch }}"
 
   worker:
     memory: "{{ lookup('env', 'WORKER_MEMORY') }}"
     disk: "{{ lookup('env', 'WORKER_DISK') }}"
     vcpu: "{{ lookup('env', 'WORKER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
+    architecture: "{{ libvirt_arch }}"
 
   extraworker:
     memory: "{{ lookup('env', 'EXTRA_WORKER_MEMORY') }}"
     disk: "{{ lookup('env', 'EXTRA_WORKER_DISK') }}"
     vcpu: "{{ lookup('env', 'EXTRA_WORKER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
+    architecture: "{{ libvirt_arch }}"
+
+  armworker:
+    memory: "{{ lookup('env', 'EXTRA_WORKER_MEMORY') }}"
+    disk: "{{ lookup('env', 'EXTRA_WORKER_DISK') }}"
+    vcpu: "{{ lookup('env', 'EXTRA_WORKER_VCPU') }}"
+    extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
+    architecture: "aarch64"
 
 # For OpenShift we create some additional DNS records for the API/DNS VIPs
 baremetal_network_cidr_v4: "{{ lookup('env', 'EXTERNAL_SUBNET_V4') }}"

@@ -457,8 +457,8 @@ function generate_ocp_host_manifest() {
     rm -f "${outdir}/extras/*"
 
     worker_index=0
-    jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address + " " + .driver_info.redfish_verify_ca' $host_input \
-       | while read name mac username password address verify_ca; do
+    jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address + " " + .driver_info.redfish_verify_ca + " " + .properties.cpu_arch' $host_input \
+       | while read name mac username password address verify_ca architecture; do
 
         encoded_username=$(echo -n "$username" | base64)
         encoded_password=$(echo -n "$password" | base64)
@@ -485,6 +485,7 @@ metadata:
 spec:
   online: ${EXTRA_WORKERS_ONLINE_STATUS}
   bootMACAddress: $mac
+  architecture: $architecture
   bmc:
     address: $address
     credentialsName: ${name}-bmc-secret

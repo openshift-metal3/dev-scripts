@@ -104,6 +104,27 @@ if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -d "${OCP_DIR}/extras" ]]; then
     oc create secret generic extraworkers-secret --from-file="${OCP_DIR}/extras/" -n openshift-machine-api
 fi
 
+if [[ -n "${APPLY_ARM_WORKERS}" ]]; then
+    if [[ ${NUM_ARM_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_arm_host_manifests.yaml" ]]; then
+        oc apply -f "${OCP_DIR}/extra_arm_host_manifests.yaml"
+
+        for h in $(jq -r '.[].name' ${EXTRA_ARM_BAREMETALHOSTS_FILE}); do
+            while ! oc get baremetalhost -n openshift-machine-api $h 2>/dev/null; do
+                echo "Waiting for $h"
+                sleep 5
+            done
+            echo "$h is successfully applied"
+        done
+    else
+        echo "NUM_ARM_WORKERS should be set and extra_arm_host_manifests.yaml should exist"
+    fi
+fi
+
+# Create a secret containing armworkers info for the e2e tests
+if [[ ${NUM_ARM_WORKERS} -ne 0 && -d "${OCP_DIR}/arm" ]]; then
+    oc create secret generic armworkers-secret --from-file="${OCP_DIR}/arm/" -n openshift-machine-api
+fi
+
 if [[ ! -z "${ENABLE_METALLB}" ]]; then
 
 	if [[ -z ${METALLB_IMAGE_BASE} ]]; then

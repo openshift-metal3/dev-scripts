@@ -128,6 +128,38 @@ if [[ $(uname -m) == "aarch64" ]]; then
   echo "libvirt_cdrombus: scsi" >> vm_setup_vars.yml
 fi
 
+# playbooks depend on it
+if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
+    ./build-qemu-aarch64.sh
+fi
+
+
+# Allow local non-root-user access to libvirt
+if ! id $USER | grep -q libvirt; then
+  sudo usermod -a -G "libvirt" $USER
+fi
+
+# This method, defined in common.sh, will either ensure sockets are up'n'running
+# for CS9 and RHEL9, or restart the libvirtd.service for other DISTRO
+manage_libvirtd
+
+# If we installed ARM support, restart libvirt and verify capabilities
+if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
+    sudo systemctl restart libvirtd
+
+    # Verify qemu-system-aarch64 binary works
+    /usr/local/bin/qemu-system-aarch64 --help > /dev/null
+
+    # Verify libvirt can see aarch64 support
+    if virsh capabilities | grep -q aarch64; then
+        echo "  libvirt can now emulate aarch64 architecture"
+    else
+        echo "  ERROR: libvirt cannot emulate aarch64 architecture"
+        echo "  This may indicate missing firmware files or qemu binary not found"
+        exit 1
+    fi
+fi
+
 ansible-playbook \
     -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
@@ -138,6 +170,7 @@ ansible-playbook \
     -e "num_masters=$NUM_MASTERS" \
     -e "num_workers=$NUM_WORKERS" \
     -e "num_extraworkers=$NUM_EXTRA_WORKERS" \
+    -e "num_armworkers=$NUM_ARM_WORKERS" \
     -e "libvirt_firmware=$LIBVIRT_FIRMWARE" \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
@@ -161,28 +194,27 @@ if ! [[ -f /usr/share/OVMF/OVMF_CODE.fd || -L /usr/share/OVMF/OVMF_CODE.fd ]]; t
   sudo ln -s /usr/share/edk2/ovmf/OVMF_CODE.fd /usr/share/OVMF/
 fi
 
-if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
+if [ ${NUM_EXTRA_WORKERS} -ne 0 ] || [ ${NUM_ARM_WORKERS} -ne 0 ]; then
   ORIG_NODES_FILE="${NODES_FILE}.orig"
   cp -f ${NODES_FILE} ${ORIG_NODES_FILE}
   sudo chown -R $USER:$GROUP ${NODES_FILE}
+
+  # NODES_FILE gets: masters + workers (no extra workers or ARM workers)
   jq "{nodes: .nodes[:$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS))]}" ${ORIG_NODES_FILE} | tee ${NODES_FILE}
-  jq "{nodes: .nodes[-${NUM_EXTRA_WORKERS}:]}" ${ORIG_NODES_FILE} | tee ${EXTRA_NODES_FILE}
+
+  # EXTRA_NODES_FILE gets: extra workers only (if any)
+  if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
+    jq "{nodes: .nodes[$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS)):$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS + NUM_EXTRA_WORKERS))]}" ${ORIG_NODES_FILE} | tee ${EXTRA_NODES_FILE}
+  fi
+
+  # ARM_NODES_FILE gets: ARM workers only (if any)
+  if [ ${NUM_ARM_WORKERS} -ne 0 ]; then
+    jq "{nodes: .nodes[-${NUM_ARM_WORKERS}:]}" ${ORIG_NODES_FILE} | tee ${ARM_NODES_FILE}
+  fi
 fi
 
 ZONE="\nZONE=libvirt"
 
-# Allow local non-root-user access to libvirt
-if ! id $USER | grep -q libvirt; then
-  sudo usermod -a -G "libvirt" $USER
-fi
-
-# This method, defined in common.sh, will either ensure sockets are up'n'running
-# for CS9 and RHEL9, or restart the libvirtd.service for other DISTRO
-manage_libvirtd
-
-if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
-    ./build-qemu-aarch46.sh
-fi
 
 # As per https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#configure-default-libvirt-storage-pool
 # Usually virt-manager/virt-install creates this: https://www.redhat.com/archives/libvir-list/2008-August/msg00179.html
