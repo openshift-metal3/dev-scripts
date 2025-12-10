@@ -180,6 +180,10 @@ fi
 # for CS9 and RHEL9, or restart the libvirtd.service for other DISTRO
 manage_libvirtd
 
+if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
+    ./build-qemu-aarch46.sh
+fi
+
 # As per https://github.com/openshift/installer/blob/master/docs/dev/libvirt-howto.md#configure-default-libvirt-storage-pool
 # Usually virt-manager/virt-install creates this: https://www.redhat.com/archives/libvir-list/2008-August/msg00179.html
 if ! virsh pool-uuid default > /dev/null 2>&1 ; then
