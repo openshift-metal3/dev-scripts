@@ -30,7 +30,12 @@ function extract_command() {
     for attempt in $(seq 1 $MAX_RETRIES); do
         extract_dir=$(mktemp --tmpdir -d "installer--XXXXXXXXXX")
 
-        if oc adm release extract --registry-config "${PULL_SECRET_FILE}" --command="$cmd" --to "${extract_dir}" "${release_image}"; then
+        INSECURE_FLAG=""
+        if [[ ! -z "${REGISTRY_INSECURE}" && "${REGISTRY_INSECURE,,}" == "true" ]]; then
+            INSECURE_FLAG="--insecure"
+        fi
+
+        if oc adm release extract --registry-config "${PULL_SECRET_FILE}" ${INSECURE_FLAG} --command="$cmd" --to "${extract_dir}" "${release_image}"; then
             echo "Successfully extracted $cmd"
             break
         fi

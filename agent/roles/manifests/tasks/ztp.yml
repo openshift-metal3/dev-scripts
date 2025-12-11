@@ -51,3 +51,8 @@
     src: "registries_conf.j2"
     dest: "{{ mirror_path }}/registries.conf"
   when: mirror_images
+
+- name: Add insecure flag to registry mirrors
+  shell: |
+    sed -i '/^\[\[registry\.mirror\]\]/a insecure = true' "{{ mirror_path }}/registries.conf"
+  when: mirror_images and registry_insecure
