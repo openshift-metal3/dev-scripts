@@ -31,6 +31,8 @@ fi
 
 if [[ -d "${OCP_DIR}/iso_builder" ]]; then
     sudo rm -rf "${OCP_DIR}/iso_builder"
+
+    AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
     sudo podman rmi -f ${AGENT_ISO_BUILDER_IMAGE} || true
 fi
 

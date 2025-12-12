@@ -26,14 +26,6 @@ export ISCSI_DEVICE_NAME=${ISCSI_DEVICE_NAME:-"/dev/sdb"}
 # See: https://github.com/openshift/appliance
 export APPLIANCE_IMAGE=${APPLIANCE_IMAGE:-"quay.io/edge-infrastructure/openshift-appliance:latest"}
 
-if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
-    full_ocp_version=$(skopeo inspect --authfile $PULL_SECRET_FILE docker://$OPENSHIFT_RELEASE_IMAGE | jq -r '.Labels["io.openshift.release"]')
-    major_minor_patch_version=$(echo "\"$full_ocp_version\"" | jq -r 'split("-")[0]')
-    major_minor_version=$(echo $major_minor_patch_version | cut -d'.' -f1,2 )
-    export AGENT_ISO_BUILDER_IMAGE=${AGENT_ISO_BUILDER_IMAGE:-"registry.ci.openshift.org/ocp/${major_minor_version}:agent-iso-builder"}
-    echo "Using AGENT_ISO_BUILDER_IMAGE: ${AGENT_ISO_BUILDER_IMAGE}"
-fi
-
 # Override command name in case of extraction
 export OPENSHIFT_INSTALLER_CMD="openshift-install"
 
@@ -92,4 +84,12 @@ function getRendezvousIP() {
     node_zero_mac_address=$(sudo virsh domiflist ${AGENT_RENDEZVOUS_NODE_HOSTNAME} | awk '$3 == "ostestbm" {print $5}')
     rendezvousIP=$(ip neigh | grep $node_zero_mac_address | awk '{print $1}')
     echo $rendezvousIP
+}
+
+function getAgentISOBuilderImage() {
+    full_ocp_version=$(skopeo inspect --authfile $PULL_SECRET_FILE docker://$OPENSHIFT_RELEASE_IMAGE | jq -r '.Labels["io.openshift.release"]')
+    major_minor_patch_version=$(echo "\"$full_ocp_version\"" | jq -r 'split("-")[0]')
+    major_minor_version=$(echo $major_minor_patch_version | cut -d'.' -f1,2 )
+    agent_iso_builder_image="registry.ci.openshift.org/ocp/${major_minor_version}:agent-iso-builder"
+    echo ${agent_iso_builder_image}
 }

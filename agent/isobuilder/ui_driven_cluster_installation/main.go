@@ -138,7 +138,12 @@ func clusterDetails(page *rod.Page, path string) error {
 }
 
 func virtualizationBundle(page *rod.Page, path string) error {
-	page.MustElement("#bundle-virtualization").MustClick().MustWaitEnabled()
+	checkbox := page.MustElement("#bundle-virtualization")
+	checkbox.MustScrollIntoView()
+	checkbox.MustClick()
+	// Allow UI enough time to complete the background API call
+	time.Sleep(2 * time.Second)
+	page.MustElement("button[name='next']").MustWaitEnabled()
 	err := saveFullPageScreenshot(page, path)
 	if err != nil {
 		return err
