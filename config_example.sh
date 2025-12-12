@@ -854,7 +854,6 @@ set -x
 # To generate an ISO that can be used in a disconnected environment 
 # without using a registry a.k.a. OVE ISO, set the boot mode to 'ISO_NO_REGISTRY'.
 # export AGENT_E2E_TEST_BOOT_MODE=ISO
-# export AGENT_ISO_BUILDER_IMAGE="registry.ci.openshift.org/ocp/4.21:agent-iso-builder"
 
 # AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is an optional environment variable used to trigger
 # cleanup of cached files and other artifacts during local development and is useful when
