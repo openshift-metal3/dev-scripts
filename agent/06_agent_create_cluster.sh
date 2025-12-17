@@ -85,7 +85,12 @@ function create_config_image() {
 function create_agent_iso_no_registry() {
   local asset_dir=${1}
 
+  AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
+
   id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") &&  podman cp "${id}":/src "${asset_dir}" &&  podman rm "${id}"
+
+  # Update release_info.json as its needed by CI tests
+  save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
 
   # Create agent ISO without registry a.k.a. OVE ISO
   pushd .

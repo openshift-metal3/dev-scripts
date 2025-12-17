@@ -541,7 +541,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     fi
   fi
 
-  if [ "$AGENT_OPERATORS" =~ "mtv" ]; then
+  if [[ "$AGENT_OPERATORS" =~ "mtv" ]]; then
     export MASTER_VCPU=9
   fi
 
