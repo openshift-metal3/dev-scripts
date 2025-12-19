@@ -15,6 +15,8 @@ export AGENT_ROOT_DEVICE_HINTS=${AGENT_ROOT_DEVICE_HINTS:-""}
 export AGENT_BM_HOSTS_IN_INSTALL_CONFIG=${AGENT_BM_HOSTS_IN_INSTALL_CONFIG:-"false"}
 
 export AGENT_MINIMAL_ISO=${AGENT_MINIMAL_ISO:-"false"}
+# OVE ISO build method: "script" uses build-ove-image.sh, "container" uses Dockerfile-based build
+export AGENT_ISO_NO_REGISTRY_BUILD_METHOD=${AGENT_ISO_NO_REGISTRY_BUILD_METHOD:-"script"}
 
 export BOND_CONFIG=${BOND_CONFIG:-"none"}
 
@@ -97,4 +99,8 @@ function getAgentISOBuilderImage() {
     major_minor_version=$(echo $major_minor_patch_version | cut -d'.' -f1,2 )
     agent_iso_builder_image="registry.ci.openshift.org/ocp/${major_minor_version}:agent-iso-builder"
     echo ${agent_iso_builder_image}
+}
+
+function get_repo_overrides() {
+    env | grep '_LOCAL_REPO=' | grep -o '^[^=]*'
 }

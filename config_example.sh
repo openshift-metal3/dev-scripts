@@ -870,10 +870,19 @@ set -x
 # AGENT_E2E_TEST_BOOT_MODE is set to ISO_NO_REGISTRY.
 # AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is useful for reclaiming disk space when building agent OVE ISO locally
 # by deleting all the files from the working directory, example ocp/ostest/iso_builder except the generated OVE ISO.
-# Set to 'true' to enable the cleanup. 
+# Set to 'true' to enable the cleanup.
 # Default behavior (unset or any value other than 'yes') is to skip cleanup.
 # Recommended to set to true for local dev/test purposes and unset in CI.
 # export AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV=false
+
+# AGENT_ISO_NO_REGISTRY_BUILD_METHOD controls which method is used to build the OVE ISO when
+# AGENT_E2E_TEST_BOOT_MODE is set to ISO_NO_REGISTRY.
+# Options:
+#   'container'        - Uses containerized Dockerfile-based build (required for CI/build pipelines)
+#   'script' (default) - Uses build-ove-image.sh script directly (faster for local development/debugging)
+# The container method is required in CI/build pipeline environments where nested podman is not supported.
+# The script method is recommended for local development as it allows faster iteration and easier debugging.
+# export AGENT_ISO_NO_REGISTRY_BUILD_METHOD=script
 
 # Specifies the hostname of the node that should be identified and set as the rendezvous node 
 # during the OVE cluster installation process. This node acts as the bootstrap node in the cluster.
