@@ -51,7 +51,8 @@ function extract_command() {
       cmd="oc"
     fi
 
-    mv "${extract_dir}/${cmd}" "${outdir}"
+    mkdir -p "${outdir}"
+    mv "${extract_dir}/${cmd}" "${outdir}/"
 }
 
 # Let's always grab the `oc` from the release we're using.
