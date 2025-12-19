@@ -47,7 +47,8 @@ function extract_command() {
 
     _tmpfiles="$_tmpfiles $extract_dir"
 
-    mv "${extract_dir}/${cmd}" "${outdir}"
+    mkdir -p "${outdir}"
+    mv "${extract_dir}/${cmd}" "${outdir}/"
 }
 
 # Let's always grab the `oc` from the release we're using.
