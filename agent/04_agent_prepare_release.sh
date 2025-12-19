@@ -13,9 +13,46 @@ source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/ocp_install_env.sh
 source $SCRIPTDIR/oc_mirror.sh
 
-# Temporarily skip preparing the custom local release in case of OVE ISO
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
-    exit 0
+early_deploy_validation
+write_pull_secret
+
+# Release mirroring could be required by the subsequent steps
+# even if the current one will be skipped
+if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
+   setup_release_mirror
+fi
+
+# Prepare registry directory for appliance if using ISO_NO_REGISTRY
+if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
+    if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+        echo "Preparing registry directory structure for appliance..."
+
+        # Create the cache directory structure expected by appliance
+        # Appliance expects: mirror-path/cache/<version-arch> (ISO output)
+        # Appliance will read registry data directly from mirror-path/data
+
+        # Extract version from release image to create cache subdirectory
+        # Appliance creates cache dir in format: cache/<version>-<arch>
+        VERSION=$(skopeo inspect --authfile ${PULL_SECRET_FILE} docker://${OPENSHIFT_RELEASE_IMAGE} | jq -r '.Labels["io.openshift.release"]')
+        ARCH=$(uname -m)
+        CACHE_SUBDIR="${VERSION}-${ARCH}"
+        mkdir -p ${REGISTRY_DIR}/cache/${CACHE_SUBDIR}
+
+        # Copy YAML files and mapping.txt to registry directory so appliance can find them
+        if [[ -d ${WORKING_DIR}/working-dir ]]; then
+            cp -r ${WORKING_DIR}/working-dir ${REGISTRY_DIR}/
+        fi
+
+        # Copy results directory containing mapping.txt
+        for results_dir in ${WORKING_DIR}/results-*; do
+            if [[ -d "$results_dir" ]]; then
+                cp -r "$results_dir" ${REGISTRY_DIR}/
+            fi
+        done
+
+        echo "Registry directory prepared for appliance"
+        exit 0
+    fi
 fi
 
 # To replace an image entry in the openshift release image, set <ENTRYNAME>_LOCAL_REPO so that:
@@ -33,15 +70,6 @@ fi
 # export ASSISTED_SERVICE_LOCAL_REPO=~/git/assisted-service
 # export ASSISTED_SERVICE_DOCKERFILE=Dockerfile.assisted-service.ocp
 # export ASSISTED_SERVICE_IMAGE=agent-installer-api-server
-
-early_deploy_validation
-write_pull_secret
-
-# Release mirroring could be required by the subsequent steps
-# even if the current one will be skipped
-if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
-   setup_release_mirror
-fi
 
 function build_local_release() {
     # Sanity checks

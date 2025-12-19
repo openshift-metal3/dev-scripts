@@ -15,6 +15,8 @@ export AGENT_ROOT_DEVICE_HINTS=${AGENT_ROOT_DEVICE_HINTS:-""}
 export AGENT_BM_HOSTS_IN_INSTALL_CONFIG=${AGENT_BM_HOSTS_IN_INSTALL_CONFIG:-"false"}
 
 export AGENT_MINIMAL_ISO=${AGENT_MINIMAL_ISO:-"false"}
+# OVE ISO build method: "script" uses build-ove-image.sh, "container" uses Dockerfile-based build
+export AGENT_OVE_BUILD_METHOD=${AGENT_OVE_BUILD_METHOD:-"container"}
 
 export BOND_CONFIG=${BOND_CONFIG:-"none"}
 
