@@ -85,23 +85,45 @@ function create_config_image() {
 function create_agent_iso_no_registry() {
   local asset_dir=${1}
 
-  AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
-
-  id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") &&  podman cp "${id}":/src "${asset_dir}" &&  podman rm "${id}"
-
   # Update release_info.json as its needed by CI tests
   save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
+
+  # Temporarily use custom agent-iso-builder image
+  AGENT_ISO_BUILDER_IMAGE="quay.io/rwsu1/agent-iso-builder:dev-scripts"
+
+  # Get agent-iso-builder source from container
+  id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") &&  podman cp "${id}":/src "${asset_dir}" &&  podman rm "${id}"
 
   # Create agent ISO without registry a.k.a. OVE ISO
   pushd .
   cd "${asset_dir}"/src
-  # Build the ISO in the container image
-  make build-ove-iso-container PULL_SECRET_FILE="${PULL_SECRET_FILE}" RELEASE_IMAGE_URL="${OPENSHIFT_RELEASE_IMAGE}" ARCH=${ARCH}
-  # Retrieve ISO from container
-  ./hack/iso-from-container.sh
-  local iso_name="agent-ove.${ARCH}.iso"
-  echo "Moving ${iso_name} to ${asset_dir}"
-  mv ./output-iso/${iso_name} "${asset_dir}"
+
+  # Prepare mirror path arguments if MIRROR_IMAGES is enabled
+  local mirror_path_arg=""
+  if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
+    echo "Using pre-mirrored images from ${REGISTRY_DIR}"
+    mirror_path_arg="--mirror-path ${REGISTRY_DIR}"
+  fi
+
+  if [[ "${AGENT_OVE_BUILD_METHOD}" == "script" ]]; then
+    # Use the legacy build-ove-image.sh script
+    ./hack/build-ove-image.sh --pull-secret-file "${PULL_SECRET_FILE}" --release-image-url "${OPENSHIFT_RELEASE_IMAGE}" --ssh-key-file "${SSH_KEY_FILE}" --dir "${asset_dir}" ${mirror_path_arg}
+  else
+    # Use container-based build (default)
+    # Build the ISO in the container image
+    # Convert mirror path argument to make variable format
+    local mirror_args=""
+    if [[ ! -z "${mirror_path_arg}" ]]; then
+      mirror_args="MIRROR_PATH=${REGISTRY_DIR}"
+    fi
+    make build-ove-iso-container PULL_SECRET_FILE="${PULL_SECRET_FILE}" RELEASE_IMAGE_URL="${OPENSHIFT_RELEASE_IMAGE}" ARCH=${ARCH} ${mirror_args}
+    # Retrieve ISO from container
+    ./hack/iso-from-container.sh
+    local iso_name="agent-ove.${ARCH}.iso"
+    echo "Moving ${iso_name} to ${asset_dir}"
+    mv ./output-iso/${iso_name} "${asset_dir}"
+  fi
+
   rm -rf "${asset_dir}"/src
   popd
 }
@@ -637,6 +659,13 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
       # reclaim disk space by deleting unwanted cache, other files
       cleanup_diskspace_agent_iso_noregistry ${asset_dir}
+    fi
+
+    # Clean up registry data to save disk space after ISO is created
+    if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
+      echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
+      sudo rm -rf ${REGISTRY_DIR}/data
+      echo "Registry data cleanup complete"
     fi
 
     attach_agent_iso_no_registry master $NUM_MASTERS
