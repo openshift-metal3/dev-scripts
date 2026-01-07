@@ -422,7 +422,7 @@ $(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
 EOF
   fi
 
-  if ! is_lower_version "$(openshift_version $OCP_DIR)" "4.21"; then
+  if ! is_lower_version "$(openshift_version $OCP_DIR)" "4.22"; then
     cat >> "${outdir}/install-config.yaml" << EOF
     bmcVerifyCA: |
 $(sudo sed 's/^/      /' "${WORKING_DIR}/virtualbmc/sushy-tools/cert.pem")
@@ -472,8 +472,12 @@ function generate_ocp_host_manifest() {
 
         encoded_username=$(echo -n "$username" | base64)
         encoded_password=$(echo -n "$password" | base64)
-        # Heads up, "verify_ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
-        disableCertificateVerification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
+        if is_lower_version "$(openshift_version $OCP_DIR)" "4.22"; then
+          # Heads up, "verify_ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
+          disableCertificateVerification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
+        else
+          disableCertificateVerification=false
+        fi
 
         secret="---
 apiVersion: v1
