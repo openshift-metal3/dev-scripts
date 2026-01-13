@@ -546,6 +546,12 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     if [ "${SCENARIO}" == "HA" ]; then
        export WORKER_VCPU=5
     fi
+    # Increase disk storage requirements for NoRegistryClusterInstall aka agent OVE ISO
+    case "$SCENARIO" in
+      "SNO"|"COMPACT"|"HA" )
+        export MASTER_DISK=220
+        ;;
+    esac
   fi
 
   if [[ "$AGENT_OPERATORS" =~ "mtv" ]]; then
