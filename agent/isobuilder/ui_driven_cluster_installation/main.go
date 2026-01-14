@@ -63,6 +63,22 @@ func main() {
 
 	next(page)
 
+	// Wait for page to load and check if cluster creation completed in time
+	logrus.Info("Waiting for operators page to load...")
+	time.Sleep(3 * time.Second)
+
+	// Check if we got an error page because cluster wasn't created in time
+	errorMsg, _ := page.Timeout(2 * time.Second).ElementR("div", "Cluster details not found")
+	if errorMsg != nil {
+		logrus.Info("Cluster not ready yet, waiting and reloading...")
+		// Wait longer for cluster creation to complete
+		time.Sleep(5 * time.Second)
+		// Reload the page
+		page.MustReload()
+		page.MustWaitLoad()
+		logrus.Info("Page reloaded, continuing...")
+	}
+
 	logrus.Info("Select virtualization bundle")
 	err = virtualizationBundle(page, filepath.Join(screenshotPath, "02-operators.png"))
 	if err != nil {
@@ -129,6 +145,10 @@ func clusterDetails(page *rod.Page, path string) error {
 	}
 	pullSecret := strings.TrimSpace(string(secretBytes))
 	page.MustElement("#form-input-pullSecret-field").MustInput(pullSecret)
+
+	// Allow UI enough time to complete the background API call to create the cluster
+	time.Sleep(2 * time.Second)
+	page.MustElement("button[name='next']").MustWaitEnabled()
 
 	err = saveFullPageScreenshot(page, path)
 	if err != nil {
@@ -310,6 +330,10 @@ func getClusterID(client *resty.Client, url string) (string, error) {
 	_, err := client.R().SetResult(&clusters).Get(url)
 	if err != nil {
 		return "", err
+	}
+
+	if len(clusters) == 0 {
+		return "", fmt.Errorf("no clusters found")
 	}
 
 	return clusters[0].ID, nil
