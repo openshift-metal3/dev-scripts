@@ -21,10 +21,10 @@ function early_either_validation() {
         exit 1
     fi
 
-    # Check CentOS version
+    # Check CentOS/RHEL version (el8 is no longer supported due to glibc requirements for oc CLI)
     VER=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
-    if [[ ${VER} -lt 8 ]]; then
-        error "CentOS 8/9 or RHEL 8/9 are required."
+    if [[ ${VER} -lt 9 ]]; then
+        error "CentOS 9 or RHEL 9 are required."
         exit 1
     fi
 
