@@ -21,7 +21,7 @@ RUN if grep "platform:el9" /etc/os-release ; then \
     INSTALL_PKGS="ansible-core python3.11-pip nss_wrapper" && \
     dnf install --disablerepo=epel -y $INSTALL_PKGS && \
     pip3.11 install -r https://raw.githubusercontent.com/equinix-labs/ansible-collection-equinix/main/requirements.txt && \
-    ansible-galaxy collection install "community.general" "ansible.posix" "equinix.cloud" && \
+    ansible-galaxy collection install --timeout 120 "community.general" "ansible.posix" "equinix.cloud" && \
     dnf clean all && \
     rm -rf /var/cache/dnf/* && \
     chmod -R g+rwx /output ; \

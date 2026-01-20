@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset cb83ca7ae9cfabe827d7a784b28e537e098070ae --hard
+  git reset b57f755f9f94caf5d1ca1a43badcd96ecff5f119 --hard
 
   popd
 fi
@@ -146,6 +146,7 @@ else
 fi
 
 GO_VERSION=${GO_VERSION:-1.22.3}
+GO_CHECKSUM="8920ea521bad8f6b7bc377b4824982e011c19af27df88a815e3586ea895f1b36"
 GO_CUSTOM_MIRROR=${GO_CUSTOM_MIRROR:-"https://go.dev/dl"}
 
 GOARCH=$(uname -m)
@@ -171,6 +172,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "working_dir=$WORKING_DIR" \
   -e "virthost=$HOSTNAME" \
   -e "go_version=$GO_VERSION" \
+  -e "go_checksum=$GO_CHECKSUM" \
   -e "go_custom_mirror=$GO_CUSTOM_MIRROR" \
   -e "GOARCH=$GOARCH" \
   $ALMA_PYTHON_OVERRIDE \
