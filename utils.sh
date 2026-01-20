@@ -272,7 +272,8 @@ EOF
           if is_lower_version "$(openshift_version $OCP_DIR)" "4.22"; then
               # Heads up, "verify ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
               verify_ca=$(node_val ${idx} "driver_info.redfish_verify_ca")
-              disable_certificate_verification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
+              # Handle both boolean false and string "False" - jq outputs boolean false as lowercase "false"
+              disable_certificate_verification=$([[ "${verify_ca,,}" = "false" ]] && echo "true" || echo "false")
               cat << EOF
           disableCertificateVerification: ${disable_certificate_verification}
 EOF
