@@ -485,9 +485,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           ;;
       "COMPACT" )
           export NUM_MASTERS=3
-          export MASTER_VCPU=4
+          export MASTER_VCPU=8
           export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_MEMORY=16384
           export NUM_WORKERS=0
           ;;
       "TNA" )
@@ -511,9 +511,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           ;;
       "HA" )
           export NUM_MASTERS=3
-          export MASTER_VCPU=4
+          export MASTER_VCPU=8
           export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_MEMORY=16384
           export NUM_WORKERS=2
           export WORKER_VCPU=4
           export WORKER_DISK=100
