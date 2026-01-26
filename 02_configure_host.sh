@@ -366,6 +366,13 @@ fi
 sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
 echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
 
+# Make sure any squid containers get the registry name, and make squid
+# reload it's config.
+for container in $(podman ps --format "{{.Names}}" | grep squid); do
+  echo "Updating /etc/hosts in container: $container"
+  sudo podman exec -it "$container" sh -c "grep -v '${LOCAL_REGISTRY_DNS_NAME}' /etc/hosts > /tmp/hosts && echo '${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}' >> /tmp/hosts && cp -f /tmp/hosts /etc/hosts && kill -HUP 1"
+done
+
 if use_registry "podman"; then
     # Remove any previous file, or podman login panics when reading the
     # blank authfile with a "assignment to entry in nil map" error
