@@ -14,6 +14,7 @@ source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/release_info.sh
 source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/agent/iscsi_utils.sh
+source $SCRIPTDIR/agent/iso_no_registry.sh
 
 early_deploy_validation
 
@@ -80,30 +81,6 @@ function create_config_image() {
 
     # Copy the auth files to OCP_DIR so wait-for command can access it
     cp -r ${config_image_dir}/auth ${asset_dir}
-}
-
-function create_agent_iso_no_registry() {
-  local asset_dir=${1}
-
-  AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
-
-  id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") &&  podman cp "${id}":/src "${asset_dir}" &&  podman rm "${id}"
-
-  # Update release_info.json as its needed by CI tests
-  save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
-
-  # Create agent ISO without registry a.k.a. OVE ISO
-  pushd .
-  cd "${asset_dir}"/src
-  # Build the ISO in the container image
-  make build-ove-iso-container PULL_SECRET_FILE="${PULL_SECRET_FILE}" RELEASE_IMAGE_URL="${OPENSHIFT_RELEASE_IMAGE}" ARCH=${ARCH}
-  # Retrieve ISO from container
-  ./hack/iso-from-container.sh
-  local iso_name="agent-ove.${ARCH}.iso"
-  echo "Moving ${iso_name} to ${asset_dir}"
-  mv ./output-iso/${iso_name} "${asset_dir}"
-  rm -rf "${asset_dir}"/src
-  popd
 }
 
 function assert_agent_no_registry_iso_size(){
@@ -637,6 +614,13 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
       # reclaim disk space by deleting unwanted cache, other files
       cleanup_diskspace_agent_iso_noregistry ${asset_dir}
+    fi
+
+    # Clean up registry data to save disk space after ISO is created
+    if [[ "${MIRROR_IMAGES}" == "true" ]]; then
+      echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
+      sudo rm -rf ${REGISTRY_DIR}/data
+      echo "Registry data cleanup complete"
     fi
 
     attach_agent_iso_no_registry master $NUM_MASTERS
