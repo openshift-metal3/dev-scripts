@@ -1,4 +1,4 @@
-.PHONY: default all agent agent_cleanup agent_build_installer agent_configure agent_create_cluster requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
+.PHONY: default all agent agent_cleanup agent_build_installer agent_configure agent_create_cluster infra_only requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
 default: requirements configure build_installer ironic install_config ocp_run bell
 
 all: default
@@ -12,6 +12,19 @@ agent: agent_requirements requirements configure agent_build_installer agent_pre
 # Deploy cluster with agent installer flow and adds nodes after initial install
 # Requires at least 1 extra worker node to be configured with disk size at least 100Gß
 agent_plus_add_node: agent agent_add_extraworker_nodes
+
+# Setup infrastructure only (VMs, networks, BMC emulation) without cluster deployment
+# Useful for testing external deployment tools
+infra_only: requirements configure
+	@echo "Infrastructure setup complete!"
+	@echo "  - VMs created and configured"
+	@echo "  - Networks configured (provisioning + baremetal)"
+	@echo "  - BMC emulation running (virtualbmc + sushy-tools)"
+	@echo ""
+	@echo "Skipping cluster installation. You can now:"
+	@echo "  - Deploy OpenShift using your own tooling"
+	@echo "  - Access BMC endpoints via Redfish/IPMI"
+	@echo "  - Use 'make clean' to tear down infrastructure"
 
 agent_requirements:
 	./agent/01_agent_requirements.sh
