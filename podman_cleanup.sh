@@ -7,5 +7,4 @@ source validation.sh
 
 early_cleanup_validation
 
-sudo podman image prune --all -f
-sudo podman volume prune -f
+sudo podman system prune -a --volumes --force 
