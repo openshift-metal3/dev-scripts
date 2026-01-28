@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"errors"
-	"strings"
 	"time"
 
 	errs "github.com/pkg/errors"
@@ -137,20 +136,13 @@ func main() {
 func clusterDetails(page *rod.Page, path string) error {
 	page.MustElement("#form-input-name-field").MustInput(clusterName)
 	page.MustElement("#form-input-baseDnsDomain-field").MustInput(baseDomain)
-
-	pullSecretPath := os.Getenv("PULL_SECRET_FILE")
-	secretBytes, err := os.ReadFile(pullSecretPath)
-	if err != nil {
-		return fmt.Errorf("failed to read pull secret file: %v", err)
-	}
-	pullSecret := strings.TrimSpace(string(secretBytes))
-	page.MustElement("#form-input-pullSecret-field").MustInput(pullSecret)
+	page.MustElement("#form-input-pullSecret-field").MustInput(`{"auths":{"":{"auth":"dXNlcjpwYXNz"}}}`)
 
 	// Allow UI enough time to complete the background API call to create the cluster
 	time.Sleep(2 * time.Second)
 	page.MustElement("button[name='next']").MustWaitEnabled()
 
-	err = saveFullPageScreenshot(page, path)
+	err := saveFullPageScreenshot(page, path)
 	if err != nil {
 		return err
 	}
@@ -191,8 +183,10 @@ func verifyStorage(page *rod.Page, path string) error {
 func networkingDetails(page *rod.Page, path string) error {
 	apiVip := os.Getenv("API_VIP")
 	ingressVip := os.Getenv("INGRESS_VIP")
+	sshPublicKey := os.Getenv("SSH_PUB_KEY")
 	page.MustElement("#form-input-apiVips-0-ip-field").MustInput(apiVip)
 	page.MustElement("#form-input-ingressVips-0-ip-field").MustInput(ingressVip)
+	page.MustElement("#form-input-sshPublicKey-field").MustInput(sshPublicKey)
 	page.MustElement(`button[name="next"]`).MustWaitEnabled()
 
 	err := saveFullPageScreenshot(page, path)
