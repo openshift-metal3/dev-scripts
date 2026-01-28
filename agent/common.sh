@@ -74,10 +74,15 @@ export AGENT_NODE0_IPSV6=${AGENT_NODE0_IPSV6:-}
 # Modifies the baremetal network to be fully isolated.
 export AGENT_ISOLATED_NETWORK=${AGENT_ISOLATED_NETWORK:-"false"}
 
-# Set isolated network to true for truely disconnected OVE env
-# in case of agent ISO with no registry 
 if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
+    # Set isolated network to true for truly disconnected OVE env
+    # in case of agent ISO with no registry
     export AGENT_ISOLATED_NETWORK=true
+    # ISO_NO_REGISTRY mode doesn't pre-configure IPs, so nodes use DHCP
+    # Make sure the hosts file reflects the DHCP IP range
+    if [[ -z "${NETWORKING_MODE}" ]]; then
+        export NETWORKING_MODE="DHCP"
+    fi
 fi
 
 function getRendezvousIP() {
