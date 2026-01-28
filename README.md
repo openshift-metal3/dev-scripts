@@ -12,8 +12,8 @@ other components of OpenShift via support for a baremetal platform type.
 
 # Pre-requisites
 
-- CentOS 8 or RHEL 8 host
-  - Alma and Rocky Linux 8 are also supported on a best effort basis
+- CentOS Stream 9 or RHEL 9 host
+  - Alma and Rocky Linux 9 are also supported on a best effort basis
 - file system that supports d_type (see [Troubleshooting](#Troubleshooting) section for more information)
 - ideally on a bare metal host with at least 64G of RAM
 - run as a user with passwordless sudo access
