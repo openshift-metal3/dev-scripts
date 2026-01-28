@@ -222,6 +222,29 @@ Then you can interact with the k8s API on the bootstrap VM e.g
 You can also see the status of the bootkube.sh script which is running via
 `journalctl -b -f -u bootkube.service`.
 
+## Infrastructure-Only Mode
+
+For testing external deployment tools or custom installers, you can use the `infra_only` target to create just the infrastructure without deploying an OpenShift cluster:
+
+```
+make infra_only
+```
+
+This will:
+- Create libvirt VMs with configured specs
+- Set up networking (provisioning + baremetal networks)
+- Configure BMC emulation (virtualbmc + sushy-tools)
+- Stop before cluster deployment
+
+This is useful when you want to:
+- Test external deployment tools (e.g., GoRI Lab, custom installers)
+- Use the infrastructure for development without deploying OpenShift
+- Have full control over the cluster installation process
+
+After running `make infra_only`, you can deploy OpenShift using your own tooling and access the BMC endpoints via Redfish (port 8000) or IPMI (ports 6230+).
+
+To clean up the infrastructure, use `make clean`.
+
 ## Interacting with the deployed cluster
 
 Consider `export KUBECONFIG=<path-to-config>` to avoid using the `--kubeconfig` flag on each command.
@@ -451,6 +474,33 @@ in `config_$USER.sh` (check `config_example.sh` for recommended defaults):
 #export WORKER_DISK=60
 #export WORKER_VCPU=4
 ```
+
+### Deploying with Landing Zone VMs
+
+Landing Zone VMs are special-purpose VMs that have access to both the BMC (provisioning)
+and cluster (baremetal) networks. They are useful as deployment hosts for external
+tooling that needs to manage worker nodes via BMC while also having access to the
+cluster network.
+
+To create Landing Zone VMs, set the following in `config_$USER.sh`:
+
+```
+# Create 1 Landing Zone VM
+export NUM_LANDINGZONE=1
+
+# Customize Landing Zone VM resources (optional)
+export LANDINGZONE_MEMORY=8192  # 8 GB RAM
+export LANDINGZONE_DISK=60      # 60 GB disk
+export LANDINGZONE_VCPU=4       # 4 vCPUs
+```
+
+Network topology when using Landing Zone VMs:
+- **Worker VMs**: Cluster network only (BMC network interface is automatically removed)
+- **Landing Zone VMs**: Both BMC and cluster networks (dual-network access)
+- **BMC emulation**: Runs on the host machine, accessible via the BMC network
+
+This topology ensures proper network isolation while allowing the Landing Zone VM
+to act as a bridge for deployment tools.
 
 ### Testing custom container images
 dev-scripts uses an openshift release image that contains references to openshift
