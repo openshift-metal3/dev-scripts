@@ -82,27 +82,39 @@ function create_config_image() {
     cp -r ${config_image_dir}/auth ${asset_dir}
 }
 
+# Build OVE ISO using script method
+function build_ove_iso_script() {
+  local asset_dir=$1
+  local release_image_url=$2
+
+  echo "Start building Agent OVE ISO"
+  ./hack/build-ove-image.sh \
+    --pull-secret-file "${PULL_SECRET_FILE}" \
+    --release-image-url "${release_image_url}" \
+    --ssh-key-file "${SSH_KEY_FILE}" \
+    --dir "${asset_dir}" >/dev/null
+  echo "Agent OVE ISO completed"
+
+  # Move the agent-ove iso in the default folder
+  agent_iso_no_registry=$(get_agent_iso_no_registry)
+  mv ${agent_iso_no_registry} "$SCRIPTDIR/$OCP_DIR"
+}
+
 function create_agent_iso_no_registry() {
   local asset_dir=${1}
-
-  AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
-
-  id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") &&  podman cp "${id}":/src "${asset_dir}" &&  podman rm "${id}"
 
   # Update release_info.json as its needed by CI tests
   save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
 
-  # Create agent ISO without registry a.k.a. OVE ISO
+  AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
+
+  id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") && \
+    podman cp "${id}":/src "${asset_dir}" && \
+    podman rm "${id}"
+
   pushd .
   cd "${asset_dir}"/src
-  # Build the ISO in the container image
-  make build-ove-iso-container PULL_SECRET_FILE="${PULL_SECRET_FILE}" RELEASE_IMAGE_URL="${OPENSHIFT_RELEASE_IMAGE}" ARCH=${ARCH}
-  # Retrieve ISO from container
-  ./hack/iso-from-container.sh
-  local iso_name="agent-ove.${ARCH}.iso"
-  echo "Moving ${iso_name} to ${asset_dir}"
-  mv ./output-iso/${iso_name} "${asset_dir}"
-  rm -rf "${asset_dir}"/src
+  build_ove_iso_script "${asset_dir}" "${OPENSHIFT_RELEASE_IMAGE}"
   popd
 }
 
