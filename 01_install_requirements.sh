@@ -156,6 +156,29 @@ elif [[ $GOARCH == "x86_64" ]]; then
     GOARCH="amd64"
 fi
 
+VERSION="go${GO_VERSION}"
+OS="linux"
+
+GO_CHECKSUM="$(
+  curl -s "https://go.dev/dl/?mode=json&include=all" | jq -r \
+    --arg version "$VERSION" \
+    --arg os "$OS" \
+    --arg arch "$GOARCH" \
+    '
+      .[]
+      | select(.version == $version)
+      | .files[]
+      | select(.os == $os and .arch == $arch)
+      | .sha256
+    '
+)"
+
+if [ -z "$GO_CHECKSUM" ]; then
+  echo "Error: Could not find checksum for $VERSION ($OS/$ARCH)" >&2
+else
+  echo "Checksum: $GO_CHECKSUM"
+fi
+
 # Also need the 3.9 version of netaddr for ansible.netcommon
 # and lxml for the pyxpath script
 sudo python -m pip install netaddr lxml
@@ -172,6 +195,7 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "virthost=$HOSTNAME" \
   -e "go_version=$GO_VERSION" \
   -e "go_custom_mirror=$GO_CUSTOM_MIRROR" \
+  -e "go_checksum=$GO_CHECKSUM" \
   -e "GOARCH=$GOARCH" \
   $ALMA_PYTHON_OVERRIDE \
   -i vm-setup/inventory.ini \
