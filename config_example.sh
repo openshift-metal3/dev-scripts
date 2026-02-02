@@ -839,6 +839,10 @@ set -x
 # - SNO_IPV6
 # - SNO_IPV4_DHCP
 # - SNO_IPV6_DHCP
+# - SNOMIN_IPV4
+# - SNOMIN_IPV6
+# - SNOMIN_IPV4_DHCP
+# - SNOMIN_IPV6_DHCP
 # When set, the code internally sets other low level details such as disk size, memory, number of masters and workers,
 # cpu and ip stack.
 # This config variable is used only by the agent based installer and is required.
