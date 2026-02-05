@@ -669,7 +669,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     # Simulate user actions as done on the webUI and start cluster installation
     ocp_dir_abs_path="$(realpath "${OCP_DIR}")"
     pushd agent/isobuilder/ui_driven_cluster_installation
-    CLUSTER_NAME=$CLUSTER_NAME BASE_DOMAIN=$BASE_DOMAIN RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$ocp_dir_abs_path INGRESS_VIP=$INGRESS_VIPS API_VIP=$API_VIPS go run main.go
+    CLUSTER_NAME=$CLUSTER_NAME BASE_DOMAIN=$BASE_DOMAIN RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$ocp_dir_abs_path INGRESS_VIP=$INGRESS_VIPS API_VIP=$API_VIPS SSH_PUB_KEY=$SSH_PUB_KEY go run main.go
     popd
     exit 0
     ;;
