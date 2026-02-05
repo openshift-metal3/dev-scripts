@@ -5,24 +5,10 @@ FROM registry.ci.openshift.org/openshift/release:rhel-9-release-golang-1.20-open
 
 ENV HOME /output
 
-# For RHEL8
-RUN if grep "platform:el8" /etc/os-release ; then \
-    INSTALL_PKGS="ansible python3-pip nss_wrapper" && \
-    dnf install --disablerepo=epel -y $INSTALL_PKGS && \
-    pip3 install packet-python && \
-    ansible-galaxy collection install "community.general:4.8.1" && \
-    dnf clean all && \
-    rm -rf /var/cache/dnf/* && \
-    chmod -R g+rwx /output ; \
-    fi
-
-# For RHEL9
-RUN if grep "platform:el9" /etc/os-release ; then \
-    INSTALL_PKGS="ansible-core python3.11-pip nss_wrapper" && \
+RUN INSTALL_PKGS="ansible-core python3.11-pip nss_wrapper" && \
     dnf install --disablerepo=epel -y $INSTALL_PKGS && \
     pip3.11 install -r https://raw.githubusercontent.com/equinix-labs/ansible-collection-equinix/main/requirements.txt && \
     ansible-galaxy collection install "community.general" "ansible.posix" "equinix.cloud" && \
     dnf clean all && \
     rm -rf /var/cache/dnf/* && \
-    chmod -R g+rwx /output ; \
-    fi
+    chmod -R g+rwx /output

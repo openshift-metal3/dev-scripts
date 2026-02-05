@@ -47,10 +47,6 @@ function extract_command() {
 
     _tmpfiles="$_tmpfiles $extract_dir"
 
-    if [[ $cmd == "oc.rhel8" ]]; then
-      cmd="oc"
-    fi
-
     mv "${extract_dir}/${cmd}" "${outdir}"
 }
 
@@ -58,9 +54,7 @@ function extract_command() {
 function extract_oc() {
     extract_dir=$(mktemp --tmpdir -d "installer--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $extract_dir"
-    if ! extract_command oc.rhel8 "$1" "${extract_dir}"; then
-      extract_command oc "$1" "${extract_dir}"
-    fi
+    extract_command oc "$1" "${extract_dir}"
     sudo mv "${extract_dir}/oc" /usr/local/bin
 }
 
