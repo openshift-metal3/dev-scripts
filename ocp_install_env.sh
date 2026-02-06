@@ -474,7 +474,8 @@ function generate_ocp_host_manifest() {
         encoded_password=$(echo -n "$password" | base64)
         if is_lower_version "$(openshift_version $OCP_DIR)" "4.22"; then
           # Heads up, "verify_ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
-          disableCertificateVerification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
+          # Handle both boolean false and string "False" - jq outputs boolean false as lowercase "false"
+          disableCertificateVerification=$([[ "${verify_ca,,}" = "false" ]] && echo "true" || echo "false")
         else
           disableCertificateVerification=false
         fi
