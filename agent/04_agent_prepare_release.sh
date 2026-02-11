@@ -57,6 +57,24 @@ function prepare_registry_dir_for_appliance() {
         fi
     done
 
+    # Append IDMS entry for local dev-scripts registry to existing idms-oc-mirror.yaml
+    # This ensures the local registry can be accessed from the installed cluster
+    echo "Appending IDMS entry for local registry"
+
+    # Local dev-scripts registry
+    local local_registry="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}"
+
+    echo "Creating IDMS mapping: ${local_registry} -> ${local_registry}"
+
+    # Append mirror entry to existing IDMS file
+    cat >> ${REGISTRY_DIR}/working-dir/cluster-resources/idms-oc-mirror.yaml << EOF
+  - mirrors:
+    - ${local_registry}
+    source: ${local_registry}
+EOF
+
+    echo "Custom registry IDMS entry appended to ${REGISTRY_DIR}/working-dir/cluster-resources/idms-oc-mirror.yaml"
+
     echo "Registry directory prepared for appliance"
 }
 
