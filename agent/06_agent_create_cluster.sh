@@ -14,6 +14,7 @@ source $SCRIPTDIR/validation.sh
 source $SCRIPTDIR/release_info.sh
 source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/agent/iscsi_utils.sh
+source $SCRIPTDIR/agent/iso_no_registry.sh
 
 early_deploy_validation
 
@@ -80,42 +81,6 @@ function create_config_image() {
 
     # Copy the auth files to OCP_DIR so wait-for command can access it
     cp -r ${config_image_dir}/auth ${asset_dir}
-}
-
-# Build OVE ISO using script method
-function build_ove_iso_script() {
-  local asset_dir=$1
-  local release_image_url=$2
-
-  echo "Start building Agent OVE ISO"
-  ./hack/build-ove-image.sh \
-    --pull-secret-file "${PULL_SECRET_FILE}" \
-    --release-image-url "${release_image_url}" \
-    --ssh-key-file "${SSH_KEY_FILE}" \
-    --dir "${asset_dir}" >/dev/null
-  echo "Agent OVE ISO completed"
-
-  # Move the agent-ove iso in the default folder
-  agent_iso_no_registry=$(get_agent_iso_no_registry)
-  mv ${agent_iso_no_registry} "$SCRIPTDIR/$OCP_DIR"
-}
-
-function create_agent_iso_no_registry() {
-  local asset_dir=${1}
-
-  # Update release_info.json as its needed by CI tests
-  save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
-
-  AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
-
-  id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") && \
-    podman cp "${id}":/src "${asset_dir}" && \
-    podman rm "${id}"
-
-  pushd .
-  cd "${asset_dir}"/src
-  build_ove_iso_script "${asset_dir}" "${OPENSHIFT_RELEASE_IMAGE}"
-  popd
 }
 
 function assert_agent_no_registry_iso_size(){
@@ -649,6 +614,13 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
       # reclaim disk space by deleting unwanted cache, other files
       cleanup_diskspace_agent_iso_noregistry ${asset_dir}
+    fi
+
+    # Clean up registry data to save disk space after ISO is created
+    if [[ "${MIRROR_IMAGES}" == "true" ]]; then
+      echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
+      sudo rm -rf ${REGISTRY_DIR}/data
+      echo "Registry data cleanup complete"
     fi
 
     attach_agent_iso_no_registry master $NUM_MASTERS
