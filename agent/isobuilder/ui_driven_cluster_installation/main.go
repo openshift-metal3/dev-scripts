@@ -139,7 +139,7 @@ func clusterDetails(page *rod.Page, path string) error {
 	page.MustElement("#form-input-pullSecret-field").MustInput(`{"auths":{"":{"auth":"dXNlcjpwYXNz"}}}`)
 
 	// Allow UI enough time to complete the background API call to create the cluster
-	time.Sleep(2 * time.Second)
+	time.Sleep(10 * time.Second)
 	page.MustElement("button[name='next']").MustWaitEnabled()
 
 	err := saveFullPageScreenshot(page, path)
