@@ -392,14 +392,8 @@ if [ -n "$EXTERNAL_LOADBALANCER" -a -z "$ENABLE_BOOTSTRAP_STATIC_IP" ]; then
   exit 1
 fi
 
-# TODO(bnemec): Once https://github.com/ansible/ansible/pull/75537 merges this
-# can be removed.
-ALMA_PYTHON_OVERRIDE=
 source /etc/os-release
 export DISTRO="${ID}${VERSION_ID%.*}"
-if [[ $DISTRO == "almalinux8" || $DISTRO == "rocky8" ]]; then
-    ALMA_PYTHON_OVERRIDE="-e ansible_python_interpreter=/usr/libexec/platform-python"
-fi
 
 export ENABLE_LOCAL_REGISTRY=${ENABLE_LOCAL_REGISTRY:-}
 
