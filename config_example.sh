@@ -455,6 +455,12 @@ set -x
 #
 #export REDFISH_EMULATOR_IGNORE_BOOT_DEVICE=False
 
+# REDFISH_EMULATOR_VIRTUAL_MEDIA_IP_FAMILY
+# Instruct the Redfish emulator to accept only virtual media images of the
+# provided IP familty.
+# Choices: 4, 6
+#export REDFISH_EMULATOR_VIRTUAL_MEDIA_IP_FAMILY=
+
 # VM_TPM_EMULATOR -
 # Add TPM2.0 emulator to VMs.
 # Default is unset

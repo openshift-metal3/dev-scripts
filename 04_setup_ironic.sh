@@ -228,6 +228,10 @@ if [ "$NODES_PLATFORM" = "libvirt" ]; then
              "${VBMC_IMAGE}"
     fi
 
+    if [[ -n "${REDFISH_EMULATOR_VIRTUAL_MEDIA_IP_FAMILY:-}" ]]; then
+        echo "SUSHY_EMULATOR_VIRTUAL_MEDIA_IP_FAMILY = '${REDFISH_EMULATOR_VIRTUAL_MEDIA_IP_FAMILY}'" | sudo tee -a "$WORKING_DIR/virtualbmc/sushy-tools/conf.py"
+    fi
+
     if ! is_running sushy-tools; then
         sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
              -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
