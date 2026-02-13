@@ -285,22 +285,6 @@ export ARBITER_HOSTNAME_FORMAT=${ARBITER_HOSTNAME_FORMAT:-"arbiter-%d"}
 export WORKER_HOSTNAME_FORMAT=${WORKER_HOSTNAME_FORMAT:-"worker-%d"}
 export EXTRA_WORKER_HOSTNAME_FORMAT=${EXTRA_WORKER_HOSTNAME_FORMAT:-"extraworker-%d"}
 
-export MASTER_MEMORY=${MASTER_MEMORY:-16384}
-export MASTER_DISK=${MASTER_DISK:-60}
-export MASTER_VCPU=${MASTER_VCPU:-8}
-
-export ARBITER_MEMORY=${ARBITER_MEMORY:-8192}
-export ARBITER_DISK=${ARBITER_DISK:-50}
-export ARBITER_VCPU=${ARBITER_VCPU:-4}
-
-export WORKER_MEMORY=${WORKER_MEMORY:-8192}
-export WORKER_DISK=${WORKER_DISK:-60}
-export WORKER_VCPU=${WORKER_VCPU:-4}
-
-export EXTRA_WORKER_MEMORY=${EXTRA_WORKER_MEMORY:-${WORKER_MEMORY}}
-export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
-export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
-
 # Ironic vars (Image can be use <NAME>_LOCAL_IMAGE to override)
 export IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:main"}
 export IRONIC_DATA_DIR="${WORKING_DIR}/ironic"
@@ -471,59 +455,59 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   case "$SCENARIO" in
       "5CONTROL" )
           export NUM_MASTERS=5
-          export MASTER_VCPU=4
-          export MASTER_DISK=100
-          export MASTER_MEMORY=24576
+          export MASTER_VCPU=${MASTER_VCPU:-4}
+          export MASTER_DISK=${MASTER_DISK:-100}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "4CONTROL" )
           export NUM_MASTERS=4
-          export MASTER_VCPU=4
-          export MASTER_DISK=100
-          export MASTER_MEMORY=24576
+          export MASTER_VCPU=${MASTER_VCPU:-4}
+          export MASTER_DISK=${MASTER_DISK:-100}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "COMPACT" )
           export NUM_MASTERS=3
-          export MASTER_VCPU=4
-          export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_VCPU=${MASTER_VCPU:-4}
+          export MASTER_DISK=${MASTER_DISK:-100}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           ;;
       "TNA" )
           export NUM_MASTERS=2
-          export MASTER_VCPU=8
-          export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_VCPU=${MASTER_VCPU:-8}
+          export MASTER_DISK=${MASTER_DISK:-100}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_ARBITERS=1
-          export ARBITER_VCPU=2
-          export ARBITER_MEMORY=8192
-          export ARBITER_DISK=50
+          export ARBITER_VCPU=${ARBITER_VCPU:-2}
+          export ARBITER_MEMORY=${ARBITER_MEMORY:-8192}
+          export ARBITER_DISK=${ARBITER_DISK:-50}
           export NUM_WORKERS=0
           ;;
       "TNF" )
           export NUM_MASTERS=2
-          export MASTER_VCPU=8
-          export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_VCPU=${MASTER_VCPU:-8}
+          export MASTER_DISK=${MASTER_DISK:-100}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           export ENABLE_TWO_NODE_FENCING="true"
           ;;
       "HA" )
           export NUM_MASTERS=3
-          export MASTER_VCPU=4
-          export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_VCPU=${MASTER_VCPU:-4}
+          export MASTER_DISK=${MASTER_DISK:-100}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=2
           export WORKER_VCPU=4
-          export WORKER_DISK=100
-          export WORKER_MEMORY=9000
+          export WORKER_DISK=${WORKER_DISK:-100}
+          export WORKER_MEMORY=${WORKER_MEMORY:-9000}
           ;;
       "SNO" )
           export NUM_MASTERS=1
-          export MASTER_VCPU=8
-          export MASTER_DISK=100
-          export MASTER_MEMORY=32768
+          export MASTER_VCPU=${MASTER_VCPU:-8}
+          export MASTER_DISK=${MASTER_DISK:-100}
+          export MASTER_MEMORY=${MASTER_MEMORY:-16384}
           export NUM_WORKERS=0
           export NETWORK_TYPE="OVNKubernetes"
           export AGENT_PLATFORM_TYPE="${AGENT_PLATFORM_TYPE:-"none"}"
@@ -539,12 +523,18 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   # Increase master vCPU for agent OVE ISO installs or when certain operators like 'mtv' are used,
   # as some operators require more CPUs.
   if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]; then
-    export MASTER_VCPU=9
+    if ((MASTER_VCPU < 9)); then
+      export MASTER_VCPU=9
+    fi
     if [ "${SCENARIO}" == "SNO" ]; then
-       export MASTER_VCPU=16
+      if ((MASTER_VCPU < 16)); then
+        export MASTER_VCPU=16
+      fi
     fi
     if [ "${SCENARIO}" == "HA" ]; then
-       export WORKER_VCPU=5
+      if ((WORKER_VCPU < 5)); then
+        export WORKER_VCPU=5
+      fi
     fi
     # Increase disk storage requirements for NoRegistryClusterInstall aka agent OVE ISO
     case "$SCENARIO" in
@@ -555,7 +545,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   fi
 
   if [[ "$AGENT_OPERATORS" =~ "mtv" ]]; then
-    export MASTER_VCPU=9
+    if ((MASTER_VCPU < 9)); then
+      export MASTER_VCPU=9
+    fi
   fi
 
   if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
@@ -564,8 +556,12 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     export VM_EXTRADISKS_LIST="vda vdb"
     export VM_EXTRADISKS_SIZE="10G"
 
-    export MASTER_VCPU=8
-    export MASTER_MEMORY=32768
+    if ((MASTER_VCPU < 8)); then
+      export MASTER_VCPU=8
+    fi
+    if ((MASTER_MEMORY < 32768)); then
+      export MASTER_MEMORY=32768
+    fi
   fi
 
   if [[ $IP_STACK != 'v4' ]] && [[ $IP_STACK != 'v6' ]] && [[ $IP_STACK != 'v4v6' ]]; then
@@ -629,6 +625,23 @@ if [[ "${MIRROR_IMAGES,,}" != "false" ]] && [[ "${MIRROR_IMAGES,,}" == "true" ||
 fi
 
 export AGENT_TEST_CASES=${AGENT_TEST_CASES:-}
+
+
+export MASTER_MEMORY=${MASTER_MEMORY:-16384}
+export MASTER_DISK=${MASTER_DISK:-60}
+export MASTER_VCPU=${MASTER_VCPU:-8}
+
+export ARBITER_MEMORY=${ARBITER_MEMORY:-8192}
+export ARBITER_DISK=${ARBITER_DISK:-50}
+export ARBITER_VCPU=${ARBITER_VCPU:-4}
+
+export WORKER_MEMORY=${WORKER_MEMORY:-8192}
+export WORKER_DISK=${WORKER_DISK:-60}
+export WORKER_VCPU=${WORKER_VCPU:-4}
+
+export EXTRA_WORKER_MEMORY=${EXTRA_WORKER_MEMORY:-${WORKER_MEMORY}}
+export EXTRA_WORKER_DISK=${EXTRA_WORKER_DISK:-${WORKER_DISK}}
+export EXTRA_WORKER_VCPU=${EXTRA_WORKER_VCPU:-${WORKER_VCPU}}
 
 
 export PERSISTENT_IMAGEREG=${PERSISTENT_IMAGEREG:-false}
