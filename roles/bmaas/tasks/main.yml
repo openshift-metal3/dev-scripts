@@ -1,0 +1,59 @@
+---
+- name: Include oras role
+  include_role:
+    name: oras
+
+- name: Create bmaas-images service account
+  kubernetes.core.k8s:
+    name: "{{ bmaas_service_account_name }}"
+    api_version: v1
+    kind: ServiceAccount
+    namespace: "{{ bmaas_namespace }}"
+    state: present
+
+- name: Create ClusterRoleBinding for registry-viewer
+  kubernetes.core.k8s:
+    name: "{{ bmaas_service_account_name }}-registry-viewer"
+    api_version: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    state: present
+    definition:
+      subjects:
+        - kind: ServiceAccount
+          name: "{{ bmaas_service_account_name }}"
+          namespace: "{{ bmaas_namespace }}"
+      roleRef:
+        kind: ClusterRole
+        name: registry-viewer
+        apiGroup: rbac.authorization.k8s.io
+
+- name: Create ClusterRoleBinding for registry-editor
+  kubernetes.core.k8s:
+    name: "{{ bmaas_service_account_name }}-registry-editor"
+    api_version: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    state: present
+    definition:
+      subjects:
+        - kind: ServiceAccount
+          name: "{{ bmaas_service_account_name }}"
+          namespace: "{{ bmaas_namespace }}"
+      roleRef:
+        kind: ClusterRole
+        name: registry-editor
+        apiGroup: rbac.authorization.k8s.io
+
+- name: Enable default route for OpenShift image registry
+  kubernetes.core.k8s:
+    name: cluster
+    api_version: imageregistry.operator.openshift.io/v1
+    kind: Config
+    state: present
+    merge_type: merge
+    definition:
+      spec:
+        defaultRoute: true
+
+- name: Display service account information
+  debug:
+    msg: "BMaaS service account '{{ bmaas_service_account_name }}' created with registry-viewer and registry-editor roles in namespace '{{ bmaas_namespace }}'"
