@@ -86,31 +86,6 @@ fi
 # Install ansible, other packages are installed via
 # vm-setup/install-package-playbook.yml
 case $DISTRO in
-  "centos8"|"rhel8"|"almalinux8"|"rocky8")
-    # install network-scripts package to be able to use legacy network commands
-    sudo dnf install -y network-scripts
-    if [[ $DISTRO == "centos8" ]] && [[ "$NAME" != *"Stream"* ]]; then
-        echo "CentOS is not supported, please switch to CentOS Stream / RHEL / Rocky / Alma"
-        exit 1
-    fi
-    if [[ $DISTRO == "centos8" || $DISTRO == "almalinux8" || $DISTRO == "rocky8" ]]; then
-      sudo dnf -y install epel-release dnf --enablerepo=extras
-    elif [[ $DISTRO == "rhel8" ]]; then
-      # Enable EPEL for python3-passlib and python3-bcrypt required by metal3-dev-env
-      sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-      if sudo subscription-manager repos --list-enabled 2>&1 | grep "ansible-2-for-rhel-8-$(uname -m)-rpms"; then
-        # The packaged 2.x ansible is too old for compatibility with metal3-dev-env
-        sudo dnf erase -y ansible
-        sudo subscription-manager repos --disable=ansible-2-for-rhel-8-$(uname -m)-rpms
-      fi
-    fi
-    # Note recent ansible needs python >= 3.8 so we install 3.9 here
-    sudo dnf -y install python39
-    sudo alternatives --set python /usr/bin/python3.9
-    sudo alternatives --set python3 /usr/bin/python3.9
-    sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.9 1
-    PYTHON_DEVEL="python39-devel"
-    ;;
   "centos9"|"rhel9"|"almalinux9"|"rocky9")
     sudo dnf -y install python3-pip
     if [[ $DISTRO == "centos9" || $DISTRO == "almalinux9" || $DISTRO == "rocky9" ]] ; then
@@ -130,7 +105,7 @@ case $DISTRO in
     PYTHON_DEVEL="python3-devel"
     ;;
   *)
-    echo -n "CentOS or RHEL version not supported"
+    echo -n "CentOS 9 or RHEL 9 required (el8 is no longer supported due to glibc requirements)"
     exit 1
     ;;
 esac
@@ -197,7 +172,6 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "go_custom_mirror=$GO_CUSTOM_MIRROR" \
   -e "go_checksum=$GO_CHECKSUM" \
   -e "GOARCH=$GOARCH" \
-  $ALMA_PYTHON_OVERRIDE \
   -i vm-setup/inventory.ini \
   -b -vvv vm-setup/install-package-playbook.yml
 popd
@@ -214,13 +188,6 @@ fi
 
 if [[ "${NODES_PLATFORM}" == "baremetal" ]] ; then
     sudo dnf -y install ipmitool
-fi
-
-# needed if we are using locally built images
-# We stop any systemd service so we can run in a container, since
-# there's no RPM/systemd version available for RHEL8
-if sudo systemctl is-active docker-distribution.service; then
-  sudo systemctl disable --now docker-distribution.service
 fi
 
 retry_with_timeout 5 60 "curl -L $OPENSHIFT_CLIENT_TOOLS_URL | sudo tar -U -C /usr/local/bin -xzf -"
