@@ -160,6 +160,46 @@ if ! [[ -f /usr/share/OVMF/OVMF_CODE.fd || -L /usr/share/OVMF/OVMF_CODE.fd ]]; t
   sudo ln -s /usr/share/edk2/ovmf/OVMF_CODE.fd /usr/share/OVMF/
 fi
 
+# Fix network topology for Landing Zone use case:
+# Cluster node VMs (masters/workers) should only have cluster network (baremetal network)
+# Landing Zone VMs should have both BMC network (provisioning network) and cluster network
+# This is necessary because metal3-dev-env attaches all networks to all VMs
+if [ ${NUM_LANDINGZONE:-0} -gt 0 ]; then
+  echo "Configuring network topology: removing BMC network from cluster node VMs..."
+
+  # Remove BMC network from master VMs
+  for i in $(seq 0 $((NUM_MASTERS - 1))); do
+    vm_name="${CLUSTER_NAME}_master_${i}"
+    # Get MAC address of the interface connected to provisioning network (BMC network)
+    # The MAC line comes BEFORE the source bridge line in the XML
+    bmc_mac=$(sudo virsh dumpxml "$vm_name" | grep -B 1 "bridge='${PROVISIONING_NETWORK_NAME}'" | grep "mac address" | sed "s/.*address='\([^']*\)'.*/\1/")
+
+    if [ -n "$bmc_mac" ]; then
+      echo "  Removing BMC interface (MAC: $bmc_mac) from $vm_name"
+      sudo virsh detach-interface "$vm_name" bridge --mac "$bmc_mac" --config --persistent
+    else
+      echo "  Warning: Could not find BMC interface for $vm_name (may already be removed)"
+    fi
+  done
+
+  # Remove BMC network from worker VMs
+  for i in $(seq 0 $((NUM_WORKERS - 1))); do
+    vm_name="${CLUSTER_NAME}_worker_${i}"
+    # Get MAC address of the interface connected to provisioning network (BMC network)
+    # The MAC line comes BEFORE the source bridge line in the XML
+    bmc_mac=$(sudo virsh dumpxml "$vm_name" | grep -B 1 "bridge='${PROVISIONING_NETWORK_NAME}'" | grep "mac address" | sed "s/.*address='\([^']*\)'.*/\1/")
+
+    if [ -n "$bmc_mac" ]; then
+      echo "  Removing BMC interface (MAC: $bmc_mac) from $vm_name"
+      sudo virsh detach-interface "$vm_name" bridge --mac "$bmc_mac" --config --persistent
+    else
+      echo "  Warning: Could not find BMC interface for $vm_name (may already be removed)"
+    fi
+  done
+
+  echo "Network topology configured: cluster nodes have cluster network only, landing zone has both networks"
+fi
+
 if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
   ORIG_NODES_FILE="${NODES_FILE}.orig"
   cp -f ${NODES_FILE} ${ORIG_NODES_FILE}
@@ -314,7 +354,8 @@ if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
     # have some delay between disabling the network on libvirt
     # and deleting it from NM to avoid race conditions
     sleep 1
-    sudo nmcli con del ${BAREMETAL_NETWORK_NAME}
+    # Delete NetworkManager connection if it exists (ignore error if it doesn't)
+    sudo nmcli con del ${BAREMETAL_NETWORK_NAME} 2>/dev/null || true
     # have some delay between deleting the network on NM
     # and restarting it from libvirt to avoid race conditions
     sleep 1
