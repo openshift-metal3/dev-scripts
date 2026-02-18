@@ -72,7 +72,7 @@ function mirror_to_file() {
    config=${1}
 
    pushd ${WORKING_DIR}
-   oc-mirror --v2 -c ${config} file://${WORKING_DIR} --ignore-release-signature
+   oc-mirror --v2 -c ${config} file://${WORKING_DIR} --ignore-release-signature --remove-signatures
    popd
 }
 
@@ -81,7 +81,7 @@ function publish_image() {
    config=${1}
 
    pushd ${WORKING_DIR}
-   oc-mirror --v2 --config ${config} --from file://${WORKING_DIR} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --ignore-release-signature
+   oc-mirror --v2 --config ${config} --from file://${WORKING_DIR} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --ignore-release-signature --remove-signatures
    popd
 
 }

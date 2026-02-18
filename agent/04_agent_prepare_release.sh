@@ -13,13 +13,73 @@ source $SCRIPTDIR/agent/common.sh
 source $SCRIPTDIR/ocp_install_env.sh
 source $SCRIPTDIR/oc_mirror.sh
 
-# Temporarily skip preparing the custom local release in case of OVE ISO
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
-    exit 0
-fi
+# Function definitions
+
+# Prepares the registry directory structure for the OpenShift appliance builder.
+#
+# When building OVE ISOs with mirror-path support, the appliance expects a specific
+# directory layout with pre-mirrored registry data and oc-mirror output files. This
+# function organizes the registry directory created by setup_release_mirror() into
+# the format expected by the appliance builder.
+#
+# Directory structure created:
+#   REGISTRY_DIR/
+#     ├── cache/<version>-<arch>/     # Where appliance will write the ISO
+#     ├── data/                        # Pre-mirrored registry data (from oc-mirror)
+#     ├── working-dir/                 # oc-mirror YAML files (IDMS, CatalogSources)
+#     └── results-*/                   # oc-mirror mapping.txt
+#
+# The appliance uses this directory via the --mirror-path flag to skip running
+# oc-mirror during the build and instead use the pre-mirrored images directly.
+function prepare_registry_dir_for_appliance() {
+    echo "Preparing registry directory structure for appliance..."
+
+    # Create the cache directory structure expected by appliance
+    # Appliance expects: mirror-path/cache/<version-arch> (ISO output)
+    # Appliance will read registry data directly from mirror-path/data
+
+    # Extract version from release image to create cache subdirectory
+    # Appliance creates cache dir in format: cache/<version>-<arch>
+    VERSION=$(skopeo inspect --authfile ${PULL_SECRET_FILE} docker://${OPENSHIFT_RELEASE_IMAGE} | jq -r '.Labels["io.openshift.release"]')
+    ARCH=$(uname -m)
+    CACHE_SUBDIR="${VERSION}-${ARCH}"
+    mkdir -p ${REGISTRY_DIR}/cache/${CACHE_SUBDIR}
+
+    # Copy YAML files and mapping.txt to registry directory so appliance can find them
+    if [[ -d ${WORKING_DIR}/working-dir ]]; then
+        cp -r ${WORKING_DIR}/working-dir ${REGISTRY_DIR}/
+    fi
+
+    # Copy results directory containing mapping.txt
+    for results_dir in ${WORKING_DIR}/results-*; do
+        if [[ -d "$results_dir" ]]; then
+            cp -r "$results_dir" ${REGISTRY_DIR}/
+        fi
+    done
+
+    # Append IDMS entry for local dev-scripts registry to existing idms-oc-mirror.yaml
+    # This ensures the local registry can be accessed from the installed cluster
+    echo "Appending IDMS entry for local registry"
+
+    # Local dev-scripts registry
+    local local_registry="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}"
+
+    echo "Creating IDMS mapping: ${local_registry} -> ${local_registry}"
+
+    # Append mirror entry to existing IDMS file
+    cat >> ${REGISTRY_DIR}/working-dir/cluster-resources/idms-oc-mirror.yaml << EOF
+  - mirrors:
+    - ${local_registry}
+    source: ${local_registry}
+EOF
+
+    echo "Custom registry IDMS entry appended to ${REGISTRY_DIR}/working-dir/cluster-resources/idms-oc-mirror.yaml"
+
+    echo "Registry directory prepared for appliance"
+}
 
 # To replace an image entry in the openshift release image, set <ENTRYNAME>_LOCAL_REPO so that:
-# - ENTRYNAME matches an uppercase version of the name in the release image with "-" converted to "_" 
+# - ENTRYNAME matches an uppercase version of the name in the release image with "-" converted to "_"
 # - The var value must point to an already locally cloned repo
 #
 # To specify a custom Dockerfile set <ENTRYNAME>_DOCKERFILE, as a relative path of the Dockerfile
@@ -33,15 +93,6 @@ fi
 # export ASSISTED_SERVICE_LOCAL_REPO=~/git/assisted-service
 # export ASSISTED_SERVICE_DOCKERFILE=Dockerfile.assisted-service.ocp
 # export ASSISTED_SERVICE_IMAGE=agent-installer-api-server
-
-early_deploy_validation
-write_pull_secret
-
-# Release mirroring could be required by the subsequent steps
-# even if the current one will be skipped
-if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
-   setup_release_mirror
-fi
 
 function build_local_release() {
     # Sanity checks
@@ -62,13 +113,13 @@ function build_local_release() {
 
     # Build new images
     for IMAGE_VAR in $REPO_OVERRIDES ; do
-        
+
         if [[ ! -d ${!IMAGE_VAR} ]]; then
             echo "The specified local repo ${IMAGE_VAR}=${!IMAGE_VAR} does not exist"
             exit 1
         fi
         cd ${!IMAGE_VAR}
-        
+
         export $IMAGE_VAR=${!IMAGE_VAR##*/}:latest
         export $IMAGE_VAR=$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
 
@@ -90,13 +141,13 @@ function build_local_release() {
         sudo podman build --network host --authfile $PULL_SECRET_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE --build-arg "${IMAGE_BUILD_ARG}" .
         cd -
         sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
-        
+
         FINAL_IMAGE_NAME=${IMAGE_VAR/_LOCAL_REPO}_IMAGE
         FINAL_IMAGE=${!FINAL_IMAGE_NAME:-}
         if [[ -z "$FINAL_IMAGE" ]]; then
             FINAL_IMAGE=$(echo ${IMAGE_VAR/_LOCAL_REPO} | tr '[:upper:]_' '[:lower:]-')
         fi
-        
+
         OLDIMAGE=$(sudo podman run --rm --authfile $PULL_SECRET_FILE $OPENSHIFT_RELEASE_IMAGE image $FINAL_IMAGE)
         echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> $DOCKERFILE
     done
@@ -108,12 +159,28 @@ function build_local_release() {
     fi
 }
 
-export REPO_OVERRIDES=$(env | grep '_LOCAL_REPO=' | grep -o '^[^=]*')
+# Main execution
+
+early_deploy_validation
+write_pull_secret
+
+# Release mirroring could be required by the subsequent steps
+# even if the current one will be skipped
+if [[ "${MIRROR_IMAGES}" == "true" ]]; then
+   setup_release_mirror
+fi
+
+export REPO_OVERRIDES=$(get_repo_overrides)
 
 # Skip the step in case of no overrides
-if [[ ! -z "${REPO_OVERRIDES}" ]] ; then 
+if [[ ! -z "${REPO_OVERRIDES}" ]] ; then
     build_local_release
 
     # Extract openshift-install from the newly built release image, in case it was updated
     extract_command "${OPENSHIFT_INSTALLER_CMD}" "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" "${OCP_DIR}"
+fi
+
+# Prepare registry directory for appliance if using ISO_NO_REGISTRY
+if [[ "${MIRROR_IMAGES}" == "true" && "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+    prepare_registry_dir_for_appliance
 fi
