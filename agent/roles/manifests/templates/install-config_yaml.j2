@@ -15,6 +15,12 @@ arbiter:
 {% if feature_set %}
 featureSet: {{ feature_set }}
 {% endif %}
+{% if feature_gates %}
+featureGates:
+{% for gate in feature_gates.split(',') %}
+- {{ gate }}
+{% endfor %}
+{% endif %}
 controlPlane:
   architecture: {{ goCPUArchitecture }}
   hyperthreading: Enabled

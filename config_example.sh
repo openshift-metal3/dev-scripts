@@ -512,6 +512,24 @@ set -x
 #
 #ADDITIONAL_CAPABILITIES=baremetal,Console
 
+# FEATURE_SET -
+# Enable a feature set for the cluster. Feature sets are a collection of features that
+# are enabled together.
+# Default: Undefined (uses the default feature set)
+#
+# For more info see:
+# https://docs.openshift.com/container-platform/latest/nodes/clusters/nodes-cluster-enabling-features.html
+#
+#export FEATURE_SET="TechPreviewNoUpgrade"
+
+# FEATURE_GATES -
+# Enable specific feature gates for the cluster. This should be provided as a
+# comma-separated list of feature gate names as key=value pairs, where value is a boolean of true or false.
+# Default: Undefined
+#
+# Example:
+#export FEATURE_GATES="ExampleFeatureGateA=true,ExampleFeatureGateB=false"
+
 # MASTER_HOSTNAME_FORMAT -
 # Set a custom hostname format for masters. This is a format string that should
 # include one %d field, which will be replaced with the number of the node.
