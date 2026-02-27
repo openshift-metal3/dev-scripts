@@ -92,6 +92,7 @@ function build_ove_iso_script() {
     --pull-secret-file "${PULL_SECRET_FILE}" \
     --release-image-url "${release_image_url}" \
     --ssh-key-file "${SSH_KEY_FILE}" \
+    ${APPLIANCE_IMAGE:+--appliance-image "${APPLIANCE_IMAGE}"} \
     --dir "${asset_dir}" >/dev/null
   echo "Agent OVE ISO completed"
 
