@@ -35,3 +35,8 @@ if [ -f "${EXTRA_NODES_FILE}" ]; then
     jq '.nodes' "${EXTRA_NODES_FILE}" | tee "${EXTRA_BAREMETALHOSTS_FILE}"
     generate_ocp_host_manifest ${OCP_DIR} ${EXTRA_BAREMETALHOSTS_FILE} extra_host_manifests.yaml ${EXTRA_WORKERS_NAMESPACE}
 fi
+
+if [ -f "${ARM_NODES_FILE}" ]; then
+    jq '.nodes' "${ARM_NODES_FILE}" | tee "${EXTRA_ARM_BAREMETALHOSTS_FILE}"
+    generate_ocp_host_manifest ${OCP_DIR} ${EXTRA_ARM_BAREMETALHOSTS_FILE} extra_arm_host_manifests.yaml ${EXTRA_WORKERS_NAMESPACE}
+fi
