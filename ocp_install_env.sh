@@ -202,6 +202,19 @@ EOF
     fi
 }
 
+function featureGates() {
+    if [[ -n "$FEATURE_GATES" ]]; then
+cat <<EOF
+featureGates:
+EOF
+        for gate in ${FEATURE_GATES//,/ }; do
+cat <<EOF
+- $gate
+EOF
+        done
+    fi
+}
+
 function capabilities_stanza() {
     if [[ -n "$BASELINE_CAPABILITY_SET" ]]; then
 cat <<EOF
@@ -386,6 +399,7 @@ controlPlane:
 $(node_map_to_install_config_fencing_credentials)
 $(arbiter_stanza)
 $(featureSet)
+$(featureGates)
 $(capabilities_stanza)
 platform:
   baremetal:
