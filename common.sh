@@ -533,6 +533,19 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
             exit 1
           fi
           ;;
+      "SNOMIN" )
+          export NUM_MASTERS=1
+          export MASTER_VCPU=4
+          export MASTER_DISK=100
+          export MASTER_MEMORY=32768
+          export NUM_WORKERS=0
+          export NETWORK_TYPE="OVNKubernetes"
+          export AGENT_PLATFORM_TYPE="${AGENT_PLATFORM_TYPE:-"none"}"
+          if [[ "${AGENT_PLATFORM_TYPE}" != "external" ]]  && [[ "${AGENT_PLATFORM_TYPE}" != "none" ]]; then
+            echo "Invalid value ${AGENT_PLATFORM_TYPE}, use 'none' or 'external'."
+            exit 1
+          fi
+          ;;
       *)
         invalidAgentValue
   esac
