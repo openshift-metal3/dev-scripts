@@ -22,9 +22,16 @@ export ISCSI_NETWORK="iscsi"
 export ISCSI_NETWORK_SUBNET=${ISCSI_NETWORK_SUBNET:-"192.168.145"}
 export ISCSI_DEVICE_NAME=${ISCSI_DEVICE_NAME:-"/dev/sdb"}
 
-# Image reference for OpenShift-based Appliance Builder.
-# See: https://github.com/openshift/appliance
-export APPLIANCE_IMAGE=${APPLIANCE_IMAGE:-"quay.io/edge-infrastructure/openshift-appliance:latest"}
+# For OVE CI jobs, this config var may be provided directly as a dependency by the test.
+# If set, it will be used by the build_ove_iso_script. Such feature will be mainly used
+# to test the Appliance repo in the Prow CI.
+if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]; then
+    export APPLIANCE_IMAGE=${APPLIANCE_IMAGE:-""}
+else
+    # Image reference for OpenShift-based Appliance Builder.
+    # See: https://github.com/openshift/appliance
+    export APPLIANCE_IMAGE=${APPLIANCE_IMAGE:-"quay.io/edge-infrastructure/openshift-appliance:latest"}
+fi
 
 # Override command name in case of extraction
 export OPENSHIFT_INSTALLER_CMD="openshift-install"
