@@ -3,6 +3,8 @@ set -euxo pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
+LOGDIR=${SCRIPTDIR}/logs
+source $SCRIPTDIR/logging.sh
 source $SCRIPTDIR/common.sh
 
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
