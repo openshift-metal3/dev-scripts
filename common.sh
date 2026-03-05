@@ -534,6 +534,10 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           fi
           ;;
       "SNOMIN" )
+          if is_lower_version "$OPENSHIFT_VERSION" "4.22"; then
+              echo "SNOMIN is not supported on OCP version lower than 4.22, current version ${OPENSHIFT_VERSION:-\"none provided\"}."
+              return 1
+          fi
           export NUM_MASTERS=1
           export MASTER_VCPU=4
           export MASTER_DISK=100
