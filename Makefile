@@ -44,7 +44,7 @@ agent_remove_extraworker_nodes:
 	./agent/agent_remove_all_extraworker_nodes.sh
 
 agent_post_install_validation:
-	./agent/agent_post_install_validation.sh
+	./agent/08_agent_post_install_validation.sh
 
 redeploy: ocp_cleanup ironic_cleanup build_installer ironic install_config ocp_run bell
 
