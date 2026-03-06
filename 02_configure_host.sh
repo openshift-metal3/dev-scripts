@@ -139,6 +139,7 @@ ansible-playbook \
     -e "num_workers=$NUM_WORKERS" \
     -e "num_extraworkers=$NUM_EXTRA_WORKERS" \
     -e "libvirt_firmware=$LIBVIRT_FIRMWARE" \
+    -e "libvirt_volume_pool=$LIBVIRT_VOLUME_POOL" \
     -e "virthost=$HOSTNAME" \
     -e "vm_platform=$NODES_PLATFORM" \
     -e "sushy_ignore_boot_device=$REDFISH_EMULATOR_IGNORE_BOOT_DEVICE" \
