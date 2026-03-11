@@ -129,6 +129,61 @@ function create_cluster() {
     fi
     generate_metal3_config
 
+    # When mirroring images for non-GA releases (nightly/CI), the RHCOS default
+    # policy.json requires sigstoreSigned verification for quay.io/openshift-release-dev
+    # images. Nightly/CI images are not signed, and the policy check uses the original
+    # image name even when pulling from a mirror. The MCO internally generates the
+    # restrictive policy.json during rendering, overriding any MachineConfig file entry.
+    #
+    # This mirroring of images also happens when using the _LOCAL_IMAGE mechanism.
+    #
+    # Fix: 1) dropin on machine-config-daemon-pull.service to use permissive policy
+    #      2) oneshot unit before machine-config-daemon-firstboot.service that replaces
+    #         /etc/containers/policy.json with the permissive version so the MCD's
+    #         internal image pulls (extensions, OS images) also succeed.
+    if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" && "${OPENSHIFT_RELEASE_TYPE}" != "ga" ]]; then
+      echo "Adding MCD pull policy fix for mirrored non-GA release"
+      for role in master worker; do
+        cat > "${assets_dir}/openshift/99_${role}-mcd-pull-policy-fix.yaml" <<MCEOF
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: ${role}
+  name: 99-${role}-mcd-pull-policy-fix
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    systemd:
+      units:
+        - name: machine-config-daemon-pull.service
+          dropins:
+            - name: 10-force-permissive-policy.conf
+              contents: |
+                [Service]
+                ExecStartPre=
+                ExecStartPre=/bin/sh -c 'echo "--signature-policy /etc/machine-config-daemon/policy-for-old-podman.json" > /tmp/podman_policy_args'
+        - name: fix-container-policy-for-mcd.service
+          enabled: true
+          contents: |
+            [Unit]
+            Description=Replace container image policy with permissive version for MCD firstboot
+            Before=machine-config-daemon-firstboot.service
+            After=machine-config-daemon-pull.service
+            ConditionPathExists=/etc/machine-config-daemon/policy-for-old-podman.json
+
+            [Service]
+            Type=oneshot
+            RemainAfterExit=yes
+            ExecStart=/bin/cp /etc/machine-config-daemon/policy-for-old-podman.json /etc/containers/policy.json
+
+            [Install]
+            WantedBy=multi-user.target
+MCEOF
+      done
+    fi
+
     find assets/generated -name '*.yaml' -exec cp -f {} ${assets_dir}/openshift \;
 
     if [[ "${IP_STACK}" == "v4v6" && "$(openshift_version $OCP_DIR)" =~ 4.[67] ]]; then
