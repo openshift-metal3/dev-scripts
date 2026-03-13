@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -euxo pipefail
 
 
 source logging.sh
@@ -10,7 +10,7 @@ source validation.sh
 
 early_deploy_validation true
 
-if [ -z "${METAL3_DEV_ENV}" ]; then
+if [ -z "${METAL3_DEV_ENV:-}" ]; then
   export REPO_PATH=${WORKING_DIR}
   sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
   pushd ${METAL3_DEV_ENV_PATH}
@@ -41,7 +41,7 @@ sudo sh -c "echo 'max_parallel_downloads=8' >> /etc/dnf/dnf.conf"
 # in the upgrade command,but this is more explicit and complete
 sudo dnf -y clean all
 
-old_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
+old_version=$(sudo dnf info NetworkManager | { grep Version || true; } | cut -d ':' -f 2)
 
 # Update to latest packages first
 # Number of attempts
@@ -69,7 +69,7 @@ if (( attempt > MAX_RETRIES )); then
     exit 1
 fi
 
-new_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
+new_version=$(sudo dnf info NetworkManager | { grep Version || true; } | cut -d ':' -f 2)
 # If NetworkManager was upgraded it needs to be restarted
 if [ "$old_version" != "$new_version" ]; then
   sudo systemctl restart NetworkManager
@@ -153,7 +153,7 @@ GO_CHECKSUM="$(
 )"
 
 if [ -z "$GO_CHECKSUM" ]; then
-  echo "Error: Could not find checksum for $VERSION ($OS/$ARCH)" >&2
+  echo "Error: Could not find checksum for $VERSION ($OS/$GOARCH)" >&2
 else
   echo "Checksum: $GO_CHECKSUM"
 fi
@@ -180,17 +180,17 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -b -vvv vm-setup/install-package-playbook.yml
 popd
 
-if [ -n "${KNI_INSTALL_FROM_GIT}" ]; then
+if [ -n "${KNI_INSTALL_FROM_GIT:-}" ]; then
     # zip is required for building the installer from source
     sudo dnf -y install zip
 fi
 
 # Install nfs for persistent volumes
-if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
+if [ "${PERSISTENT_IMAGEREG:-}" == true ] ; then
     sudo dnf -y install nfs-utils
 fi
 
-if [[ "${NODES_PLATFORM}" == "baremetal" ]] ; then
+if [[ "${NODES_PLATFORM:-}" == "baremetal" ]] ; then
     sudo dnf -y install ipmitool
 fi
 
