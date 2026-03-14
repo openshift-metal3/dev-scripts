@@ -509,11 +509,15 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NETWORK_TYPE="OVNKubernetes"
           export AGENT_PLATFORM_TYPE="${AGENT_PLATFORM_TYPE:-"none"}"
           if [[ "${AGENT_PLATFORM_TYPE}" != "external" ]]  && [[ "${AGENT_PLATFORM_TYPE}" != "none" ]]; then
-            echo "Invalid value ${AGENT_PLATFORM_TYPE},  use 'none' or 'external'."
+            echo "Invalid value ${AGENT_PLATFORM_TYPE}, use 'none' or 'external'."
             exit 1
           fi
           ;;
       "SNOMIN" )
+          if is_lower_version "$OPENSHIFT_VERSION" "4.22"; then
+              echo "SNOMIN is not supported on OCP version lower than 4.22, current version ${OPENSHIFT_VERSION:-\"none provided\"}."
+              return 1
+          fi
           export NUM_MASTERS=1
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
