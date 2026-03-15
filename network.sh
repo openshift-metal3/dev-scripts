@@ -226,7 +226,7 @@ function concat_parameters_with_vipsseparator() {
     #
     # Returns:
     #     Print all given parameters with ${VIPS_SEPARATOR} in between.
-    
+
     ARG_NR=1
     RESULT=""
     for ARG in "$@"; do
@@ -269,10 +269,16 @@ function get_vips() {
         fi
     fi
 
-    if [[ "$IP_STACK" == "v4" || "$IP_STACK" == "v4v6" ]]; then
+    if [[ "$IP_STACK" == "v4" ]]; then
+        API_VIPS=${API_VIPS_V4:-}
+        INGRESS_VIPS=${INGRESS_VIPS_V4:-}
+    elif [[ "$IP_STACK" == "v6" ]]; then
+        API_VIPS=${API_VIPS_V6:-}
+        INGRESS_VIPS=${INGRESS_VIPS_V6:-}
+    elif [[ "$IP_STACK" == "v4v6" ]]; then
         API_VIPS=$(concat_parameters_with_vipsseparator ${API_VIPS_V4:-} ${API_VIPS_V6:-})
         INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V4:-} ${INGRESS_VIPS_V6:-})
-    else
+    else # The only remaining is "v6v4"
         API_VIPS=$(concat_parameters_with_vipsseparator ${API_VIPS_V6:-} ${API_VIPS_V4:-})
         INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V6:-} ${INGRESS_VIPS_V4:-})
     fi
