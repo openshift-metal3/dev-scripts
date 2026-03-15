@@ -267,7 +267,7 @@ function node_map_to_install_config_hosts() {
           password: ${password}
 EOF
 
-      if [[ "$driver_prefix" == "redfish" ]]; then
+      if [[ "$driver_prefix" == "redfish" ]] || [[ "$driver_prefix" == "drac" ]]; then
           # Set disableCertificateVerification on older versions
           if is_lower_version "$(openshift_version $OCP_DIR)" "4.22"; then
               # Heads up, "verify ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
