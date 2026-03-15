@@ -327,11 +327,13 @@ function set_api_and_ingress_vip() {
       configure_dnsmasq ${API_VIPS} ${INGRESS_VIPS}
   else
       # Specific for users *NOT* using devscript with KVM (virsh) for deploy. (Reads: baremetal)
-      if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
+      # Use IPv6 AAAA records for IPv6-only (v6) or IPv6-primary dual-stack (v6v4) deployments
+      if [[ "${IP_STACK}" == "v6" || "${IP_STACK}" == "v6v4" ]]; then
           API_VIPS=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
+          INGRESS_VIPS=$(dig -t AAAA +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
       else
           API_VIPS=$(dig +noall +answer "api.${CLUSTER_DOMAIN}"  | awk '{print $NF}')
+          INGRESS_VIPS=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
       fi
-      INGRESS_VIPS=$(dig +noall +answer "test.apps.${CLUSTER_DOMAIN}" | awk '{print $NF}')
   fi
 }
