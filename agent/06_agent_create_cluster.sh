@@ -436,6 +436,55 @@ function run_agent_test_cases() {
 
     echo "Finished fixing DNS through agent-tui"
   fi
+
+  if [[ $AGENT_TEST_CASES =~ "copy_network" ]]; then
+    if [[ ${NUM_MASTERS} -lt 2 ]]; then
+      echo "ERROR: copy_network test case requires at least 2 master nodes (NUM_MASTERS=${NUM_MASTERS}). Not supported with SNO topology."
+      exit 1
+    fi
+    if [[ "${IP_STACK}" != "v4" ]]; then
+      echo "ERROR: copy_network test case only supports IPv4 (IP_STACK=${IP_STACK})."
+      exit 1
+    fi
+    echo "Running test scenario: inject static network keyfile on master_0 and master_1"
+
+    # Inject a NetworkManager keyfile on master_0 and master_1 via SSH into the live
+    # environment, simulating what a user would create via the agent-tui. The keyfile
+    # must be in place before agent-set-host-copy-network-arg.service runs.
+    # The script waits for SSH to become available on each node.
+    # master_1 is intentionally included as a non-rendezvous node, which is the
+    # scenario the bug affected.
+    # master-0 is the rendezvous/bootstrap node whose IP is recorded in the etcd
+    # cluster during installation - preserve its DHCP IP as the static IP so etcd
+    # membership is not broken after reboot.
+    # master-1 uses a distinct static IP outside the DHCP range to prove the
+    # static config was copied and persists after installation.
+    subnet_prefix=$(echo "${EXTERNAL_SUBNET_V4}" | cut -d'/' -f2)
+    master0_hostname=$(printf ${MASTER_HOSTNAME_FORMAT} 0)
+    master0_dhcp_ip=$(sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath \
+        "string(//dns[*]/host/hostname[. = '${master0_hostname}']/../@ip)" -)
+    # Find an unused static IP for master-1 by scanning virsh for unassigned offsets
+    master1_static_ip=""
+    for offset in $(seq 90 254); do
+      candidate=$(nth_ip ${EXTERNAL_SUBNET_V4} ${offset})
+      if ! sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath "//dns[*]/host[@ip = '${candidate}']" - &>/dev/null; then
+        master1_static_ip=${candidate}
+        break
+      fi
+    done
+    if [ -z "${master1_static_ip}" ]; then
+      echo "ERROR: could not find an unused IP in ${EXTERNAL_SUBNET_V4} for master-1 static config"
+      exit 1
+    fi
+    echo "Using static IP ${master1_static_ip} for master-1"
+    declare -A COPY_NETWORK_STATIC_IPS=([0]="${master0_dhcp_ip}/${subnet_prefix}" [1]="${master1_static_ip}/${subnet_prefix}")
+    for node_index in 0 1; do
+      echo "Injecting keyfile on master_${node_index}"
+      ./agent/e2e/agent-tui/test-copy-network.sh $node_index ${COPY_NETWORK_STATIC_IPS[$node_index]}
+    done
+
+    echo "Finished injecting network keyfiles"
+  fi
 }
 
 # Setup the environment to allow iPXE booting, by reusing libvirt native features
