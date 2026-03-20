@@ -110,6 +110,8 @@ func main() {
 
 	next(page)
 
+	// Initialize step counter
+	stepNum := 6
 	logrus.Info("Download credentials")
 	client := resty.New()
 	err = downloadCredentials(page, client, filepath.Join(screenshotPath, "06-credentials.png"))
@@ -118,9 +120,27 @@ func main() {
 	}
 
 	next(page)
+	stepNum++
+
+	// Wait for page to load
+	time.Sleep(3 * time.Second)
+
+	// Check if we're on Custom manifests page (4.22+) or Review page (< 4.22)
+	customManifestsHeading, _ := page.Timeout(2 * time.Second).ElementR("h2", "Custom manifests")
+	if customManifestsHeading != nil {
+		logrus.Info("Custom manifests page detected (OCP 4.22+)")
+		err = saveFullPageScreenshot(page, filepath.Join(screenshotPath, fmt.Sprintf("%02d-custom-manifests.png", stepNum)))
+		if err != nil {
+			log.Fatalf("failed custom manifests screenshot: %v", err)
+		}
+		next(page)  // Advance to review
+		stepNum++
+	} else {
+		logrus.Info("No Custom manifests page (OCP < 4.22), already on review page")
+	}
 
 	logrus.Info("Review and start cluster installation")
-	err = review(page, filepath.Join(screenshotPath, "07-review.png"))
+	err = review(page, filepath.Join(screenshotPath, fmt.Sprintf("%02d-review.png", stepNum)))
 	if err != nil {
 		log.Fatalf("failed review page: %v", err)
 	}
@@ -128,7 +148,8 @@ func main() {
 	logrus.Info("Cluster installation started successfully.")
 	page.MustElementR("h2", "Installation progress")
 
-	err = waitForClusterConsoleLink(page, filepath.Join(screenshotPath, "08-installation-progress"))
+	stepNum++
+	err = waitForClusterConsoleLink(page, filepath.Join(screenshotPath, fmt.Sprintf("%02d-installation-progress", stepNum)))
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -216,7 +237,7 @@ func downloadCredentials(page *rod.Page, client *resty.Client, path string) erro
 	page.MustElement("#credentials-download-agreement").MustClick()
 	time.Sleep(5 * time.Second)
 
-	page.MustElementR("button", "Download credentials").MustWaitEnabled()
+	page.MustElementR("button", "Download credentials").MustWaitEnabled().MustClick()
 
 	err = saveFullPageScreenshot(page, path)
 	if err != nil {
