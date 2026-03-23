@@ -376,6 +376,7 @@ function sync_repo_and_patch {
     git am --abort || true
     git checkout ${REPO_BRANCH}
     git fetch origin
+    git restore .
     git rebase origin/${REPO_BRANCH}
 
     # If set, use the specified PR number
