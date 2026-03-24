@@ -181,6 +181,12 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
   export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]]\.[[:digit:]]*\).*/\1/")}
 fi
 
+# Disable image policy verification for local development
+# In CI, this is set via the test configuration (see https://github.com/openshift/installer/pull/10379)
+if [ "${OPENSHIFT_CI}" != "true" ] && [ "${OPENSHIFT_RELEASE_TYPE}" = "nightly" ]; then
+    export OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY="true"
+fi
+
 export OPENSHIFT_RELEASE_TAG=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -E 's/[[:alnum:]\/.-]*(release|okd).*://')
 
 # Use "ipmi" for 4.3 as it didn't support redfish, for other versions
