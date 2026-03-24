@@ -530,6 +530,12 @@ set -x
 # Example:
 #export FEATURE_GATES="ExampleFeatureGateA=true,ExampleFeatureGateB=false"
 
+# OS_IMAGE_STREAM -
+# Set the specific OS Image Stream the cluster should use at install time.
+# Default: Undefined (uses the default OS Image Stream picked by the installer)
+#
+#export OS_IMAGE_STREAM="rhel-10"
+
 # MASTER_HOSTNAME_FORMAT -
 # Set a custom hostname format for masters. This is a format string that should
 # include one %d field, which will be replaced with the number of the node.

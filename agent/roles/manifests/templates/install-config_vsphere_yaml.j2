@@ -21,6 +21,9 @@ featureGates:
 - {{ gate }}
 {% endfor %}
 {% endif %}
+{% if os_image_stream %}
+osImageStream: {{ os_image_stream }}
+{% endif %}
 controlPlane:
   architecture: {{ goCPUArchitecture }}
   hyperthreading: Enabled
