@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"errors"
 	"time"
@@ -28,6 +30,8 @@ var (
 	baseDomain       = os.Getenv("BASE_DOMAIN")
 	rendezvousIP     = os.Getenv("RENDEZVOUS_IP")
 	ocpDir           = os.Getenv("OCP_DIR")
+	featureSet       = os.Getenv("FEATURE_SET")
+	featureGates     = os.Getenv("FEATURE_GATES")
 	baseURL          = fmt.Sprintf("http://%s:3001", rendezvousIP)
 	clustersURL      = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
 	downloadAttempts = 3
@@ -110,6 +114,13 @@ func main() {
 
 	next(page)
 
+	if featureSet != "" || featureGates != "" {
+		err = patchInstallConfig(clustersURL, featureSet, featureGates)
+		if err != nil {
+			log.Fatalf("failed patching install-config: %v", err)
+		}
+	}
+
 	// Initialize step counter
 	stepNum := 6
 	logrus.Info("Download credentials")
@@ -167,6 +178,59 @@ func clusterDetails(page *rod.Page, path string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func patchInstallConfig(clustersURL string, featureSet string, featureGates string) error {
+	client := resty.New()
+	clusterID, err := getClusterID(client, clustersURL)
+	if err != nil {
+		return err
+	}
+
+	installConfigURL := fmt.Sprintf("%s/%s/install-config", clustersURL, clusterID)
+
+	// Always patch both featureSet and featureGates together to avoid validation errors
+	override := make(map[string]interface{})
+
+	if featureSet == "" && featureGates != "" {
+		// If only gates are specified, must use CustomNoUpgrade
+		featureSet = "CustomNoUpgrade"
+	}
+
+	if featureSet != "" {
+		logrus.Infof("Patching install-config featureSet to %s", featureSet)
+		override["featureSet"] = featureSet
+
+		gates := []string{}
+		if featureGates != "" {
+			for _, gate := range strings.Split(featureGates, ",") {
+				if item := strings.TrimSpace(gate); len(item) > 0 {
+					gates = append(gates, item)
+				}
+			}
+		}
+		logrus.Infof("Patching install-config featureGates to %v", gates)
+		override["featureGates"] = gates
+	}
+
+	body, err := json.Marshal(override)
+	if err != nil {
+		return fmt.Errorf("marshal override: %w", err)
+	}
+
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(body).
+		Patch(installConfigURL)
+
+	if err != nil {
+		return err
+	}
+	if !resp.IsSuccess() {
+		return fmt.Errorf("error while patching install-config: %s (%d)", resp.String(), resp.StatusCode())
+	}
+
 	return nil
 }
 
