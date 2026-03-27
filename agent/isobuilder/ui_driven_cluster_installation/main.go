@@ -30,6 +30,9 @@ var (
 	baseDomain       = os.Getenv("BASE_DOMAIN")
 	rendezvousIP     = os.Getenv("RENDEZVOUS_IP")
 	ocpDir           = os.Getenv("OCP_DIR")
+	apiVips          = os.Getenv("API_VIPS")
+	ingressVips      = os.Getenv("INGRESS_VIPS")
+	sshPublicKey     = os.Getenv("SSH_PUB_KEY")
 	featureSet       = os.Getenv("FEATURE_SET")
 	featureGates     = os.Getenv("FEATURE_GATES")
 	baseURL          = fmt.Sprintf("http://%s:3001", rendezvousIP)
@@ -39,6 +42,8 @@ var (
 
 func main() {
 	logrus.Info("Launching headless browser...")
+	logConfiguration()
+
 	chromiumPath, _ := launcher.LookPath()
 	url := launcher.New().Bin(chromiumPath).NoSandbox(true).Headless(true).MustLaunch()
 	browser := rod.New().ControlURL(url).MustConnect()
@@ -114,6 +119,8 @@ func main() {
 
 	next(page)
 
+	// Assisted UI configures the featureSet after the Networking page,
+	// so this is the right moment to apply an eventual ds overrides.
 	if featureSet != "" || featureGates != "" {
 		err = patchInstallConfig(clustersURL, featureSet, featureGates)
 		if err != nil {
@@ -181,6 +188,20 @@ func clusterDetails(page *rod.Page, path string) error {
 	return nil
 }
 
+func logConfiguration() {
+	logrus.Infof("CLUSTER_NAME=%s", clusterName)
+	logrus.Infof("BASE_DOMAIN=%s", baseDomain)
+	logrus.Infof("RENDEZVOUS_IP=%s", rendezvousIP)
+	logrus.Infof("OCP_DIR=%s", ocpDir)
+	logrus.Infof("API_VIPS=%s", apiVips)
+	logrus.Infof("INGRESS_VIPS=%s", ingressVips)
+	if sshPublicKey != "" {
+		logrus.Infof("SSH_PUB_KEY=%s...", sshPublicKey[:20])
+	}
+	logrus.Infof("FEATURE_SET=%s", featureSet)
+	logrus.Infof("FEATURE_GATES=%s", featureGates)
+}
+
 func patchInstallConfig(clustersURL string, featureSet string, featureGates string) error {
 	client := resty.New()
 	clusterID, err := getClusterID(client, clustersURL)
@@ -193,35 +214,38 @@ func patchInstallConfig(clustersURL string, featureSet string, featureGates stri
 	// Always patch both featureSet and featureGates together to avoid validation errors
 	override := make(map[string]interface{})
 
-	if featureSet == "" && featureGates != "" {
-		// If only gates are specified, must use CustomNoUpgrade
-		featureSet = "CustomNoUpgrade"
+	if featureGates != "" && featureSet != "CustomNoUpgrade" {
+		return fmt.Errorf("custom features can only be used with the CustomNoUpgrade feature set")
 	}
 
 	if featureSet != "" {
 		logrus.Infof("Patching install-config featureSet to %s", featureSet)
 		override["featureSet"] = featureSet
 
-		gates := []string{}
 		if featureGates != "" {
+			gates := []string{}
 			for _, gate := range strings.Split(featureGates, ",") {
 				if item := strings.TrimSpace(gate); len(item) > 0 {
 					gates = append(gates, item)
 				}
 			}
+			logrus.Infof("Patching install-config featureGates to %v", gates)
+			override["featureGates"] = gates
 		}
-		logrus.Infof("Patching install-config featureGates to %v", gates)
-		override["featureGates"] = gates
 	}
 
-	body, err := json.Marshal(override)
+	body1, err := json.Marshal(override)
+	if err != nil {
+		return fmt.Errorf("marshal override: %w", err)
+	}
+	body2, err := json.Marshal(string(body1))
 	if err != nil {
 		return fmt.Errorf("marshal override: %w", err)
 	}
 
 	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(body).
+		SetBody(body2).
 		Patch(installConfigURL)
 
 	if err != nil {
@@ -266,11 +290,8 @@ func verifyStorage(page *rod.Page, path string) error {
 }
 
 func networkingDetails(page *rod.Page, path string) error {
-	apiVip := os.Getenv("API_VIP")
-	ingressVip := os.Getenv("INGRESS_VIP")
-	sshPublicKey := os.Getenv("SSH_PUB_KEY")
-	page.MustElement("#form-input-apiVips-0-ip-field").MustInput(apiVip)
-	page.MustElement("#form-input-ingressVips-0-ip-field").MustInput(ingressVip)
+	page.MustElement("#form-input-apiVips-0-ip-field").MustInput(apiVips)
+	page.MustElement("#form-input-ingressVips-0-ip-field").MustInput(ingressVips)
 	page.MustElement("#form-input-sshPublicKey-field").MustInput(sshPublicKey)
 	page.MustElement(`button[name="next"]`).MustWaitEnabled()
 
