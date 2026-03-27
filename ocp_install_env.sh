@@ -447,6 +447,13 @@ sshKey: |
 fips: ${FIPS_MODE:-false}
 EOF
 
+  # Add osImageStream if OS_IMAGE_STREAM is set
+  if [[ -n "${OS_IMAGE_STREAM:-}" ]]; then
+    cat >> "${outdir}/install-config.yaml" << EOF
+osImageStream: ${OS_IMAGE_STREAM}
+EOF
+  fi
+
   if [[ ! -z "$INSTALLER_PROXY" ]]; then
 
     cat >> "${outdir}/install-config.yaml" << EOF

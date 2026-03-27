@@ -204,6 +204,14 @@ set -x
 #
 #export FIPS_MODE=true
 
+# OS_IMAGE_STREAM
+# Specify the OS image stream to use for cluster nodes
+# This sets the osImageStream field in install-config.yaml
+# Common values: rhel-9, rhel-10
+# Default is unset (uses installer default)
+#
+#export OS_IMAGE_STREAM=rhel-10
+
 # DISABLE_MULTICAST -
 # In order to test using unicast for keepalived, one needs to disable multicast.
 # Setting this variable to true will block multicast via ebtables for both IPv4
