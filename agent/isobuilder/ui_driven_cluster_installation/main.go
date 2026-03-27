@@ -24,19 +24,19 @@ import (
 )
 
 var (
-	clusterName  = os.Getenv("CLUSTER_NAME")
-	baseDomain   = os.Getenv("BASE_DOMAIN")
-	rendezvousIP = os.Getenv("RENDEZVOUS_IP")
-	ocpDir       = os.Getenv("OCP_DIR")
-	baseURL      = fmt.Sprintf("http://%s:3001", rendezvousIP)
-	clustersURL  = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
+	clusterName      = os.Getenv("CLUSTER_NAME")
+	baseDomain       = os.Getenv("BASE_DOMAIN")
+	rendezvousIP     = os.Getenv("RENDEZVOUS_IP")
+	ocpDir           = os.Getenv("OCP_DIR")
+	baseURL          = fmt.Sprintf("http://%s:3001", rendezvousIP)
+	clustersURL      = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
 	downloadAttempts = 3
 )
 
 func main() {
 	logrus.Info("Launching headless browser...")
 	chromiumPath, _ := launcher.LookPath()
-  	url := launcher.New().Bin(chromiumPath).NoSandbox(true).Headless(true).MustLaunch()
+	url := launcher.New().Bin(chromiumPath).NoSandbox(true).Headless(true).MustLaunch()
 	browser := rod.New().ControlURL(url).MustConnect()
 	defer browser.MustClose()
 
@@ -49,9 +49,9 @@ func main() {
 	}
 	var screenshotPath string
 	if filepath.IsAbs(ocpDir) {
-			screenshotPath = ocpDir
+		screenshotPath = ocpDir
 	} else {
-			screenshotPath = filepath.Join(cwd, ocpDir)
+		screenshotPath = filepath.Join(cwd, ocpDir)
 	}
 
 	logrus.Info("Enter cluster details")
@@ -67,7 +67,7 @@ func main() {
 	time.Sleep(3 * time.Second)
 
 	// Check if we got an error page because cluster wasn't created in time
-	errorMsg, _ := page.Timeout(2 * time.Second).ElementR("div", "Cluster details not found")
+	errorMsg, _ := page.Timeout(2*time.Second).ElementR("div", "Cluster details not found")
 	if errorMsg != nil {
 		logrus.Info("Cluster not ready yet, waiting and reloading...")
 		// Wait longer for cluster creation to complete
@@ -126,14 +126,14 @@ func main() {
 	time.Sleep(3 * time.Second)
 
 	// Check if we're on Custom manifests page (4.22+) or Review page (< 4.22)
-	customManifestsHeading, _ := page.Timeout(2 * time.Second).ElementR("h2", "Custom manifests")
+	customManifestsHeading, _ := page.Timeout(2*time.Second).ElementR("h2", "Custom manifests")
 	if customManifestsHeading != nil {
 		logrus.Info("Custom manifests page detected (OCP 4.22+)")
 		err = saveFullPageScreenshot(page, filepath.Join(screenshotPath, fmt.Sprintf("%02d-custom-manifests.png", stepNum)))
 		if err != nil {
 			log.Fatalf("failed custom manifests screenshot: %v", err)
 		}
-		next(page)  // Advance to review
+		next(page) // Advance to review
 		stepNum++
 	} else {
 		logrus.Info("No Custom manifests page (OCP < 4.22), already on review page")
@@ -366,10 +366,10 @@ func saveCredentials(client *resty.Client, url, filename string) error {
 			continue
 		}
 		if resp.StatusCode() == http.StatusOK {
-			downloadedFile := fmt.Sprintf("%s/auth/%s", ocpDir, filename) 
-			err = os.WriteFile(downloadedFile, resp.Body(), 0644) 
-			if err != nil { 
-				logrus.Errorf("Failed to save file %s:%s", downloadedFile, err) 
+			downloadedFile := fmt.Sprintf("%s/auth/%s", ocpDir, filename)
+			err = os.WriteFile(downloadedFile, resp.Body(), 0644)
+			if err != nil {
+				logrus.Errorf("Failed to save file %s:%s", downloadedFile, err)
 				return err
 			}
 			return nil
