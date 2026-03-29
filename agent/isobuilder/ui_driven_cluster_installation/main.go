@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"errors"
 	"time"
@@ -24,19 +26,26 @@ import (
 )
 
 var (
-	clusterName  = os.Getenv("CLUSTER_NAME")
-	baseDomain   = os.Getenv("BASE_DOMAIN")
-	rendezvousIP = os.Getenv("RENDEZVOUS_IP")
-	ocpDir       = os.Getenv("OCP_DIR")
-	baseURL      = fmt.Sprintf("http://%s:3001", rendezvousIP)
-	clustersURL  = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
+	clusterName      = os.Getenv("CLUSTER_NAME")
+	baseDomain       = os.Getenv("BASE_DOMAIN")
+	rendezvousIP     = os.Getenv("RENDEZVOUS_IP")
+	ocpDir           = os.Getenv("OCP_DIR")
+	apiVips          = os.Getenv("API_VIPS")
+	ingressVips      = os.Getenv("INGRESS_VIPS")
+	sshPublicKey     = os.Getenv("SSH_PUB_KEY")
+	featureSet       = os.Getenv("FEATURE_SET")
+	featureGates     = os.Getenv("FEATURE_GATES")
+	baseURL          = fmt.Sprintf("http://%s:3001", rendezvousIP)
+	clustersURL      = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
 	downloadAttempts = 3
 )
 
 func main() {
 	logrus.Info("Launching headless browser...")
+	logConfiguration()
+
 	chromiumPath, _ := launcher.LookPath()
-  	url := launcher.New().Bin(chromiumPath).NoSandbox(true).Headless(true).MustLaunch()
+	url := launcher.New().Bin(chromiumPath).NoSandbox(true).Headless(true).MustLaunch()
 	browser := rod.New().ControlURL(url).MustConnect()
 	defer browser.MustClose()
 
@@ -49,9 +58,9 @@ func main() {
 	}
 	var screenshotPath string
 	if filepath.IsAbs(ocpDir) {
-			screenshotPath = ocpDir
+		screenshotPath = ocpDir
 	} else {
-			screenshotPath = filepath.Join(cwd, ocpDir)
+		screenshotPath = filepath.Join(cwd, ocpDir)
 	}
 
 	logrus.Info("Enter cluster details")
@@ -67,7 +76,7 @@ func main() {
 	time.Sleep(3 * time.Second)
 
 	// Check if we got an error page because cluster wasn't created in time
-	errorMsg, _ := page.Timeout(2 * time.Second).ElementR("div", "Cluster details not found")
+	errorMsg, _ := page.Timeout(2*time.Second).ElementR("div", "Cluster details not found")
 	if errorMsg != nil {
 		logrus.Info("Cluster not ready yet, waiting and reloading...")
 		// Wait longer for cluster creation to complete
@@ -110,6 +119,15 @@ func main() {
 
 	next(page)
 
+	// Assisted UI configures the featureSet after the Networking page,
+	// so this is the right moment to apply an eventual ds overrides.
+	if featureSet != "" || featureGates != "" {
+		err = patchInstallConfig(clustersURL, featureSet, featureGates)
+		if err != nil {
+			log.Fatalf("failed patching install-config: %v", err)
+		}
+	}
+
 	// Initialize step counter
 	stepNum := 6
 	logrus.Info("Download credentials")
@@ -126,14 +144,14 @@ func main() {
 	time.Sleep(3 * time.Second)
 
 	// Check if we're on Custom manifests page (4.22+) or Review page (< 4.22)
-	customManifestsHeading, _ := page.Timeout(2 * time.Second).ElementR("h2", "Custom manifests")
+	customManifestsHeading, _ := page.Timeout(2*time.Second).ElementR("h2", "Custom manifests")
 	if customManifestsHeading != nil {
 		logrus.Info("Custom manifests page detected (OCP 4.22+)")
 		err = saveFullPageScreenshot(page, filepath.Join(screenshotPath, fmt.Sprintf("%02d-custom-manifests.png", stepNum)))
 		if err != nil {
 			log.Fatalf("failed custom manifests screenshot: %v", err)
 		}
-		next(page)  // Advance to review
+		next(page) // Advance to review
 		stepNum++
 	} else {
 		logrus.Info("No Custom manifests page (OCP < 4.22), already on review page")
@@ -170,6 +188,76 @@ func clusterDetails(page *rod.Page, path string) error {
 	return nil
 }
 
+func logConfiguration() {
+	logrus.Infof("CLUSTER_NAME=%s", clusterName)
+	logrus.Infof("BASE_DOMAIN=%s", baseDomain)
+	logrus.Infof("RENDEZVOUS_IP=%s", rendezvousIP)
+	logrus.Infof("OCP_DIR=%s", ocpDir)
+	logrus.Infof("API_VIPS=%s", apiVips)
+	logrus.Infof("INGRESS_VIPS=%s", ingressVips)
+	if sshPublicKey != "" {
+		logrus.Infof("SSH_PUB_KEY=%s...", sshPublicKey[:20])
+	}
+	logrus.Infof("FEATURE_SET=%s", featureSet)
+	logrus.Infof("FEATURE_GATES=%s", featureGates)
+}
+
+func patchInstallConfig(clustersURL string, featureSet string, featureGates string) error {
+	client := resty.New()
+	clusterID, err := getClusterID(client, clustersURL)
+	if err != nil {
+		return err
+	}
+
+	installConfigURL := fmt.Sprintf("%s/%s/install-config", clustersURL, clusterID)
+
+	// Always patch both featureSet and featureGates together to avoid validation errors
+	override := make(map[string]interface{})
+
+	if featureGates != "" && featureSet != "CustomNoUpgrade" {
+		return fmt.Errorf("custom features can only be used with the CustomNoUpgrade feature set")
+	}
+
+	if featureSet != "" {
+		logrus.Infof("Patching install-config featureSet to %s", featureSet)
+		override["featureSet"] = featureSet
+
+		if featureGates != "" {
+			gates := []string{}
+			for _, gate := range strings.Split(featureGates, ",") {
+				if item := strings.TrimSpace(gate); len(item) > 0 {
+					gates = append(gates, item)
+				}
+			}
+			logrus.Infof("Patching install-config featureGates to %v", gates)
+			override["featureGates"] = gates
+		}
+	}
+
+	body1, err := json.Marshal(override)
+	if err != nil {
+		return fmt.Errorf("marshal override: %w", err)
+	}
+	body2, err := json.Marshal(string(body1))
+	if err != nil {
+		return fmt.Errorf("marshal override: %w", err)
+	}
+
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(body2).
+		Patch(installConfigURL)
+
+	if err != nil {
+		return err
+	}
+	if !resp.IsSuccess() {
+		return fmt.Errorf("error while patching install-config: %s (%d)", resp.String(), resp.StatusCode())
+	}
+
+	return nil
+}
+
 func virtualizationBundle(page *rod.Page, path string) error {
 	checkbox := page.MustElement("#bundle-virtualization")
 	checkbox.MustScrollIntoView()
@@ -202,11 +290,8 @@ func verifyStorage(page *rod.Page, path string) error {
 }
 
 func networkingDetails(page *rod.Page, path string) error {
-	apiVip := os.Getenv("API_VIP")
-	ingressVip := os.Getenv("INGRESS_VIP")
-	sshPublicKey := os.Getenv("SSH_PUB_KEY")
-	page.MustElement("#form-input-apiVips-0-ip-field").MustInput(apiVip)
-	page.MustElement("#form-input-ingressVips-0-ip-field").MustInput(ingressVip)
+	page.MustElement("#form-input-apiVips-0-ip-field").MustInput(apiVips)
+	page.MustElement("#form-input-ingressVips-0-ip-field").MustInput(ingressVips)
 	page.MustElement("#form-input-sshPublicKey-field").MustInput(sshPublicKey)
 	page.MustElement(`button[name="next"]`).MustWaitEnabled()
 
@@ -366,10 +451,10 @@ func saveCredentials(client *resty.Client, url, filename string) error {
 			continue
 		}
 		if resp.StatusCode() == http.StatusOK {
-			downloadedFile := fmt.Sprintf("%s/auth/%s", ocpDir, filename) 
-			err = os.WriteFile(downloadedFile, resp.Body(), 0644) 
-			if err != nil { 
-				logrus.Errorf("Failed to save file %s:%s", downloadedFile, err) 
+			downloadedFile := fmt.Sprintf("%s/auth/%s", ocpDir, filename)
+			err = os.WriteFile(downloadedFile, resp.Body(), 0644)
+			if err != nil {
+				logrus.Errorf("Failed to save file %s:%s", downloadedFile, err)
 				return err
 			}
 			return nil
