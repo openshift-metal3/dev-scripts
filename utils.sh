@@ -107,6 +107,13 @@ function create_cluster() {
     # Enable terraform debug logging
     export TF_LOG=DEBUG
 
+    # Disable sigstore image policy verification for non-GA releases.
+    # The installer adds a CVO override marking the ClusterImagePolicy as unmanaged,
+    # which prevents MCO from rendering a restrictive /etc/containers/policy.json.
+    if [[ "${OPENSHIFT_RELEASE_TYPE}" != "ga" ]]; then
+      export OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY=true
+    fi
+
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create manifests
 
     if [[ "$OPENSHIFT_RELEASE_TYPE" != "ga" ]]; then
