@@ -11,7 +11,7 @@ do
     ip=$( echo "$line" | cut -d " " -f 1)
     host=$( echo "$line" | cut -d " " -f 2)
     echo "Trying to gather agent logs on host ${host}"
-    if ssh -n -o 'ConnectTimeout=30' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' core@"${ip}" agent-gather -O >agent-gather-"${host}".tar.xz; then
+    if ssh -vv -n -o 'ConnectTimeout=30' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' core@"${ip}" agent-gather -O >agent-gather-"${host}".tar.xz; then
         echo "Agent logs saved to agent-gather-"${host}".tar.xz" >&2
     else
         if [ $? == 127 ]; then
