@@ -5,6 +5,7 @@ set -euxo pipefail
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
 source "$SCRIPTDIR"/common.sh
+source "$SCRIPTDIR"/agent/common.sh
 
 while read -r line
 do
@@ -28,6 +29,17 @@ if [[ "$num_screenshots" -gt 0 ]]; then
     archive_name="agent-gather-console-screenshots.tar.xz"
     echo "Gathering screenshots to $archive_name"
 
+    # Attempt to download installation logs from the UI
+    if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+        echo "Attempting to download installation logs from Assisted Installer UI"
+        rendezvousIP=$(getRendezvousIP)
+        ocp_dir_abs_path="$(realpath "${OCP_DIR}")"
+
+        pushd agent/isobuilder/ui_driven_cluster_installation
+        RENDEZVOUS_IP="$rendezvousIP" OCP_DIR="$ocp_dir_abs_path" go run main.go --download-logs || true
+        popd
+    fi
+
     # Build list of files to archive
     files_to_archive=()
 
@@ -37,6 +49,11 @@ if [[ "$num_screenshots" -gt 0 ]]; then
     # Include UI screenshots if in ISO_NO_REGISTRY mode
     if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]] && compgen -G "${OCP_DIR}/*.png" > /dev/null; then
         files_to_archive+=("${OCP_DIR}"/*.png)
+    fi
+
+    # Include installation logs if available
+    if [[ -f "${OCP_DIR}/installation-logs.tar" ]]; then
+        files_to_archive+=("${OCP_DIR}/installation-logs.tar")
     fi
 
     # Create archive with all collected files
