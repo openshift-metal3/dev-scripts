@@ -549,6 +549,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
        if ((WORKER_VCPU < 5)); then
         export WORKER_VCPU=5
       fi
+      if ((WORKER_MEMORY < 10000)); then
+        export WORKER_MEMORY=10000
+      fi
     fi
     # Increase disk storage requirements for NoRegistryClusterInstall aka agent OVE ISO
     # Large storage size is used to catch any regression related to https://issues.redhat.com/browse/OCPBUGS-76382.
