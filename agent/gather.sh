@@ -27,11 +27,20 @@ num_screenshots=$((num_tui_screenshots + num_ui_screenshots))
 if [[ "$num_screenshots" -gt 0 ]]; then
     archive_name="agent-gather-console-screenshots.tar.xz"
     echo "Gathering screenshots to $archive_name"
+
+    # Build list of files to archive
+    files_to_archive=()
+
+    # Always include TUI screenshots
+    files_to_archive+=("${OCP_DIR}"/*.ppm)
+
+    # Include UI screenshots if in ISO_NO_REGISTRY mode
     if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]] && compgen -G "${OCP_DIR}/*.png" > /dev/null; then
-        tar -cJf $archive_name "${OCP_DIR}"/*.ppm "${OCP_DIR}"/*.png
-    else
-        tar -cJf $archive_name "${OCP_DIR}"/*.ppm
+        files_to_archive+=("${OCP_DIR}"/*.png)
     fi
+
+    # Create archive with all collected files
+    tar -cJf $archive_name "${files_to_archive[@]}"
 else
     echo "No screenshots found. Skipping screenshot gather."
 fi
