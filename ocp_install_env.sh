@@ -215,6 +215,14 @@ EOF
     fi
 }
 
+function osImageStream() {
+    if [[ -n "$OS_IMAGE_STREAM" ]]; then
+cat <<EOF
+osImageStream: "$OS_IMAGE_STREAM"
+EOF
+    fi
+}
+
 function capabilities_stanza() {
     if [[ -n "$BASELINE_CAPABILITY_SET" ]]; then
 cat <<EOF
@@ -400,6 +408,7 @@ $(node_map_to_install_config_fencing_credentials)
 $(arbiter_stanza)
 $(featureSet)
 $(featureGates)
+$(osImageStream)
 $(capabilities_stanza)
 platform:
   baremetal:
