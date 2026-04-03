@@ -25,6 +25,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// timestampedPath adds a timestamp to the filename
+func timestampedPath(basePath, suffix string) string {
+	ext := filepath.Ext(basePath)
+	nameWithoutExt := strings.TrimSuffix(basePath, ext)
+	timestamp := time.Now().Format("20060102-150405")
+	return fmt.Sprintf("%s-%s-%s%s", nameWithoutExt, suffix, timestamp, ext)
+}
+
 var (
 	clusterName      = os.Getenv("CLUSTER_NAME")
 	baseDomain       = os.Getenv("BASE_DOMAIN")
@@ -147,7 +155,11 @@ func main() {
 	customManifestsHeading, _ := page.Timeout(2*time.Second).ElementR("h2", "Custom manifests")
 	if customManifestsHeading != nil {
 		logrus.Info("Custom manifests page detected (OCP 4.22+)")
-		err = saveFullPageScreenshot(page, filepath.Join(screenshotPath, fmt.Sprintf("%02d-custom-manifests.png", stepNum)))
+		err = saveFullPageScreenshot(page, timestampedPath(filepath.Join(screenshotPath, fmt.Sprintf("%02d-custom-manifests.png", stepNum)), "start"))
+		if err != nil {
+			log.Fatalf("failed custom manifests screenshot: %v", err)
+		}
+		err = saveFullPageScreenshot(page, timestampedPath(filepath.Join(screenshotPath, fmt.Sprintf("%02d-custom-manifests.png", stepNum)), "end"))
 		if err != nil {
 			log.Fatalf("failed custom manifests screenshot: %v", err)
 		}
@@ -173,15 +185,74 @@ func main() {
 	}
 }
 func clusterDetails(page *rod.Page, path string) error {
+	// Wait for the page to fully load before taking screenshot
+	page.MustElement("#form-input-name-field").MustWaitVisible()
+	err := saveFullPageScreenshot(page, timestampedPath(path, "start"))
+	if err != nil {
+		return err
+	}
+
 	page.MustElement("#form-input-name-field").MustInput(clusterName)
 	page.MustElement("#form-input-baseDnsDomain-field").MustInput(baseDomain)
-	page.MustElement("#form-input-pullSecret-field").MustInput(`{"auths":{"":{"auth":"dXNlcjpwYXNz"}}}`)
+
+	// Find the "Edit pull secret" checkbox if it exists
+	var pullSecretCheckbox *rod.Element
+
+	// Try finding by ID patterns first
+	pullSecretCheckbox, _ = page.Timeout(2 * time.Second).Element("input[type='checkbox'][id*='pullSecret']")
+
+	// Fallback: find via label text
+	if pullSecretCheckbox == nil {
+		label, _ := page.Timeout(2 * time.Second).ElementR("label", "Edit pull secret")
+		if label != nil {
+			forAttr, _ := label.Attribute("for")
+			if forAttr != nil {
+				pullSecretCheckbox, _ = page.Timeout(2 * time.Second).Element("#" + *forAttr)
+			}
+		}
+	}
+
+	if pullSecretCheckbox != nil {
+		// Verify checkbox state before clicking
+		checked, _ := pullSecretCheckbox.Property("checked")
+		wasUnchecked := !checked.Bool()
+
+		if wasUnchecked {
+			// Checkbox is unchecked, click it to reveal the field
+			logrus.Info("Found 'Edit pull secret' checkbox (unchecked), clicking to reveal field...")
+			pullSecretCheckbox.MustClick()
+		} else {
+			logrus.Info("Found 'Edit pull secret' checkbox (already checked), field should be visible")
+		}
+
+		// Wait for pull secret field to be visible
+		pullSecretField := page.MustElement("#form-input-pullSecret-field")
+		pullSecretField.MustWaitVisible()
+
+		// Take screenshot showing the revealed field (only if we clicked the checkbox)
+		if wasUnchecked {
+			err = saveFullPageScreenshot(page, timestampedPath(path, "after-checkbox"))
+			if err != nil {
+				return err
+			}
+		}
+
+		// Clear template content and enter pull secret
+		pullSecretField.MustSelectAllText()
+		pullSecretField.MustInput("")
+		time.Sleep(500 * time.Millisecond)
+
+		pullSecretField.MustInput(`{"auths":{"":{"auth":"dXNlcjpwYXNz"}}}`)
+	} else {
+		// Old UI: no checkbox, field already visible, enter pull secret directly
+		page.MustElement("#form-input-pullSecret-field").MustInput(`{"auths":{"":{"auth":"dXNlcjpwYXNz"}}}`)
+	}
 
 	// Allow UI enough time to complete the background API call to create the cluster
 	time.Sleep(10 * time.Second)
 	page.MustElement("button[name='next']").MustWaitEnabled()
 
-	err := saveFullPageScreenshot(page, path)
+	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
 		return err
 	}
@@ -259,13 +330,19 @@ func patchInstallConfig(clustersURL string, featureSet string, featureGates stri
 }
 
 func virtualizationBundle(page *rod.Page, path string) error {
+	err := saveFullPageScreenshot(page, timestampedPath(path, "start"))
+	if err != nil {
+		return err
+	}
+
 	checkbox := page.MustElement("#bundle-virtualization")
 	checkbox.MustScrollIntoView()
 	checkbox.MustClick()
 	// Allow UI enough time to complete the background API call
 	time.Sleep(2 * time.Second)
 	page.MustElement("button[name='next']").MustWaitEnabled()
-	err := saveFullPageScreenshot(page, path)
+
+	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
 		return err
 	}
@@ -273,8 +350,14 @@ func virtualizationBundle(page *rod.Page, path string) error {
 }
 
 func hostDiscovery(page *rod.Page, path string) error {
+	err := saveFullPageScreenshot(page, timestampedPath(path, "start"))
+	if err != nil {
+		return err
+	}
+
 	page.MustElement("button[name='next']").MustWaitEnabled()
-	err := saveFullPageScreenshot(page, path)
+
+	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
 		return err
 	}
@@ -282,7 +365,12 @@ func hostDiscovery(page *rod.Page, path string) error {
 }
 
 func verifyStorage(page *rod.Page, path string) error {
-	err := saveFullPageScreenshot(page, path)
+	err := saveFullPageScreenshot(page, timestampedPath(path, "start"))
+	if err != nil {
+		return err
+	}
+
+	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
 		return err
 	}
@@ -290,12 +378,17 @@ func verifyStorage(page *rod.Page, path string) error {
 }
 
 func networkingDetails(page *rod.Page, path string) error {
+	err := saveFullPageScreenshot(page, timestampedPath(path, "start"))
+	if err != nil {
+		return err
+	}
+
 	page.MustElement("#form-input-apiVips-0-ip-field").MustInput(apiVips)
 	page.MustElement("#form-input-ingressVips-0-ip-field").MustInput(ingressVips)
 	page.MustElement("#form-input-sshPublicKey-field").MustInput(sshPublicKey)
 	page.MustElement(`button[name="next"]`).MustWaitEnabled()
 
-	err := saveFullPageScreenshot(page, path)
+	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
 		return err
 	}
@@ -303,6 +396,11 @@ func networkingDetails(page *rod.Page, path string) error {
 }
 
 func downloadCredentials(page *rod.Page, client *resty.Client, path string) error {
+	err := saveFullPageScreenshot(page, timestampedPath(path, "start"))
+	if err != nil {
+		return err
+	}
+
 	clusterID, err := getClusterID(client, clustersURL)
 	if err != nil {
 		return err
@@ -324,7 +422,7 @@ func downloadCredentials(page *rod.Page, client *resty.Client, path string) erro
 
 	page.MustElementR("button", "Download credentials").MustWaitEnabled().MustClick()
 
-	err = saveFullPageScreenshot(page, path)
+	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
 		return err
 	}
@@ -332,9 +430,14 @@ func downloadCredentials(page *rod.Page, client *resty.Client, path string) erro
 }
 
 func review(page *rod.Page, path string) error {
+	err := saveFullPageScreenshot(page, timestampedPath(path, "start"))
+	if err != nil {
+		return err
+	}
+
 	installBtn := page.MustElementR("button", "Install cluster")
 
-	err := saveFullPageScreenshot(page, path)
+	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
 		return err
 	}
