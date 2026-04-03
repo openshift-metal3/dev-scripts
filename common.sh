@@ -487,7 +487,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_VCPU=${MASTER_VCPU:-8}
           export MASTER_DISK=${MASTER_DISK:-100}
           export MASTER_MEMORY=${MASTER_MEMORY:-32768}
-          export NUM_WORKERS=0
+          export NUM_WORKERS=${NUM_WORKERS:-0}
           export ENABLE_TWO_NODE_FENCING="true"
           ;;
       "HA" )
