@@ -30,6 +30,14 @@ function update_docker_config() {
       cp ${DOCKER_CONFIG_FILE} ${DOCKER_CONFIG_FILE}.old
    fi
    cp ${PULL_SECRET_FILE} ${DOCKER_CONFIG_FILE}
+
+   # oc-mirror --v2 uses the podman auth store as its primary credential source,
+   # ignoring --authfile for source registry auth. Explicitly refresh the CI registry
+   # login so the podman auth store has fresh credentials.
+   local ci_token=$(jq -r '.auths["registry.ci.openshift.org"].auth' ${PULL_SECRET_FILE} | base64 -d)
+   local ci_user=$(echo "$ci_token" | cut -d: -f1)
+   local ci_password=$(echo "$ci_token" | cut -d: -f2-)
+   podman login registry.ci.openshift.org --username "$ci_user" --password "$ci_password" 2>/dev/null || true
 }
 
 function setup_quay_mirror_registry() {
@@ -58,10 +66,19 @@ kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v2alpha1
 mirror:
   platform:
-    graph: true
+    # graph: true is intentionally omitted. When enabled, oc-mirror generates
+    # an updateService.yaml manifest referencing the UpdateService CRD, which
+    # does not exist during cluster bootstrap. This causes bootkube to loop
+    # indefinitely trying to apply it, eventually timing out and failing the
+    # rendezvous node installation. This is particularly an issue when
+    # --mirror-path is used with the appliance build, since the updateService.yaml
+    # generated here gets picked up via mirrorPath and embedded in the appliance ISO.
     release: $OPENSHIFT_RELEASE_IMAGE
   additionalImages:
   - name: registry.redhat.io/ubi8/ubi:latest
+  # Required by the OVE ISO appliance config (additionalImages) so it is available
+  # in the local mirror when building the appliance ISO with --mirror-path.
+  - name: registry.redhat.io/rhel9/support-tools:latest
 EOF
 
 }
@@ -72,7 +89,7 @@ function mirror_to_file() {
    config=${1}
 
    pushd ${WORKING_DIR}
-   oc-mirror --v2 -c ${config} file://${WORKING_DIR} --ignore-release-signature --remove-signatures
+   oc-mirror --v2 -c ${config} --authfile ${PULL_SECRET_FILE} file://${WORKING_DIR} --ignore-release-signature --remove-signatures
    popd
 }
 
@@ -81,7 +98,7 @@ function publish_image() {
    config=${1}
 
    pushd ${WORKING_DIR}
-   oc-mirror --v2 --config ${config} --from file://${WORKING_DIR} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --ignore-release-signature --remove-signatures
+   oc-mirror --v2 --config ${config} --authfile ${PULL_SECRET_FILE} --from file://${WORKING_DIR} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --ignore-release-signature --remove-signatures
    popd
 
 }

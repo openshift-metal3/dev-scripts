@@ -142,6 +142,15 @@ function build_local_release() {
         cd -
         sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
 
+        # Use a digest reference instead of a tag so that IDMS mirror rules apply.
+        # IDMS (ImageDigestMirrorSet) only redirects digest-based image references;
+        # tag-based references are ignored (oc warns: "--idms-file only applies to
+        # images referenced by digest"). Without a digest, oc bypasses the IDMS and
+        # tries to pull directly from the source registry (virthost:5000) instead of
+        # the appliance's embedded local registry (registry.appliance.openshift.com:22625).
+        NEWIMAGE_DIGEST=$(sudo skopeo inspect --format '{{.Digest}}' --tls-verify=false --authfile $PULL_SECRET_FILE docker://${!IMAGE_VAR})
+        NEWIMAGE_WITH_DIGEST="${!IMAGE_VAR%:*}@${NEWIMAGE_DIGEST}"
+
         FINAL_IMAGE_NAME=${IMAGE_VAR/_LOCAL_REPO}_IMAGE
         FINAL_IMAGE=${!FINAL_IMAGE_NAME:-}
         if [[ -z "$FINAL_IMAGE" ]]; then
@@ -149,7 +158,7 @@ function build_local_release() {
         fi
 
         OLDIMAGE=$(sudo podman run --rm --authfile $PULL_SECRET_FILE $OPENSHIFT_RELEASE_IMAGE image $FINAL_IMAGE)
-        echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> $DOCKERFILE
+        echo "RUN sed -i 's%$OLDIMAGE%${NEWIMAGE_WITH_DIGEST}%g' /release-manifests/*" >> $DOCKERFILE
     done
 
     # Publish the new release in the local registry
