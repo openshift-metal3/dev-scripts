@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -34,6 +35,7 @@ func timestampedPath(basePath, suffix string) string {
 }
 
 var (
+	downloadLogsFlag = flag.Bool("download-logs", false, "Download installation logs from UI and exit")
 	clusterName      = os.Getenv("CLUSTER_NAME")
 	baseDomain       = os.Getenv("BASE_DOMAIN")
 	rendezvousIP     = os.Getenv("RENDEZVOUS_IP")
@@ -49,6 +51,16 @@ var (
 )
 
 func main() {
+	// Parse command-line flags
+	flag.Parse()
+
+	// Check if download-logs mode requested
+	if *downloadLogsFlag {
+		runDownloadLogs()
+		return
+	}
+
+	// Default mode: perform installation
 	logrus.Info("Launching headless browser...")
 	logConfiguration()
 
@@ -564,4 +576,85 @@ func saveCredentials(client *resty.Client, url, filename string) error {
 		}
 	}
 	return errs.Errorf("%s was not downloaded after %d attempts", filename, downloadAttempts)
+}
+
+// downloadInstallationLogs downloads installation logs by clicking the download button
+func downloadInstallationLogs(browser *rod.Browser, page *rod.Page) error {
+	logrus.Info("Attempting to download installation logs")
+
+	// Check if ocpDir is set
+	if ocpDir == "" {
+		logrus.Warn("OCP_DIR not set, cannot download installation logs")
+		return errors.New("OCP_DIR environment variable not set")
+	}
+
+	// OCP_DIR should already exist (created during installation)
+	// But ensure it exists just in case
+	if err := os.MkdirAll(ocpDir, 0755); err != nil {
+		return fmt.Errorf("failed to create OCP directory %s: %w", ocpDir, err)
+	}
+
+	// Find the download button - case-insensitive via character classes
+	downloadBtn, err := page.Timeout(10*time.Second).ElementR("button", "Download [Ii]nstallation [Ll]ogs")
+	if err != nil {
+		logrus.Warnf("Could not find download logs button: %v", err)
+		return err
+	}
+
+	if visible, _ := downloadBtn.Visible(); !visible {
+		logrus.Warn("Download logs button not visible")
+		return errors.New("download logs button not visible")
+	}
+
+	// Set up download handler before clicking
+	wait := browser.MustWaitDownload()
+
+	// Click the download button
+	logrus.Info("Clicking download logs button")
+	downloadBtn.MustClick()
+
+	// Wait for download to complete and get the downloaded bytes
+	downloadData := wait()
+
+	// Save to OCP_DIR alongside screenshots
+	logFile := filepath.Join(ocpDir, "installation-logs.tar")
+	logrus.Infof("Saving installation logs to %s", logFile)
+
+	err = os.WriteFile(logFile, downloadData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to save logs to %s: %w", logFile, err)
+	}
+
+	logrus.Infof("Installation logs saved successfully to %s", logFile)
+	return nil
+}
+
+// runDownloadLogs connects to the UI and downloads installation logs if available
+func runDownloadLogs() {
+	logrus.Info("Running in download-logs mode")
+
+	// Launch browser
+	chromiumPath, _ := launcher.LookPath()
+	url := launcher.New().Bin(chromiumPath).NoSandbox(true).Headless(true).MustLaunch()
+	browser := rod.New().ControlURL(url).MustConnect()
+	defer browser.MustClose()
+
+	// Navigate to base URL - UI will redirect to current cluster
+	page := browser.MustPage(baseURL)
+	page.MustWaitLoad()
+
+	logrus.Info("Connected to Assisted Installer UI")
+
+	// The download button is only available on certain pages (e.g., Installation Progress)
+	// The page may be on cluster details, progress, or completion page
+	// Best effort: try to download logs from wherever we are
+	if err := downloadInstallationLogs(browser, page); err != nil {
+		logrus.Warnf("Could not download installation logs: %v", err)
+		// Not a fatal error - button may not be visible on current page
+		// or logs may not be ready yet
+	} else {
+		logrus.Info("Installation logs downloaded successfully")
+	}
+
+	logrus.Info("Download-logs mode complete")
 }
