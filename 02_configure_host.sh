@@ -122,6 +122,9 @@ sudo systemctl enable --now firewalld
 # access.
 configure_chronyd
 
+# Open BGP port for no-overlay mode enabled for default network
+sudo firewall-cmd --zone=libvirt --add-port=179/tcp
+
 export VNC_CONSOLE=true
 if [[ $(uname -m) == "aarch64" ]]; then
   VNC_CONSOLE=false
