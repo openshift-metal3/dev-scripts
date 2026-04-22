@@ -480,14 +480,14 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export ARBITER_VCPU=${ARBITER_VCPU:-2}
           export ARBITER_MEMORY=${ARBITER_MEMORY:-8192}
           export ARBITER_DISK=${ARBITER_DISK:-50}
-          export NUM_WORKERS=0
+          export NUM_WORKERS=${NUM_WORKERS:-0}
           ;;
       "TNF" )
           export NUM_MASTERS=2
           export MASTER_VCPU=${MASTER_VCPU:-8}
           export MASTER_DISK=${MASTER_DISK:-100}
           export MASTER_MEMORY=${MASTER_MEMORY:-32768}
-          export NUM_WORKERS=0
+          export NUM_WORKERS=${NUM_WORKERS:-0}
           export ENABLE_TWO_NODE_FENCING="true"
           ;;
       "HA" )
