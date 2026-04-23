@@ -288,6 +288,18 @@ function generate_cluster_manifests() {
   nodes_hostnames=$(printf '%s,' "${AGENT_NODES_HOSTNAMES[@]}")
   export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
 
+  master_hostnames=$(printf '%s,' "${AGENT_MASTER_HOSTNAMES[@]}")
+  export AGENT_MASTER_HOSTNAMES_STR=${master_hostnames::-1}
+  master_bmc_usernames=$(printf '%s,' "${AGENT_MASTER_BMC_USERNAMES[@]}")
+  export AGENT_MASTER_BMC_USERNAMES_STR=${master_bmc_usernames::-1}
+  master_bmc_passwords=$(printf '%s,' "${AGENT_MASTER_BMC_PASSWORDS[@]}")
+  export AGENT_MASTER_BMC_PASSWORDS_STR=${master_bmc_passwords::-1}
+  master_bmc_addresses=$(printf '%s,' "${AGENT_MASTER_BMC_ADDRESSES[@]}")
+  export AGENT_MASTER_BMC_ADDRESSES_STR=${master_bmc_addresses::-1}
+  master_bmc_verify_cas=$(printf '%s,' "${AGENT_MASTER_BMC_VERIFY_CAS[@]}")
+  export AGENT_MASTER_BMC_VERIFY_CAS_STR=${master_bmc_verify_cas::-1}
+
+
   extra_workers_ips=$(printf '%s,' "${AGENT_EXTRA_WORKERS_IPS[@]}")
   export AGENT_EXTRA_WORKERS_IPS_STR=${extra_workers_ips::-1}
   extra_workers_ipsv6=$(printf '%s,' "${AGENT_EXTRA_WORKERS_IPSV6[@]}")
@@ -543,6 +555,12 @@ function get_nodes_bmc_info() {
     AGENT_NODES_BMC_ADDRESSES=()
     AGENT_NODES_BMC_VERIFY_CAS=()
 
+    # Master-only arrays for fencing credentials
+    AGENT_MASTER_BMC_USERNAMES=()
+    AGENT_MASTER_BMC_PASSWORDS=()
+    AGENT_MASTER_BMC_ADDRESSES=()
+    AGENT_MASTER_BMC_VERIFY_CAS=()
+
     number_nodes=$NUM_MASTERS+$NUM_WORKERS
 
     for (( i=0; i<${number_nodes}; i++ ))
@@ -551,6 +569,13 @@ function get_nodes_bmc_info() {
       AGENT_NODES_BMC_PASSWORDS+=($(node_val ${i} "driver_info.password"))
       AGENT_NODES_BMC_ADDRESSES+=($(node_val ${i} "driver_info.address"))
       AGENT_NODES_BMC_VERIFY_CAS+=($(node_val ${i} "driver_info.redfish_verify_ca"))
+
+      if (( i < NUM_MASTERS )); then
+        AGENT_MASTER_BMC_USERNAMES+=($(node_val ${i} "driver_info.username"))
+        AGENT_MASTER_BMC_PASSWORDS+=($(node_val ${i} "driver_info.password"))
+        AGENT_MASTER_BMC_ADDRESSES+=($(node_val ${i} "driver_info.address"))
+        AGENT_MASTER_BMC_VERIFY_CAS+=($(node_val ${i} "driver_info.redfish_verify_ca"))
+      fi
     done
 
     if [ "$NODES_PLATFORM" = "libvirt" ]; then
