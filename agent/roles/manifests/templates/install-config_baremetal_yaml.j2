@@ -36,13 +36,18 @@ controlPlane:
   name: master
   replicas: {{ num_masters }} 
 {% if enable_two_node_fencing %}
+{% set master_hostnames = agent_master_hostnames.split(',') %}
+{% set master_bmc_addresses = agent_master_bmc_addresses.split(',') %}
+{% set master_bmc_usernames = agent_master_bmc_usernames.split(',') %}
+{% set master_bmc_passwords = agent_master_bmc_passwords.split(',') %}
+{% set master_bmc_verify_cas = agent_master_bmc_verify_cas.split(',') %}
   fencing:
     credentials:
-{% for hostname in hostnames %}
+{% for hostname in master_hostnames %}
     - hostname: {{hostname}}
-      address: {{ bmc_addresses[loop.index0] }}
-      username: {{ bmc_usernames[loop.index0] }}
-      password: {{ bmc_passwords[loop.index0] }}
+      address: {{ master_bmc_addresses[loop.index0] }}
+      username: {{ master_bmc_usernames[loop.index0] }}
+      password: {{ master_bmc_passwords[loop.index0] }}
       certificateVerification: {{ 'Disabled' if bmc_verify_cas[loop.index0] == "False" else 'Enabled' }}
 {% endfor %}
 {% endif %}
