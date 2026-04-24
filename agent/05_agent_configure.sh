@@ -59,6 +59,11 @@ function configure_node() {
   local cluster_name="${CLUSTER_NAME}_${node_type}_${node_num}"
   local hostname="$(printf "${MASTER_HOSTNAME_FORMAT}" "${node_num}")"
   local ip=$((base_ip + node_num))
+
+  if [[ "$node_type" == "master" ]]; then
+    AGENT_MASTER_HOSTNAMES+=("$hostname")
+  fi
+  
   if [[ "$node_type" == "arbiter" ]]; then
     local hostname="$(printf "${ARBITER_HOSTNAME_FORMAT}" "${node_num}")"
     local ip=$((base_ip + ${NUM_MASTERS} + node_num))
