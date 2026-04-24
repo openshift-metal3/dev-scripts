@@ -6,9 +6,10 @@ export PATH="/usr/local/go/bin:$HOME/.local/bin:$PATH"
 # Set a PS4 value which logs the script name and line #.
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-eval "$(go env)"
-
-export PATH="${GOPATH}/bin:$PATH"
+if command -v go &>/dev/null; then
+    eval "$(go env)"
+    export PATH="${GOPATH}/bin:$PATH"
+fi
 
 # Ensure if a go program crashes we get a coredump
 #
@@ -169,7 +170,9 @@ if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
   fi
 fi
 export OPENSHIFT_RELEASE_IMAGE="${OPENSHIFT_RELEASE_IMAGE:-$LATEST_CI_IMAGE}"
-export OPENSHIFT_INSTALL_PATH="${OPENSHIFT_INSTALL_PATH:-$GOPATH/src/github.com/openshift/installer}"
+if [[ -n "${GOPATH:-}" ]]; then
+    export OPENSHIFT_INSTALL_PATH="${OPENSHIFT_INSTALL_PATH:-$GOPATH/src/github.com/openshift/installer}"
+fi
 
 # Override the image to use for installing hive
 export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshift/hive-v4.0:hive}"
