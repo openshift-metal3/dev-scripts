@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-set -x
-set -e
+set -euxo pipefail
 
 source logging.sh
 source common.sh
@@ -14,9 +13,9 @@ source validation.sh
 early_deploy_validation
 
 if [[ ! -z "$INSTALLER_PROXY" ]]; then
-  export HTTP_PROXY=${HTTP_PROXY}
-  export HTTPS_PROXY=${HTTPS_PROXY}
-  export NO_PROXY=${NO_PROXY}
+  export HTTP_PROXY=${HTTP_PROXY:-}
+  export HTTPS_PROXY=${HTTPS_PROXY:-}
+  export NO_PROXY=${NO_PROXY:-}
   # Update libvirt firewalld policy to allow the VM to connect to the proxy
   sudo firewall-cmd --policy=libvirt-to-host --add-port=$INSTALLER_PROXY_PORT/tcp
   # Allow the bootstrap VM to talk directly to services on the bootstrap host
@@ -87,7 +86,7 @@ if [[ -n "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
       -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
 fi
 
-if [[ -n "${APPLY_EXTRA_WORKERS}" ]]; then
+if [[ -n "${APPLY_EXTRA_WORKERS:-}" ]]; then
     if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_host_manifests.yaml" ]]; then
         oc apply -f "${OCP_DIR}/extra_host_manifests.yaml"
 
@@ -108,7 +107,7 @@ if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -d "${OCP_DIR}/extras" ]]; then
     oc create secret generic extraworkers-secret --from-file="${OCP_DIR}/extras/" -n openshift-machine-api
 fi
 
-if [[ -n "${APPLY_ARM_WORKERS}" ]]; then
+if [[ -n "${APPLY_ARM_WORKERS:-}" ]]; then
     if [[ ${NUM_ARM_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_arm_host_manifests.yaml" ]]; then
         oc apply -f "${OCP_DIR}/extra_arm_host_manifests.yaml"
 
@@ -129,9 +128,9 @@ if [[ ${NUM_ARM_WORKERS} -ne 0 && -d "${OCP_DIR}/arm" ]]; then
     oc create secret generic armworkers-secret --from-file="${OCP_DIR}/arm/" -n openshift-machine-api
 fi
 
-if [[ ! -z "${ENABLE_METALLB}" ]]; then
+if [[ ! -z "${ENABLE_METALLB:-}" ]]; then
 
-	if [[ -z ${METALLB_IMAGE_BASE} ]]; then
+	if [[ -z ${METALLB_IMAGE_BASE:-} ]]; then
                 # This can use any image in the release, as we are dropping
                 # the hash
 		export METALLB_IMAGE_BASE=$(\
@@ -145,7 +144,7 @@ if [[ ! -z "${ENABLE_METALLB}" ]]; then
 	popd
 fi
 
-if [[ ! -z "${ENABLE_VIRTUAL_MEDIA_VIA_EXTERNAL_NETWORK}" ]]; then
+if [[ ! -z "${ENABLE_VIRTUAL_MEDIA_VIA_EXTERNAL_NETWORK:-}" ]]; then
     oc patch provisioning provisioning-configuration --type merge -p "{\"spec\":{\"virtualMediaViaExternalNetwork\":true}}"
 fi
 
