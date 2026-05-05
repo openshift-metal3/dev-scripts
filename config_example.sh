@@ -669,6 +669,13 @@ set -x
 #
 # export VM_EXTRADISKS_SIZE="10G"
 
+# LIBVIRT_VOLUME_POOL -
+# Configure the name of the libvirt storage pool where VM disk images will be stored.
+# This is useful if you want to use a custom storage pool instead of the default.
+# Default: "oooq_pool"
+#
+# export LIBVIRT_VOLUME_POOL="my_custom_pool"
+
 ################################################################################
 ## Image Registry Settings
 ##
