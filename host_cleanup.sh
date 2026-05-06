@@ -83,3 +83,6 @@ sudo pkill -f oc.*proxy
 
 # Remove image-reg nfsshare
 sudo rm -rf /etc/exports.d/dev-scripts.exports /opt/dev-scripts/nfsshare
+
+# Remove the authfile created in configure host
+rm -f ${REGISTRY_CREDS}
