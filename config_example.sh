@@ -946,7 +946,19 @@ set -x
 # then the wait-for commands should timeout and fail.
 # This test case is only supported when IP_STACK=v4.
 #
+# 2. 'copy_network' test case:
+# Validates that static network connections created manually via the agent-tui during boot
+# persist into the installed OS (OCPBUGS-63472). Use a DHCP scenario so that no static
+# networking is pre-configured in the manifests. During boot, the test uses console key
+# presses to create a new static connection via nmtui on master_0 and master_1. After
+# installation, the post-install validation checks that the connection keyfile and nmcli
+# entry are present on both nodes, confirming that --copy-network was set per-host by
+# agent-set-host-copy-network-arg.service and coreos-installer copied the keyfile into the OS.
+# Requires: AGENT_E2E_TEST_SCENARIO=COMPACT_IPV4_DHCP (or any HA_IPV4_DHCP), IP_STACK=v4.
+# Not supported with SNO topology (requires at least 2 master nodes) or IPv6.
+#
 # export AGENT_TEST_CASES='bad_dns'
+# export AGENT_TEST_CASES='copy_network'
 
 # Uncomment the following line to deploy the cluster using the appliance model
 # The appliance model boots the host using the unconfigured ignition. It then mounts
