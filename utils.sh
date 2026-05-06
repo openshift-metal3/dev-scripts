@@ -74,7 +74,7 @@ function configure_chronyd() {
 function custom_ntp(){
   ASSESTS_DIR=$1
   # TODO - consider adding NTP server config to install-config.yaml instead
-  if [ -z "${NTP_SERVERS}" ]; then
+  if [ -z "${NTP_SERVERS:-}" ]; then
     if host clock.redhat.com; then
       NTP_SERVERS="clock.redhat.com"
     elif host pool.ntp.org; then
@@ -82,7 +82,7 @@ function custom_ntp(){
     fi
   fi
 
-  if [ -n "$NTP_SERVERS" ]; then
+  if [ -n "${NTP_SERVERS:-}" ]; then
     cp assets/templates/98_worker-chronyd-custom.yaml.optional assets/generated/98_worker-chronyd-custom.yaml
     cp assets/templates/98_master-chronyd-custom.yaml.optional assets/generated/98_master-chronyd-custom.yaml
     NTPFILECONTENT=$(cat assets/files/etc/chrony.conf)
@@ -125,13 +125,13 @@ function create_cluster() {
     mkdir -p ${assets_dir}/openshift
     generate_assets
 
-    if [ -z "${NTP_SERVERS}" ];
+    if [ -z "${NTP_SERVERS:-}" ];
     then
       export NTP_SERVERS="$PROVISIONING_HOST_EXTERNAL_IP"
     fi
     custom_ntp ${assets_dir}/openshift
 
-    if [[ "${OVN_LOCAL_GATEWAY_MODE}" == "true" ]] && [[ "${NETWORK_TYPE}" == "OVNKubernetes" ]]; then
+    if [[ "${OVN_LOCAL_GATEWAY_MODE:-}" == "true" ]] && [[ "${NETWORK_TYPE}" == "OVNKubernetes" ]]; then
       local_gateway_mode ${assets_dir}/openshift
     fi
     generate_metal3_config
