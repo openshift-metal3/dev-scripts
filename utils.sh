@@ -13,16 +13,40 @@ function default_installer_cmd() {
 }
 
 function retry_with_timeout() {
-  retries=$1
-  timeout_duration=$2
-  command=${*:3}
+  local retries=$1
+  local timeout_duration=$2
+  local command=${*:3}
+  local retry_delay=${RETRY_DELAY:-0}
+  local exponential_backoff=${EXPONENTIAL_BACKOFF:-false}
+  # Use RETRY_TIMEOUT env var if set, otherwise use timeout_duration parameter
+  local timeout=${RETRY_TIMEOUT:-${timeout_duration:-0}}
+  local attempt=1
 
   for _ in $(seq "$retries"); do
     exit_code=0
-    timeout "$timeout_duration" bash -c "$command" || exit_code=$?
+
+    # Use timeout only if timeout is greater than 0
+    if (( timeout > 0 )); then
+      timeout "$timeout" bash -c "$command" || exit_code=$?
+    else
+      eval "$command" || exit_code=$?
+    fi
+
     if (( exit_code == 0 )); then
       return 0
     fi
+
+    # Add delay between retries if configured
+    if (( attempt < retries )) && (( retry_delay > 0 )); then
+      local sleep_time=$retry_delay
+      if [[ "$exponential_backoff" == "true" ]]; then
+        sleep_time=$(( retry_delay * attempt ))
+      fi
+      echo "Command failed (attempt $attempt/$retries). Retrying in ${sleep_time}s..."
+      sleep $sleep_time
+    fi
+
+    (( attempt++ ))
   done
 
   return $(( exit_code ))
