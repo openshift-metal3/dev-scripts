@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset f5c0b859717e71c35701905161caa6e65221b3fb --hard
+  git reset e5cb63c6a9dcd0d4544a1ae6855c6769957a8984 --hard
 
   # Ansible 9+ requires Python 3.10+, but CentOS Stream 9 ships Python 3.9.
   # Patch metal3-dev-env to use Ansible 8.x on centos9/rhel9.
