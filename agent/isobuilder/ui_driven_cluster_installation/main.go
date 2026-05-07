@@ -34,6 +34,83 @@ func timestampedPath(basePath, suffix string) string {
 	return fmt.Sprintf("%s-%s-%s%s", nameWithoutExt, suffix, timestamp, ext)
 }
 
+// selectControlPlaneCount selects the specified control plane count from the dropdown
+func selectControlPlaneCount(page *rod.Page, count int, screenshotPath string) error {
+	// Validate input
+	if count < 1 || count > 5 {
+		return fmt.Errorf("invalid control plane count: %d (must be between 1 and 5)", count)
+	}
+
+	// Find the dropdown toggle
+	dropdownToggle, err := page.Timeout(5 * time.Second).Element("#form-input-controlPlaneCount-field")
+	if err != nil {
+		return fmt.Errorf("could not find control plane count dropdown: %v", err)
+	}
+
+	// Verify dropdown is visible
+	if visible, _ := dropdownToggle.Visible(); !visible {
+		return fmt.Errorf("control plane count dropdown is not visible")
+	}
+
+	// Scroll into view and wait for element to be stable
+ if err := dropdownToggle.ScrollIntoView(); err != nil {
+      return fmt.Errorf("failed to scroll control plane count dropdown into view: %v", err)
+  }
+  if err := dropdownToggle.WaitStable(time.Second); err != nil {
+      return fmt.Errorf("control plane count dropdown did not stabilize: %v", err)                                      
+  }
+
+	_, err = dropdownToggle.Eval(`() => this.click()`)
+	if err != nil {
+		return fmt.Errorf("failed to click dropdown toggle: %v", err)
+	}
+
+	// Wait for dropdown menu to appear and become visible
+	dropdownMenu, err := page.Timeout(10 * time.Second).Element("#form-input-controlPlaneCount-field-dropdown")
+	if err != nil {
+		return fmt.Errorf("dropdown menu did not appear within timeout: %v", err)
+	}
+
+	err = dropdownMenu.WaitVisible()
+	if err != nil {
+		return fmt.Errorf("dropdown menu is not visible: %v", err)
+	}
+
+ if err := dropdownMenu.WaitStable(time.Second); err != nil {
+      return fmt.Errorf("dropdownmenu %d did not stabilize: %v", count, err)                                     
+  }         
+
+	// Select menu item by ID (use attribute selector as #5 is invalid CSS)
+	menuItemSelector := fmt.Sprintf("button[id='%d']", count)
+	menuItem, err := page.Timeout(10 * time.Second).Element(menuItemSelector)
+	if err != nil {
+		return fmt.Errorf("could not find menu item for count %d with selector '%s': %v", count, menuItemSelector, err)
+	}
+
+	// Wait for menu item to be visible and stable before clicking
+	err = menuItem.WaitVisible()
+	if err != nil {
+		return fmt.Errorf("menu item for count %d is not visible: %v", count, err)
+	}
+
+	menuItem.MustWaitStable().MustClick()
+
+	// Take screenshot for verification
+	if screenshotPath != "" {
+		err = saveFullPageScreenshot(page, timestampedPath(screenshotPath, "after-topology-select"))
+		if err != nil {
+			return fmt.Errorf("failed to save screenshot: %v", err)
+		}
+	}
+
+	return nil
+}
+
+const (
+	defaultControlPlaneCount = 3
+	downloadAttempts         = 3
+)
+
 var (
 	downloadLogsFlag = flag.Bool("download-logs", false, "Download installation logs from UI and exit")
 	clusterName      = os.Getenv("CLUSTER_NAME")
@@ -47,8 +124,33 @@ var (
 	featureGates     = os.Getenv("FEATURE_GATES")
 	baseURL          = fmt.Sprintf("http://%s:3001", rendezvousIP)
 	clustersURL      = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
-	downloadAttempts = 3
 )
+
+// getControlPlaneCount determines the control plane count based on AGENT_E2E_TEST_SCENARIO
+func getControlPlaneCount() int {
+	scenario := os.Getenv("AGENT_E2E_TEST_SCENARIO")
+	
+	if scenario == "" {
+		return defaultControlPlaneCount
+	}
+
+	// Extract scenario type (e.g., "5CONTROL" from "5CONTROL_IPV4")
+	parts := strings.Split(scenario, "_")
+	scenarioType := parts[0]
+
+	switch scenarioType {
+	case "5CONTROL":
+		return 5
+	case "4CONTROL":
+		return 4
+	case "SNO", "SNOMIN":
+		return 1
+	default:
+		return defaultControlPlaneCount
+	}
+}
+
+var controlPlaneCount = getControlPlaneCount()
 
 func main() {
 	// Parse command-line flags
@@ -215,7 +317,7 @@ func clusterDetails(page *rod.Page, path string) error {
 
 	// Fallback: find via label text
 	if pullSecretCheckbox == nil {
-		label, _ := page.Timeout(2 * time.Second).ElementR("label", "Edit pull secret")
+		label, _ := page.Timeout(2*time.Second).ElementR("label", "Edit pull secret")
 		if label != nil {
 			forAttr, _ := label.Attribute("for")
 			if forAttr != nil {
@@ -260,6 +362,15 @@ func clusterDetails(page *rod.Page, path string) error {
 		page.MustElement("#form-input-pullSecret-field").MustInput(`{"auths":{"":{"auth":"dXNlcjpwYXNz"}}}`)
 	}
 
+	// Set cluster topology if CONTROL_PLANE_COUNT is specified
+	if controlPlaneCount != defaultControlPlaneCount {
+		logrus.Infof("Setting control plane count to %d", controlPlaneCount)
+		err = selectControlPlaneCount(page, controlPlaneCount, path)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Allow UI enough time to complete the background API call to create the cluster
 	time.Sleep(10 * time.Second)
 	page.MustElement("button[name='next']").MustWaitEnabled()
@@ -283,6 +394,7 @@ func logConfiguration() {
 	}
 	logrus.Infof("FEATURE_SET=%s", featureSet)
 	logrus.Infof("FEATURE_GATES=%s", featureGates)
+	logrus.Infof("CONTROL_PLANE_COUNT=%d", controlPlaneCount)
 }
 
 func patchInstallConfig(clustersURL string, featureSet string, featureGates string) error {
