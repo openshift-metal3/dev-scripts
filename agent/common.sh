@@ -97,7 +97,7 @@ fi
 function getRendezvousIP() {
     node_zero_mac_address=$(sudo virsh domiflist ${AGENT_RENDEZVOUS_NODE_HOSTNAME} | awk '$3 == "ostestbm" {print $5}')
     rendezvousIP=$(ip neigh | grep $node_zero_mac_address | awk '{print $1}')
-    echo $rendezvousIP
+    echo $rendezvousIP | awk '{print $1}'
 }
 
 function getAgentISOBuilderImage() {
