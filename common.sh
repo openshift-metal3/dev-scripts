@@ -549,8 +549,8 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   # Increase master vCPU for agent OVE ISO installs or when certain operators like 'mtv' are used,
   # as some operators require more CPUs.
   if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]; then
-    if ((MASTER_VCPU < 9)); then
-      export MASTER_VCPU=9
+    if ((MASTER_VCPU < 10)); then
+      export MASTER_VCPU=10
     fi
     if [ "${SCENARIO}" == "SNO" ]; then
        if ((MASTER_VCPU < 16)); then
@@ -572,6 +572,9 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           if ((MASTER_DISK < 300)); then
             export MASTER_DISK=300
           fi
+
+          # The LVM operator is used by default and requires an additional disk
+          export VM_EXTRADISKS=true
         ;;
     esac
   fi
