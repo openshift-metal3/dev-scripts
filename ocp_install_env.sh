@@ -411,6 +411,7 @@ compute:
 - name: worker
   replicas: $NUM_WORKERS
   architecture: $(get_arch install_config)
+$([ -n "${WORKER_POOL_OS_IMAGE_STREAM:-}" ] && echo "  osImageStream: $WORKER_POOL_OS_IMAGE_STREAM")
 controlPlane:
   name: master
   replicas: ${NUM_MASTERS}

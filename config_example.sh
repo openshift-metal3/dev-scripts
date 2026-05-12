@@ -638,6 +638,14 @@ set -x
 #export WORKER_DISK=60
 #export WORKER_VCPU=4
 
+# WORKER_POOL_OS_IMAGE_STREAM -
+# Set osImageStream on the worker compute pool in install-config.yaml.
+# For example, set to "rhel-10" to deploy workers with a different OS
+# stream than the control plane.
+# Default: unset (omitted from install-config).
+#
+#export WORKER_POOL_OS_IMAGE_STREAM=rhel-10
+
 # NUM_EXTRA_WORKERS - Indicate number of extra VMs to create but not deploy.
 # Default: 0
 #
