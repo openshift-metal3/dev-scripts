@@ -31,9 +31,18 @@ function add_dns_entry {
     ip=${1}
     hostname=${2}
 
-    # Add a DNS entry for this hostname if it's not already defined
-    if ! $(sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath "//dns/host[@ip = '${ip}']" - &> /dev/null); then
-      sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host  "<host ip='${ip}'> <hostname>${hostname}</hostname> </host>"  --live --config
+    # Check if this specific hostname already exists (for any IP). If doesn't exist, add it.
+    if ! sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | grep -q "<hostname>${hostname}</hostname>"; then
+      existing_hostnames=$(sudo virsh net-dumpxml ${BAREMETAL_NETWORK_NAME} | xmllint --xpath "//dns/host[@ip = '${ip}']/hostname/text()" - 2>/dev/null | awk '{printf "<hostname>%s</hostname> ", $0}' || true)
+
+      # Delete the existing host entry for the given IP (if any) so we can re-add it with merged hostnames
+      # This is required because virsh net-update doesn't support modifying/appending to existing entries
+      # Otherwise we get error - Requested operation is not valid: there is already at least one DNS HOST record with a matching field in network ostestbm
+
+      sudo virsh net-update ${BAREMETAL_NETWORK_NAME} delete dns-host "<host ip='${ip}'/>" --live --config 2>/dev/null || true
+
+      # Add new entry with all hostnames (existing + new)
+      sudo virsh net-update ${BAREMETAL_NETWORK_NAME} add dns-host "<host ip='${ip}'> ${existing_hostnames}<hostname>${hostname}</hostname> </host>" --live --config
     fi
 
     # Add entries to etc/hosts for SNO IPV6 to sucessfully run the openshift conformance tests
@@ -63,7 +72,7 @@ function configure_node() {
   if [[ "$node_type" == "master" ]]; then
     AGENT_MASTER_HOSTNAMES+=("$hostname")
   fi
-  
+
   if [[ "$node_type" == "arbiter" ]]; then
     local hostname="$(printf "${ARBITER_HOSTNAME_FORMAT}" "${node_num}")"
     local ip=$((base_ip + ${NUM_MASTERS} + node_num))
@@ -89,7 +98,7 @@ function configure_node() {
   elif [[ "$IP_STACK" = "v6" ]]; then
       node_ip=$(nth_ip ${EXTERNAL_SUBNET_V6} ${ip})
   else
-      # v4v6 
+      # v4v6
       node_ip=$(nth_ip ${EXTERNAL_SUBNET_V4} ${ip})
       ipv6=$(nth_ip ${EXTERNAL_SUBNET_V6} ${ip})
       add_dns_entry "$ipv6" "$hostname"
@@ -376,7 +385,7 @@ function write_extra_workers_ips() {
   else
     extra_workers_ips_space_delimited=$(printf '%s ' "${AGENT_EXTRA_WORKERS_IPS[@]}")
   fi
-  
+
   echo "EXTRA_WORKERS_IPS=\"${extra_workers_ips_space_delimited}\"" > "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
 }
 
@@ -612,7 +621,7 @@ function enable_isolated_baremetal_network() {
     sudo sed -i "/<forward\( [^>]*\)\?>/,/<\/forward>/d" ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
     # Add a default route (will be required by assisted-service pre-flight validations)
     sudo sed -i "/<\/dnsmasq:options>/i   <dnsmasq:option value='dhcp-option=3,${PROVISIONING_HOST_EXTERNAL_IP}'/>" ${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}
-    
+
     # Update the baremetal network
     sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
     sudo virsh net-undefine ${BAREMETAL_NETWORK_NAME}
@@ -670,5 +679,10 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]] ; then
   generate_extra_cluster_manifests
 
   write_extra_workers_ips
+else
+  # For ISO_NO_REGISTRY mode with workers, add api-int to libvirt DNS
+  # Workers need to resolve api-int during bootstrap before joining the cluster
+   add_dns_entry "${API_VIPS%${VIPS_SEPARATOR}*}" "api-int"
 fi
+
 enable_isolated_baremetal_network

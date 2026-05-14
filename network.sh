@@ -226,7 +226,7 @@ function concat_parameters_with_vipsseparator() {
     #
     # Returns:
     #     Print all given parameters with ${VIPS_SEPARATOR} in between.
-    
+
     ARG_NR=1
     RESULT=""
     for ARG in "$@"; do
@@ -295,6 +295,10 @@ function add_dnsmasq_multi_entry() {
             echo "address=/api.${CLUSTER_DOMAIN}/${i}" | sudo tee -a "${PATH_CONF_DNSMASQ}"
         fi
 
+        if [ "${1}" = "apiintvip" ] ; then
+            echo "address=/api-int.${CLUSTER_DOMAIN}/${i}" | sudo tee -a "${PATH_CONF_DNSMASQ}"
+        fi
+
         if [ "${1}" = "ingressvip" ] ; then
             echo "address=/.apps.${CLUSTER_DOMAIN}/${i}" | sudo tee -a "${PATH_CONF_DNSMASQ}"
         fi
@@ -309,6 +313,9 @@ function configure_dnsmasq() {
   rm -f "${PATH_CONF_DNSMASQ}"
 
   add_dnsmasq_multi_entry "apivip" "${apiVips}"
+  if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]] ; then
+    add_dnsmasq_multi_entry "apiintvip" "${apiVips}"
+  fi
   add_dnsmasq_multi_entry "ingressvip" "${ingressVips}"
 
   echo "listen-address=::1" | sudo tee -a "${PATH_CONF_DNSMASQ}"
