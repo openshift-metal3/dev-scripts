@@ -26,6 +26,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	defaultControlPlaneCount = 3
+	downloadAttempts         = 3
+)
+
+var (
+	downloadLogsFlag = flag.Bool("download-logs", false, "Download installation logs from UI and exit")
+	clusterName      = os.Getenv("CLUSTER_NAME")
+	baseDomain       = os.Getenv("BASE_DOMAIN")
+	rendezvousIP     = os.Getenv("RENDEZVOUS_IP")
+	ocpDir           = os.Getenv("OCP_DIR")
+	apiVips          = os.Getenv("API_VIPS")
+	ingressVips      = os.Getenv("INGRESS_VIPS")
+	sshPublicKey     = os.Getenv("SSH_PUB_KEY")
+	featureSet       = os.Getenv("FEATURE_SET")
+	featureGates     = os.Getenv("FEATURE_GATES")
+	ipStack          = os.Getenv("IP_STACK")
+	workers          = os.Getenv("NUM_WORKERS")
+	baseURL          = fmt.Sprintf("http://%s:3001", rendezvousIP)
+	clustersURL      = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
+)
+
 // timestampedPath adds a timestamp to the filename
 func timestampedPath(basePath, suffix string) string {
 	ext := filepath.Ext(basePath)
@@ -53,12 +75,12 @@ func selectControlPlaneCount(page *rod.Page, count int, screenshotPath string) e
 	}
 
 	// Scroll into view and wait for element to be stable
- if err := dropdownToggle.ScrollIntoView(); err != nil {
-      return fmt.Errorf("failed to scroll control plane count dropdown into view: %v", err)
-  }
-  if err := dropdownToggle.WaitStable(time.Second); err != nil {
-      return fmt.Errorf("control plane count dropdown did not stabilize: %v", err)                                      
-  }
+	if err := dropdownToggle.ScrollIntoView(); err != nil {
+		return fmt.Errorf("failed to scroll control plane count dropdown into view: %v", err)
+	}
+	if err := dropdownToggle.WaitStable(time.Second); err != nil {
+		return fmt.Errorf("control plane count dropdown did not stabilize: %v", err)
+	}
 
 	_, err = dropdownToggle.Eval(`() => this.click()`)
 	if err != nil {
@@ -76,9 +98,9 @@ func selectControlPlaneCount(page *rod.Page, count int, screenshotPath string) e
 		return fmt.Errorf("dropdown menu is not visible: %v", err)
 	}
 
- if err := dropdownMenu.WaitStable(time.Second); err != nil {
-      return fmt.Errorf("dropdownmenu %d did not stabilize: %v", count, err)                                     
-  }         
+	if err := dropdownMenu.WaitStable(time.Second); err != nil {
+		return fmt.Errorf("dropdownmenu %d did not stabilize: %v", count, err)
+	}
 
 	// Select menu item by ID (use attribute selector as #5 is invalid CSS)
 	menuItemSelector := fmt.Sprintf("button[id='%d']", count)
@@ -106,37 +128,23 @@ func selectControlPlaneCount(page *rod.Page, count int, screenshotPath string) e
 	return nil
 }
 
-const (
-	defaultControlPlaneCount = 3
-	downloadAttempts         = 3
-)
-
-var (
-	downloadLogsFlag = flag.Bool("download-logs", false, "Download installation logs from UI and exit")
-	clusterName      = os.Getenv("CLUSTER_NAME")
-	baseDomain       = os.Getenv("BASE_DOMAIN")
-	rendezvousIP     = os.Getenv("RENDEZVOUS_IP")
-	ocpDir           = os.Getenv("OCP_DIR")
-	apiVips          = os.Getenv("API_VIPS")
-	ingressVips      = os.Getenv("INGRESS_VIPS")
-	sshPublicKey     = os.Getenv("SSH_PUB_KEY")
-	featureSet       = os.Getenv("FEATURE_SET")
-	featureGates     = os.Getenv("FEATURE_GATES")
-	baseURL          = fmt.Sprintf("http://%s:3001", rendezvousIP)
-	clustersURL      = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
-)
-
-// getControlPlaneCount determines the control plane count based on AGENT_E2E_TEST_SCENARIO
-func getControlPlaneCount() int {
+func getScenarioType() string {
 	scenario := os.Getenv("AGENT_E2E_TEST_SCENARIO")
-	
+
 	if scenario == "" {
-		return defaultControlPlaneCount
+		return scenario
 	}
 
 	// Extract scenario type (e.g., "5CONTROL" from "5CONTROL_IPV4")
 	parts := strings.Split(scenario, "_")
 	scenarioType := parts[0]
+	return scenarioType
+}
+
+// getControlPlaneCount determines the control plane count based on AGENT_E2E_TEST_SCENARIO
+func getControlPlaneCount() int {
+
+	scenarioType := getScenarioType()
 
 	switch scenarioType {
 	case "5CONTROL":
@@ -387,6 +395,7 @@ func logConfiguration() {
 	logrus.Infof("BASE_DOMAIN=%s", baseDomain)
 	logrus.Infof("RENDEZVOUS_IP=%s", rendezvousIP)
 	logrus.Infof("OCP_DIR=%s", ocpDir)
+	logrus.Infof("IP_STACK=%s", ipStack)
 	logrus.Infof("API_VIPS=%s", apiVips)
 	logrus.Infof("INGRESS_VIPS=%s", ingressVips)
 	if sshPublicKey != "" {
@@ -395,6 +404,9 @@ func logConfiguration() {
 	logrus.Infof("FEATURE_SET=%s", featureSet)
 	logrus.Infof("FEATURE_GATES=%s", featureGates)
 	logrus.Infof("CONTROL_PLANE_COUNT=%d", controlPlaneCount)
+	if getScenarioType() == "HA" {
+		logrus.Infof("COMPUTE_PLANE_COUNT=%s", workers)
+	}
 }
 
 func patchInstallConfig(clustersURL string, featureSet string, featureGates string) error {
@@ -507,8 +519,40 @@ func networkingDetails(page *rod.Page, path string) error {
 		return err
 	}
 
-	page.MustElement("#form-input-apiVips-0-ip-field").MustInput(apiVips)
-	page.MustElement("#form-input-ingressVips-0-ip-field").MustInput(ingressVips)
+	apiVip := apiVips
+	ingressVip := ingressVips
+
+	if ipStack == "v4v6" {
+		dualStackRadio := page.MustElement("#form-radio-stackType-dualStack-field")
+		dualStackRadio.MustClick()
+		err = saveFullPageScreenshot(page, timestampedPath(path, "after-dualstack"))
+		if err != nil {
+			return err
+		}
+		apiVip = strings.Split(apiVips, ",")[0]
+		ingressVip = strings.Split(ingressVips, ",")[0]
+	} else {
+		logrus.Infof("Using default single-stack IPv4 networking (IP_STACK=%s)", ipStack)
+	}
+
+	apiVipField := page.MustElement("#form-input-apiVips-0-ip-field")
+	apiVipField.MustWaitVisible()
+	apiVipField.MustInput(apiVip)
+
+	err = saveFullPageScreenshot(page, timestampedPath(path, "after-apivip"))
+	if err != nil {
+		return err
+	}
+
+	ingressVipField := page.MustElement("#form-input-ingressVips-0-ip-field")
+	ingressVipField.MustWaitVisible()
+	ingressVipField.MustInput(ingressVip)
+
+	err = saveFullPageScreenshot(page, timestampedPath(path, "after-ingressvip"))
+	if err != nil {
+		return err
+	}
+
 	page.MustElement("#form-input-sshPublicKey-field").MustInput(sshPublicKey)
 	page.MustElement(`button[name="next"]`).MustWaitEnabled()
 
