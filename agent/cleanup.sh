@@ -77,3 +77,4 @@ fi
 if [[ -d "$(sudo buildah info --format '{{.store.GraphRoot}}')/vfs" ]] ; then
     sudo buildah rmi -f --storage-driver vfs localhost/appliance-test >/dev/null 2>&1 || true
 fi
+
