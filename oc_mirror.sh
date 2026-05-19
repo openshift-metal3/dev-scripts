@@ -81,6 +81,58 @@ mirror:
   - name: registry.redhat.io/rhel9/support-tools:latest
 EOF
 
+   if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+      append_ove_operators "${imageset}"
+   fi
+
+}
+
+# Appends the operators section from the agent-iso-builder appliance-config.yaml
+# to the imageset so operator images are included in the mirror and available
+# to the appliance builder via --mirror-path.
+function append_ove_operators() {
+
+   local imageset=$1
+   local full_version
+   full_version=$(skopeo inspect --authfile "${PULL_SECRET_FILE}" docker://${OPENSHIFT_RELEASE_IMAGE} \
+       | jq -r '.Labels["io.openshift.release"]')
+   local major_minor
+   major_minor=$(echo "${full_version}" | cut -d'.' -f1,2)
+   local iso_builder_image="registry.ci.openshift.org/ocp/${major_minor}:agent-iso-builder"
+
+   echo "Appending OVE operators from ${iso_builder_image} config/${major_minor}/appliance-config.yaml"
+
+   # The agent-iso-builder image is a minimal image with no shell or python3,
+   # so use podman cp to extract the file and parse it on the host.
+   local tmpdir
+   tmpdir=$(mktemp -d)
+   _tmpfiles="$_tmpfiles $tmpdir"
+
+   local cid
+   cid=$(podman create --authfile "${PULL_SECRET_FILE}" "${iso_builder_image}")
+   if ! podman cp "${cid}:/src/config/${major_minor}/appliance-config.yaml" "${tmpdir}/"; then
+      podman rm "${cid}" > /dev/null
+      return 1
+   fi
+   podman rm "${cid}" > /dev/null
+
+   local operators_yaml
+   operators_yaml=$(python3 -c "
+import yaml
+with open('${tmpdir}/appliance-config.yaml') as f:
+    config = yaml.safe_load(f)
+operators = config.get('operators')
+if operators:
+    print(yaml.dump(operators, default_flow_style=False))
+")
+
+   if [[ -n "${operators_yaml}" ]]; then
+      echo "  operators:" >> "${imageset}"
+      echo "${operators_yaml}" | sed 's/^/  /' >> "${imageset}"
+   else
+      echo "No operators found in appliance-config.yaml for version ${major_minor}"
+   fi
+
 }
 
 # Use the oc-mirror command to generate a tar file of the release image
