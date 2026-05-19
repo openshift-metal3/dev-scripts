@@ -43,3 +43,8 @@ if (( $NUM_MASTERS != $installed_control_plane_nodes )); then
 fi
 
 oc get clusterversion
+
+if [[ "${AGENT_TEST_CASES:-}" =~ "copy_network" ]]; then
+  echo "Validating static network config persistence after installation"
+  ./agent/e2e/agent-tui/validate-copy-network.sh
+fi
