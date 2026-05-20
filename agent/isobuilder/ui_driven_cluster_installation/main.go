@@ -217,10 +217,14 @@ func main() {
 		logrus.Info("Page reloaded, continuing...")
 	}
 
-	logrus.Info("Select virtualization bundle")
-	err = virtualizationBundle(page, filepath.Join(screenshotPath, "02-operators.png"))
-	if err != nil {
-		log.Fatalf("failed to select virtualization bundle: %v", err)
+	if getControlPlaneCount() > 1 {
+		logrus.Info("Select virtualization bundle")
+		err = virtualizationBundle(page, filepath.Join(screenshotPath, "02-operators.png"))
+		if err != nil {
+			log.Fatalf("failed to select virtualization bundle: %v", err)
+		}
+	} else {
+		logrus.Info("Skip selecting virtualization bundle for SNO...")
 	}
 
 	next(page)
