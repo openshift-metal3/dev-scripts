@@ -46,7 +46,8 @@ function add_dns_entry {
     fi
 
     # Add entries to etc/hosts for SNO IPV6 to sucessfully run the openshift conformance tests
-    if [[ $NUM_MASTERS == 1 && $IP_STACK == "v6" ]]; then
+    # Temp change added to also check v4 in case of SNO for OVE
+    if [[ $NUM_MASTERS == 1 ]] && [[ $IP_STACK == "v4" || $IP_STACK == "v6" ]]; then
       AGENT_NODE0_IPSV6=${ip}
       echo "${ip} console-openshift-console.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
       echo "${ip} oauth-openshift.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
@@ -682,7 +683,9 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]] ; then
 else
   # For ISO_NO_REGISTRY mode with workers, add api-int to libvirt DNS
   # Workers need to resolve api-int during bootstrap before joining the cluster
+  if [[ "${NUM_MASTERS}" > "1" ]]; then
    add_dns_entry "${API_VIPS%${VIPS_SEPARATOR}*}" "api-int"
+  fi
 fi
 
 enable_isolated_baremetal_network

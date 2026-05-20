@@ -313,7 +313,7 @@ function configure_dnsmasq() {
   rm -f "${PATH_CONF_DNSMASQ}"
 
   add_dnsmasq_multi_entry "apivip" "${apiVips}"
-  if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]] ; then
+  if [[ ${AGENT_E2E_TEST_BOOT_MODE} == "ISO_NO_REGISTRY" ]] && [[ "${NUM_MASTERS}" > "1" ]]; then
     add_dnsmasq_multi_entry "apiintvip" "${apiVips}"
   fi
   add_dnsmasq_multi_entry "ingressvip" "${ingressVips}"
