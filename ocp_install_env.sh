@@ -127,7 +127,7 @@ EOF
 }
 
 function external_mac() {
-  if [ -n "$EXTERNAL_BOOTSTRAP_MAC" ] ; then
+  if [ -n "${EXTERNAL_BOOTSTRAP_MAC:-}" ] ; then
 cat <<EOF
     externalMACAddress: $EXTERNAL_BOOTSTRAP_MAC
 EOF
@@ -196,7 +196,7 @@ EOF
 }
 
 function featureSet() {
-    if [[ -n "$FEATURE_SET" ]]; then
+    if [[ -n "${FEATURE_SET:-}" ]]; then
 cat <<EOF
 featureSet: "$FEATURE_SET"
 EOF
@@ -204,7 +204,7 @@ EOF
 }
 
 function featureGates() {
-    if [[ -n "$FEATURE_GATES" ]]; then
+    if [[ -n "${FEATURE_GATES:-}" ]]; then
 cat <<EOF
 featureGates:
 EOF
@@ -217,7 +217,7 @@ EOF
 }
 
 function osImageStream() {
-    if [[ -n "$OS_IMAGE_STREAM" ]]; then
+    if [[ -n "${OS_IMAGE_STREAM:-}" ]]; then
 cat <<EOF
 osImageStream: "$OS_IMAGE_STREAM"
 EOF
@@ -225,14 +225,14 @@ EOF
 }
 
 function capabilities_stanza() {
-    if [[ -n "$BASELINE_CAPABILITY_SET" ]]; then
+    if [[ -n "${BASELINE_CAPABILITY_SET:-}" ]]; then
 cat <<EOF
 capabilities:
   baselineCapabilitySet: "$BASELINE_CAPABILITY_SET"
 EOF
     fi
 
-    if [[ -n "$BASELINE_CAPABILITY_SET" ]] && [[ -n "$ADDITIONAL_CAPABILITIES" ]]; then
+    if [[ -n "${BASELINE_CAPABILITY_SET:-}" ]] && [[ -n "${ADDITIONAL_CAPABILITIES:-}" ]]; then
 cat << EOF
   additionalEnabledCapabilities:
 EOF
@@ -243,7 +243,7 @@ cat << EOF
 EOF
       done
 
-    elif [[ -n "$ADDITIONAL_CAPABILITIES" ]] && [[ -z "$BASELINE_CAPABILITY_SET" ]]; then
+    elif [[ -n "${ADDITIONAL_CAPABILITIES:-}" ]] && [[ -z "${BASELINE_CAPABILITY_SET:-}" ]]; then
       echo "Additional capabilities is set to: $ADDITIONAL_CAPABILITIES, but no desired BASELINE_CAPABILITY_SET is set"
       exit 1
     fi
@@ -264,7 +264,7 @@ EOF
 }
 
 function workload_partitioning() {
-  if [[ -n "${ENABLE_WORKLOAD_PARTITIONING}" ]]; then
+  if [[ -n "${ENABLE_WORKLOAD_PARTITIONING:-}" ]]; then
 cat <<EOF
 cpuPartitioningMode: AllNodes
 EOF
@@ -280,7 +280,7 @@ EOF
 }
 
 function additional_trust_bundle() {
-  if [[ ! -z "$ADDITIONAL_TRUST_BUNDLE" ]]; then
+  if [[ ! -z "${ADDITIONAL_TRUST_BUNDLE:-}" ]]; then
     if [[ -z "${MIRROR_IMAGES}" || "${MIRROR_IMAGES,,}" != "false" ]] && [[ -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
       echo "additionalTrustBundle: |"
     fi
