@@ -68,7 +68,7 @@ function getReleaseImage() {
     # If not installing from src, let's use the current version from the binary
     elif [ -z "$KNI_INSTALL_FROM_GIT" ]; then
       local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
-      releaseImage=$("${openshift_install}" --dir="${OCP_DIR}" version | grep "release image" | cut -d " " -f 3)      
+      releaseImage=$("${openshift_install}" --dir="${OCP_DIR}" version | grep "release image" | cut -d " " -f 3)
     fi
     echo ${releaseImage}
 }
@@ -92,11 +92,16 @@ if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
     if [[ -z "${NETWORKING_MODE}" ]]; then
         export NETWORKING_MODE="DHCP"
     fi
+    export MIRROR_IMAGES=false
 fi
 
 function getRendezvousIP() {
     node_zero_mac_address=$(sudo virsh domiflist ${AGENT_RENDEZVOUS_NODE_HOSTNAME} | awk '$3 == "ostestbm" {print $5}')
     rendezvousIP=$(ip neigh | grep $node_zero_mac_address | awk '{print $1}')
+    if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]] && [[ "${IP_STACK}" == "v6" ]]; then
+        # Filter out link-local addresses and get global/ULA IPv6
+        rendezvousIP=$(echo "$rendezvousIP" | tr ' ' '\n' | grep -vE '^fe[89ab][0-9a-f]:' | head -n1)
+    fi
     echo $rendezvousIP | awk '{print $1}'
 }
 

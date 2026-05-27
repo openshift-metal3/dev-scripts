@@ -45,7 +45,7 @@ var (
 	ipStack          = os.Getenv("IP_STACK")
 	workers          = os.Getenv("NUM_WORKERS")
 	baseURL          = fmt.Sprintf("http://%s:3001", rendezvousIP)
-	clustersURL      = fmt.Sprintf("%s%s", baseURL, path.Join("/api/assisted-install/v2/clusters"))
+	clustersURL      = fmt.Sprintf("%s%s", getBaseURL(ipStack, rendezvousIP), path.Join("/api/assisted-install/v2/clusters"))
 )
 
 // timestampedPath adds a timestamp to the filename
@@ -179,7 +179,7 @@ func main() {
 	browser := rod.New().ControlURL(url).MustConnect()
 	defer browser.MustClose()
 
-	page := browser.MustPage(baseURL)
+	page := browser.MustPage(getBaseURL(ipStack, rendezvousIP))
 	page.MustWaitLoad()
 
 	cwd, err := os.Getwd()
@@ -203,18 +203,15 @@ func main() {
 
 	// Wait for page to load and check if cluster creation completed in time
 	logrus.Info("Waiting for operators page to load...")
-	time.Sleep(3 * time.Second)
+	wait(10 * time.Second)
+	reload(page)
 
 	// Check if we got an error page because cluster wasn't created in time
 	errorMsg, _ := page.Timeout(2*time.Second).ElementR("div", "Cluster details not found")
 	if errorMsg != nil {
 		logrus.Info("Cluster not ready yet, waiting and reloading...")
-		// Wait longer for cluster creation to complete
-		time.Sleep(5 * time.Second)
-		// Reload the page
-		page.MustReload()
-		page.MustWaitLoad()
-		logrus.Info("Page reloaded, continuing...")
+		wait(5 * time.Second)
+		reload(page)
 	}
 
 	logrus.Info("Select virtualization bundle")
@@ -271,7 +268,7 @@ func main() {
 	stepNum++
 
 	// Wait for page to load
-	time.Sleep(3 * time.Second)
+	wait(5 * time.Second)
 
 	// Check if we're on Custom manifests page (4.22+) or Review page (< 4.22)
 	customManifestsHeading, _ := page.Timeout(2*time.Second).ElementR("h2", "Custom manifests")
@@ -362,7 +359,7 @@ func clusterDetails(page *rod.Page, path string) error {
 		// Clear template content and enter pull secret
 		pullSecretField.MustSelectAllText()
 		pullSecretField.MustInput("")
-		time.Sleep(500 * time.Millisecond)
+		wait(500 * time.Millisecond)
 
 		pullSecretField.MustInput(`{"auths":{"":{"auth":"dXNlcjpwYXNz"}}}`)
 	} else {
@@ -380,7 +377,7 @@ func clusterDetails(page *rod.Page, path string) error {
 	}
 
 	// Allow UI enough time to complete the background API call to create the cluster
-	time.Sleep(10 * time.Second)
+	wait(10 * time.Second)
 	page.MustElement("button[name='next']").MustWaitEnabled()
 
 	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
@@ -471,12 +468,35 @@ func virtualizationBundle(page *rod.Page, path string) error {
 		return err
 	}
 
-	checkbox := page.MustElement("#bundle-virtualization")
-	checkbox.MustScrollIntoView()
-	checkbox.MustClick()
-	// Allow UI enough time to complete the background API call
-	time.Sleep(2 * time.Second)
-	page.MustElement("button[name='next']").MustWaitEnabled()
+	if getControlPlaneCount() > 1 {
+		checkbox := page.MustElement("#bundle-virtualization")
+		checkbox.MustScrollIntoView()
+		checkbox.MustClick()
+		// Allow UI enough time to complete the background API call
+		wait(5 * time.Second)
+	} else {
+		logrus.Info("Looking for Single Operators button (SNO)...")
+		wait(5 * time.Second)
+
+		singleOpsButton, err := page.Timeout(10*time.Second).ElementR("button", "Single Operators")
+		if err != nil {
+			return fmt.Errorf("Single Operators button not found: %v", err)
+		}
+
+		err = singleOpsButton.WaitVisible()
+		if err != nil {
+			return fmt.Errorf("Single Operators button not visible: %v", err)
+		}
+
+		logrus.Info("Found Single Operators button")
+		err = selectAllEnabledOperators(page, singleOpsButton)
+		if err != nil {
+			return err
+		}
+	}
+
+	wait(5 * time.Second)
+	page.MustElement("button[name='next']").MustWaitEnabled().MustScrollIntoView().MustWaitEnabled()
 
 	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
@@ -505,6 +525,7 @@ func verifyStorage(page *rod.Page, path string) error {
 	if err != nil {
 		return err
 	}
+	page.MustElement("button[name='next']").MustWaitEnabled()
 
 	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
@@ -522,8 +543,15 @@ func networkingDetails(page *rod.Page, path string) error {
 	apiVip := apiVips
 	ingressVip := ingressVips
 
-	if ipStack == "v4v6" {
+	if ipStack == "v4" {
+		page.MustElement("#form-radio-stackType-singleStack-field")
+		logrus.Info("Selected IPV4 networking stack")
+		if getControlPlaneCount() == 1 {
+			logrus.Infof("Using default single-stack IPv4 networking (IP_STACK=%s) for SNO", ipStack)
+		}
+	} else if ipStack == "v4v6" {
 		dualStackRadio := page.MustElement("#form-radio-stackType-dualStack-field")
+		logrus.Info("Selected dualstack networking stack")
 		dualStackRadio.MustClick()
 		err = saveFullPageScreenshot(page, timestampedPath(path, "after-dualstack"))
 		if err != nil {
@@ -531,26 +559,26 @@ func networkingDetails(page *rod.Page, path string) error {
 		}
 		apiVip = strings.Split(apiVips, ",")[0]
 		ingressVip = strings.Split(ingressVips, ",")[0]
-	} else {
-		logrus.Infof("Using default single-stack IPv4 networking (IP_STACK=%s)", ipStack)
 	}
 
-	apiVipField := page.MustElement("#form-input-apiVips-0-ip-field")
-	apiVipField.MustWaitVisible()
-	apiVipField.MustInput(apiVip)
+	if getControlPlaneCount() > 1 {
+		apiVipField := page.MustElement("#form-input-apiVips-0-ip-field")
+		apiVipField.MustWaitVisible()
+		apiVipField.MustInput(apiVip)
 
-	err = saveFullPageScreenshot(page, timestampedPath(path, "after-apivip"))
-	if err != nil {
-		return err
-	}
+		err = saveFullPageScreenshot(page, timestampedPath(path, "after-apivip"))
+		if err != nil {
+			return err
+		}
 
-	ingressVipField := page.MustElement("#form-input-ingressVips-0-ip-field")
-	ingressVipField.MustWaitVisible()
-	ingressVipField.MustInput(ingressVip)
+		ingressVipField := page.MustElement("#form-input-ingressVips-0-ip-field")
+		ingressVipField.MustWaitVisible()
+		ingressVipField.MustInput(ingressVip)
 
-	err = saveFullPageScreenshot(page, timestampedPath(path, "after-ingressvip"))
-	if err != nil {
-		return err
+		err = saveFullPageScreenshot(page, timestampedPath(path, "after-ingressvip"))
+		if err != nil {
+			return err
+		}
 	}
 
 	page.MustElement("#form-input-sshPublicKey-field").MustInput(sshPublicKey)
@@ -586,7 +614,7 @@ func downloadCredentials(page *rod.Page, client *resty.Client, path string) erro
 	}
 
 	page.MustElement("#credentials-download-agreement").MustClick()
-	time.Sleep(5 * time.Second)
+	wait(5 * time.Second)
 
 	page.MustElementR("button", "Download credentials").MustWaitEnabled().MustClick()
 
@@ -645,7 +673,7 @@ func waitForClusterConsoleLink(page *rod.Page, path string) error {
 			return err
 		}
 		i++
-		time.Sleep(5 * time.Minute)
+		wait(5 * time.Minute)
 	}
 
 	return nil
@@ -718,7 +746,7 @@ func saveCredentials(client *resty.Client, url, filename string) error {
 		logrus.Infof("%s download attempts %d/%d", filename, i+1, downloadAttempts)
 		resp, err := client.R().Get(fileURL)
 		if err != nil || resp.StatusCode() != http.StatusOK {
-			time.Sleep(10 * time.Second)
+			wait(10 * time.Second)
 			continue
 		}
 		if resp.StatusCode() == http.StatusOK {
@@ -796,7 +824,7 @@ func runDownloadLogs() {
 	defer browser.MustClose()
 
 	// Navigate to base URL - UI will redirect to current cluster
-	page := browser.MustPage(baseURL)
+	page := browser.MustPage(getBaseURL(ipStack, rendezvousIP))
 	page.MustWaitLoad()
 
 	logrus.Info("Connected to Assisted Installer UI")
@@ -813,4 +841,56 @@ func runDownloadLogs() {
 	}
 
 	logrus.Info("Download-logs mode complete")
+}
+
+func wait(timeToWait time.Duration) {
+	logrus.Infof("Waiting for %s ...", timeToWait)
+	time.Sleep(timeToWait)
+}
+
+func reload(page *rod.Page) {
+	page.MustReload()
+	page.MustWaitLoad()
+	logrus.Info("Page reloaded, continuing...")
+}
+
+func selectAllEnabledOperators(page *rod.Page, expandButton *rod.Element) error {
+	expandButton.MustWaitStable()
+	logrus.Info("Single Operators button is stable")
+
+	ariaExpanded, _ := expandButton.Attribute("aria-expanded")
+	if ariaExpanded == nil || *ariaExpanded == "false" {
+		logrus.Info("Expanding Single Operators section...")
+		expandButton.MustClick()
+
+		// Wait for expansion animation
+		wait(1 * time.Second)
+
+		logrus.Info("Single Operators section expanded")
+	} else {
+		logrus.Info("Single Operators section already expanded")
+	}
+
+	// Select all enabled, unchecked checkboxes
+	checkboxes := page.MustElements(`input[data-testid^="operator-checkbox-"]:not([disabled])`)
+	logrus.Infof("Found %d enabled checkboxes", len(checkboxes))
+
+	for i, checkbox := range checkboxes {
+		checked, _ := checkbox.Property("checked")
+		if !checked.Bool() {
+			checkbox.MustClick()
+			logrus.Infof("Checked checkbox %d", i+1)
+			wait(100 * time.Millisecond)
+		}
+	}
+
+	logrus.Info("All enabled operators selected")
+	return nil
+}
+
+func getBaseURL(ipStack, rendezvousIP string) string {
+	if ipStack == "v6" {
+		return fmt.Sprintf("http://[%s]:3001", rendezvousIP)
+	}
+	return fmt.Sprintf("http://%s:3001", rendezvousIP)
 }

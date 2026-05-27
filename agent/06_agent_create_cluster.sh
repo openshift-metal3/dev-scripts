@@ -212,7 +212,7 @@ function automate_rendezvousIP_selection(){
 
 function check_assisted_install_UI(){
   local rendezvousIP=$(getRendezvousIP)
-  local url="http://$rendezvousIP:3001"
+  local url="http://$(wrap_if_ipv6 ${rendezvousIP}):3001"
   while true; do
     if curl -s -o /dev/null -w "%{http_code}" "$url" | grep -q "^200$"; then
       echo "Assisted install UI is up: $url"
