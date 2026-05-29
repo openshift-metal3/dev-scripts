@@ -51,11 +51,6 @@ if [[ "$num_screenshots" -gt 0 ]]; then
         files_to_archive+=("${OCP_DIR}"/*.png)
     fi
 
-    # Include installation logs if available
-    if [[ -f "${OCP_DIR}/installation-logs.tar" ]]; then
-        files_to_archive+=("${OCP_DIR}/installation-logs.tar")
-    fi
-
     # Create archive with all collected files
     tar -cJf $archive_name "${files_to_archive[@]}"
 else
