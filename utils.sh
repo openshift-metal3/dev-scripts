@@ -30,12 +30,13 @@ function retry_with_timeout() {
 
 function generate_assets() {
   rm -rf assets/generated && mkdir assets/generated
+  # shellcheck disable=SC2044
   for file in $(find assets/templates/ -iname '*.yaml' -type f -printf "%P\n"); do
       echo "Templating ${file} to assets/generated/${file}"
-      cp assets/{templates,generated}/${file}
+      cp assets/{templates,generated}/"${file}"
 
-      for path in $(yq -r '.spec.config.storage.files[].path' assets/templates/${file} | cut -c 2-); do
-          assets/yaml_patch.py "assets/generated/${file}" "/${path}" "$(cat assets/files/${path} | base64 -w0)"
+      for path in $(yq -r '.spec.config.storage.files[].path' "assets/templates/${file}" | cut -c 2-); do
+          assets/yaml_patch.py "assets/generated/${file}" "/${path}" "$(cat "assets/files/${path}" | base64 -w0)"
       done
   done
 }
@@ -49,7 +50,7 @@ function ensure_line() {
   file=$1
   line=$2
 
-  grep -q "$line" $file || echo "$line" | sudo tee -a $file
+  grep -q "$line" "$file" || echo "$line" | sudo tee -a "$file"
 }
 
 function configure_chronyd() {
@@ -86,12 +87,12 @@ function custom_ntp(){
     cp assets/templates/98_worker-chronyd-custom.yaml.optional assets/generated/98_worker-chronyd-custom.yaml
     cp assets/templates/98_master-chronyd-custom.yaml.optional assets/generated/98_master-chronyd-custom.yaml
     NTPFILECONTENT=$(cat assets/files/etc/chrony.conf)
-    for ntp in $(echo $NTP_SERVERS | tr ";" "\n"); do
+    for ntp in $(echo "$NTP_SERVERS" | tr ";" "\n"); do
       NTPFILECONTENT="${NTPFILECONTENT}"$'\n'"pool ${ntp} iburst"
     done
     NTPFILECONTENT=$(echo "${NTPFILECONTENT}" | base64 -w0)
     sed -i -e "s/NTPFILECONTENT/${NTPFILECONTENT}/g" assets/generated/*-chronyd-custom.yaml
-    IGNITION_VERSION=$(yq -r .spec.config.ignition.version ${ASSESTS_DIR}/99_openshift-machineconfig_99-master-ssh.yaml)
+    IGNITION_VERSION=$(yq -r .spec.config.ignition.version "${ASSESTS_DIR}/99_openshift-machineconfig_99-master-ssh.yaml")
     sed -i -e "s/IGNITION_VERSION/${IGNITION_VERSION}/g" assets/generated/*-chronyd-custom.yaml
     if [[ ${IGNITION_VERSION} =~ ^3\. ]]; then
       sed -i -e "/filesystem: root/d" assets/generated/*-chronyd-custom.yaml
@@ -122,58 +123,58 @@ function create_cluster() {
       sed -i '/^  channel:/d' "${assets_dir}/manifests/cvo-overrides.yaml"
     fi
 
-    mkdir -p ${assets_dir}/openshift
+    mkdir -p "${assets_dir}/openshift"
     generate_assets
 
     if [ -z "${NTP_SERVERS:-}" ];
     then
       export NTP_SERVERS="$PROVISIONING_HOST_EXTERNAL_IP"
     fi
-    custom_ntp ${assets_dir}/openshift
+    custom_ntp "${assets_dir}/openshift"
 
     if [[ "${OVN_LOCAL_GATEWAY_MODE:-}" == "true" ]] && [[ "${NETWORK_TYPE}" == "OVNKubernetes" ]]; then
-      local_gateway_mode ${assets_dir}/openshift
+      local_gateway_mode "${assets_dir}/openshift"
     fi
     generate_metal3_config
 
-    find assets/generated -name '*.yaml' -exec cp -f {} ${assets_dir}/openshift \;
+    find assets/generated -name '*.yaml' -exec cp -f {} "${assets_dir}/openshift" \;
 
-    if [[ "${IP_STACK}" == "v4v6" && "$(openshift_version $OCP_DIR)" =~ 4.[67] ]]; then
+    if [[ "${IP_STACK}" == "v4v6" && "$(openshift_version "$OCP_DIR")" =~ 4.[67] ]]; then
         # The IPv6DualStack feature is not on by default in 4.6 and 4.7 and needs
         # to be manually enabled
-        cp assets/ipv6-dual-stack-no-upgrade.yaml ${assets_dir}/openshift/.
+        cp assets/ipv6-dual-stack-no-upgrade.yaml "${assets_dir}/openshift/."
     fi
 
     if [[  ! -z "${ENABLE_CBO_TEST:-}" ]]; then
       # Create an empty image to be used by the CBO test deployment
       EMPTY_IMAGE=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/empty:latest
-      echo -e "FROM quay.io/quay/busybox\nCMD [\"sleep\", \"infinity\"]" | sudo podman build --network host -t ${EMPTY_IMAGE} -f - .
-      sudo podman push --tls-verify=false --authfile ${REGISTRY_CREDS} ${EMPTY_IMAGE} ${EMPTY_IMAGE}
+      echo -e "FROM quay.io/quay/busybox\nCMD [\"sleep\", \"infinity\"]" | sudo podman build --network host -t "${EMPTY_IMAGE}" -f - .
+      sudo podman push --tls-verify=false --authfile "${REGISTRY_CREDS}" "${EMPTY_IMAGE}" "${EMPTY_IMAGE}"
 
-      cp assets/metal3-cbo-deployment.yaml ${assets_dir}/openshift/.
+      cp assets/metal3-cbo-deployment.yaml "${assets_dir}/openshift/."
     fi
 
     if [ ! -z "${ASSETS_EXTRA_FOLDER:-}" ]; then
       if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]] || [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
-        for ASSET in $(find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -print) ; do
+        while IFS= read -r -d '' ASSET; do
             ASSET_NEW=${assets_dir}/openshift/${ASSET##*/}
-            cp $ASSET $ASSET_NEW
-            for IMAGE in $(yq '.. | objects | select(has("containers")) | .containers[].image' $ASSET -r | sort | uniq) ; do
+            cp "$ASSET" "$ASSET_NEW"
+            for IMAGE in $(yq '.. | objects | select(has("containers")) | .containers[].image' "$ASSET" -r | sort | uniq) ; do
                 IMAGE_SHORT=${IMAGE##*/}
                 [[ $IMAGE_SHORT =~ "@" ]] && DIGEST=${IMAGE_SHORT##*@}
                 # Remove digest from the short name for podman push
                 IMAGE_SHORT=${IMAGE_SHORT%@*}
                 IMAGE_MIRRORED=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/assets/${IMAGE_SHORT}
-                sudo -E podman pull --authfile $PULL_SECRET_FILE $IMAGE
-                sudo podman push --tls-verify=false --remove-signatures --authfile $PULL_SECRET_FILE $IMAGE $IMAGE_MIRRORED
+                sudo -E podman pull --authfile "$PULL_SECRET_FILE" "$IMAGE"
+                sudo podman push --tls-verify=false --remove-signatures --authfile "$PULL_SECRET_FILE" "$IMAGE" "$IMAGE_MIRRORED"
                 if [[ -n ${DIGEST:-} ]]; then
                   # Get digest of the pushed image
-                  DIGEST=$(podman inspect --format "{{.Digest}}" $IMAGE_MIRRORED)
+                  DIGEST=$(podman inspect --format "{{.Digest}}" "$IMAGE_MIRRORED")
                   IMAGE_MIRRORED="${IMAGE_MIRRORED}@${DIGEST}"
                 fi
-                sed -i -e "s%${IMAGE}%${IMAGE_MIRRORED}%g" $ASSET_NEW
+                sed -i -e "s%${IMAGE}%${IMAGE_MIRRORED}%g" "$ASSET_NEW"
             done
-        done
+        done < <(find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -print0)
       else
         find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -exec cp {} "${assets_dir}/openshift" \;
       fi
@@ -196,14 +197,14 @@ function create_cluster() {
 
     if [ ! -z "${IGNITION_EXTRA:-}" ]; then
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
-      if ! jq . ${IGNITION_EXTRA}; then
+      if ! jq . "${IGNITION_EXTRA}"; then
         echo "Error ${IGNITION_EXTRA} not valid json"
         exit 1
       fi
-      mv ${assets_dir}/master.ign ${assets_dir}/master.ign.orig
-      jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/master.ign.orig | tee ${assets_dir}/master.ign
-      mv ${assets_dir}/worker.ign ${assets_dir}/worker.ign.orig
-      jq -s '.[0] * .[1]' ${IGNITION_EXTRA} ${assets_dir}/worker.ign.orig | tee ${assets_dir}/worker.ign
+      mv "${assets_dir}/master.ign" "${assets_dir}/master.ign.orig"
+      jq -s '.[0] * .[1]' "${IGNITION_EXTRA}" "${assets_dir}/master.ign.orig" | tee "${assets_dir}/master.ign"
+      mv "${assets_dir}/worker.ign" "${assets_dir}/worker.ign.orig"
+      jq -s '.[0] * .[1]' "${IGNITION_EXTRA}" "${assets_dir}/worker.ign.orig" | tee "${assets_dir}/worker.ign"
     fi
 
     trap auth_template_and_removetmp EXIT
@@ -230,7 +231,7 @@ function node_val() {
     n="$1"
     val="$2"
 
-    jq -r ".nodes[${n}].${val}" $NODES_FILE
+    jq -r ".nodes[${n}].${val}" "$NODES_FILE"
 }
 
 function node_map_to_install_config_hosts() {
@@ -239,20 +240,21 @@ function node_map_to_install_config_hosts() {
     start_idx="$2"
     role="$3"
 
-    for ((idx=$start_idx;idx<$(($1 + $start_idx));idx++)); do
+    for ((idx=start_idx; idx < num_hosts + start_idx; idx++)); do
       name=$(node_val ${idx} "name")
       mac=$(node_val ${idx} "ports[0].address")
       local node_role=$role
 
       driver=$(node_val ${idx} "driver")
-      if [ $driver == "ipmi" ] ; then
+      if [ "$driver" == "ipmi" ] ; then
           driver_prefix=ipmi
-      elif [ $driver == "idrac" ] ; then
+      elif [ "$driver" == "idrac" ] ; then
           driver_prefix=drac
       else
           driver_prefix=redfish
       fi
 
+      # shellcheck disable=SC2034
       port=$(node_val ${idx} "driver_info.port // \"\"")
       username=$(node_val ${idx} "driver_info.username")
       password=$(node_val ${idx} "driver_info.password")
@@ -276,7 +278,7 @@ EOF
 
       if [[ "$driver_prefix" == "redfish" ]]; then
           # Set disableCertificateVerification on older versions
-          if is_lower_version "$(openshift_version $OCP_DIR)" "4.22"; then
+          if is_lower_version "$(openshift_version "$OCP_DIR")" "4.22"; then
               # Heads up, "verify ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
               verify_ca=$(node_val ${idx} "driver_info.redfish_verify_ca")
               disable_certificate_verification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
@@ -334,8 +336,9 @@ function node_map_to_install_config_fencing_credentials() {
   fencing:
     credentials:
 EOF
-    for ((idx=0;idx<$(($NUM_MASTERS));idx++)); do
-      hostname="$(printf $MASTER_HOSTNAME_FORMAT ${idx})"
+    for ((idx=0; idx < NUM_MASTERS ; idx++)); do
+      # shellcheck disable=SC2059
+      hostname="$(printf "$MASTER_HOSTNAME_FORMAT" ${idx})"
       # IP V6 and DualStack will force FQDN hostname for the VMs, we need to update
       # this here to correctly set the hostname for the fencing credentials.
       if [[ $IP_STACK != 'v4' ]]; then
@@ -352,11 +355,12 @@ EOF
       password: ${password}
 EOF
       # We don't support overriding certificateVerification in 4.19
-      if [ $(openshift_version "${OCP_DIR}") == "$TNF_ENABLED_RELEASE" ]; then
+      if [ "$(openshift_version "${OCP_DIR}")" == "$TNF_ENABLED_RELEASE" ]; then
         continue
       fi
-      declare -l redfish_verify_ca=$(node_val ${idx} "driver_info.redfish_verify_ca")
-      certificate_verification=$(["${redfish_verify_ca}" == "true" ] && echo -n "Enabled" || echo -n "Disabled")
+      declare -l redfish_verify_ca
+      redfish_verify_ca=$(node_val ${idx} "driver_info.redfish_verify_ca")
+      certificate_verification=$([ "${redfish_verify_ca}" == "true" ] && echo -n "Enabled" || echo -n "Disabled")
       cat <<EOF
       certificateVerification: ${certificate_verification}
 EOF
@@ -369,33 +373,33 @@ function sync_repo_and_patch {
     DEST="${REPO_PATH}/$1"
     echo "Syncing $1"
 
-    if [ ! -d $DEST ]; then
-        mkdir -p $DEST
-        git clone $2 $DEST
+    if [ ! -d "$DEST" ]; then
+        mkdir -p "$DEST"
+        git clone "$2" "$DEST"
     fi
 
-    pushd $DEST
+    pushd "$DEST" || exit 1
 
-    REPO_NAME=$(basename "$1" .git | tr "a-z" "A-Z" | tr "-" "_")
+    REPO_NAME=$(basename "$1" .git | tr "[:lower:]" "[:upper:]" | tr "-" "_")
     REPO_BRANCH_VAR="${REPO_NAME}_REPO_BRANCH"
     REPO_BRANCH=${!REPO_BRANCH_VAR:-$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')}
 
     git am --abort || true
-    git checkout ${REPO_BRANCH}
+    git checkout "${REPO_BRANCH}"
     git fetch origin
     git restore .
-    git rebase origin/${REPO_BRANCH}
+    git rebase "origin/${REPO_BRANCH}"
 
     # If set, use the specified PR number
     REPO_PR_VAR="${REPO_NAME}_REPO_PR"
     REPO_PR=${!REPO_PR_VAR:-}
     if [[ ! -z "${REPO_PR}" ]] ; then
       echo "Fetching PR ${REPO_PR}"
-      git fetch origin pull/${REPO_PR}/head:pr${REPO_PR}
-      git checkout pr${REPO_PR}
+      git fetch origin "pull/${REPO_PR}/head:pr${REPO_PR}"
+      git checkout "pr${REPO_PR}"
     fi
 
-    popd
+    popd || exit 1
 }
 
 function generate_auth_template {
@@ -411,17 +415,17 @@ function generate_auth_template {
     OCP_VERSIONS_NOAUTH="4.3 4.4 4.5"
     OCP_VERSIONS_INSPECTOR="4.12 4.13 4.14 4.15 4.16"
 
-    VERSION=$(openshift_version $OCP_DIR)
+    VERSION=$(openshift_version "$OCP_DIR")
 
     if [[ "$OCP_VERSIONS_NOAUTH" == *"$VERSION"* ]]; then
         go run metal3-templater.go "noauth" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
     else
-        IRONIC_USER=$((oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
-        IRONIC_PASSWORD=$((oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
+        IRONIC_USER=$( (oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
+        IRONIC_PASSWORD=$( (oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
         IRONIC_CREDS="$IRONIC_USER:$IRONIC_PASSWORD"
         if [[ "$OCP_VERSIONS_INSPECTOR" == *"$VERSION"* ]]; then
-            INSPECTOR_USER=$((oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
-            INSPECTOR_PASSWORD=$((oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
+            INSPECTOR_USER=$( (oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
+            INSPECTOR_PASSWORD=$( (oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
             INSPECTOR_CREDS="$INSPECTOR_USER:$INSPECTOR_PASSWORD"
         fi
         CLUSTER_IRONIC_IP=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o jsonpath="{.items[0].status.hostIP}" || echo "")
@@ -440,12 +444,12 @@ function generate_auth_template {
 
         BOOTSTRAP_VM_IP=$(bootstrap_ip)
         if [ ! -z "${BOOTSTRAP_VM_IP}" ]; then
-            if ping -c 1 ${BOOTSTRAP_VM_IP}; then
+            if ping -c 1 "${BOOTSTRAP_VM_IP}"; then
                 # From 4.7 basic_auth is also enabled on the bootstrap VM
                 # There's a clouds.yaml we can copy in that case
                 # FIXME: the sed of the URL is a workaround for
                 # https://bugzilla.redhat.com/show_bug.cgi?id=1930240
-                ($SSH core@${BOOTSTRAP_VM_IP} sudo cat /opt/metal3/auth/clouds.yaml || echo "") | sed "s/^clouds://" | sed "s/http:\/\/:/http:\/\/${BOOTSTRAP_VM_IP}:/" >> clouds.yaml
+                ($SSH "core@${BOOTSTRAP_VM_IP}" sudo cat /opt/metal3/auth/clouds.yaml || echo "") | sed "s/^clouds://" | sed "s/http:\/\/:/http:\/\/${BOOTSTRAP_VM_IP}:/" >> clouds.yaml
             fi
         fi
     fi
@@ -458,14 +462,14 @@ function generate_auth_template {
 }
 
 function generate_metal3_config {
-    MACHINE_OS_IMAGE_URL="http:///$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
+    MACHINE_OS_IMAGE_URL="http:///$(wrap_if_ipv6 "$MIRROR_IP")/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
     # metal3-config.yaml
-    mkdir -p ${OCP_DIR}/deploy
+    mkdir -p "${OCP_DIR}/deploy"
     go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
 
-    if [[ "$(openshift_version $OCP_DIR)" == "4.3" ]]; then
-      go run metal3-templater.go noauth -template-file=metal3-config.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > ${OCP_DIR}/deploy/metal3-config.yaml
-      cp ${OCP_DIR}/deploy/metal3-config.yaml assets/generated/98_metal3-config.yaml
+    if [[ "$(openshift_version "$OCP_DIR")" == "4.3" ]]; then
+      go run metal3-templater.go noauth -template-file=metal3-config.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > "${OCP_DIR}/deploy/metal3-config.yaml"
+      cp "${OCP_DIR}/deploy/metal3-config.yaml" assets/generated/98_metal3-config.yaml
     else
       echo "OpenShift Version is > 4.3; skipping config map"
     fi
@@ -480,11 +484,13 @@ function generate_metal3_config {
 
 function image_mirror_config {
     if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]] || [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
-        INDENTED_CERT=$( cat $REGISTRY_DIR/certs/$REGISTRY_CRT | awk '{ print " ", $0 }' )
+        INDENTED_CERT=$( cat "$REGISTRY_DIR/certs/$REGISTRY_CRT" | awk '{ print " ", $0 }' )
         if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]] && [[ ! -s ${MIRROR_LOG_FILE} ]]; then
+            # shellcheck disable=SC1091
             . /tmp/mirrored_release_image
-            TAGGED=$(echo $MIRRORED_RELEASE_IMAGE | sed -e 's/release://')
-            RELEASE=$(echo $MIRRORED_RELEASE_IMAGE | grep -o 'registry.ci.openshift.org[^":\@]\+')
+            # shellcheck disable=SC2001
+            TAGGED=$(echo "$MIRRORED_RELEASE_IMAGE" | sed -e 's/release://')
+            RELEASE=$(echo "$MIRRORED_RELEASE_IMAGE" | grep -o 'registry.ci.openshift.org[^":\@]\+')
             cat << EOF
 imageContentSources:
 - mirrors:
@@ -497,7 +503,7 @@ additionalTrustBundle: |
 ${INDENTED_CERT}
 EOF
         else
-            cat ${MIRROR_LOG_FILE} | sed -n '/To use the new mirrored repository to install/,/To use the new mirrored repository for upgrades/p' |\
+            cat "${MIRROR_LOG_FILE}" | sed -n '/To use the new mirrored repository to install/,/To use the new mirrored repository for upgrades/p' |\
                 sed -e '/^$/d' -e '/To use the new mirrored repository/d'
             cat << EOF
 additionalTrustBundle: |
@@ -527,16 +533,16 @@ function setup_legacy_release_mirror {
 
     if [[ ! -d $REGISTRY_DIR ]]; then
         # Create directory needed for log file which isn't created when using quay backend
-        mkdir $REGISTRY_DIR
+        mkdir "$REGISTRY_DIR"
     fi
 
     for ((i=1; i<=5; i++)); do
         if oc adm release mirror \
                 --insecure=true --keep-manifest-list=true \
-                -a ${PULL_SECRET_FILE}  \
-                --from ${OPENSHIFT_RELEASE_IMAGE} \
-                --to-release-image ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG} \
-                --to ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image >${MIRROR_LOG_FILE} 2>&1; then
+                -a "${PULL_SECRET_FILE}"  \
+                --from "${OPENSHIFT_RELEASE_IMAGE}" \
+                --to-release-image "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image:${OPENSHIFT_RELEASE_TAG}" \
+                --to "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image" >"${MIRROR_LOG_FILE}" 2>&1; then
             echo "Release payload mirror success."
             exit_code="0"
             break
@@ -545,9 +551,9 @@ function setup_legacy_release_mirror {
         echo "Release payload mirror failure. Retrying in 60 seconds..."
 	      sleep 60
     done
-    cat ${MIRROR_LOG_FILE}
+    cat "${MIRROR_LOG_FILE}"
     if [[ "$exit_code" != "0" ]]; then
-      exit $exit_code
+      exit "$exit_code"
     fi
     echo "export MIRRORED_RELEASE_IMAGE=$OPENSHIFT_RELEASE_IMAGE" > /tmp/mirrored_release_image
 
@@ -560,10 +566,10 @@ function setup_legacy_release_mirror {
       _tmpfiles="$_tmpfiles $EXTRACT_DIR"
 
       oc adm release extract --registry-config "${PULL_SECRET_FILE}" \
-        --command=$installer --to "${EXTRACT_DIR}" \
+        --command="$installer" --to "${EXTRACT_DIR}" \
         "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG}"
 
-      mv -f "${EXTRACT_DIR}/$installer" ${OCP_DIR}
+      mv -f "${EXTRACT_DIR}/$installer" "${OCP_DIR}"
     fi
 }
 
@@ -572,10 +578,10 @@ function setup_podman_mirror_registry() {
     # httpd-tools provides htpasswd utility
     sudo yum install -y httpd-tools
 
-    sudo mkdir -pv ${REGISTRY_DIR}/{auth,certs,data}
-    sudo chown -R $USER:$GROUP ${REGISTRY_DIR}
+    sudo mkdir -pv "${REGISTRY_DIR}"/{auth,certs,data}
+    sudo chown -R "$USER":"$GROUP" "${REGISTRY_DIR}"
 
-    pushd $REGISTRY_DIR/certs
+    pushd "$REGISTRY_DIR/certs" || exit 1
 
     #
     # registry key and cert are generated if they don't exist
@@ -586,17 +592,18 @@ function setup_podman_mirror_registry() {
     restart_registry=0
     if [[ ! -s ${REGISTRY_DIR}/certs/${REGISTRY_KEY} ]]; then
         restart_registry=1
-        openssl genrsa -out ${REGISTRY_DIR}/certs/${REGISTRY_KEY} 2048
+        openssl genrsa -out "${REGISTRY_DIR}/certs/${REGISTRY_KEY}" 2048
     fi
 
     if [[ ! -s ${REGISTRY_DIR}/certs/${REGISTRY_CRT} ]]; then
         restart_registry=1
 
         # Format names as DNS:name1,DNS:name2
-        SUBJECT_ALT_NAME="DNS:$(echo $ALL_REGISTRY_DNS_NAMES | sed 's/ /,DNS:/g')"
+        # shellcheck disable=SC2001
+        SUBJECT_ALT_NAME="DNS:$(echo "$ALL_REGISTRY_DNS_NAMES" | sed 's/ /,DNS:/g')"
 
         SSL_CONF=${REGISTRY_DIR}/certs/openssl.cnf
-        cat > ${SSL_CONF} <<EOF
+        cat > "${SSL_CONF}" <<EOF
 [req]
 distinguished_name = req_distinguished_name
 prompt = no
@@ -615,21 +622,21 @@ subjectAltName = ${SUBJECT_ALT_NAME}
 EOF
 
         openssl req -x509 \
-                -key ${REGISTRY_DIR}/certs/${REGISTRY_KEY} \
-                -out  ${REGISTRY_DIR}/certs/${REGISTRY_CRT} \
+                -key "${REGISTRY_DIR}/certs/${REGISTRY_KEY}" \
+                -out  "${REGISTRY_DIR}/certs/${REGISTRY_CRT}" \
                 -days 365 \
-                -config ${SSL_CONF} \
+                -config "${SSL_CONF}" \
                 -extensions SAN
 
         # Dump the certificate details to the log
-        openssl x509 -in ${REGISTRY_DIR}/certs/${REGISTRY_CRT} -text
+        openssl x509 -in "${REGISTRY_DIR}/certs/${REGISTRY_CRT}" -text
     fi
 
-    popd
+    popd || exit 1
 
-    htpasswd -bBc ${REGISTRY_DIR}/auth/htpasswd ${REGISTRY_USER} ${REGISTRY_PASS}
+    htpasswd -bBc "${REGISTRY_DIR}/auth/htpasswd" "${REGISTRY_USER}" "${REGISTRY_PASS}"
 
-    sudo cp ${REGISTRY_DIR}/certs/${REGISTRY_CRT} /etc/pki/ca-trust/source/anchors/
+    sudo cp "${REGISTRY_DIR}/certs/${REGISTRY_CRT}" /etc/pki/ca-trust/source/anchors/
     sudo update-ca-trust
 
     reg_state=$(sudo podman inspect registry --format  "{{.State.Status}}" || echo "error")
@@ -660,15 +667,15 @@ EOF
         done
 
         sudo podman run -d --name registry --net=host --privileged \
-            -v ${REGISTRY_DIR}/data:/var/lib/registry:z \
-            -v ${REGISTRY_DIR}/auth:/auth:z \
+            -v "${REGISTRY_DIR}/data":/var/lib/registry:z \
+            -v "${REGISTRY_DIR}/auth":/auth:z \
             -e "REGISTRY_AUTH=htpasswd" \
             -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
             -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
-            -v ${REGISTRY_DIR}/certs:/certs:z \
-            -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/${REGISTRY_CRT} \
-            -e REGISTRY_HTTP_TLS_KEY=/certs/${REGISTRY_KEY} \
-            ${DOCKER_REGISTRY_IMAGE}
+            -v "${REGISTRY_DIR}/certs":/certs:z \
+            -e REGISTRY_HTTP_TLS_CERTIFICATE="/certs/${REGISTRY_CRT}" \
+            -e REGISTRY_HTTP_TLS_KEY="/certs/${REGISTRY_KEY}" \
+            "${DOCKER_REGISTRY_IMAGE}"
     fi
 
 }
@@ -844,7 +851,7 @@ EOF
 function add_local_certificate_as_trusted() {
     REGISTRY_CONFIG="registry-config"
     oc create configmap ${REGISTRY_CONFIG} \
-      --from-file=${LOCAL_REGISTRY_DNS_NAME}..${LOCAL_REGISTRY_PORT}=${REGISTRY_DIR}/certs/${REGISTRY_CRT} -n openshift-config
+      --from-file="${LOCAL_REGISTRY_DNS_NAME}".."${LOCAL_REGISTRY_PORT}"="${REGISTRY_DIR}/certs/${REGISTRY_CRT}" -n openshift-config
     oc patch image.config.openshift.io/cluster --patch "{\"spec\":{\"additionalTrustedCA\":{\"name\":\"${REGISTRY_CONFIG}\"}}}" --type=merge
 }
 
@@ -872,7 +879,7 @@ function write_pull_secret() {
         # We don't need to fetch a personal pull secret with the
         # token, but we still need to merge what we're given with the
         # credentials for the local reigstry.
-        jq -s '.[0] * .[1]' ${REGISTRY_CREDS} ${PERSONAL_PULL_SECRET} > ${PULL_SECRET_FILE}
+        jq -s '.[0] * .[1]' "${REGISTRY_CREDS}" "${PERSONAL_PULL_SECRET}" > "${PULL_SECRET_FILE}"
         return
     fi
 
@@ -881,15 +888,15 @@ function write_pull_secret() {
     # Get a current pull secret for registry.ci.openshift.org using the token
     tmpkubeconfig=$(mktemp --tmpdir "kubeconfig--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpkubeconfig"
-    oc login https://${CI_SERVER}:6443 --kubeconfig=$tmpkubeconfig --token=${CI_TOKEN}
+    oc login "https://${CI_SERVER}:6443" --kubeconfig="$tmpkubeconfig" --token="${CI_TOKEN}"
     tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
-    echo '{}' >$tmppullsecret
+    echo '{}' > "$tmppullsecret"
     _tmpfiles="$_tmpfiles $tmppullsecret"
-    oc registry login --kubeconfig=$tmpkubeconfig --to=$tmppullsecret
+    oc registry login --kubeconfig="$tmpkubeconfig" --to="$tmppullsecret"
 
     # Combine the personal pull secret with the ones for the CI
     # registry and the local registry credentials.
-    jq -s '.[0] * .[1] * .[2]' ${PERSONAL_PULL_SECRET} ${REGISTRY_CREDS} ${tmppullsecret} > ${PULL_SECRET_FILE}
+    jq -s '.[0] * .[1] * .[2]' "${PERSONAL_PULL_SECRET}" "${REGISTRY_CREDS}" "${tmppullsecret}" > "${PULL_SECRET_FILE}"
 }
 
 function switch_to_internal_dns() {
@@ -915,7 +922,7 @@ function bootstrap_ip {
   # TODO(bnemec): Remove this logic once we have libvirt 7.0 or higher.
   # Older versions fail on infinite leases.
   if [ "$DHCP_LEASE_EXPIRY" -ne "0" ]; then
-    sudo virsh net-dhcp-leases ${BAREMETAL_NETWORK_NAME} \
+    sudo virsh net-dhcp-leases "${BAREMETAL_NETWORK_NAME}" \
                       | grep -v master \
                       | grep "${pref_ip}" \
                       | tail -n1 \
@@ -930,15 +937,19 @@ function wait_for_crd() {
   echo "Waiting for CRD ($1) to be defined"
 
   for i in {1..40}; do
-    oc get "crd/$1" --kubeconfig ${KUBECONFIG} && break || sleep 10
+    if oc get "crd/$1" --kubeconfig "${KUBECONFIG}"; then
+      break
+    else
+      sleep 10
+    fi
   done
 
-  oc wait --for condition=established --timeout=60s --kubeconfig ${KUBECONFIG} "crd/$1" || exit 1
+  oc wait --for condition=established --timeout=60s --kubeconfig "${KUBECONFIG}" "crd/$1" || exit 1
 }
 
 function apply_manifest() {
     local manifest=$1
-    while ! oc apply -f $manifest
+    while ! oc apply -f "$manifest"
     do
         ((i++))
         if [[ $i -eq 10 ]]; then
@@ -966,7 +977,7 @@ EOF
 
 _tmpfiles=
 function removetmp(){
-    [ -n "$_tmpfiles" ] && rm -rf $_tmpfiles || true
+    [ -n "$_tmpfiles" ] && rm -rf "$_tmpfiles" || true
 }
 
 function auth_template_and_removetmp(){
@@ -978,6 +989,7 @@ function auth_template_and_removetmp(){
 use_registry() {
   check_registry=$1
   # return true if using the local registry and the backend is quay
+  # shellcheck disable=SC2143
   if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]] || [[ $(env | grep "_LOCAL_IMAGE=")  || ! -z "${ENABLE_CBO_TEST:-}" || ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
      if [[ ${check_registry} == "" ]] || [[ ${check_registry} == "${REGISTRY_BACKEND}" ]]; then
         return 0
@@ -995,12 +1007,12 @@ function setup_bond() {
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
-        primaryMac=$(sudo virsh dumpxml ${name} | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
-        sudo virt-xml ${name} --remove-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio
-        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${primaryMac}"
+        primaryMac=$(sudo virsh dumpxml "${name}" | xmllint --xpath "string(//interface[descendant::source[@bridge = '${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
+        sudo virt-xml "${name}" --remove-device --network bridge="${BAREMETAL_NETWORK_NAME}",model=virtio
+        sudo virt-xml "${name}" --add-device --network bridge="${BAREMETAL_NETWORK_NAME}",model=virtio,mac="${primaryMac}"
         macByte=$(printf "%02x" ${n})
         secondaryMac="${macStr}:${macByte}"
-        sudo virt-xml ${name} --add-device --network bridge=${BAREMETAL_NETWORK_NAME},model=virtio,mac="${secondaryMac}"
+        sudo virt-xml "${name}" --add-device --network bridge="${BAREMETAL_NETWORK_NAME}",model=virtio,mac="${secondaryMac}"
     done
 }
 

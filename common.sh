@@ -25,15 +25,16 @@ export GOTRACEBACK=crash
 export MOBY_DISABLE_PIGZ=true
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-USER=`whoami`
-GROUP=`id -gn`
+USER=$(whoami)
+GROUP=$(id -gn)
 
 function error () {
+    # shellcheck disable=SC2068
     echo $@ 1>&2
 }
 
 is_lower_version () {
-  if [[ $(echo "$1 $2" | tr " " "\n" | sort -V | head -n1) != $2 ]]; then
+  if [[ $(echo "$1 $2" | tr " " "\n" | sort -V | head -n1) != "$2" ]]; then
     return 0
   else
     return 1
@@ -45,7 +46,7 @@ XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$(systemd-path user-configuration)}
 # Get variables from the config file
 if [ -z "${CONFIG:-}" ]; then
     # See if there's a config_$USER.sh in the SCRIPTDIR
-    if [ -f ${SCRIPTDIR}/config_${USER}.sh ]; then
+    if [ -f "${SCRIPTDIR}/config_${USER}.sh" ]; then
         echo "Using CONFIG ${SCRIPTDIR}/config_${USER}.sh" 1>&2
         CONFIG="${SCRIPTDIR}/config_${USER}.sh"
     elif [[ -f "${XDG_CONFIG_HOME}/dev-scripts/config" ]]; then
@@ -57,7 +58,8 @@ if [ -z "${CONFIG:-}" ]; then
         exit 1
     fi
 fi
-source $CONFIG
+# shellcheck source=/dev/null
+source "$CONFIG"
 
 export CLUSTER_NAME=${CLUSTER_NAME:-ostest}
 
@@ -71,7 +73,7 @@ export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-${CLUSTER_NAME}bm}
 
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
-export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat $HOME/.ssh/id_rsa.pub)}"
+export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat "$HOME/.ssh/id_rsa.pub")}"
 export SSH_KEY_FILE="${SSH_KEY_FILE:-$HOME/.ssh/id_rsa.pub}"
 
 # mirror images for installation in restricted network
@@ -122,7 +124,8 @@ export REGISTRY_BACKEND=${REGISTRY_BACKEND:-"podman"}
 # Set this variable to build the installer from source
 export KNI_INSTALL_FROM_GIT=${KNI_INSTALL_FROM_GIT:-}
 
-export OPENSHIFT_CLIENT_TOOLS_URL=https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/stable/openshift-client-linux.tar.gz
+OPENSHIFT_CLIENT_TOOLS_URL=https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/stable/openshift-client-linux.tar.gz
+export OPENSHIFT_CLIENT_TOOLS_URL
 
 # Note: when changing defaults for OPENSHIFT_RELEASE_STREAM, make sure to update
 #       doc in config_example.sh
@@ -145,8 +148,9 @@ fi
 # DNS resolution for amd64.ocp.releases.ci.openshift.org fails
 # pretty regularly, so try a few times before giving up.
 function get_latest_ci_image() {
+    # shellcheck disable=SC2034
     for i in {1..3}; do
-        if curl -L https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest | grep -o 'registry.ci.openshift.org[^"]\+'; then
+        if curl -L "https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest"| grep -o 'registry.ci.openshift.org[^"]\+'; then
             return
         fi
         echo "Failed to get CI image" 1>&2
@@ -160,7 +164,7 @@ function get_latest_ci_image() {
 # if we provide OPENSHIFT_RELEASE_IMAGE, do not curl. This is needed for offline installs
 if [ -z "${OPENSHIFT_RELEASE_IMAGE:-}" ]; then
   if [[ "$OPENSHIFT_RELEASE_TYPE" == "ga" ]]; then
-    LATEST_CI_IMAGE=$(curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OPENSHIFT_VERSION}/release.txt  | grep -o 'quay.io/openshift-release-dev/ocp-release[^"]\+')
+    LATEST_CI_IMAGE=$(curl -L "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OPENSHIFT_VERSION}/release.txt"  | grep -o 'quay.io/openshift-release-dev/ocp-release[^"]\+')
   else
     LATEST_CI_IMAGE=$(get_latest_ci_image)
     if [ -z "$LATEST_CI_IMAGE" ]; then
@@ -181,10 +185,12 @@ export HIVE_DEPLOY_IMAGE="${HIVE_DEPLOY_IMAGE:-registry.ci.openshift.org/openshi
 export OPENSHIFT_CI=${OPENSHIFT_CI:-""}
 export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-""}
 if [[ -z "$OPENSHIFT_CI" ]]; then
-  export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo $OPENSHIFT_RELEASE_IMAGE | sed "s/.*:\([[:digit:]]\.[[:digit:]]*\).*/\1/")}
+  # shellcheck disable=SC2001
+  export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo "$OPENSHIFT_RELEASE_IMAGE" | sed "s/.*:\([[:digit:]]\.[[:digit:]]*\).*/\1/")}
 fi
 
-export OPENSHIFT_RELEASE_TAG=$(echo $OPENSHIFT_RELEASE_IMAGE | sed -E 's/[[:alnum:]\/.-]*(release|okd).*://')
+OPENSHIFT_RELEASE_TAG=$(echo "$OPENSHIFT_RELEASE_IMAGE" | sed -E 's/[[:alnum:]\/.-]*(release|okd).*://')
+export OPENSHIFT_RELEASE_TAG
 
 # Use "ipmi" for 4.3 as it didn't support redfish, for other versions
 # use "redfish", unless its CI where we use "mixed"
@@ -209,7 +215,7 @@ if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
     export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:main"}
 # Starting from Openshift 4.9 the ironic-inspector container is not used anymore
     # FIXME: $OPENSHIFT_VERSION is not defined in CI
-    if is_lower_version $OPENSHIFT_VERSION 4.9; then
+    if is_lower_version "$OPENSHIFT_VERSION" 4.9; then
         export IRONIC_INSPECTOR_LOCAL_IMAGE=${IRONIC_INSPECTOR_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
     fi
     export IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE=${IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE:-"quay.io/metal3-io/static-ip-manager"}
@@ -334,8 +340,8 @@ export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 
 # Ensure working dir is always different than script dir. If not, some
 # files may get overriden during deployment process.
-if [ "$(realpath ${WORKING_DIR})" == "$(realpath ${SCRIPTDIR})" ]; then
-  error "WORKING_DIR must not be the same as SCRIPTDIR, i.e. $(realpath ${WORKING_DIR})"
+if [ "$(realpath "${WORKING_DIR}")" == "$(realpath "${SCRIPTDIR}")" ]; then
+  error "WORKING_DIR must not be the same as SCRIPTDIR, i.e. $(realpath "${WORKING_DIR}")"
   error "is used for both. Please change one of them to another directory."
   error "WORKING_DIR will be created automatically if it does not exist."
   exit 1
@@ -384,11 +390,12 @@ export ENABLE_BOOTSTRAP_STATIC_IP=${ENABLE_BOOTSTRAP_STATIC_IP:-}
 
 export EXTERNAL_LOADBALANCER=${EXTERNAL_LOADBALANCER:-}
 
-if [ -n "$EXTERNAL_LOADBALANCER" -a -z "$ENABLE_BOOTSTRAP_STATIC_IP" ]; then
+if [ -n "$EXTERNAL_LOADBALANCER" ] && [ -z "$ENABLE_BOOTSTRAP_STATIC_IP" ]; then
   error "EXTERNAL_LOADBALANCER requires ENABLE_BOOTSTRAP_STATIC_IP to be set as well"
   exit 1
 fi
 
+# shellcheck disable=SC1091
 source /etc/os-release
 export DISTRO="${ID}${VERSION_ID%.*}"
 
@@ -406,7 +413,7 @@ fi
 
 # Only redfish BMC driver is supported for two node fencing
 if [[ "${BMC_DRIVER}" != "redfish" ]] && [[ "${ENABLE_TWO_NODE_FENCING:-}" == "true" ]]; then
-  printf "Only redfish BMC driver is supported for Two Node Fencing deployments: BMC_DRIVER=${BMC_DRIVER}, ENABLE_TWO_NODE_FENCING=${ENABLE_TWO_NODE_FENCING}"
+  printf "Only redfish BMC driver is supported for Two Node Fencing deployments: BMC_DRIVER=%s, ENABLE_TWO_NODE_FENCING=%s" "${BMC_DRIVER}" "${ENABLE_TWO_NODE_FENCING}"
   exit 1
 fi
 
@@ -419,7 +426,7 @@ export AGENT_WAIT_FOR_INSTALL_COMPLETE=${AGENT_WAIT_FOR_INSTALL_COMPLETE:-true}
 # Agent specific configuration 
 
 function invalidAgentValue() {
-  printf "Found invalid value \"$AGENT_E2E_TEST_SCENARIO\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', 'SNO_IPXX', 'TNA_IPXX', '4CONTROL_IPXX', or '5CONTROL_IPXX', where XX is 'V4', 'V6', or 'V4V6'"
+  printf "Found invalid value \"%s\" for AGENT_E2E_TEST_SCENARIO. Supported values: 'COMPACT_IPXX', 'HA_IPXX', 'SNO_IPXX', 'TNA_IPXX', '4CONTROL_IPXX', or '5CONTROL_IPXX', where XX is 'V4', 'V6', or 'V4V6'" "${AGENT_E2E_TEST_SCENARIO}"
   exit 1
 }
 
@@ -445,12 +452,13 @@ export AGENT_OPERATORS=${AGENT_OPERATORS:-""}
 SCENARIO=""
 if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   IFS='_'
-  read -a arr <<<"$AGENT_E2E_TEST_SCENARIO"
+  read -r -a arr <<<"$AGENT_E2E_TEST_SCENARIO"
   delimiterCount=$(echo "$AGENT_E2E_TEST_SCENARIO" | tr -cd '_' | wc -c)
   unset IFS
 
   SCENARIO=${arr[0]}
-  export IP_STACK=$(echo ${arr[1]##*IP} | tr V v)
+  IP_STACK=$(echo "${arr[1]##*IP}" | tr V v)
+  export IP_STACK
   
   if [[ "$delimiterCount" == "2" ]]; then
     export NETWORKING_MODE=${arr[2]}
@@ -617,7 +625,7 @@ if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then
       # Valid value
       ;;
     *)
-      printf "Found invalid value \"$AGENT_E2E_TEST_BOOT_MODE\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, ISCSI, or ISO_NO_REGISTRY."
+      printf "Found invalid value \"%s\" for AGENT_E2E_TEST_BOOT_MODE. Supported values: ISO (default), PXE, DISKIMAGE, ISCSI, or ISO_NO_REGISTRY." "$AGENT_E2E_TEST_BOOT_MODE"
       exit 1
       ;;
   esac
