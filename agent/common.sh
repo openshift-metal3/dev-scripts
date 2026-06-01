@@ -92,7 +92,6 @@ if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
     if [[ -z "${NETWORKING_MODE}" ]]; then
         export NETWORKING_MODE="DHCP"
     fi
-    export MIRROR_IMAGES=false
 fi
 
 function getRendezvousIP() {
