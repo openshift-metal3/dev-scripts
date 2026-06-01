@@ -1,20 +1,27 @@
 if $OPENSHIFT_INSTALLER coreos print-stream-json >/dev/null 2>&1; then
-    $OPENSHIFT_INSTALLER coreos print-stream-json > $OCP_DIR/rhcos.json
-    TOP_LEVEL_FORMAT="$(jq -r '.architectures.x86_64.artifacts.openstack.formats | keys[]' $OCP_DIR/rhcos.json | head -n1)"
-    export MACHINE_OS_INSTALLER_IMAGE_URL=$(jq -r .architectures.$(uname -m).artifacts.openstack.formats[\"${TOP_LEVEL_FORMAT}\"].disk.location $OCP_DIR/rhcos.json)
-    export MACHINE_OS_INSTALLER_IMAGE_SHA256=$(jq -r .architectures.$(uname -m).artifacts.openstack.formats[\"${TOP_LEVEL_FORMAT}\"].disk[\"sha256\"] $OCP_DIR/rhcos.json)
+    $OPENSHIFT_INSTALLER coreos print-stream-json > "$OCP_DIR/rhcos.json"
+    TOP_LEVEL_FORMAT="$(jq -r '.architectures.x86_64.artifacts.openstack.formats | keys[]' "$OCP_DIR/rhcos.json" | head -n1)"
+    MACHINE_OS_INSTALLER_IMAGE_URL=$(jq -r ".architectures.$(uname -m).artifacts.openstack.formats[\"${TOP_LEVEL_FORMAT}\"].disk.location" "$OCP_DIR/rhcos.json")
+    export MACHINE_OS_INSTALLER_IMAGE_URL
+    MACHINE_OS_INSTALLER_IMAGE_SHA256=$(jq -r ".architectures.$(uname -m).artifacts.openstack.formats[\"${TOP_LEVEL_FORMAT}\"].disk[\"sha256\"]" "$OCP_DIR/rhcos.json")
+    export MACHINE_OS_INSTALLER_IMAGE_SHA256
     export MACHINE_OS_IMAGE_URL=${MACHINE_OS_IMAGE_URL:-${MACHINE_OS_INSTALLER_IMAGE_URL}}
-    export MACHINE_OS_IMAGE_NAME=$(basename ${MACHINE_OS_IMAGE_URL})
+    MACHINE_OS_IMAGE_NAME=$(basename "${MACHINE_OS_IMAGE_URL}")
+    export MACHINE_OS_IMAGE_NAME
     export MACHINE_OS_IMAGE_SHA256=${MACHINE_OS_IMAGE_SHA256:-${MACHINE_OS_INSTALLER_IMAGE_SHA256}}
 
-    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL=$(jq -r .architectures.$(uname -m).artifacts.qemu.formats[\"${TOP_LEVEL_FORMAT}\"].disk.location $OCP_DIR/rhcos.json)
-    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256=$(jq -r .architectures.$(uname -m).artifacts.qemu.formats[\"${TOP_LEVEL_FORMAT}\"].disk[\"sha256\"] $OCP_DIR/rhcos.json)
+    MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL=$(jq -r ".architectures.$(uname -m).artifacts.qemu.formats[\"${TOP_LEVEL_FORMAT}\"].disk.location" "$OCP_DIR/rhcos.json")
+    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL
+    MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256=$(jq -r ".architectures.$(uname -m).artifacts.qemu.formats[\"${TOP_LEVEL_FORMAT}\"].disk[\"sha256\"]" "$OCP_DIR/rhcos.json")
+    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256
     export MACHINE_OS_BOOTSTRAP_IMAGE_URL=${MACHINE_OS_BOOTSTRAP_IMAGE_URL:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL}}
-    export MACHINE_OS_BOOTSTRAP_IMAGE_NAME=$(basename ${MACHINE_OS_BOOTSTRAP_IMAGE_URL})
+    MACHINE_OS_BOOTSTRAP_IMAGE_NAME=$(basename "${MACHINE_OS_BOOTSTRAP_IMAGE_URL}")
+    export MACHINE_OS_BOOTSTRAP_IMAGE_NAME
     export MACHINE_OS_BOOTSTRAP_IMAGE_URL=${MACHINE_OS_BOOTSTRAP_IMAGE_URL:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL}}
     export MACHINE_OS_BOOTSTRAP_IMAGE_SHA256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256}}
 
-    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=$(jq -r .architectures.$(uname -m).artifacts.qemu.formats[\"${TOP_LEVEL_FORMAT}\"].disk[\"uncompressed-sha256\"] $OCP_DIR/rhcos.json)
+    MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=$(jq -r ".architectures.$(uname -m).artifacts.qemu.formats[\"${TOP_LEVEL_FORMAT}\"].disk[\"uncompressed-sha256\"]" "$OCP_DIR/rhcos.json")
+    export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256
     export MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}}
 else
   if [[ ! -f "$OCP_DIR/rhcos.json" ]]; then
@@ -33,23 +40,30 @@ else
     OPENSHIFT_INSTALLER_MACHINE_OS=${OPENSHIFT_INSTALLER_MACHINE_OS:-https://raw.githubusercontent.com/openshift/installer/$OPENSHIFT_INSTALL_COMMIT/data/data/rhcos.json}
   
     # Get the rhcos.json for that commit, and find the baseURI and openstack image path
-    curl -o $OCP_DIR/rhcos.json "${OPENSHIFT_INSTALLER_MACHINE_OS}"
+    curl -o "$OCP_DIR/rhcos.json" "${OPENSHIFT_INSTALLER_MACHINE_OS}"
   fi
   
-  export MACHINE_OS_INSTALLER_IMAGE_URL=$(jq -r '.baseURI + .images.openstack.path' $OCP_DIR/rhcos.json)
-  export MACHINE_OS_INSTALLER_IMAGE_SHA256=$(jq -r '.images.openstack.sha256' $OCP_DIR/rhcos.json)
+  MACHINE_OS_INSTALLER_IMAGE_URL=$(jq -r '.baseURI + .images.openstack.path' "$OCP_DIR/rhcos.json")
+  export MACHINE_OS_INSTALLER_IMAGE_URL
+  MACHINE_OS_INSTALLER_IMAGE_SHA256=$(jq -r '.images.openstack.sha256' "$OCP_DIR/rhcos.json")
+  export MACHINE_OS_INSTALLER_IMAGE_SHA256
   export MACHINE_OS_IMAGE_URL=${MACHINE_OS_IMAGE_URL:-${MACHINE_OS_INSTALLER_IMAGE_URL}}
-  export MACHINE_OS_IMAGE_NAME=$(basename ${MACHINE_OS_IMAGE_URL})
+  MACHINE_OS_IMAGE_NAME=$(basename "${MACHINE_OS_IMAGE_URL}")
+  export MACHINE_OS_IMAGE_NAME
   export MACHINE_OS_IMAGE_SHA256=${MACHINE_OS_IMAGE_SHA256:-${MACHINE_OS_INSTALLER_IMAGE_SHA256}}
   
-  export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL=$(jq -r '.baseURI + .images.qemu.path' $OCP_DIR/rhcos.json)
-  export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256=$(jq -r '.images.qemu.sha256' $OCP_DIR/rhcos.json)
+  MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL=$(jq -r '.baseURI + .images.qemu.path' "$OCP_DIR/rhcos.json")
+  export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL
+  MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256=$(jq -r '.images.qemu.sha256' "$OCP_DIR/rhcos.json")
+  export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256
   export MACHINE_OS_BOOTSTRAP_IMAGE_URL=${MACHINE_OS_BOOTSTRAP_IMAGE_URL:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_URL}}
-  export MACHINE_OS_BOOTSTRAP_IMAGE_NAME=$(basename ${MACHINE_OS_BOOTSTRAP_IMAGE_URL})
+  MACHINE_OS_BOOTSTRAP_IMAGE_NAME=$(basename "${MACHINE_OS_BOOTSTRAP_IMAGE_URL}")
+  export MACHINE_OS_BOOTSTRAP_IMAGE_NAME
   export MACHINE_OS_BOOTSTRAP_IMAGE_SHA256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_SHA256}}
   
   # FIXME the installer cache expects an uncompressed sha256
   # https://github.com/openshift/installer/issues/2845
-  export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=$(jq -r '.images.qemu["uncompressed-sha256"]' $OCP_DIR/rhcos.json)
+  MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=$(jq -r '.images.qemu["uncompressed-sha256"]' "$OCP_DIR/rhcos.json")
+  export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256
   export MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}}
 fi

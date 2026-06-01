@@ -214,13 +214,30 @@ function create_cluster() {
 function network_ip() {
     local network
     local rc
+    local ip_version
+    local ip
+    local all_ips
 
     network="$1"
-    ip="$(sudo virsh net-dumpxml "$network" | "${PWD}/pyxpath" "//ip/@address" -)"
+    ip_version="$2"  # Required: 'v4' or 'v6'
+
+    all_ips="$(sudo virsh net-dumpxml "$network" | "${PWD}/pyxpath" "//ip/@address" -)"
     rc=$?
     if [ $rc -ne 0 ]; then
         return $rc
     fi
+
+    if [[ "$ip_version" == "v4" ]]; then
+        # IPv4 addresses don't contain colons
+        ip="$(echo "$all_ips" | grep -v ':' | head -n 1)"
+    elif [[ "$ip_version" == "v6" ]]; then
+        # IPv6 addresses contain colons
+        ip="$(echo "$all_ips" | grep ':' | head -n 1)"
+    else
+        echo "Invalid IP version: $ip_version (must be 'v4' or 'v6')" >&2
+        return 1
+    fi
+
     echo "$ip"
 }
 
