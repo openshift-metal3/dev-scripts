@@ -139,7 +139,9 @@ elif [[ "$IP_STACK" = "v6" ]]; then
   export SERVICE_SUBNET_V4=""
   export SERVICE_SUBNET_V6=${SERVICE_SUBNET_V6:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
-  export MIRROR_IMAGES=${MIRROR_IMAGES:-true}
+  if [[ ${AGENT_E2E_TEST_BOOT_MODE} != "ISO_NO_REGISTRY" ]]; then
+    export MIRROR_IMAGES=${MIRROR_IMAGES:-true}
+  fi
 elif [[ "$IP_STACK" = "v4v6" || "$IP_STACK" = "v6v4" ]]; then
   export CLUSTER_SUBNET_V4=${CLUSTER_SUBNET_V4:-"10.128.0.0/14"}
   export CLUSTER_SUBNET_V6=${CLUSTER_SUBNET_V6:-"fd01::/48"}
