@@ -12,10 +12,10 @@ function _pressKey() {
   if [ -z "$node_name" ]; then
     node_name="${CLUSTER_NAME}_master_0"
   fi
-  sudo virsh send-key $node_name $keyCode
+  sudo virsh send-key "$node_name" "$keyCode"
 
   timestamp=$(date +"%Y-%m-%d--%H:%M:%S")
-  sudo virsh screenshot $node_name "${OCP_DIR}/${timestamp}-${node_name}_after_${keyCode}.ppm"
+  sudo virsh screenshot "$node_name" "${OCP_DIR}/${timestamp}-${node_name}_after_${keyCode}.ppm"
 
   # On some CI instances, the sequence of events appears to be too fast
   # for the console refresh, leading the test in the wrong state.
@@ -32,12 +32,12 @@ function pressKey() {
     numReps=$3
     echo "$msg ($numReps)"
   else
-    echo $msg
+    echo "$msg"
   fi	
 
   local node_name=$4
-  for i in $(seq 1 $numReps); do
-    _pressKey $keyCode $node_name
+  for i in $(seq 1 "$numReps"); do
+    _pressKey "$keyCode" "$node_name"
   done
 }
 
@@ -69,16 +69,18 @@ function pressKeys(){
   if [[ -n "$node" ]]; then
     echo "$msg $text on node $node"
   else
-   echo $msg
+   echo "$msg"
   fi
 
+  # shellcheck disable=SC2034
   local reNumber='[0-9]'
+  # shellcheck disable=SC2034
   local reUpperText='[A-Z]'
   for (( i=0; i<${#text}; i++ )); do
     local c=${text:$i:1}
 
     if [[ $c =~ ['a-z'] ]]; then
-      c=$(echo $c | tr '[:lower:]' '[:upper:]')
+      c=$(echo "$c" | tr '[:lower:]' '[:upper:]')
     elif [[ $c =~ ['\.'] ]]; then
       c="DOT"
     elif [[ $c =~ [':'] ]]; then
@@ -86,6 +88,6 @@ function pressKeys(){
     fi
 
     local keyCode="KEY_"$c
-    _pressKey $keyCode $node
+    _pressKey "$keyCode" "$node"
   done
 }

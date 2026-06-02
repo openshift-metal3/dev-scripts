@@ -2,7 +2,7 @@
 
 function verify_if_release_image_exists() {
     local release_image=$1
-    if [ ! "$(podman manifest inspect ${release_image})" ]; then
+    if [ ! "$(podman manifest inspect "${release_image}")" ]; then
         echo "Cannot download image ${release_image}"
     fi
 }
@@ -19,27 +19,28 @@ function clone_agent_repo() {
         echo "Building from commit $commit"
     fi
 
-    pushd installer
-    git checkout $commit
-    popd
+    pushd installer || exit 1
+    git checkout "$commit"
+    popd || exit 1
 }
 
 function build_agent_installer() {
-    pushd installer
+    pushd installer || exit 1
     hack/build.sh
-    popd
+    popd || exit 1
 }
 
 function patch_openshift_install_release_version() {
     local version=$1
 
-    local res=$(grep -oba ._RELEASE_VERSION_LOCATION_.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX installer/bin/openshift-install)
+    local res
+    res=$(grep -oba ._RELEASE_VERSION_LOCATION_.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX installer/bin/openshift-install)
     local location=${res%%:*}
 
     # If the release marker was found then it means that the version is missing
     if [[ ! -z ${location} ]]; then
         echo "Patching openshift-install with version ${version}"
-        printf "${version}\0" | dd of=installer/bin/openshift-install bs=1 seek=${location} conv=notrunc &> /dev/null 
+        printf "%s\0" "$version" | dd of=installer/bin/openshift-install bs=1 seek="${location}" conv=notrunc &> /dev/null 
     else
         echo "Version already patched"
     fi
@@ -48,13 +49,14 @@ function patch_openshift_install_release_version() {
 function patch_openshift_install_release_image() {
     local image=$1
 
-    local res=$(grep -oba ._RELEASE_IMAGE_LOCATION_.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX installer/bin/openshift-install)
+    local res
+    res=$(grep -oba ._RELEASE_IMAGE_LOCATION_.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX installer/bin/openshift-install)
     local location=${res%%:*}
 
     # If the release marker was found then it means that the image is missing
     if [[ ! -z ${location} ]]; then
         echo "Patching openshift-install with image ${image}"
-        printf "${image}\0" | dd of=installer/bin/openshift-install bs=1 seek=${location} conv=notrunc &> /dev/null 
+        printf "%s\0" "$image" | dd of=installer/bin/openshift-install bs=1 seek="${location}" conv=notrunc &> /dev/null 
     else
         echo "Image already patched"
     fi
@@ -81,11 +83,11 @@ fi
 
 commit=$1
 release_image=$2
-release_version=$(oc adm release info -o template --template '{{.metadata.version}}' --insecure=true ${release_image})
+release_version=$(oc adm release info -o template --template '{{.metadata.version}}' --insecure=true "${release_image}")
 
-verify_if_release_image_exists $release_image
-clone_agent_repo $commit
+verify_if_release_image_exists "$release_image"
+clone_agent_repo "$commit"
 build_agent_installer
-patch_openshift_install_release_version $release_version
-patch_openshift_install_release_image $release_image
+patch_openshift_install_release_version "$release_version"
+patch_openshift_install_release_image "$release_image"
 complete_release

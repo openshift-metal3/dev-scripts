@@ -31,7 +31,9 @@ function build_ove_iso_script() {
     --release-image-url "${release_image_url}" \
     --ssh-key-file "${SSH_KEY_FILE}" \
     --dir "${asset_dir}" \
+    # shellckeck disable=SC2086 # build-ove-image.sh doesn't handle empty args
     ${mirror_path_arg} \
+    # shellckeck disable=SC2086 # build-ove-image.sh doesn't handle empty args
     ${registry_cert_arg}
 }
 
@@ -44,7 +46,7 @@ function build_ove_iso_container() {
   make build-ove-iso-container \
     PULL_SECRET_FILE="${PULL_SECRET_FILE}" \
     RELEASE_IMAGE_URL="${release_image_url}" \
-    ARCH=${ARCH}
+    ARCH="${ARCH}"
 
   # Extract ISO from container
   ./hack/iso-from-container.sh
@@ -52,7 +54,7 @@ function build_ove_iso_container() {
   # Move to asset directory
   local iso_name="agent-ove.${ARCH}.iso"
   echo "Moving ${iso_name} to ${asset_dir}"
-  mv ./output-iso/${iso_name} "${asset_dir}"
+  mv "./output-iso/${iso_name}" "${asset_dir}"
 }
 
 # Create agent ISO without registry (OVE ISO)
@@ -60,7 +62,7 @@ function create_agent_iso_no_registry() {
   local asset_dir=${1}
 
   # Update release_info.json as its needed by CI tests
-  save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
+  save_release_info "${OPENSHIFT_RELEASE_IMAGE}" "${OCP_DIR}"
 
   AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
 
@@ -73,7 +75,8 @@ function create_agent_iso_no_registry() {
   cd "${asset_dir}"/src
 
   # Determine release image URL
-  local release_image_url=$(get_release_image_url)
+  local release_image_url
+  release_image_url=$(get_release_image_url)
   echo "build_ove_iso will use release image ${release_image_url}"
 
   # Prepare mirror and certificate arguments for script build method

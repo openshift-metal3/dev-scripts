@@ -3,9 +3,9 @@ set -euxo pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-LOGDIR=${SCRIPTDIR}/logs
-source $SCRIPTDIR/logging.sh
-source $SCRIPTDIR/common.sh
+LOGDIR="${SCRIPTDIR}/logs"
+source "$SCRIPTDIR/logging.sh"
+source "$SCRIPTDIR/common.sh"
 
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
     MAX_ATTEMPTS=120
@@ -33,11 +33,11 @@ if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
     oc get packagemanifests -n openshift-marketplace
 fi
 
-installed_control_plane_nodes=$(oc get nodes --selector=node-role.kubernetes.io/master | grep -v AGE | wc -l)
+installed_control_plane_nodes=$(oc get nodes --selector=node-role.kubernetes.io/master | grep -cv AGE)
 
 oc get nodes
 
-if (( $NUM_MASTERS != $installed_control_plane_nodes )); then
+if (( NUM_MASTERS != installed_control_plane_nodes )); then
   echo "Post install validation failed. Expected $NUM_MASTERS control plane nodes but found $installed_control_plane_nodes."
   exit 1
 fi

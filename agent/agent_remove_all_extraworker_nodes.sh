@@ -23,11 +23,11 @@ set -euo pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-source $SCRIPTDIR/common.sh
+source "$SCRIPTDIR/common.sh"
 
 export KUBECONFIG=$OCP_DIR/auth/kubeconfig
 
-for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
+for (( n=0; n < NUM_EXTRA_WORKERS; n++ ))
 do
     node="extraworker-${n}"
     nodeLibvirt="${CLUSTER_NAME}_extraworker_${n}"

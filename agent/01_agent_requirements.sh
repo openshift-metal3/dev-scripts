@@ -4,13 +4,13 @@ set -o pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-LOGDIR=${SCRIPTDIR}/logs
-source $SCRIPTDIR/logging.sh
-source $SCRIPTDIR/common.sh
-source $SCRIPTDIR/agent/common.sh
-source $SCRIPTDIR/utils.sh
-source $SCRIPTDIR/ocp_install_env.sh
-source $SCRIPTDIR/validation.sh
+LOGDIR="${SCRIPTDIR}/logs"
+source "$SCRIPTDIR/logging.sh"
+source "$SCRIPTDIR/common.sh"
+source "$SCRIPTDIR/agent/common.sh"
+source "$SCRIPTDIR/utils.sh"
+source "$SCRIPTDIR/ocp_install_env.sh"
+source "$SCRIPTDIR/validation.sh"
 
 early_deploy_validation
 
@@ -21,15 +21,15 @@ fi
 
 if [[ ${REGISTRY_BACKEND} = "quay" ]]; then
 
-   mkdir -p ${WORKING_DIR}/mirror-registry
-   pushd ${WORKING_DIR}/mirror-registry
+   mkdir -p "${WORKING_DIR}/mirror-registry"
+   pushd "${WORKING_DIR}/mirror-registry"
    # run the exec in this dir as execution-environment.tar is also needed
    mirror_registry_file=mirror-registry.tar.gz
    mirror_registry_exec=${mirror_registry_file%%.*}
    if [[ ! -f "./${mirror_registry_exec}" ]]; then
       curl -O -L https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/mirror-registry/latest/${mirror_registry_file}
       tar xzf ${mirror_registry_file}
-      chmod +x ${mirror_registry_exec}
+      chmod +x "${mirror_registry_exec}"
       rm -f ${mirror_registry_file}
    fi
    popd
@@ -43,8 +43,8 @@ if [[ "${MIRROR_COMMAND}" == oc-mirror ]]; then
    if [[ ! -f "/usr/local/bin/${oc_mirror_exec}" ]]; then
       curl -O -L https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/${oc_mirror_file}
       tar xzf ${oc_mirror_file}
-      chmod +x ${oc_mirror_exec}
-      sudo mv -f ${oc_mirror_exec} /usr/local/bin
+      chmod +x "${oc_mirror_exec}"
+      sudo mv -f "${oc_mirror_exec}" /usr/local/bin
       rm -f ${oc_mirror_file}
    fi
 fi
