@@ -13,7 +13,7 @@ early_deploy_validation true
 if [ -z "${METAL3_DEV_ENV:-}" ]; then
   export REPO_PATH=${WORKING_DIR}
   sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
-  pushd ${METAL3_DEV_ENV_PATH}
+  pushd "${METAL3_DEV_ENV_PATH}"
   # Pin to a specific metal3-dev-env commit to ensure we catch breaking
   # changes before they're used by everyone and CI.
   # TODO -- come up with a plan for continuously updating this
@@ -101,7 +101,7 @@ case $DISTRO in
       if sudo subscription-manager identity > /dev/null 2>&1; then
 	# NOTE(elfosardo): a valid RHEL subscription is needed to be able to
 	# enable the CRB repository
-	sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
+	sudo subscription-manager repos --enable "codeready-builder-for-rhel-9-$(arch)-rpms"
       fi
       sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
     fi
@@ -118,7 +118,7 @@ esac
 # for CentOS/RHEL so we have to install from pip. We do not want to
 # overwrite an existing installation of the golang version, though,
 # so check if we have a yq before installing.
-if ! which yq 2>&1 >/dev/null; then
+if ! which yq >/dev/null 2>&1; then
     sudo python -m pip install 'yq>=3,<4'
 else
     echo "Using yq from $(which yq)"
@@ -164,7 +164,7 @@ sudo python -m pip install netaddr lxml
 
 sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
 
-pushd ${METAL3_DEV_ENV_PATH}
+pushd "${METAL3_DEV_ENV_PATH}"
 ansible-galaxy install -r vm-setup/requirements.yml
 # Let's temporarily pin these collections to the latest compatible with ansible-2.15
 #ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
