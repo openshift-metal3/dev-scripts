@@ -257,20 +257,10 @@ func main() {
 
 	// Initialize step counter
 	stepNum := 6
-	logrus.Info("Download credentials")
-	client := resty.New()
-	err = downloadCredentials(page, client, filepath.Join(screenshotPath, "06-credentials.png"))
-	if err != nil {
-		log.Fatalf("failed downloading credentials: %v", err)
-	}
 
-	next(page)
-	stepNum++
-
-	// Wait for page to load
+	// Custom manifests page appears before credentials (OCP 4.22+)
+	// Wait for page to load and detect which page we're on
 	wait(5 * time.Second)
-
-	// Check if we're on Custom manifests page (4.22+) or Review page (< 4.22)
 	customManifestsHeading, _ := page.Timeout(2*time.Second).ElementR("h2", "Custom manifests")
 	if customManifestsHeading != nil {
 		logrus.Info("Custom manifests page detected (OCP 4.22+)")
@@ -282,11 +272,21 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed custom manifests screenshot: %v", err)
 		}
-		next(page) // Advance to review
+		next(page) // Advance to credentials
 		stepNum++
 	} else {
-		logrus.Info("No Custom manifests page (OCP < 4.22), already on review page")
+		logrus.Info("No Custom manifests page (OCP < 4.22)")
 	}
+
+	logrus.Infof("Download credentials (step %d)", stepNum)
+	client := resty.New()
+	err = downloadCredentials(page, client, filepath.Join(screenshotPath, fmt.Sprintf("%02d-credentials.png", stepNum)))
+	if err != nil {
+		log.Fatalf("failed downloading credentials: %v", err)
+	}
+
+	next(page)
+	stepNum++
 
 	logrus.Info("Review and start cluster installation")
 	err = review(page, filepath.Join(screenshotPath, fmt.Sprintf("%02d-review.png", stepNum)))
