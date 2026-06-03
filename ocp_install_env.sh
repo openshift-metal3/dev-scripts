@@ -11,7 +11,7 @@ function get_arch() {
 	    ARCH="amd64"
         fi
     fi
-    echo $ARCH
+    echo "$ARCH"
 }
 
 function extract_command() {
@@ -77,7 +77,7 @@ function extract_rhcos_json() {
 }
 
 function baremetal_network_configuration() {
-  if [[ "$(openshift_version $OCP_DIR)" == "4.3" ]]; then
+  if [[ "$(openshift_version "$OCP_DIR")" == "4.3" ]]; then
     return
   fi
 
@@ -101,9 +101,10 @@ EOF
 
   if [ -n "${ENABLE_BOOTSTRAP_STATIC_IP}" ]; then
     if [[ "${IP_STACK}" = "v6" || "${IP_STACK}" = "v6v4" ]]; then
-      BOOTSTRAP_IP=$(nth_ip $EXTERNAL_SUBNET_V6 $((idx + 9)))
+      BOOTSTRAP_IP=$(nth_ip "$EXTERNAL_SUBNET_V6" 9)
     else
-      BOOTSTRAP_IP=$(nth_ip $EXTERNAL_SUBNET_V4 $((idx + 9)))
+      # shellcheck disable=SC2153
+      BOOTSTRAP_IP=$(nth_ip "$EXTERNAL_SUBNET_V4" 9)
     fi
 cat <<EOF
     bootstrapExternalStaticIP: "${BOOTSTRAP_IP}"
@@ -171,6 +172,7 @@ function setVIPs() {
             renderVIPs "apiVIPs:" "${API_VIPS}"
         else
             # OCP version is older as 4.12 and does not support the new VIPs fields
+            # shellcheck disable=SC2295
             echo "    apiVIP: ${API_VIPS%${VIPS_SEPARATOR}*}"
         fi
     ;;
@@ -180,6 +182,7 @@ function setVIPs() {
             renderVIPs "ingressVIPs:" "${INGRESS_VIPS}"
         else
             # OCP version is older as 4.12 and does not support the new VIPs fields
+            # shellcheck disable=SC2295
             echo "    ingressVIP: ${INGRESS_VIPS%${VIPS_SEPARATOR}*}"
         fi
     ;;
@@ -274,7 +277,7 @@ EOF
 function libvirturi() {
     if [[ "$REMOTE_LIBVIRT" -ne 0 ]]; then
 cat <<EOF
-    libvirtURI: qemu+ssh://${PROVISIONING_HOST_USER}@$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/system
+    libvirtURI: qemu+ssh://${PROVISIONING_HOST_USER}@$(wrap_if_ipv6 "${PROVISIONING_HOST_IP}")/system
 EOF
     fi
 }
@@ -350,9 +353,9 @@ function override_openshift_sdn_deprecation() {
 }
 
 function cluster_os_image() {
-  if is_lower_version $(openshift_version) 4.10; then
+  if is_lower_version "$(openshift_version)" 4.10; then
 cat <<EOF
-    clusterOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
+    clusterOSImage: http://$(wrap_if_ipv6 "$MIRROR_IP")/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
 EOF
   fi
 }
@@ -417,7 +420,7 @@ $(libvirturi)
 $(baremetal_network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
 $(external_mac)
-    bootstrapOSImage: http://$(wrap_if_ipv6 $MIRROR_IP)/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
+    bootstrapOSImage: http://$(wrap_if_ipv6 "$MIRROR_IP")/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
 $(cluster_os_image)
 $(setVIPs apivips)
 $(setVIPs ingressvips)
@@ -428,19 +431,19 @@ EOF
 
   if [ -z "${HOSTS_SWAP_DEFINITION:-}" ]; then
     cat >> "${outdir}/install-config.yaml" << EOF
-$(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
-$(node_map_to_install_config_hosts $NUM_ARBITERS $NUM_MASTERS arbiter)
-$(node_map_to_install_config_hosts $NUM_WORKERS $(( NUM_MASTERS + NUM_ARBITERS )) worker)
+$(node_map_to_install_config_hosts "$NUM_MASTERS" 0 master)
+$(node_map_to_install_config_hosts "$NUM_ARBITERS" "$NUM_MASTERS" arbiter)
+$(node_map_to_install_config_hosts "$NUM_WORKERS" $(( NUM_MASTERS + NUM_ARBITERS )) worker)
 EOF
   else
     cat >> "${outdir}/install-config.yaml" << EOF
-$(node_map_to_install_config_hosts $NUM_WORKERS $(( NUM_MASTERS + NUM_ARBITERS )) worker)
-$(node_map_to_install_config_hosts $NUM_ARBITERS $NUM_MASTERS arbiter)
-$(node_map_to_install_config_hosts $NUM_MASTERS 0 master)
+$(node_map_to_install_config_hosts "$NUM_WORKERS" $(( NUM_MASTERS + NUM_ARBITERS )) worker)
+$(node_map_to_install_config_hosts "$NUM_ARBITERS" "$NUM_MASTERS" arbiter)
+$(node_map_to_install_config_hosts "$NUM_MASTERS" 0 master)
 EOF
   fi
 
-  if ! is_lower_version "$(openshift_version $OCP_DIR)" "4.22"; then
+  if ! is_lower_version "$(openshift_version "$OCP_DIR")" "4.22"; then
     cat >> "${outdir}/install-config.yaml" << EOF
     bmcVerifyCA: |
 $(sudo sed 's/^/      /' "${WORKING_DIR}/virtualbmc/sushy-tools/cert.pem")
@@ -451,7 +454,7 @@ EOF
 $(image_mirror_config)
 $(additional_trust_bundle)
 pullSecret: |
-  $(jq -c . $install_config_pull_secret)
+  $(jq -c . "$install_config_pull_secret")
 sshKey: |
   ${SSH_PUB_KEY}
 fips: ${FIPS_MODE:-false}
@@ -485,12 +488,12 @@ function generate_ocp_host_manifest() {
     rm -f "${outdir}/extras/*"
 
     worker_index=0
-    jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address + " " + .driver_info.redfish_verify_ca + " " + .properties.cpu_arch' $host_input \
-       | while read name mac username password address verify_ca architecture; do
+    jq --raw-output '.[] | .name + " " + .ports[0].address + " " + .driver_info.username + " " + .driver_info.password + " " + .driver_info.address + " " + .driver_info.redfish_verify_ca + " " + .properties.cpu_arch' "$host_input" \
+       | while read -r name mac username password address verify_ca architecture; do
 
         encoded_username=$(echo -n "$username" | base64)
         encoded_password=$(echo -n "$password" | base64)
-        if is_lower_version "$(openshift_version $OCP_DIR)" "4.22"; then
+        if is_lower_version "$(openshift_version "$OCP_DIR")" "4.22"; then
           # Heads up, "verify_ca" in ironic driver config, and "disableCertificateVerification" in BMH have opposite meaning
           disableCertificateVerification=$([ "$verify_ca" = "False" ] && echo "true" || echo "false")
         else

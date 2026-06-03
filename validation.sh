@@ -4,7 +4,7 @@ set -o pipefail
 
 # Perform some validation steps that we always want done.
 function early_either_validation() {
-    if [ "$USER" != "root" -a "${XDG_RUNTIME_DIR:-}" == "/run/user/0" ] ; then
+    if [ "$USER" != "root" ] && [ "${XDG_RUNTIME_DIR:-}" == "/run/user/0" ] ; then
         error "Please use a non-root user, WITH a login shell (e.g. su - USER)"
         exit 1
     fi
@@ -35,7 +35,7 @@ function early_either_validation() {
         'ext4'|'btrfs')
         ;;
         'xfs')
-            if [[ $(xfs_info ${FILESYSTEM} | grep -q "ftype=1") ]]; then
+            if ! xfs_info "${FILESYSTEM}" | grep -q "ftype=1"; then
                 error "XFS filesystem must have ftype set to 1"
                 exit 1
             fi
@@ -55,7 +55,7 @@ function early_deploy_validation() {
 
     early_either_validation
 
-    if [ ! -s ${PERSONAL_PULL_SECRET} -a ${OPENSHIFT_RELEASE_TYPE} != "okd" ]; then
+    if [ ! -s "${PERSONAL_PULL_SECRET}" ] && [ "${OPENSHIFT_RELEASE_TYPE}" != "okd" ]; then
         error "${PERSONAL_PULL_SECRET} is missing or empty"
         if [ -n "${PULL_SECRET:-}" ]; then
             error "It looks like you are using the old PULL_SECRET variable."
@@ -67,7 +67,7 @@ function early_deploy_validation() {
         exit 1
     fi
 
-    if [ "${OPENSHIFT_CI}" != "true" -a ${#CI_TOKEN} = 0 -a "${OPENSHIFT_RELEASE_TYPE}" != "okd" ]; then
+    if [ "${OPENSHIFT_CI}" != "true" ] && [ ${#CI_TOKEN} = 0 ] && [ "${OPENSHIFT_RELEASE_TYPE}" != "okd" ]; then
         error "No valid CI_TOKEN set in ${CONFIG}"
         if [ -n "${PULL_SECRET:-}" ]; then
             error "It looks like you are using the old PULL_SECRET variable."
@@ -78,14 +78,14 @@ function early_deploy_validation() {
     fi
 
     LOGIN_CHECK="true"
-    if [ "${CHECK_OC_TOOL_PRESENCE}" == "true" -a ! -x "$(command -v oc)" ]; then
+    if [ "${CHECK_OC_TOOL_PRESENCE}" == "true" ] && [ ! -x "$(command -v oc)" ]; then
         LOGIN_CHECK="false"
     fi
     # Verify that the token we have is valid
-    if [ ${#CI_TOKEN} != 0 -a ${LOGIN_CHECK} == "true" ]; then
+    if [ ${#CI_TOKEN} != 0 ] && [ ${LOGIN_CHECK} == "true" ]; then
         _test_token=$(mktemp --tmpdir "test-token--XXXXXXXXXX")
         _tmpfiles="$_tmpfiles $_test_token"
-        if ! oc login https://${CI_SERVER}:6443 --kubeconfig=$_test_token --token=${CI_TOKEN}; then
+        if ! oc login "https://${CI_SERVER}:6443" --kubeconfig="$_test_token" --token="${CI_TOKEN}"; then
             error "Please login to https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
             error "Refer to https://github.com/openshift-metal3/dev-scripts#configuration for details."
             exit 1

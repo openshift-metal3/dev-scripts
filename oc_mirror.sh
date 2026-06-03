@@ -21,22 +21,23 @@ function add_auth_to_pull_secret() {
 }
 EOF
 
-   cp ${tmpauthfile} ${REGISTRY_CREDS}
+   cp "${tmpauthfile}" "${REGISTRY_CREDS}"
 }
 
 function update_docker_config() {
 
    if [[ -f ${DOCKER_CONFIG_FILE} ]]; then
-      cp ${DOCKER_CONFIG_FILE} ${DOCKER_CONFIG_FILE}.old
+      cp "${DOCKER_CONFIG_FILE}" "${DOCKER_CONFIG_FILE}.old"
    fi
-   cp ${PULL_SECRET_FILE} ${DOCKER_CONFIG_FILE}
+   cp "${PULL_SECRET_FILE}" "${DOCKER_CONFIG_FILE}"
 
    # oc-mirror --v2 uses the podman auth store as its primary credential source,
    # ignoring --authfile for source registry auth. Explicitly refresh the CI registry
    # login so the podman auth store has fresh credentials.
-   local ci_token=$(jq -r '.auths["registry.ci.openshift.org"].auth' ${PULL_SECRET_FILE} | base64 -d)
-   local ci_user=$(echo "$ci_token" | cut -d: -f1)
-   local ci_password=$(echo "$ci_token" | cut -d: -f2-)
+   local ci_token ci_user ci_password
+   ci_token=$(jq -r '.auths["registry.ci.openshift.org"].auth' "${PULL_SECRET_FILE}" | base64 -d)
+   ci_user=$(echo "$ci_token" | cut -d: -f1)
+   ci_password=$(echo "$ci_token" | cut -d: -f2-)
    podman login registry.ci.openshift.org --username "$ci_user" --password "$ci_password" 2>/dev/null || true
 }
 
@@ -47,19 +48,19 @@ function setup_quay_mirror_registry() {
      exit 1
    fi
 
-   mkdir -p ${WORKING_DIR}/quay-install
-   pushd ${WORKING_DIR}/mirror-registry
-   sudo ./mirror-registry install --quayHostname ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --quayRoot ${WORKING_DIR}/quay-install/ --initUser ${REGISTRY_USER} --initPassword ${REGISTRY_PASS} --sslCheckSkip -v
+   mkdir -p "${WORKING_DIR}/quay-install"
+   pushd "${WORKING_DIR}/mirror-registry"
+   sudo ./mirror-registry install --quayHostname "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}" --quayRoot "${WORKING_DIR}/quay-install/" --initUser "${REGISTRY_USER}" --initPassword "${REGISTRY_PASS}" --sslCheckSkip -v
 
-   quay_auths=`echo -n "${REGISTRY_USER}:${REGISTRY_PASS}" | base64 -w0`
+   quay_auths=$(echo -n "${REGISTRY_USER}:${REGISTRY_PASS}" | base64 -w0)
 
-   add_auth_to_pull_secret ${quay_auths}
+   add_auth_to_pull_secret "${quay_auths}"
    popd
 }
 
 function create_file_imageset() {
 
-   imageset=$1
+   imageset="$1"
 
    cat > "${imageset}" << EOF
 kind: ImageSetConfiguration
@@ -86,10 +87,10 @@ EOF
 # Use the oc-mirror command to generate a tar file of the release image
 function mirror_to_file() {
 
-   config=${1}
+   config="${1}"
 
-   pushd ${WORKING_DIR}
-   oc-mirror --v2 -c ${config} --authfile ${PULL_SECRET_FILE} file://${WORKING_DIR} --ignore-release-signature --remove-signatures
+   pushd "${WORKING_DIR}"
+   oc-mirror --v2 -c "${config}" --authfile "${PULL_SECRET_FILE}" "file://${WORKING_DIR}" --ignore-release-signature --remove-signatures
    popd
 }
 
@@ -97,8 +98,8 @@ function publish_image() {
 
    config=${1}
 
-   pushd ${WORKING_DIR}
-   oc-mirror --v2 --config ${config} --authfile ${PULL_SECRET_FILE} --from file://${WORKING_DIR} docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT} --ignore-release-signature --remove-signatures
+   pushd "${WORKING_DIR}"
+   oc-mirror --v2 --config "${config}" --authfile "${PULL_SECRET_FILE}" --from "file://${WORKING_DIR}" "docker://${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}" --ignore-release-signature --remove-signatures
    popd
 
 }
@@ -112,12 +113,12 @@ function setup_oc_mirror() {
    tmpimageset=$(mktemp --tmpdir "imageset--XXXXXXXXXX")
    _tmpfiles="$_tmpfiles $tmpimageset"
 
-   create_file_imageset $tmpimageset
+   create_file_imageset "$tmpimageset"
 
-   mirror_to_file $tmpimageset
+   mirror_to_file "$tmpimageset"
 
-   publish_image $tmpimageset
+   publish_image "$tmpimageset"
 
    # remove interim file
-   rm ${WORKING_DIR}/mirror_*.tar
+   rm "${WORKING_DIR}"/mirror_*.tar
 }

@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 
 source release_info.sh
 
@@ -6,7 +7,7 @@ function nth_ip() {
   network=$1
   idx=$2
 
-  python -c "from ansible_collections.ansible.utils.plugins.filter import nthhost; print(nthhost.nthhost('"$network"', $idx))"
+  python -c "from ansible_collections.ansible.utils.plugins.filter import nthhost; print(nthhost.nthhost('$network', $idx))"
 }
 
 function ipversion(){
@@ -18,7 +19,7 @@ function ipversion(){
 }
 
 function wrap_if_ipv6(){
-    if [ $(ipversion $1) == 6 ] ; then
+    if [ "$(ipversion "$1")" == 6 ] ; then
         echo "[$1]"
         exit
     fi
@@ -156,21 +157,21 @@ else
 fi
 
 if [[ "${IP_STACK}" = "v6" ]]; then
-  export DNS_VIP=${DNS_VIP:-$(nth_ip $EXTERNAL_SUBNET_V6 2)}
+  export DNS_VIP=${DNS_VIP:-$(nth_ip "$EXTERNAL_SUBNET_V6" 2)}
 else
-  export DNS_VIP=${DNS_VIP:-$(nth_ip $EXTERNAL_SUBNET_V4 2)}
+  export DNS_VIP=${DNS_VIP:-$(nth_ip "$EXTERNAL_SUBNET_V4" 2)}
 fi
 
 # Provisioning network information
 export CLUSTER_PRO_IF=${CLUSTER_PRO_IF:-enp1s0}
-export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask $PROVISIONING_NETWORK | cut -d= -f2)}
+export PROVISIONING_NETMASK=${PROVISIONING_NETMASK:-$(ipcalc --netmask "$PROVISIONING_NETWORK" | cut -d= -f2)}
 
-export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(nth_ip $PROVISIONING_NETWORK 1)}
+export PROVISIONING_HOST_IP=${PROVISIONING_HOST_IP:-$(nth_ip "$PROVISIONING_NETWORK" 1)}
 
 if [[ "${HOST_IP_STACK}" = "v6" || "${HOST_IP_STACK}" = "v6v4" ]]; then
-  export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(nth_ip $EXTERNAL_SUBNET_V6 1)}
+  export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(nth_ip "$EXTERNAL_SUBNET_V6" 1)}
 else
-  export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(nth_ip $EXTERNAL_SUBNET_V4 1)}
+  export PROVISIONING_HOST_EXTERNAL_IP=${PROVISIONING_HOST_EXTERNAL_IP:-$(nth_ip "$EXTERNAL_SUBNET_V4" 1)}
 fi
 export MIRROR_IP=${MIRROR_IP:-$PROVISIONING_HOST_EXTERNAL_IP}
 
@@ -182,11 +183,11 @@ if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
   fi
 
   # When the provisioning network is disabled, we use IP's on the external network for the provisioning IP's:
-  export BOOTSTRAP_PROVISIONING_IP=${BOOTSTRAP_PROVISIONING_IP:-$(nth_ip $PROVISIONING_IP_SUBNET 7)}
-  export CLUSTER_PROVISIONING_IP=${CLUSTER_PROVISIONING_IP:-$(nth_ip $PROVISIONING_IP_SUBNET 8)}
+  export BOOTSTRAP_PROVISIONING_IP=${BOOTSTRAP_PROVISIONING_IP:-$(nth_ip "$PROVISIONING_IP_SUBNET" 7)}
+  export CLUSTER_PROVISIONING_IP=${CLUSTER_PROVISIONING_IP:-$(nth_ip "$PROVISIONING_IP_SUBNET" 8)}
 else
-  export BOOTSTRAP_PROVISIONING_IP=${BOOTSTRAP_PROVISIONING_IP:-$(nth_ip $PROVISIONING_NETWORK 2)}
-  export CLUSTER_PROVISIONING_IP=${CLUSTER_PROVISIONING_IP:-$(nth_ip $PROVISIONING_NETWORK 3)}
+  export BOOTSTRAP_PROVISIONING_IP=${BOOTSTRAP_PROVISIONING_IP:-$(nth_ip "$PROVISIONING_NETWORK" 2)}
+  export CLUSTER_PROVISIONING_IP=${CLUSTER_PROVISIONING_IP:-$(nth_ip "$PROVISIONING_NETWORK" 3)}
 fi
 
 # Proxy related configuration
@@ -196,8 +197,8 @@ if  [[ ! -z "${INSTALLER_PROXY:-}" ]]; then
     EXT_SUBNET=${EXTERNAL_SUBNET_V4}
   fi
 
-  HTTP_PROXY=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${INSTALLER_PROXY_PORT}
-  HTTPS_PROXY=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${INSTALLER_PROXY_PORT}
+  HTTP_PROXY="http://$(wrap_if_ipv6 "${PROVISIONING_HOST_EXTERNAL_IP}"):${INSTALLER_PROXY_PORT}"
+  HTTPS_PROXY="http://$(wrap_if_ipv6 "${PROVISIONING_HOST_EXTERNAL_IP}"):${INSTALLER_PROXY_PORT}"
   NO_PROXY=${PROVISIONING_NETWORK},9999,${EXT_SUBNET}
 
   if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
@@ -215,7 +216,7 @@ fi
 
 if [ -n "${NETWORK_CONFIG_FOLDER:-}" ]; then
   # We need an absolute path to this location
-  NETWORK_CONFIG_FOLDER="$(readlink -m $NETWORK_CONFIG_FOLDER)"
+  NETWORK_CONFIG_FOLDER="$(readlink -m "$NETWORK_CONFIG_FOLDER")"
 fi
 
 if [[ ! -z "${BOND_CONFIG:-}" && "${BOND_CONFIG}" != 'none' ]]; then
@@ -229,15 +230,17 @@ function concat_parameters_with_vipsseparator() {
     # Returns:
     #     Print all given parameters with ${VIPS_SEPARATOR} in between.
 
-    ARG_NR=1
+    local FIRST=1
     RESULT=""
     for ARG in "$@"; do
-      RESULT+="${ARG}"
-      if [[ $ARG_NR -lt $# ]]; then
-        RESULT+="${VIPS_SEPARATOR}"
+      # skip empty arguments
+      if [[ -n "${ARG}" ]]; then
+        if [[ "${FIRST}" -eq 0 ]]; then
+          RESULT+="${VIPS_SEPARATOR}"
+        fi
+        RESULT+="${ARG}"
+        FIRST=0
       fi
-
-      ARG_NR=$((ARG_NR+1))
     done
 
     echo "${RESULT}"
@@ -254,29 +257,29 @@ function get_vips() {
     #     None
     #
     if [[ -n "${EXTERNAL_SUBNET_V4}" ]]; then
-        API_VIPS_V4=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
+        API_VIPS_V4=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @"$(network_ip "${BAREMETAL_NETWORK_NAME}" v4)" | awk '{print $NF}')
         if [ -z "$EXTERNAL_LOADBALANCER" ]; then
-          INGRESS_VIPS_V4=$(nth_ip $EXTERNAL_SUBNET_V4 4)
+          INGRESS_VIPS_V4=$(nth_ip "$EXTERNAL_SUBNET_V4" 4)
         else
-          INGRESS_VIPS_V4=$(nth_ip $EXTERNAL_SUBNET_V4 1)
+          INGRESS_VIPS_V4=$(nth_ip "$EXTERNAL_SUBNET_V4" 1)
         fi
     fi
 
     if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-        API_VIPS_V6=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @$(network_ip ${BAREMETAL_NETWORK_NAME}) | awk '{print $NF}')
+        API_VIPS_V6=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @"$(network_ip "${BAREMETAL_NETWORK_NAME}" v6)" | awk '{print $NF}')
         if [ -z "$EXTERNAL_LOADBALANCER" ]; then
-          INGRESS_VIPS_V6=$(nth_ip $EXTERNAL_SUBNET_V6 4)
+          INGRESS_VIPS_V6=$(nth_ip "$EXTERNAL_SUBNET_V6" 4)
         else
-          INGRESS_VIPS_V6=$(nth_ip $EXTERNAL_SUBNET_V6 1)
+          INGRESS_VIPS_V6=$(nth_ip "$EXTERNAL_SUBNET_V6" 1)
         fi
     fi
 
     if [[ "$IP_STACK" == "v4" || "$IP_STACK" == "v4v6" ]]; then
-        API_VIPS=$(concat_parameters_with_vipsseparator ${API_VIPS_V4:-} ${API_VIPS_V6:-})
-        INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V4:-} ${INGRESS_VIPS_V6:-})
+        API_VIPS=$(concat_parameters_with_vipsseparator "${API_VIPS_V4:-}" "${API_VIPS_V6:-}")
+        INGRESS_VIPS=$(concat_parameters_with_vipsseparator "${INGRESS_VIPS_V4:-}" "${INGRESS_VIPS_V6:-}")
     else
-        API_VIPS=$(concat_parameters_with_vipsseparator ${API_VIPS_V6:-} ${API_VIPS_V4:-})
-        INGRESS_VIPS=$(concat_parameters_with_vipsseparator ${INGRESS_VIPS_V6:-} ${INGRESS_VIPS_V4:-})
+        API_VIPS=$(concat_parameters_with_vipsseparator "${API_VIPS_V6:-}" "${API_VIPS_V4:-}")
+        INGRESS_VIPS=$(concat_parameters_with_vipsseparator "${INGRESS_VIPS_V6:-}" "${INGRESS_VIPS_V4:-}")
     fi
 }
 
@@ -315,7 +318,7 @@ function configure_dnsmasq() {
   rm -f "${PATH_CONF_DNSMASQ}"
 
   add_dnsmasq_multi_entry "apivip" "${apiVips}"
-  if [[ ${AGENT_E2E_TEST_BOOT_MODE} == "ISO_NO_REGISTRY" ]] && [[ "${NUM_MASTERS}" > "1" ]]; then
+  if [[ ${AGENT_E2E_TEST_BOOT_MODE} == "ISO_NO_REGISTRY" ]] && [[ "${NUM_MASTERS}" -gt "1" ]]; then
     add_dnsmasq_multi_entry "apiintvip" "${apiVips}"
   fi
   add_dnsmasq_multi_entry "ingressvip" "${ingressVips}"
@@ -333,7 +336,7 @@ function set_api_and_ingress_vip() {
   # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
   if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
       get_vips
-      configure_dnsmasq ${API_VIPS} ${INGRESS_VIPS}
+      configure_dnsmasq "${API_VIPS}" "${INGRESS_VIPS}"
   else
       # Specific for users *NOT* using devscript with KVM (virsh) for deploy. (Reads: baremetal)
       if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then

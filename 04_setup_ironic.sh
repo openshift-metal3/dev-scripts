@@ -13,6 +13,7 @@ source validation.sh
 early_deploy_validation
 
 # Account for differences in 1.* and 2.* version reporting.
+# shellcheck disable=SC2034
 PODMAN_VERSION=$(sudo podman version -f json | jq -r '.Version,.Client.Version|strings')
 
 # To replace an image entry in the openshift releae image, set
@@ -23,36 +24,36 @@ PODMAN_VERSION=$(sudo podman version -f json | jq -r '.Version,.Client.Version|s
 #export BAREMETAL_OPERATOR_LOCAL_IMAGE=192.168.111.1:5000/localimages/bmo:latest
 # The use of IRONIC_INSPECTOR_LOCAL_IMAGE is limited to Openshift up to Version 4.8,
 # starting from Openshift 4.9 the ironic-inspector container is not used anymore
-rm -f assets/templates/99_local-registry.yaml $OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf
+rm -f assets/templates/99_local-registry.yaml "$OPENSHIFT_INSTALL_PATH/data/data/bootstrap/baremetal/files/etc/containers/registries.conf"
 
 write_pull_secret
 
 DOCKERFILE=$(mktemp --tmpdir "release-update--XXXXXXXXXX")
 _tmpfiles="$_tmpfiles $DOCKERFILE"
-echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
+echo "FROM $OPENSHIFT_RELEASE_IMAGE" > "$DOCKERFILE"
 
 # Build a custom base image for the ironic images.
 # This may be necessary in case we want to rebuild the base image from
 # scratch or can't for some reason get the base openshift image from the
 # openshift registry.
 if [ "${CUSTOM_BASE_IMAGE:-}" == "true" ]; then
-    ./build-base-image.sh ${BASE_IMAGE_DIR:-base-image} ${CUSTOM_REPO_FILE:-}
+    ./build-base-image.sh "${BASE_IMAGE_DIR:-base-image}" "${CUSTOM_REPO_FILE:-}"
 fi
 
 for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
     IMAGE=${!IMAGE_VAR}
     BUILD_COMMAND_ARGS=""
 
-    sudo -E podman pull --authfile $PULL_SECRET_FILE $OPENSHIFT_RELEASE_IMAGE
+    sudo -E podman pull --authfile "$PULL_SECRET_FILE" "$OPENSHIFT_RELEASE_IMAGE"
 
     # Is it a git repo?
     if [[ "$IMAGE" =~ "://" ]] ; then
         REPOPATH=~/${IMAGE##*/}
         # Clone to ~ if not there already
-        [ -e "$REPOPATH" ] || git clone $IMAGE $REPOPATH
-        cd $REPOPATH
-        export $IMAGE_VAR=${IMAGE##*/}:latest
-        export $IMAGE_VAR=$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
+        [ -e "$REPOPATH" ] || git clone "$IMAGE" "$REPOPATH"
+        cd "$REPOPATH"
+        export "$IMAGE_VAR"="${IMAGE##*/}:latest"
+        export "$IMAGE_VAR"="$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}"
         # Some repos need to build with a non-default Dockerfile name
         IMAGE_DOCKERFILE_NAME=${IMAGE_VAR/_LOCAL_IMAGE}_DOCKERFILE
         IMAGE_DOCKERFILE=${!IMAGE_DOCKERFILE_NAME:-}
@@ -69,8 +70,8 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         IMAGE_PR=${!IMAGE_PR_VAR:-}
         if [[ -n ${IMAGE_PR:-} ]]; then
 	    if [[ $(git rev-parse --abbrev-ref HEAD) != pr${IMAGE_PR} ]]; then
-                git fetch origin pull/${IMAGE_PR}/head:pr${IMAGE_PR}
-                git checkout pr${IMAGE_PR}
+                git fetch origin "pull/${IMAGE_PR}/head:pr${IMAGE_PR}"
+                git checkout "pr${IMAGE_PR}"
             fi
         fi
 
@@ -79,9 +80,9 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         EXTRA_PKGS_FILE_PATH=${IMAGE_VAR/_LOCAL_IMAGE}_EXTRA_PACKAGES
         EXTRA_PKGS_FILE=${!EXTRA_PKGS_FILE_PATH:-}
         if [[ -n $EXTRA_PKGS_FILE ]]; then
-            EXTRA_PKGS_FILE=$(cd $OLDPWD; realpath $EXTRA_PKGS_FILE)
-            cp $EXTRA_PKGS_FILE "$REPOPATH"
-            EXTRA_PKGS_FILE_NAME=$(basename $EXTRA_PKGS_FILE)
+            EXTRA_PKGS_FILE=$(cd "$OLDPWD"; realpath "$EXTRA_PKGS_FILE")
+            cp "$EXTRA_PKGS_FILE" "$REPOPATH"
+            EXTRA_PKGS_FILE_NAME=$(basename "$EXTRA_PKGS_FILE")
             BUILD_COMMAND_ARGS+=" --build-arg EXTRA_PKGS_LIST=$EXTRA_PKGS_FILE_NAME"
         fi
 
@@ -89,20 +90,20 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
         # the Dockerfile to prevent discrepancies between locally built images.
         # Replace all FROM entries with the base-image.
         if [ "${CUSTOM_BASE_IMAGE:-}" == "true" ]; then
-            sed -i "s/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g" ${IMAGE_DOCKERFILE}
+            sed -i "s/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g" "${IMAGE_DOCKERFILE}"
         fi
 
-        sudo podman build --network host --authfile $PULL_SECRET_FILE $BUILD_COMMAND_ARGS -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE .
+        sudo podman build --network host --authfile "$PULL_SECRET_FILE" "$BUILD_COMMAND_ARGS" -t "${!IMAGE_VAR}" -f "$IMAGE_DOCKERFILE" .
         cd -
-        sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
+        sudo podman push --tls-verify=false --authfile "$PULL_SECRET_FILE" "${!IMAGE_VAR}" "${!IMAGE_VAR}"
     fi
 
-    IMAGE_NAME=$(echo ${IMAGE_VAR/_LOCAL_IMAGE} | tr '[:upper:]_' '[:lower:]-')
-    if [ $IMAGE_NAME = "image-customization-controller" ]; then
+    IMAGE_NAME=$(echo "${IMAGE_VAR/_LOCAL_IMAGE}" | tr '[:upper:]_' '[:lower:]-')
+    if [ "$IMAGE_NAME" = "image-customization-controller" ]; then
         IMAGE_NAME="machine-$IMAGE_NAME"
     fi
-    OLDIMAGE=$(sudo podman run --rm $OPENSHIFT_RELEASE_IMAGE image $IMAGE_NAME)
-    echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> $DOCKERFILE
+    OLDIMAGE=$(sudo podman run --rm "$OPENSHIFT_RELEASE_IMAGE" image "$IMAGE_NAME")
+    echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> "$DOCKERFILE"
 done
 
 if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
@@ -110,8 +111,8 @@ if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
     setup_release_mirror
 
     # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
-    sudo podman image build --authfile $PULL_SECRET_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
-    sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
+    sudo podman image build --authfile "$PULL_SECRET_FILE" -t "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" -f "$DOCKERFILE"
+    sudo podman push --tls-verify=false --authfile "$PULL_SECRET_FILE" "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"
 
     IRONIC_RELEASE_IMAGE=$(image_for ironic | cut -d '@' -f2)
     LOCAL_REGISTRY_PREFIX="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/local-release-image"
@@ -119,12 +120,13 @@ if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
 
     if [ -n "${MIRROR_OLM:-}" ]; then
         echo "Installing OPM client"
-        VERSION="$(openshift_version ${OCP_DIR})"
+        VERSION="$(openshift_version "${OCP_DIR}")"
         OLM_DIR=$(mktemp --tmpdir -d "mirror-olm--XXXXXXXXXX")
         _tmpfiles="$_tmpfiles $OLM_DIR"
 
-        pushd $OLM_DIR
-        curl -O https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/${VERSION}.0/opm-linux.tar.gz && \
+        pushd "$OLM_DIR"
+        # shellcheck disable=SC2015
+        curl -O "https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/${VERSION}.0/opm-linux.tar.gz" && \
           tar xf opm-linux.tar.gz && \
           ./opm version || \
           {
@@ -175,8 +177,8 @@ if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
 fi
 
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb; do
-    sudo podman ps | grep -w " $name$" && sudo podman kill $name
-    sudo podman ps --all | grep -w " $name$" && sudo podman rm $name -f
+    sudo podman ps | grep -w " $name$" && sudo podman kill "$name"
+    sudo podman ps --all | grep -w " $name$" && sudo podman rm "$name" -f
 done
 
 # Remove existing pod
@@ -190,39 +192,39 @@ sudo podman pod create -n ironic-pod
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
 
 for IMAGE in ${IRONIC_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
-    sudo -E podman pull --authfile $PULL_SECRET_FILE $IMAGE || echo "WARNING: Could not pull latest $IMAGE; will try to use cached images instead"
+    sudo -E podman pull --authfile "$PULL_SECRET_FILE" "$IMAGE" || echo "WARNING: Could not pull latest $IMAGE; will try to use cached images instead"
 done
 
 CACHED_MACHINE_OS_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_IMAGE_NAME}"
 if [ ! -f "${CACHED_MACHINE_OS_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_IMAGE}" "${MACHINE_OS_IMAGE_URL}"
-  echo "${MACHINE_OS_IMAGE_SHA256} $(basename ${CACHED_MACHINE_OS_IMAGE})" | tee ${CACHED_MACHINE_OS_IMAGE}.sha256sum
-  pushd $(dirname ${CACHED_MACHINE_OS_IMAGE})
-  sha256sum --strict --check ${CACHED_MACHINE_OS_IMAGE}.sha256sum || ( rm -f "${CACHED_MACHINE_OS_IMAGE}" ; exit 1 )
+  echo "${MACHINE_OS_IMAGE_SHA256} $(basename "${CACHED_MACHINE_OS_IMAGE}")" | tee "${CACHED_MACHINE_OS_IMAGE}.sha256sum"
+  pushd "$(dirname "${CACHED_MACHINE_OS_IMAGE}")"
+  sha256sum --strict --check "${CACHED_MACHINE_OS_IMAGE}.sha256sum" || ( rm -f "${CACHED_MACHINE_OS_IMAGE}" ; exit 1 )
   popd
 fi
 
 CACHED_MACHINE_OS_BOOTSTRAP_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}"
 if [ ! -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" "${MACHINE_OS_BOOTSTRAP_IMAGE_URL}"
-  pushd $(dirname ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE})
-  echo "${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256} $(basename ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE})" | tee ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum
-  sha256sum --strict --check ${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum || ( rm -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ; exit 1 )
+  pushd "$(dirname "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}")"
+  echo "${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256} $(basename "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}")" | tee "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum"
+  sha256sum --strict --check "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}.sha256sum" || ( rm -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ; exit 1 )
   popd
 fi
 
 # cached images to the bootstrap VM
 sudo -E podman pull --authfile "${PULL_SECRET_FILE}" "${IRONIC_IMAGE}" || echo "WARNING: Could not pull latest $IRONIC_IMAGE; will try to use cached images instead"
-sudo podman run -d --net host --privileged --name httpd-${PROVISIONING_NETWORK_NAME} --pod ironic-pod \
-     --env PROVISIONING_INTERFACE=${PROVISIONING_NETWORK_NAME} \
-     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
+sudo podman run -d --net host --privileged --name "httpd-${PROVISIONING_NETWORK_NAME}" --pod ironic-pod \
+     --env PROVISIONING_INTERFACE="${PROVISIONING_NETWORK_NAME}" \
+     -v "$IRONIC_DATA_DIR:/shared" --entrypoint /bin/runhttpd "${IRONIC_IMAGE}"
 
 if [ "$NODES_PLATFORM" = "libvirt" ]; then
     if ! is_running vbmc; then
         # Force remove the pid file before restarting because podman
         # has told us the process isn't there but sometimes when it
         # dies it leaves the file.
-        sudo rm -f $WORKING_DIR/virtualbmc/vbmc/master.pid
+        sudo rm -f "$WORKING_DIR/virtualbmc/vbmc/master.pid"
         sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
              -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
              "${VBMC_IMAGE}"
@@ -238,5 +240,5 @@ fi
 
 
 # Wait for images to be downloaded/ready
-while ! curl --fail -g http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/${MACHINE_OS_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
-while ! curl --fail -g http://$(wrap_if_ipv6 ${PROVISIONING_HOST_IP})/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum ; do sleep 1 ; done
+while ! curl --fail -g "http://$(wrap_if_ipv6 "${PROVISIONING_HOST_IP}")/images/${MACHINE_OS_IMAGE_NAME}.sha256sum" ; do sleep 1 ; done
+while ! curl --fail -g "http://$(wrap_if_ipv6 "${PROVISIONING_HOST_IP}")/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum" ; do sleep 1 ; done

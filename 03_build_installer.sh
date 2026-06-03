@@ -18,7 +18,7 @@ function clone_installer() {
 function build_installer() {
   # Build installer
   pushd .
-  cd $OPENSHIFT_INSTALL_PATH
+  cd "$OPENSHIFT_INSTALL_PATH"
   local default_tags="libvirt baremetal"
   if [[ "${FIPS_MODE:-false}" = "true" && "${FIPS_VALIDATE:-false}" = "true" ]]; then
       default_tags="${default_tags} fipscapable"
@@ -57,14 +57,14 @@ write_pull_secret
 # Extract an updated client tools from the release image
 extract_oc "${OPENSHIFT_RELEASE_IMAGE}"
 
-mkdir -p $OCP_DIR
+mkdir -p "$OCP_DIR"
 
-save_release_info ${OPENSHIFT_RELEASE_IMAGE} ${OCP_DIR}
+save_release_info "${OPENSHIFT_RELEASE_IMAGE}" "${OCP_DIR}"
 
 if [ -z "$KNI_INSTALL_FROM_GIT" ]; then
   # Extract openshift-install from the release image
-  extract_installer "${OPENSHIFT_RELEASE_IMAGE}" $OCP_DIR
-  ${OPENSHIFT_INSTALLER} coreos print-stream-json 1>/dev/null 2>&1 || extract_rhcos_json "${OPENSHIFT_RELEASE_IMAGE}" $OCP_DIR
+  extract_installer "${OPENSHIFT_RELEASE_IMAGE}" "$OCP_DIR"
+  ${OPENSHIFT_INSTALLER} coreos print-stream-json 1>/dev/null 2>&1 || extract_rhcos_json "${OPENSHIFT_RELEASE_IMAGE}" "$OCP_DIR"
 else
   # Clone and build the installer from source
   clone_installer

@@ -17,7 +17,7 @@ if [[ ! -z "$INSTALLER_PROXY" ]]; then
   export HTTPS_PROXY=${HTTPS_PROXY:-}
   export NO_PROXY=${NO_PROXY:-}
   # Update libvirt firewalld policy to allow the VM to connect to the proxy
-  sudo firewall-cmd --policy=libvirt-to-host --add-port=$INSTALLER_PROXY_PORT/tcp
+  sudo firewall-cmd --policy=libvirt-to-host --add-port="$INSTALLER_PROXY_PORT/tcp"
   # Allow the bootstrap VM to talk directly to services on the bootstrap host
   sudo firewall-cmd --policy=libvirt-to-host --add-port=8000/tcp      # sushy
   sudo firewall-cmd --policy=libvirt-to-host --add-port=6230-6240/udp # vbmc
@@ -33,7 +33,7 @@ if [ -n "$EXTERNAL_LOADBALANCER" ]; then
 fi
 
 # Call openshift-installer to deploy the bootstrap node and masters
-create_cluster ${OCP_DIR}
+create_cluster "${OCP_DIR}"
 
 # Kill the dnsmasq container on the host since it is performing DHCP and doesn't
 # allow our pod in openshift to take over.  We don't want to take down all of ironic
@@ -90,8 +90,8 @@ if [[ -n "${APPLY_EXTRA_WORKERS:-}" ]]; then
     if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_host_manifests.yaml" ]]; then
         oc apply -f "${OCP_DIR}/extra_host_manifests.yaml"
 
-        for h in $(jq -r '.[].name' ${EXTRA_BAREMETALHOSTS_FILE}); do
-            while ! oc get baremetalhost -n openshift-machine-api $h 2>/dev/null; do
+        for h in $(jq -r '.[].name' "${EXTRA_BAREMETALHOSTS_FILE}"); do
+            while ! oc get baremetalhost -n openshift-machine-api "$h" 2>/dev/null; do
                 echo "Waiting for $h"
                 sleep 5
             done
@@ -111,8 +111,8 @@ if [[ -n "${APPLY_ARM_WORKERS:-}" ]]; then
     if [[ ${NUM_ARM_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_arm_host_manifests.yaml" ]]; then
         oc apply -f "${OCP_DIR}/extra_arm_host_manifests.yaml"
 
-        for h in $(jq -r '.[].name' ${EXTRA_ARM_BAREMETALHOSTS_FILE}); do
-            while ! oc get baremetalhost -n openshift-machine-api $h 2>/dev/null; do
+        for h in $(jq -r '.[].name' "${EXTRA_ARM_BAREMETALHOSTS_FILE}"); do
+            while ! oc get baremetalhost -n openshift-machine-api "$h" 2>/dev/null; do
                 echo "Waiting for $h"
                 sleep 5
             done
@@ -133,8 +133,8 @@ if [[ ! -z "${ENABLE_METALLB:-}" ]]; then
 	if [[ -z ${METALLB_IMAGE_BASE:-} ]]; then
                 # This can use any image in the release, as we are dropping
                 # the hash
-		export METALLB_IMAGE_BASE=$(\
-			image_for cli | sed -e 's/@.*$//g')
+		METALLB_IMAGE_BASE=$(image_for cli | sed -e 's/@.*$//g')
+		export METALLB_IMAGE_BASE
 		export METALLB_IMAGE_TAG="metallb"
 		export FRR_IMAGE_TAG="metallb-frr"
 	fi

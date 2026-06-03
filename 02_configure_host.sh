@@ -34,7 +34,7 @@ esac
 }
 
 # Generate user ssh key
-if [ ! -f $HOME/.ssh/id_rsa.pub ]; then
+if [ ! -f "$HOME/.ssh/id_rsa.pub" ]; then
     ssh-keygen -f ~/.ssh/id_rsa -t rsa -P ""
 fi
 
@@ -64,12 +64,12 @@ fi
 # sure all nodes are powered down
 if [[ "${NODES_PLATFORM}" == "baremetal" ]] && [ -n "$NODES_FILE" ] ; then
     set +x
-    cat $NODES_FILE | jq -r '.nodes[].driver_info | ( .address + " " + .username + " " + .password ) ' |
-    while read ADDRESS USER PASSWORD ; do
+    cat "$NODES_FILE" | jq -r '.nodes[].driver_info | ( .address + " " + .username + " " + .password ) ' |
+    while read -r ADDRESS USER PASSWORD ; do
         if [[ $ADDRESS =~ ^ipmi://([^:]*)(:([0-9]+))?$ ]] ; then
             IPMIIP=${BASH_REMATCH[1]}
             IPMIPORT=${BASH_REMATCH[3]:-623}
-            ipmitool -I lanplus -H $IPMIIP -p $IPMIPORT -U $USER -P $PASSWORD power off || echo "WARNING($?): Failed power down of $ADDRESS"
+            ipmitool -I lanplus -H "$IPMIIP" -p "$IPMIPORT" -U "$USER" -P "$PASSWORD" power off || echo "WARNING($?): Failed power down of $ADDRESS"
         elif [[ $ADDRESS =~ ^(redfish.*://)(.*)$ ]] ; then
             SCHEME="https://"
             SYSTEM="${BASH_REMATCH[2]}"
@@ -77,7 +77,7 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]] && [ -n "$NODES_FILE" ] ; then
                 SCHEME="http://"
             fi
             SYSTEMURL="${SCHEME}${SYSTEM}"
-            curl -u $USER:$PASSWORD -k -H 'Content-Type: application/json' $SYSTEMURL/Actions/ComputerSystem.Reset -d '{"ResetType": "ForceOff"}' || echo "WARNING($?): Failed power down of $ADDRESS"
+            curl -u "$USER":"$PASSWORD" -k -H 'Content-Type: application/json' "$SYSTEMURL/Actions/ComputerSystem.Reset" -d '{"ResetType": "ForceOff"}' || echo "WARNING($?): Failed power down of $ADDRESS"
         else
             # TODO: Add support for other protocols
             echo "WARNING: Skipping power down of $ADDRESS"
@@ -91,8 +91,8 @@ fi
 #   "msg": "internal error: Check the host setup: enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss. Interfaces to look at: eno2"
 # This comes from libvirt when trying to create the ostestbm network.
 for n in /proc/sys/net/ipv6/conf/* ; do
-  if [ -f $n/accept_ra ]; then
-    sudo sysctl -w net/ipv6/conf/$(basename $n)/accept_ra=2
+  if [ -f "$n/accept_ra" ]; then
+    sudo sysctl -w net/ipv6/conf/"$(basename "$n")"/accept_ra=2
   fi
 done
 
@@ -104,14 +104,14 @@ fi
 
 # Configure a local proxy to be used for the installation
 if [[ ! -z "${INSTALLER_PROXY}" ]]; then
-  generate_proxy_conf > ${WORKING_DIR}/squid.conf
+  generate_proxy_conf > "${WORKING_DIR}/squid.conf"
 
   sudo podman run -d --rm \
     --net host \
-    --volume ${WORKING_DIR}/squid.conf:/etc/squid/squid.conf \
+    --volume "${WORKING_DIR}/squid.conf":/etc/squid/squid.conf \
     --name ds-squid \
     --dns 127.0.0.1 \
-    --add-host=virthost.ostest.test.metalkube.org:$PROVISIONING_HOST_EXTERNAL_IP \
+    --add-host=virthost.ostest.test.metalkube.org:"$PROVISIONING_HOST_EXTERNAL_IP" \
     quay.io/sameersbn/squid:latest
 fi
 
@@ -138,8 +138,8 @@ fi
 
 
 # Allow local non-root-user access to libvirt
-if ! id $USER | grep -q libvirt; then
-  sudo usermod -a -G "libvirt" $USER
+if ! id "$USER" | grep -q libvirt; then
+  sudo usermod -a -G "libvirt" "$USER"
 fi
 
 # This method, defined in common.sh, will either ensure sockets are up'n'running
@@ -187,8 +187,8 @@ ansible-playbook \
     -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
     -e "libvirt_arch=$(uname -m)" \
     -e "enable_vnc_console=$VNC_CONSOLE" \
-    -i ${VM_SETUP_PATH}/inventory.ini \
-    -b -vvv ${VM_SETUP_PATH}/setup-playbook.yml
+    -i "${VM_SETUP_PATH}/inventory.ini" \
+    -b -vvv "${VM_SETUP_PATH}/setup-playbook.yml"
 
 # NOTE(elfosardo): /usr/share/OVMF/OVMF_CODE.fd does not exist in the ovmf
 # package anymore, so we need to create a link to that until metal3-dev-env
@@ -201,7 +201,7 @@ fi
 # Cluster node VMs (masters/workers) should only have cluster network (baremetal network)
 # Landing Zone VMs should have both BMC network (provisioning network) and cluster network
 # This is necessary because metal3-dev-env attaches all networks to all VMs
-if [ ${NUM_LANDINGZONE:-0} -gt 0 ]; then
+if [ "${NUM_LANDINGZONE:-0}" -gt 0 ]; then
   echo "Configuring network topology: removing BMC network from cluster node VMs..."
 
   # Remove BMC network from master VMs
@@ -237,25 +237,26 @@ if [ ${NUM_LANDINGZONE:-0} -gt 0 ]; then
   echo "Network topology configured: cluster nodes have cluster network only, landing zone has both networks"
 fi
 
-if [ ${NUM_EXTRA_WORKERS} -ne 0 ] || [ ${NUM_ARM_WORKERS} -ne 0 ]; then
+if [ "${NUM_EXTRA_WORKERS}" -ne 0 ] || [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
   ORIG_NODES_FILE="${NODES_FILE}.orig"
-  cp -f ${NODES_FILE} ${ORIG_NODES_FILE}
-  sudo chown -R $USER:$GROUP ${NODES_FILE}
+  cp -f "${NODES_FILE}" "${ORIG_NODES_FILE}"
+  sudo chown -R "$USER":"$GROUP" "${NODES_FILE}"
 
   # NODES_FILE gets: masters + workers (no extra workers or ARM workers)
-  jq "{nodes: .nodes[:$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS))]}" ${ORIG_NODES_FILE} | tee ${NODES_FILE}
+  jq "{nodes: .nodes[:$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS))]}" "${ORIG_NODES_FILE}" | tee "${NODES_FILE}"
 
   # EXTRA_NODES_FILE gets: extra workers only (if any)
-  if [ ${NUM_EXTRA_WORKERS} -ne 0 ]; then
-    jq "{nodes: .nodes[$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS)):$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS + NUM_EXTRA_WORKERS))]}" ${ORIG_NODES_FILE} | tee ${EXTRA_NODES_FILE}
+  if [ "${NUM_EXTRA_WORKERS}" -ne 0 ]; then
+    jq "{nodes: .nodes[$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS)):$((NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS + NUM_EXTRA_WORKERS))]}" "${ORIG_NODES_FILE}" | tee "${EXTRA_NODES_FILE}"
   fi
 
   # ARM_NODES_FILE gets: ARM workers only (if any)
-  if [ ${NUM_ARM_WORKERS} -ne 0 ]; then
-    jq "{nodes: .nodes[-${NUM_ARM_WORKERS}:]}" ${ORIG_NODES_FILE} | tee ${ARM_NODES_FILE}
+  if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
+    jq "{nodes: .nodes[-${NUM_ARM_WORKERS}:]}" "${ORIG_NODES_FILE}" | tee "${ARM_NODES_FILE}"
   fi
 fi
 
+# shellcheck disable=SC2034
 ZONE="\nZONE=libvirt"
 
 
@@ -281,9 +282,9 @@ if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
     # Adding an IP address in the libvirt definition for this network results in
     # dnsmasq being run, we don't want that as we have our own dnsmasq, so set
     # the IP address here
-    if [ ! -e /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection ]; then
-        if [ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]; then
-            sudo tee -a /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection <<EOF
+    if [ ! -e "/etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection" ]; then
+        if [ "$(ipversion "$PROVISIONING_HOST_IP")" == "6" ]; then
+            sudo tee -a "/etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection" <<EOF
 [connection]
 id=${PROVISIONING_NETWORK_NAME}
 type=bridge
@@ -298,7 +299,7 @@ address1=${PROVISIONING_HOST_IP}/64
 method=manual
 EOF
         else
-            sudo tee -a /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection <<EOF
+            sudo tee -a "/etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection" <<EOF
 [connection]
 id=${PROVISIONING_NETWORK_NAME}
 type=bridge
@@ -313,14 +314,14 @@ addr-gen-mode=eui64
 method=disabled
 EOF
         fi
-        sudo chmod 600 /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection
-        sudo nmcli con load /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection
+        sudo chmod 600 "/etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection"
+        sudo nmcli con load "/etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection"
     fi
-    sudo nmcli con up ${PROVISIONING_NETWORK_NAME}
+    sudo nmcli con up "${PROVISIONING_NETWORK_NAME}"
 
     # Need to pass the provision interface for bare metal
     if [ "$PRO_IF" ]; then
-        sudo tee -a /etc/NetworkManager/system-connections/${PRO_IF}.nmconnection <<EOF
+        sudo tee -a "/etc/NetworkManager/system-connections/${PRO_IF}.nmconnection" <<EOF
 [connection]
 id=${PRO_IF}
 type=ethernet
@@ -328,15 +329,15 @@ interface-name=${PRO_IF}
 master=${PROVISIONING_NETWORK_NAME}
 slave-type=bridge
 EOF
-        sudo chmod 600 /etc/NetworkManager/system-connections/${PRO_IF}.nmconnection
-        sudo nmcli con load /etc/NetworkManager/system-connections/${PRO_IF}.nmconnection
-        sudo nmcli con up ${PRO_IF}
+        sudo chmod 600 "/etc/NetworkManager/system-connections/${PRO_IF}.nmconnection"
+        sudo nmcli con load "/etc/NetworkManager/system-connections/${PRO_IF}.nmconnection"
+        sudo nmcli con up "${PRO_IF}"
     fi
 fi
 
 if [ "$MANAGE_INT_BRIDGE" == "y" ]; then
     # Create the baremetal bridge
-    sudo tee /etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection <<EOF
+    sudo tee "/etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection" <<EOF
 [connection]
 id=${BAREMETAL_NETWORK_NAME}
 type=bridge
@@ -348,15 +349,15 @@ stp=false
 addr-gen-mode=stable-privacy
 method=ignore
 EOF
-    sudo chmod 600 /etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection
-    sudo nmcli con load /etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection
-    sudo nmcli con up ${BAREMETAL_NETWORK_NAME}
+    sudo chmod 600 "/etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection"
+    sudo nmcli con load "/etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection"
+    sudo nmcli con up "${BAREMETAL_NETWORK_NAME}"
 fi
 
     # Add the internal interface to it if requests, this may also be the interface providing
     # external access so we need to make sure we maintain dhcp config if its available
     if [ "$INT_IF" ]; then
-        sudo tee /etc/NetworkManager/system-connections/${INT_IF}.nmconnection <<EOF
+        sudo tee "/etc/NetworkManager/system-connections/${INT_IF}.nmconnection" <<EOF
 [connection]
 id=${INT_IF}
 type=ethernet
@@ -364,21 +365,21 @@ interface-name=${INT_IF}
 master=${BAREMETAL_NETWORK_NAME}
 slave-type=bridge
 EOF
-        sudo chmod 600 /etc/NetworkManager/system-connections/${INT_IF}.nmconnection
-        sudo nmcli con load /etc/NetworkManager/system-connections/${INT_IF}.nmconnection
+        sudo chmod 600 "/etc/NetworkManager/system-connections/${INT_IF}.nmconnection"
+        sudo nmcli con load "/etc/NetworkManager/system-connections/${INT_IF}.nmconnection"
 
         if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
-            sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.addr-gen-mode eui64
-            sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.method ignore
+            sudo nmcli con mod "${BAREMETAL_NETWORK_NAME}" ipv6.addr-gen-mode eui64
+            sudo nmcli con mod "${BAREMETAL_NETWORK_NAME}" ipv6.method ignore
         else
-            if sudo nmap --script broadcast-dhcp-discover -e $INT_IF | grep "IP Offered" ; then
-                if [ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]; then
-                    sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv6.method auto
+            if sudo nmap --script broadcast-dhcp-discover -e "$INT_IF" | grep "IP Offered" ; then
+                if [ "$(ipversion "$PROVISIONING_HOST_IP")" == "6" ]; then
+                    sudo nmcli con mod "${BAREMETAL_NETWORK_NAME}" ipv6.method auto
                 else
-                    sudo nmcli con mod ${BAREMETAL_NETWORK_NAME} ipv4.method auto
+                    sudo nmcli con mod "${BAREMETAL_NETWORK_NAME}" ipv4.method auto
             fi
       fi
-      sudo nmcli con up ${INT_IF}
+      sudo nmcli con up "${INT_IF}"
     fi
 fi
 
@@ -390,34 +391,34 @@ fi
 
 # restart the libvirt network so it applies an ip to the bridge
 if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
-    sudo virsh net-destroy ${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-destroy "${BAREMETAL_NETWORK_NAME}"
     # have some delay between disabling the network on libvirt
     # and deleting it from NM to avoid race conditions
     sleep 1
     # Delete NetworkManager connection if it exists (ignore error if it doesn't)
-    sudo nmcli con del ${BAREMETAL_NETWORK_NAME} 2>/dev/null || true
+    sudo nmcli con del "${BAREMETAL_NETWORK_NAME}" 2>/dev/null || true
     # have some delay between deleting the network on NM
     # and restarting it from libvirt to avoid race conditions
     sleep 1
-    sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
+    sudo virsh net-start "${BAREMETAL_NETWORK_NAME}"
     # Needed in IPv6 on some EL9 hosts for the bootstrap VM to get an IP
-    echo 0 | sudo dd of=/proc/sys/net/ipv6/conf/${BAREMETAL_NETWORK_NAME}/addr_gen_mode
+    echo 0 | sudo dd of="/proc/sys/net/ipv6/conf/${BAREMETAL_NETWORK_NAME}/addr_gen_mode"
     if [ "$INT_IF" ]; then #Need to bring UP the NIC after destroying the libvirt network
-        sudo nmcli con up ${INT_IF}
+        sudo nmcli con up "${INT_IF}"
     fi
 fi
 
 # IPv6 bridge interfaces will remain in DOWN state with NO-CARRIER unless an interface is added,
 # so add a dummy interface to ensure the bridge comes up
 if [[ -n "${EXTERNAL_SUBNET_V6}" ]] && [ ! "$INT_IF" ]; then
-    sudo ip link add name bm-ipv6-dummy up master ${BAREMETAL_NETWORK_NAME} type dummy || true
+    sudo ip link add name bm-ipv6-dummy up master "${BAREMETAL_NETWORK_NAME}" type dummy || true
 fi
 if [[ "${PROVISIONING_NETWORK}" =~ : ]] && [ ! "$PRO_IF" ] ; then
-    sudo ip link add name pro-ipv6-dummy up master ${PROVISIONING_NETWORK_NAME} type dummy || true
+    sudo ip link add name pro-ipv6-dummy up master "${PROVISIONING_NETWORK_NAME}" type dummy || true
 fi
 
 IPTABLES=iptables
-if [[ "$(ipversion $PROVISIONING_HOST_IP)" == "6" ]]; then
+if [[ "$(ipversion "$PROVISIONING_HOST_IP")" == "6" ]]; then
     IPTABLES=ip6tables
 fi
 
@@ -427,13 +428,13 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "external_interface=$BAREMETAL_NETWORK_NAME" \
     -e "{vm_host_ports: [80, ${LOCAL_REGISTRY_PORT}, 8000, ${INSTALLER_PROXY_PORT}, ${AGENT_BOOT_SERVER_PORT}, 3260]}" \
     -e "vbmc_port_range=$VBMC_BASE_PORT:$VBMC_MAX_PORT" \
-    -i ${VM_SETUP_PATH}/inventory.ini \
-    -b -vvv ${VM_SETUP_PATH}/firewall.yml
+    -i "${VM_SETUP_PATH}/inventory.ini" \
+    -b -vvv "${VM_SETUP_PATH}/firewall.yml"
 
 # Need to route traffic from the provisioning host.
 if [ "$EXT_IF" ]; then
-  sudo $IPTABLES -t nat -A POSTROUTING --out-interface $EXT_IF -j MASQUERADE
-  sudo $IPTABLES -A FORWARD --in-interface ${BAREMETAL_NETWORK_NAME} -j ACCEPT
+  sudo $IPTABLES -t nat -A POSTROUTING --out-interface "$EXT_IF" -j MASQUERADE
+  sudo $IPTABLES -A FORWARD --in-interface "${BAREMETAL_NETWORK_NAME}" -j ACCEPT
 fi
 
 # Switch NetworkManager to internal DNS
@@ -448,21 +449,21 @@ echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a
 if use_registry "podman"; then
     # Remove any previous file, or podman login panics when reading the
     # blank authfile with a "assignment to entry in nil map" error
-    rm -f ${REGISTRY_CREDS}
+    rm -f "${REGISTRY_CREDS}"
     # create authfile for local registry
-    sudo podman login --authfile ${REGISTRY_CREDS} \
-        -u ${REGISTRY_USER} -p ${REGISTRY_PASS} \
-        ${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}
+    sudo podman login --authfile "${REGISTRY_CREDS}" \
+        -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" \
+        "${LOCAL_REGISTRY_DNS_NAME}":"${LOCAL_REGISTRY_PORT}"
 elif ! use_registry "quay"; then
     # Create a blank authfile in order to have something valid when we read it in 04_setup_ironic.sh
-    echo '{}' | sudo dd of=${REGISTRY_CREDS}
+    echo '{}' | sudo dd of="${REGISTRY_CREDS}"
 fi
 # Since podman 2.2.1 the REGISTRY_CREDS file gets written out as
 # o600, where as in previous versions it was 644 - to enable reading
 # as $USER elsewhere we chown here, but in future we should probably
 # consider moving all podman calls to rootless mode (e.g remove sudo)
-sudo chown $USER:$USER ${REGISTRY_CREDS}
-ls -l ${REGISTRY_CREDS}
+sudo chown "$USER":"$USER" "${REGISTRY_CREDS}"
+ls -l "${REGISTRY_CREDS}"
 
 # metal3-dev-env contains a script to run the baremetal ironic client in a
 # container, place a link to it if its not installed
@@ -488,15 +489,15 @@ fi
 
 if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
 
-    setup_bond master $NUM_MASTERS
-    setup_bond worker $NUM_WORKERS
+    setup_bond master "$NUM_MASTERS"
+    setup_bond worker "$NUM_WORKERS"
 fi
 
 # We should have both virsh networks started by this point.
 # Let's do a quick validation here before moving to the next
 # stage
-sudo virsh net-list | grep ${PROVISIONING_NETWORK_NAME} || sudo virsh net-start ${PROVISIONING_NETWORK_NAME}
-sudo virsh net-list | grep ${BAREMETAL_NETWORK_NAME} || sudo virsh net-start ${BAREMETAL_NETWORK_NAME}
+sudo virsh net-list | grep "${PROVISIONING_NETWORK_NAME}" || sudo virsh net-start "${PROVISIONING_NETWORK_NAME}"
+sudo virsh net-list | grep "${BAREMETAL_NETWORK_NAME}" || sudo virsh net-start "${BAREMETAL_NETWORK_NAME}"
 
 
 # Setup a single nfs export for image registry
