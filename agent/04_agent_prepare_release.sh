@@ -3,15 +3,15 @@ set -euxo pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-LOGDIR=${SCRIPTDIR}/logs
-source $SCRIPTDIR/logging.sh
-source $SCRIPTDIR/common.sh
-source $SCRIPTDIR/network.sh
-source $SCRIPTDIR/utils.sh
-source $SCRIPTDIR/validation.sh
-source $SCRIPTDIR/agent/common.sh
-source $SCRIPTDIR/ocp_install_env.sh
-source $SCRIPTDIR/oc_mirror.sh
+LOGDIR="${SCRIPTDIR}/logs"
+source "$SCRIPTDIR/logging.sh"
+source "$SCRIPTDIR/common.sh"
+source "$SCRIPTDIR/network.sh"
+source "$SCRIPTDIR/utils.sh"
+source "$SCRIPTDIR/validation.sh"
+source "$SCRIPTDIR/agent/common.sh"
+source "$SCRIPTDIR/ocp_install_env.sh"
+source "$SCRIPTDIR/oc_mirror.sh"
 
 # Function definitions
 
@@ -40,20 +40,20 @@ function prepare_registry_dir_for_appliance() {
 
     # Extract version from release image to create cache subdirectory
     # Appliance creates cache dir in format: cache/<version>-<arch>
-    VERSION=$(skopeo inspect --authfile ${PULL_SECRET_FILE} docker://${OPENSHIFT_RELEASE_IMAGE} | jq -r '.Labels["io.openshift.release"]')
+    VERSION=$(skopeo inspect --authfile "${PULL_SECRET_FILE}" "docker://${OPENSHIFT_RELEASE_IMAGE}" | jq -r '.Labels["io.openshift.release"]')
     ARCH=$(uname -m)
     CACHE_SUBDIR="${VERSION}-${ARCH}"
-    mkdir -p ${REGISTRY_DIR}/cache/${CACHE_SUBDIR}
+    mkdir -p "${REGISTRY_DIR}/cache/${CACHE_SUBDIR}"
 
     # Copy YAML files and mapping.txt to registry directory so appliance can find them
     if [[ -d ${WORKING_DIR}/working-dir ]]; then
-        cp -r ${WORKING_DIR}/working-dir ${REGISTRY_DIR}/
+        cp -r "${WORKING_DIR}/working-dir" "${REGISTRY_DIR}/"
     fi
 
     # Copy results directory containing mapping.txt
-    for results_dir in ${WORKING_DIR}/results-*; do
+    for results_dir in "${WORKING_DIR}"/results-*; do
         if [[ -d "$results_dir" ]]; then
-            cp -r "$results_dir" ${REGISTRY_DIR}/
+            cp -r "$results_dir" "${REGISTRY_DIR}/"
         fi
     done
 
@@ -67,7 +67,7 @@ function prepare_registry_dir_for_appliance() {
     echo "Creating IDMS mapping: ${local_registry} -> ${local_registry}"
 
     # Append mirror entry to existing IDMS file
-    cat >> ${REGISTRY_DIR}/working-dir/cluster-resources/idms-oc-mirror.yaml << EOF
+    cat >> "${REGISTRY_DIR}/working-dir/cluster-resources/idms-oc-mirror.yaml" << EOF
   - mirrors:
     - ${local_registry}
     source: ${local_registry}
@@ -101,7 +101,7 @@ function build_local_release() {
         exit 1
     fi
 
-    if [[ ! "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" =~ "$LOCAL_REGISTRY_DNS_NAME" ]] ; then
+    if [[ ! "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" == *"$LOCAL_REGISTRY_DNS_NAME"* ]] ; then
         echo "OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE mismatch, it must reference the local registry"
         exit 1
     fi
@@ -109,7 +109,7 @@ function build_local_release() {
     # Prepare new release
     DOCKERFILE=$(mktemp --tmpdir "release-update--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $DOCKERFILE"
-    echo "FROM $OPENSHIFT_RELEASE_IMAGE" > $DOCKERFILE
+    echo "FROM $OPENSHIFT_RELEASE_IMAGE" > "$DOCKERFILE"
 
     # Build new images
     for IMAGE_VAR in $REPO_OVERRIDES ; do
@@ -118,10 +118,10 @@ function build_local_release() {
             echo "The specified local repo ${IMAGE_VAR}=${!IMAGE_VAR} does not exist"
             exit 1
         fi
-        cd ${!IMAGE_VAR}
+        cd "${!IMAGE_VAR}"
 
-        export $IMAGE_VAR=${!IMAGE_VAR##*/}:latest
-        export $IMAGE_VAR=$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}
+        export "$IMAGE_VAR"="${!IMAGE_VAR##*/}:latest"
+        export "$IMAGE_VAR"="$LOCAL_REGISTRY_DNS_NAME:$LOCAL_REGISTRY_PORT/localimages/${!IMAGE_VAR}"
 
         # Some repos need to build with a non-default Dockerfile name
         IMAGE_DOCKERFILE_NAME=${IMAGE_VAR/_LOCAL_REPO}_DOCKERFILE
@@ -138,9 +138,9 @@ function build_local_release() {
         IMAGE_BUILD_ARG_VALUE=${IMAGE_VAR/_LOCAL_REPO}_BUILD_ARG
         IMAGE_BUILD_ARG=${!IMAGE_BUILD_ARG_VALUE:-}
 
-        sudo podman build --network host --authfile $PULL_SECRET_FILE -t ${!IMAGE_VAR} -f $IMAGE_DOCKERFILE --build-arg "${IMAGE_BUILD_ARG}" .
+        sudo podman build --network host --authfile "$PULL_SECRET_FILE" -t "${!IMAGE_VAR}" -f "$IMAGE_DOCKERFILE" --build-arg "${IMAGE_BUILD_ARG}" .
         cd -
-        sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE ${!IMAGE_VAR} ${!IMAGE_VAR}
+        sudo podman push --tls-verify=false --authfile "$PULL_SECRET_FILE" "${!IMAGE_VAR}" "${!IMAGE_VAR}"
 
         # Use a digest reference instead of a tag so that IDMS mirror rules apply.
         # IDMS (ImageDigestMirrorSet) only redirects digest-based image references;
@@ -148,23 +148,23 @@ function build_local_release() {
         # images referenced by digest"). Without a digest, oc bypasses the IDMS and
         # tries to pull directly from the source registry (virthost:5000) instead of
         # the appliance's embedded local registry (registry.appliance.openshift.com:22625).
-        NEWIMAGE_DIGEST=$(sudo skopeo inspect --format '{{.Digest}}' --tls-verify=false --authfile $PULL_SECRET_FILE docker://${!IMAGE_VAR})
+        NEWIMAGE_DIGEST=$(sudo skopeo inspect --format '{{.Digest}}' --tls-verify=false --authfile "$PULL_SECRET_FILE" "docker://${!IMAGE_VAR}")
         NEWIMAGE_WITH_DIGEST="${!IMAGE_VAR%:*}@${NEWIMAGE_DIGEST}"
 
         FINAL_IMAGE_NAME=${IMAGE_VAR/_LOCAL_REPO}_IMAGE
         FINAL_IMAGE=${!FINAL_IMAGE_NAME:-}
         if [[ -z "$FINAL_IMAGE" ]]; then
-            FINAL_IMAGE=$(echo ${IMAGE_VAR/_LOCAL_REPO} | tr '[:upper:]_' '[:lower:]-')
+            FINAL_IMAGE=$(echo "${IMAGE_VAR/_LOCAL_REPO}" | tr '[:upper:]_' '[:lower:]-')
         fi
 
-        OLDIMAGE=$(sudo podman run --rm --authfile $PULL_SECRET_FILE $OPENSHIFT_RELEASE_IMAGE image $FINAL_IMAGE)
-        echo "RUN sed -i 's%$OLDIMAGE%${NEWIMAGE_WITH_DIGEST}%g' /release-manifests/*" >> $DOCKERFILE
+        OLDIMAGE=$(sudo podman run --rm --authfile "$PULL_SECRET_FILE" "$OPENSHIFT_RELEASE_IMAGE" image "$FINAL_IMAGE")
+        echo "RUN sed -i 's%$OLDIMAGE%${NEWIMAGE_WITH_DIGEST}%g' /release-manifests/*" >> "$DOCKERFILE"
     done
 
     # Publish the new release in the local registry
     if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
-        sudo podman image build --authfile $PULL_SECRET_FILE -t $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE -f $DOCKERFILE
-        sudo podman push --tls-verify=false --authfile $PULL_SECRET_FILE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
+        sudo podman image build --authfile "$PULL_SECRET_FILE" -t "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" -f "$DOCKERFILE"
+        sudo podman push --tls-verify=false --authfile "$PULL_SECRET_FILE" "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"
     fi
 }
 
@@ -179,7 +179,8 @@ if [[ "${MIRROR_IMAGES}" == "true" ]]; then
    setup_release_mirror
 fi
 
-export REPO_OVERRIDES=$(get_repo_overrides)
+REPO_OVERRIDES=$(get_repo_overrides)
+export REPO_OVERRIDES
 
 # Skip the step in case of no overrides
 if [[ ! -z "${REPO_OVERRIDES}" ]] ; then

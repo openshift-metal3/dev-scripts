@@ -49,15 +49,19 @@ export EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
 # 3. ISCSI, to contain the iPXE file needed for iSCSI booting
 export BOOT_SERVER_DIR=${WORKING_DIR}/boot-artifacts
 export PXE_BOOT_FILE=agent.x86_64.ipxe
-export BOOT_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):${AGENT_BOOT_SERVER_PORT}
+# FIXME:  agent/common.sh is sourced without network.sh
+# wrap_if_ipv6 and PROVISIONING_HOST_EXTERNAL_IP are undefined
+# errors masked by export which returns true
+# shellcheck disable=SC2155,SC2086
+export BOOT_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP:-}):${AGENT_BOOT_SERVER_PORT}
 
 # Configure the instances for PXE booting
 function agent_pxe_boot() {
     for (( n=0; n<${2}; n++ ))
       do
           name=${CLUSTER_NAME}_${1}_${n}
-          sudo virt-xml ${name} --edit target=sda --disk="boot_order=1"
-          sudo virt-xml ${name} --edit source=${BAREMETAL_NETWORK_NAME} --network="boot_order=2" --start
+          sudo virt-xml "${name}" --edit target=sda --disk="boot_order=1"
+          sudo virt-xml "${name}" --edit source="${BAREMETAL_NETWORK_NAME}" --network="boot_order=2" --start
       done
 }
 
@@ -67,10 +71,11 @@ function getReleaseImage() {
         releaseImage="${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}"
     # If not installing from src, let's use the current version from the binary
     elif [ -z "$KNI_INSTALL_FROM_GIT" ]; then
-      local openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+      local openshift_install
+      openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
       releaseImage=$("${openshift_install}" --dir="${OCP_DIR}" version | grep "release image" | cut -d " " -f 3)
     fi
-    echo ${releaseImage}
+    echo "${releaseImage}"
 }
 
 # External load balancer configuration.
@@ -95,23 +100,23 @@ if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
 fi
 
 function getRendezvousIP() {
-    node_zero_mac_address=$(sudo virsh domiflist ${AGENT_RENDEZVOUS_NODE_HOSTNAME} | awk '$3 == "ostestbm" {print $5}')
-    rendezvousIP=$(ip neigh | grep $node_zero_mac_address | awk '{print $1}')
+    node_zero_mac_address=$(sudo virsh domiflist "${AGENT_RENDEZVOUS_NODE_HOSTNAME}" | awk '$3 == "ostestbm" {print $5}')
+    rendezvousIP=$(ip neigh | grep "$node_zero_mac_address" | awk '{print $1}')
     if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]] && [[ "${IP_STACK}" == "v6" ]]; then
         # Filter out link-local addresses and get global/ULA IPv6
         rendezvousIP=$(echo "$rendezvousIP" | tr ' ' '\n' | grep -vE '^fe[89ab][0-9a-f]:' | head -n1)
     fi
-    echo $rendezvousIP | awk '{print $1}'
+    echo "$rendezvousIP" | awk '{print $1}'
 }
 
 function getAgentISOBuilderImage() {
-    full_ocp_version=$(skopeo inspect --authfile $PULL_SECRET_FILE docker://$OPENSHIFT_RELEASE_IMAGE | jq -r '.Labels["io.openshift.release"]')
+    full_ocp_version=$(skopeo inspect --authfile "$PULL_SECRET_FILE" "docker://$OPENSHIFT_RELEASE_IMAGE" | jq -r '.Labels["io.openshift.release"]')
     major_minor_patch_version=$(echo "\"$full_ocp_version\"" | jq -r 'split("-")[0]')
-    major_minor_version=$(echo $major_minor_patch_version | cut -d'.' -f1,2 )
+    major_minor_version=$(echo "$major_minor_patch_version" | cut -d'.' -f1,2 )
     agent_iso_builder_image="registry.ci.openshift.org/ocp/${major_minor_version}:agent-iso-builder"
-    echo ${agent_iso_builder_image}
+    echo "${agent_iso_builder_image}"
 }
 
 function get_repo_overrides() {
-    env | grep '_LOCAL_REPO=' | grep -o '^[^=]*'
+    env | grep '_LOCAL_REPO=' | grep -o '^[^=]*' || true
 }

@@ -24,14 +24,14 @@ set -euxo pipefail
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-LOGDIR=${SCRIPTDIR}/logs
-source $SCRIPTDIR/logging.sh
-source $SCRIPTDIR/common.sh
-source $SCRIPTDIR/network.sh
-source $SCRIPTDIR/ocp_install_env.sh
-source $SCRIPTDIR/utils.sh
-source $SCRIPTDIR/validation.sh
-source $SCRIPTDIR/agent/common.sh
+LOGDIR="${SCRIPTDIR}/logs"
+source "$SCRIPTDIR/logging.sh"
+source "$SCRIPTDIR/common.sh"
+source "$SCRIPTDIR/network.sh"
+source "$SCRIPTDIR/ocp_install_env.sh"
+source "$SCRIPTDIR/utils.sh"
+source "$SCRIPTDIR/validation.sh"
+source "$SCRIPTDIR/agent/common.sh"
 
 early_deploy_validation
 
@@ -43,7 +43,7 @@ function approve_csrs() {
     pending_csrs=$(oc get csr | grep Pending)
     if [[ ${pending_csrs} != "" ]]; then
       echo "Approving CSRs: $pending_csrs"
-      echo $pending_csrs | cut -d ' ' -f 1 | xargs oc adm certificate approve
+      echo "$pending_csrs" | cut -d ' ' -f 1 | xargs oc adm certificate approve
     fi
     elapsed=$((elapsed + 10))
     sleep 10
@@ -56,25 +56,25 @@ if [ "${NUM_EXTRA_WORKERS:-0}" -eq 0 ]; then
 fi
 
 # oc node-image commands are supported only in 4.17+
-if is_lower_version "$(openshift_version "${OCP_DIR}")" "4.17" ]]; then
+if is_lower_version "$(openshift_version "${OCP_DIR}")" "4.17" ; then
   echo "Skipping extraworker add nodes step"    
   exit 0
 fi
 
 
-if [ -f $OCP_DIR/add-node/node.iso ]; then
-  rm -f $OCP_DIR/add-node/node.iso
+if [ -f "$OCP_DIR/add-node/node.iso" ]; then
+  rm -f "$OCP_DIR/add-node/node.iso"
 fi
 
-if [ -f $OCP_DIR/add-node/.openshift_install_state.json ]; then
-  rm -f $OCP_DIR/add-node/.openshift_install_state.json
+if [ -f "$OCP_DIR/add-node/.openshift_install_state.json" ]; then
+  rm -f "$OCP_DIR/add-node/.openshift_install_state.json"
 fi
 
 case "${AGENT_E2E_TEST_BOOT_MODE}" in
   "ISO" )
-    oc adm node-image create --dir $OCP_DIR/add-node/ --registry-config "${PULL_SECRET_FILE}"
+    oc adm node-image create --dir "$OCP_DIR/add-node/" --registry-config "${PULL_SECRET_FILE}"
 
-    for (( n=0; n<${NUM_EXTRA_WORKERS}; n++ ))
+    for (( n=0; n < NUM_EXTRA_WORKERS; n++ ))
     do
         sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --add-device --disk "$OCP_DIR/add-node//node.x86_64.iso,device=cdrom,target.dev=sdc"
         sudo virt-xml "${CLUSTER_NAME}_extraworker_${n}" --edit target=sda --disk="boot_order=1"
@@ -83,13 +83,13 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     ;;
 
   "PXE" )
-    oc adm node-image create --pxe --dir $OCP_DIR/add-node/ --registry-config "${PULL_SECRET_FILE}"
+    oc adm node-image create --pxe --dir "$OCP_DIR/add-node/" --registry-config "${PULL_SECRET_FILE}"
     # Copy the generated PXE artifacts in the tftp server location
     # The local http server should be running and was started by
     # day 1 installtion.
-    cp $OCP_DIR/add-node//boot-artifacts/* ${BOOT_SERVER_DIR}
+    cp "$OCP_DIR"/add-node//boot-artifacts/* "${BOOT_SERVER_DIR}"
 
-    agent_pxe_boot extraworker $NUM_EXTRA_WORKERS
+    agent_pxe_boot extraworker "$NUM_EXTRA_WORKERS"
     ;;
 esac
 
@@ -103,6 +103,7 @@ approve_csrs_pid=$!
 trap 'echo "Stopping approve csrs"; kill -TERM ${approve_csrs_pid} 2>/dev/null || true; exit; echo "Done"' INT EXIT TERM
 set -ex
 
+# shellcheck source=/dev/null
 source "${SCRIPTDIR}/${OCP_DIR}/add-node/extra-workers.env"
 EXTRA_WORKERS_IPS="${EXTRA_WORKERS_IPS%% }"
 oc adm node-image monitor --ip-addresses "${EXTRA_WORKERS_IPS// /,}" --registry-config "${PULL_SECRET_FILE}"
