@@ -9,8 +9,8 @@ early_cleanup_validation
 
 # Kill and remove the running ironic containers
 for name in ironic ironic-api ironic-conductor ironic-inspector dnsmasq httpd-${PROVISIONING_NETWORK_NAME} mariadb vbmc sushy-tools; do
-    sudo podman ps | grep -w "$name$" && sudo podman kill $name
-    sudo podman ps --all | grep -w "$name$" && sudo podman rm $name -f
+    sudo podman ps | grep -w "$name$" && sudo podman kill "$name"
+    sudo podman ps --all | grep -w "$name$" && sudo podman rm "$name" -f
 done
 
 # Remove existing pod

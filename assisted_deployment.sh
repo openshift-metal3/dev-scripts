@@ -283,12 +283,12 @@ function patch_extra_host_manifests() {
   if [ -f "${OCP_DIR}/extra_host_manifests.yaml" ]; then
     cp "${OCP_DIR}/extra_host_manifests.yaml" "${ASSETS_DIR}/06-extra-host-manifests.yaml"
 
-    yq -i -Y '. | select(."kind" == "BareMetalHost") | .metadata += {"namespace":'\"${ASSISTED_NAMESPACE}\"'}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
+    yq -i -Y '. | select(."kind" == "BareMetalHost") | .metadata += {"namespace":"'"${ASSISTED_NAMESPACE}"'"}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
     yq -i -Y '. | select(."kind" == "BareMetalHost") | .metadata.labels += {"infraenvs.agent-install.openshift.io":"myinfraenv"}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
     yq -i -Y '. | select(."kind" == "BareMetalHost") | .metadata.annotations += {"inspect.metal3.io":"disabled"}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
     yq -i -Y '. | select(."kind" == "BareMetalHost") | .spec += {"automatedCleaningMode":"disabled"}' "${ASSETS_DIR}/06-extra-host-manifests.yaml"
     echo "---" >> "${ASSETS_DIR}/06-extra-host-manifests.yaml"
-    yq -Y '. | select(."kind" == "Secret") | .metadata += {"namespace":'\"${ASSISTED_NAMESPACE}\"'}' "${OCP_DIR}/extra_host_manifests.yaml" >> "${ASSETS_DIR}/06-extra-host-manifests.yaml"
+    yq -Y '. | select(."kind" == "Secret") | .metadata += {"namespace":'\""${ASSISTED_NAMESPACE}"\"'}' "${OCP_DIR}/extra_host_manifests.yaml" >> "${ASSETS_DIR}/06-extra-host-manifests.yaml"
   fi
 }
 
@@ -320,12 +320,12 @@ function install_prerequisites_assisted_service() {
 # Deleting resources with `oc` is not asynchronous so we are adding a timeout in case the cluster
 # or the node is under load and can't handle requests fast enough.
 function delete_assisted() {
-  timeout 15 oc delete -n $ASSISTED_NAMESPACE agentserviceconfig --all
-  timeout 15 oc delete -n $ASSISTED_NAMESPACE csv --all
-  timeout 15 oc delete subscription -n $ASSISTED_NAMESPACE --all
-  timeout 15 oc delete -n $ASSISTED_NAMESPACE operatorgroup --all
+  timeout 15 oc delete -n "$ASSISTED_NAMESPACE" agentserviceconfig --all
+  timeout 15 oc delete -n "$ASSISTED_NAMESPACE" csv --all
+  timeout 15 oc delete subscription -n "$ASSISTED_NAMESPACE" --all
+  timeout 15 oc delete -n "$ASSISTED_NAMESPACE" operatorgroup --all
   timeout 15 oc delete -n openshift-marketplace catalogsource assisted-service-catalog
-  timeout 15 oc delete ns $ASSISTED_NAMESPACE
+  timeout 15 oc delete ns "$ASSISTED_NAMESPACE"
 }
 
 function delete_hive() {

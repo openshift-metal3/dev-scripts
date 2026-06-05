@@ -7,4 +7,4 @@ source validation.sh
 
 early_cleanup_validation
 
-rm -rf $HOME/.cache/openshift-installer
+rm -rf "$HOME/.cache/openshift-installer"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-    echo "$(basename $0) -  list recent pass rates for metal-ipi jobs" 1>&2
+    echo "$(basename "$0") -  list recent pass rates for metal-ipi jobs" 1>&2
     echo "Usage: $(basename 0) [-h] [-l] RELEASE" 1>&2
     echo "  -l: list links to failed job runs" 1>&2
     echo "  RELEASE: release to display results for (default: all)" 1>&2
@@ -31,20 +31,22 @@ RESULT_FORMAT=${RESULT_FORMAT:-"%4s %5s - %s\n"}
 function getJobSummary(){
     JOB=$1
     URL=https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/$JOB
-    DATA=$(curl --silent $URL | grep allBuilds - | grep -o '\[.*\]')
-    SUCCESS=$(echo $DATA | jq '.[].Result' | grep "SUCCESS" | wc -l)
-    TOTAL=$(echo $DATA | jq '.[].Result' | grep -v "PENDING" | wc -l)
+    DATA=$(curl --silent "$URL" | grep allBuilds - | grep -o '\[.*\]')
+    SUCCESS=$(echo "$DATA" | jq '.[].Result' | grep -c "SUCCESS")
+    TOTAL=$(echo "$DATA" | jq '.[].Result' | grep -c -v "PENDING")
     if [ "$TOTAL" == 0 ] ; then
-        printf "$RESULT_FORMAT" $SUCCESS/0 0% - ${URL}
+        # shellcheck disable=SC2059
+        printf "$RESULT_FORMAT" "$SUCCESS"/0 0% - "${URL}"
         return
     fi
-    printf "$RESULT_FORMAT" $(( (SUCCESS * 100)/TOTAL ))% $SUCCESS/$TOTAL ${URL}
+    # shellcheck disable=SC2059
+    printf "$RESULT_FORMAT" $(( (SUCCESS * 100)/TOTAL ))% "$SUCCESS"/"$TOTAL" "${URL}"
     if [ "$LIST" == "1" ] ; then
-        echo $DATA | jq '.[] | select(.Result | contains("FAILURE")) | "    \(.Started) https://prow.ci.openshift.org/\(.SpyglassLink) " ' -r
+        echo "$DATA" | jq '.[] | select(.Result | contains("FAILURE")) | "    \(.Started) https://prow.ci.openshift.org/\(.SpyglassLink) " ' -r
     fi
 }
 
 for JOB in $JOBSTOTEST ; do
-    getJobSummary $JOB
+    getJobSummary "$JOB"
 done
 

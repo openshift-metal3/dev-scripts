@@ -9,7 +9,9 @@
 set -xe
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source ${SCRIPTDIR}/../common.sh
+# shellcheck source=/dev/null
+source "${SCRIPTDIR}"/../common.sh
+# shellcheck disable=SC2046
 eval $(go env)
 
 # Set the project
@@ -22,12 +24,12 @@ then
     oc delete deployment metalkube-baremetal-operator
 fi
 
-cd $GOPATH/src/github.com/metalkube/baremetal-operator
+cd "$GOPATH/src/github.com/metalkube/baremetal-operator"
 
 oc apply -f deploy/crds/demo-hosts.yaml
 
 export OPERATOR_NAME=baremetal-operator
 
-${GOPATH}/bin/operator-sdk up local \
+"${GOPATH}/bin/operator-sdk" up local \
     --namespace=openshift-machine-api \
 	--operator-flags="-dev -demo-mode"

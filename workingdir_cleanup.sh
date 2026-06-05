@@ -7,4 +7,4 @@ source validation.sh
 
 early_cleanup_validation
 
-sudo rm -rf $WORKING_DIR
+sudo rm -rf "$WORKING_DIR"

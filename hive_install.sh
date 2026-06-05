@@ -14,9 +14,9 @@ if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
     # Mirror hive itself
     DEPLOY_IMAGE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/hive:latest"
     oc image mirror \
-       -a ${REGISTRY_CREDS} \
-       ${HIVE_DEPLOY_IMAGE} \
-       ${DEPLOY_IMAGE}
+       -a "${REGISTRY_CREDS}" \
+       "${HIVE_DEPLOY_IMAGE}" \
+       "${DEPLOY_IMAGE}"
 fi
 
 # Check out hive and install it. This has to be done in the GOPATH
@@ -25,7 +25,7 @@ fi
 if [[ ! -d $GOPATH/src/github.com/openshift/hive ]]; then
     sync_repo_and_patch go/src/github.com/openshift/hive https://github.com/openshift/hive.git
 fi
-pushd $HOME/go/src/github.com/openshift/hive
+pushd "$HOME/go/src/github.com/openshift/hive"
 
 make deploy
 
