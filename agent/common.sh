@@ -101,12 +101,19 @@ fi
 
 function getRendezvousIP() {
     node_zero_mac_address=$(sudo virsh domiflist "${AGENT_RENDEZVOUS_NODE_HOSTNAME}" | awk '$3 == "ostestbm" {print $5}')
+    # ip neigh can return multiple addresses (IPv4, link-local IPv6, global IPv6)
+    # on separate lines. Filter to a single appropriate address.
     rendezvousIP=$(ip neigh | grep "$node_zero_mac_address" | awk '{print $1}')
-    if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]] && [[ "${IP_STACK}" == "v6" ]]; then
-        # Filter out link-local addresses and get global/ULA IPv6
-        rendezvousIP=$(echo "$rendezvousIP" | tr ' ' '\n' | grep -vE '^fe[89ab][0-9a-f]:' | head -n1)
+    if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ]]; then
+        if [[ "${IP_STACK}" == "v6" ]]; then
+            # IPv6-only: filter out link-local addresses and get global/ULA IPv6
+	    rendezvousIP=$(echo "$rendezvousIP" | tr ' ' '\n' | grep -vE '^fe[89ab][0-9a-f]:' | head -n1)
+        elif [[ "${IP_STACK}" == "v4v6" || "${IP_STACK}" == "v6v4" ]]; then
+            # Dualstack: prefer the IPv4 address
+            rendezvousIP=$(echo "$rendezvousIP" | grep -E '^[0-9]+\.' | head -n1)
+        fi
     fi
-    echo "$rendezvousIP" | awk '{print $1}'
+    echo "$rendezvousIP" | head -n1 | awk '{print $1}'
 }
 
 function getAgentISOBuilderImage() {
