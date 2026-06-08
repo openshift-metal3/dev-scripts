@@ -4,6 +4,8 @@
 
 set -euo pipefail
 
+# FIXME: SCRIPT_DIR appears unused
+# shellcheck disable=SC2034
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="${BUILD_DIR:-/tmp/qemu-build}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/usr/local}"
@@ -28,7 +30,7 @@ echo "Building QEMU version: $QEMU_VERSION"
 
 # Check if already installed
 if [ -x "$INSTALL_PREFIX/bin/qemu-system-aarch64" ]; then
-    INSTALLED_VERSION=$($INSTALL_PREFIX/bin/qemu-system-aarch64 --version | head -1 | grep -oP '\d+\.\d+\.\d+' || echo "unknown")
+    INSTALLED_VERSION=$("$INSTALL_PREFIX/bin/qemu-system-aarch64" --version | head -1 | grep -oP '\d+\.\d+\.\d+' || echo "unknown")
     if [ "$INSTALLED_VERSION" = "$QEMU_VERSION" ]; then
         echo "qemu-system-aarch64 version $QEMU_VERSION is already installed at $INSTALL_PREFIX/bin/qemu-system-aarch64"
         echo "Skipping build."
@@ -89,6 +91,8 @@ echo "    - $AAVMF_CODE"
 echo "    - $AAVMF_VARS"
 
 # Install meson if not available or too old
+# FIXME: MESON_MIN_VERSION appears unused
+# shellcheck disable=SC2034
 MESON_MIN_VERSION="0.63.0"
 if command -v meson &> /dev/null; then
     MESON_VERSION=$(meson --version)

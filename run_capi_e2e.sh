@@ -24,6 +24,6 @@ export EXTRA_WORKERS_NAMESPACE="openshift-cluster-api"
 
 sync_repo_and_patch cluster-capi-operator https://github.com/openshift/cluster-capi-operator
 
-pushd $REPO_PATH/cluster-capi-operator
+pushd "$REPO_PATH/cluster-capi-operator"
 make e2e
 popd

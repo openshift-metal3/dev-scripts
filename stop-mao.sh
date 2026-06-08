@@ -7,8 +7,8 @@ source common.sh
 # fail.
 pod=$(oc get pod -n openshift-machine-api -o name | grep machine-api-operator || true)
 if [ -n "$pod" ]; then
-    oc exec $pod -n openshift-machine-api -c machine-api-operator \
-       -- cat /etc/machine-api-operator-config/images/images.json > ${OCP_DIR}/mao-images.json
+    oc exec "$pod" -n openshift-machine-api -c machine-api-operator \
+       -- cat /etc/machine-api-operator-config/images/images.json > "${OCP_DIR}/mao-images.json"
     echo "MAO image settings saved to ${OCP_DIR}/mao-images.json"
 else
     echo "No MAO pod found, cannot save image settings"

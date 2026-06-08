@@ -7,8 +7,8 @@ source common.sh
 # fail.
 pod=$(oc get pod -n openshift-machine-api -o name | grep cluster-baremetal-operator || true)
 if [ -n "$pod" ]; then
-    oc exec $pod -n openshift-machine-api -c cluster-baremetal-operator \
-       -- cat /etc/cluster-baremetal-operator/images/images.json > ${OCP_DIR}/cbo-images.json
+    oc exec "$pod" -n openshift-machine-api -c cluster-baremetal-operator \
+       -- cat /etc/cluster-baremetal-operator/images/images.json > "${OCP_DIR}/cbo-images.json"
     echo "CBO image settings saved to ${OCP_DIR}/cbo-images.json"
 else
     echo "No CBO pod found, cannot save image settings"

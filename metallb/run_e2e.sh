@@ -1,19 +1,20 @@
 #!/usr/bin/bash
 
-metallb_dir="$(dirname $(readlink -f $0))"
-source ${metallb_dir}/metallb_common.sh
+metallb_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=/dev/null
+source "${metallb_dir}/metallb_common.sh"
 
 export METALLB_REPO=${METALLB_REPO:-https://github.com/metallb/metallb.git}
 METALLB_BRANCH=${METALLB_BRANCH:-"main"}
 [[ -d /usr/local/go ]] && export PATH=${PATH}:/usr/local/go/bin
 
 if [ ! -d ./metallb ]; then
-	git clone $METALLB_REPO
-	cd metallb
+	git clone "$METALLB_REPO"
+	cd metallb || exit 1
 	git checkout "${METALLB_BRANCH}"
-	cd -
+	cd - || exit 1
 fi
-cd metallb
+cd metallb || exit 1
 
 # add firewalld rules
 sudo firewall-cmd --zone=libvirt --permanent --add-port=179/tcp
@@ -35,6 +36,7 @@ sudo firewall-cmd --zone=libvirt --add-port=4784/udp
 SKIP="\"L2 metrics\""
 if [ "${IP_STACK}" = "v4" ]; then
 	SKIP="$SKIP\|IPV6\|DUALSTACK"
+	# shellcheck disable=SC2153
 	export PROVISIONING_HOST_EXTERNAL_IPV4=${PROVISIONING_HOST_EXTERNAL_IP}
 	export PROVISIONING_HOST_EXTERNAL_IPV6=1111:1:1::1
 elif [ "${IP_STACK}" = "v6" ]; then
@@ -52,7 +54,7 @@ pip3 install --user -r ./dev-env/requirements.txt
 export PATH=${PATH}:${HOME}/.local/bin
 export CONTAINER_RUNTIME=podman
 export RUN_FRR_CONTAINER_ON_HOST_NETWORK=true
-inv e2etest --kubeconfig=$(readlink -f ../../ocp/ostest/auth/kubeconfig) \
+inv e2etest --kubeconfig="$(readlink -f ../../ocp/ostest/auth/kubeconfig)" \
 	--service-pod-port=8080 --system-namespaces="metallb-system" --skip-docker \
 	--ipv4-service-range=192.168.10.0/24 --ipv6-service-range=fc00:f853:0ccd:e799::/124 \
 	--skip="${SKIP}" --use-operator

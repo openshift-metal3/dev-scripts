@@ -92,50 +92,50 @@ function playbook() {
 		-e "forward_mode=nat" \
 		-e "cluster_domain=$REMOTE_CLUSTER_DOMAIN" \
 		-e "networks={{external_network}}" \
-		-i ${VM_SETUP_PATH}/inventory.ini \
-		-b -vvv ${PLAYBOOK}
+		-i "${VM_SETUP_PATH}/inventory.ini" \
+		-b -vvv "${PLAYBOOK}"
 }
 
 function setup_remote_cluster() {
 	playbook setup
 
 	# Generate the assets for extra worker VMs
-	cp -f ${REMOTE_NODES_FILE} ${REMOTE_NODES_FILE}.orig
+	cp -f "${REMOTE_NODES_FILE}" "${REMOTE_NODES_FILE}.orig"
 	jq '.nodes' "${REMOTE_NODES_FILE}" | tee "${REMOTE_BAREMETALHOSTS_FILE}"
 
-	generate_ocp_host_manifest ${OCP_DIR} ${REMOTE_BAREMETALHOSTS_FILE} remote_host_manifests.yaml ${NS}
+	generate_ocp_host_manifest "${OCP_DIR}" "${REMOTE_BAREMETALHOSTS_FILE}" remote_host_manifests.yaml "${NS}"
 
 	# Enable watchAllNamepaces flag in the provisioning-configuration resource
 	oc patch provisioning provisioning-configuration --type merge -p '{"spec":{"watchAllNamespaces": true}}'
 
 	# Enable traffic between ostestbm and ostest<NS>
-	sudo $IPTABLES -I FORWARD 1 -o ${REMOTE_CLUSTER_NAME} -i ${BAREMETAL_NETWORK_NAME} -j ACCEPT
+	sudo $IPTABLES -I FORWARD 1 -o "${REMOTE_CLUSTER_NAME}" -i "${BAREMETAL_NETWORK_NAME}" -j ACCEPT
 
 	# Create the NS and apply the manifests
 	if [[ $APPLY_REMOTE_NODES = "true" ]]
 	then
 		# The default of $NS openshift-machine-api is a protected namespace
-		if !(is_ocp_protected_namespace $NS)
+		if ! (is_ocp_protected_namespace "$NS")
 		then
-			oc create ns ${NS}
+			oc create ns "${NS}"
 		fi
-		oc apply -f ${OCP_DIR}/remote_host_manifests.yaml
+		oc apply -f "${OCP_DIR}/remote_host_manifests.yaml"
 	fi
 
 }
 
 function cleanup_remote_cluster() {
 	# The default of $NS openshift-machine-api is a protected namespace
-	if !(is_ocp_protected_namespace $NS)
+	if ! (is_ocp_protected_namespace "$NS")
 	then
-		oc delete ns ${NS}
+		oc delete ns "${NS}"
 	fi
 
 	# Remove manifests
-	rm -f ${OCP_DIR}/remote_host_manifests.yaml ${OCP_DIR}/${REMOTE_BAREMETALHOSTS_FILE} ${REMOTE_NODES_FILE}
+	rm -f "${OCP_DIR}/remote_host_manifests.yaml" "${OCP_DIR}/${REMOTE_BAREMETALHOSTS_FILE}" "${REMOTE_NODES_FILE}"
 
 	# Run a partial teardown playbook. We don't want a full virtualbmc teardown.
-	cat > ${TEARDOWN_PLAYBOOK} <<EOF
+	cat > "${TEARDOWN_PLAYBOOK}" <<EOF
 ---
 - name: Teardown previous libvirt setup
   hosts: virthost
@@ -151,12 +151,11 @@ function cleanup_remote_cluster() {
 EOF
 
 	playbook cleanup
-	rm -f ${TEARDOWN_PLAYBOOK}
+	rm -f "${TEARDOWN_PLAYBOOK}"
 
 	# Remove the iptables rule between ostestbm and ostest<NS>
-	sudo $IPTABLES -C FORWARD -o ${REMOTE_CLUSTER_NAME} -i ${BAREMETAL_NETWORK_NAME} -j ACCEPT  >/dev/null 2>&1
-	if [ $? -ne 0 ]; then
-		sudo $IPTABLES -D FORWARD -o ${REMOTE_CLUSTER_NAME} -i ${BAREMETAL_NETWORK_NAME} -j ACCEPT
+	if sudo $IPTABLES -C FORWARD -o "${REMOTE_CLUSTER_NAME}" -i "${BAREMETAL_NETWORK_NAME}" -j ACCEPT  >/dev/null 2>&1; then
+		sudo $IPTABLES -D FORWARD -o "${REMOTE_CLUSTER_NAME}" -i "${BAREMETAL_NETWORK_NAME}" -j ACCEPT
 	fi
 }
 

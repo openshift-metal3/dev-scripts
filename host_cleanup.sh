@@ -29,10 +29,10 @@ ansible-playbook \
     -e "virthost=$HOSTNAME" \
     -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
     -e "nodes_file=$NODES_FILE" \
-    -i ${VM_SETUP_PATH}/inventory.ini \
-    -b -vvv ${VM_SETUP_PATH}/teardown-playbook.yml
+    -i "${VM_SETUP_PATH}/inventory.ini" \
+    -b -vvv "${VM_SETUP_PATH}/teardown-playbook.yml"
 
-sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf /etc/yum.repos.d/delorean*
+sudo rm -rf "/etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf" /etc/yum.repos.d/delorean*
 sudo rm -rf /etc/NetworkManager/conf.d/dnsmasq.conf
 sudo rm -rf /etc/NetworkManager/dnsmasq.d/upstream.conf
 if systemctl is-active --quiet NetworkManager; then
@@ -44,8 +44,8 @@ fi
 # handle upgrade from legacy network scripts
 for interface in ${PROVISIONING_NETWORK_NAME} ${BAREMETAL_NETWORK_NAME} ${PRO_IF} ${INT_IF}; do
   interface_config=/etc/sysconfig/network-scripts/ifcfg-${interface}
-  if [ -e $interface_config ]; then
-    sudo rm -f $interface_config
+  if [ -e "$interface_config" ]; then
+    sudo rm -f "$interface_config"
     IF_FOUND=true
   fi
 done
@@ -57,22 +57,22 @@ fi
 # There was a bug in this file, it may need to be recreated.
 # delete the interface as it can cause issues when not rebooting
 if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
-    sudo nmcli con del ${PROVISIONING_NETWORK_NAME} || true
-    sudo ip link delete ${PROVISIONING_NETWORK_NAME} || true
+    sudo nmcli con del "${PROVISIONING_NETWORK_NAME}" || true
+    sudo ip link delete "${PROVISIONING_NETWORK_NAME}" || true
     if [[ -d /sys/class/net/pro-ipv6-dummy ]]; then
        sudo ip link delete pro-ipv6-dummy || true
     fi
-    sudo rm -f /etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection
+    sudo rm -f "/etc/NetworkManager/system-connections/${PROVISIONING_NETWORK_NAME}.nmconnection"
 fi
 # Leaving this around causes issues when the host is rebooted
 # delete the interface as it can cause issues when not rebooting
 if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
-    sudo nmcli con del ${BAREMETAL_NETWORK_NAME} || true
-    sudo ip link delete ${BAREMETAL_NETWORK_NAME} || true
+    sudo nmcli con del "${BAREMETAL_NETWORK_NAME}" || true
+    sudo ip link delete "${BAREMETAL_NETWORK_NAME}" || true
     if [[ -d /sys/class/net/bm-ipv6-dummy ]]; then
        sudo ip link delete bm-ipv6-dummy || true
     fi
-    sudo rm -f /etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection
+    sudo rm -f "/etc/NetworkManager/system-connections/${BAREMETAL_NETWORK_NAME}.nmconnection"
 fi
 
 # Drop all ebtables rules

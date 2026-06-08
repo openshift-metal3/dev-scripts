@@ -12,25 +12,25 @@ sudo firewall-cmd --zone=libvirt --add-port=8080/tcp
 sudo firewall-cmd --zone=libvirt --add-port=22623/tcp
 
 haproxy_config="${WORKING_DIR}/haproxy.cfg"
-echo $haproxy_config
+echo "$haproxy_config"
 
 
 if [ "$IP_STACK" = "v6" ]
 then
-     master0=$(nth_ip $EXTERNAL_SUBNET_V6 20)
-     master1=$(nth_ip $EXTERNAL_SUBNET_V6 21)
-     master2=$(nth_ip $EXTERNAL_SUBNET_V6 22)
-     worker0=$(nth_ip $EXTERNAL_SUBNET_V6 23)
-     worker1=$(nth_ip $EXTERNAL_SUBNET_V6 24)
-     bootstrap=$(nth_ip $EXTERNAL_SUBNET_V6 9)
+     master0=$(nth_ip "$EXTERNAL_SUBNET_V6" 20)
+     master1=$(nth_ip "$EXTERNAL_SUBNET_V6" 21)
+     master2=$(nth_ip "$EXTERNAL_SUBNET_V6" 22)
+     worker0=$(nth_ip "$EXTERNAL_SUBNET_V6" 23)
+     worker1=$(nth_ip "$EXTERNAL_SUBNET_V6" 24)
+     bootstrap=$(nth_ip "$EXTERNAL_SUBNET_V6" 9)
 else
 
-     master0=$(nth_ip $EXTERNAL_SUBNET_V4 20)
-     master1=$(nth_ip $EXTERNAL_SUBNET_V4 21)
-     master2=$(nth_ip $EXTERNAL_SUBNET_V4 22)
-     worker0=$(nth_ip $EXTERNAL_SUBNET_V4 23)
-     worker1=$(nth_ip $EXTERNAL_SUBNET_V4 24)
-     bootstrap=$(nth_ip $EXTERNAL_SUBNET_V4 9)
+     master0=$(nth_ip "$EXTERNAL_SUBNET_V4" 20)
+     master1=$(nth_ip "$EXTERNAL_SUBNET_V4" 21)
+     master2=$(nth_ip "$EXTERNAL_SUBNET_V4" 22)
+     worker0=$(nth_ip "$EXTERNAL_SUBNET_V4" 23)
+     worker1=$(nth_ip "$EXTERNAL_SUBNET_V4" 24)
+     bootstrap=$(nth_ip "$EXTERNAL_SUBNET_V4" 9)
 fi
 
 cat << EOF > "$haproxy_config"
@@ -108,14 +108,14 @@ sudo podman run -d  --net host -v "${WORKING_DIR}":/etc/haproxy/:z --entrypoint 
 
 sleep 5
 
-if [ "$(curl  --fail  https://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):6443/version --insecure)" ]; then
+if [ "$(curl  --fail  "https://$(wrap_if_ipv6 "${PROVISIONING_HOST_EXTERNAL_IP}"):6443/version" --insecure)" ]; then
     echo " API is available through LB"
 else
     echo " Can't access API through  LB"
 fi
 
 
-if [ "$(curl  --fail  --header "Host: console-openshift-console.apps.ostest.test.metalkube.org" http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP}):8080  -I -L --insecure)" ]; then
+if [ "$(curl  --fail  --header "Host: console-openshift-console.apps.ostest.test.metalkube.org" "http://$(wrap_if_ipv6 "${PROVISIONING_HOST_EXTERNAL_IP}"):8080"  -I -L --insecure)" ]; then
     echo " Ingress is available through LB"
 else
     echo " Can't access Ingress through LB"

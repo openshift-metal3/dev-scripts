@@ -12,5 +12,5 @@ if sudo podman container exists registry; then
   sudo podman rm registry
 fi
 
-sudo rm -rf $WORKING_DIR/registry
-sudo rm -rf $WORKING_DIR/mirror_registry
+sudo rm -rf "$WORKING_DIR/registry"
+sudo rm -rf "$WORKING_DIR/mirror_registry"

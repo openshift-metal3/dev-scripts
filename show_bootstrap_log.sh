@@ -6,4 +6,4 @@ source utils.sh
 
 BOOTSTRAP_VM_IP=$(bootstrap_ip)
 echo "Attempting to follow $1 on ${BOOTSTRAP_VM_IP} ..."
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no core@${BOOTSTRAP_VM_IP} journalctl -b -f -u $1
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "core@${BOOTSTRAP_VM_IP}" journalctl -b -f -u "$1"
