@@ -5,6 +5,11 @@ shopt -s nocasematch
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 ARCH=$(uname -m)
 
+CDROM_BUS="sata"
+if [[ "${ARCH}" == "aarch64" ]]; then
+    CDROM_BUS="scsi"
+fi
+
 LOGDIR="${SCRIPTDIR}/logs"
 source "$SCRIPTDIR/logging.sh"
 source "$SCRIPTDIR/common.sh"
@@ -143,13 +148,13 @@ function attach_agent_iso() {
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
-        sudo virt-xml "${name}" --add-device --disk "${agent_iso}",device=cdrom,target.dev=sdc
+        sudo virt-xml "${name}" --add-device --disk "${agent_iso}",device=cdrom,target.dev=sdc,target.bus=${CDROM_BUS}
 	if [ "${AGENT_USE_APPLIANCE_MODEL}" == true ]; then
 	    if [ "${AGENT_APPLIANCE_HOTPLUG}" == true ]; then
                 # Add the device with no image. It will be added later using change-media when config-drive is created
-                sudo virt-xml "${name}" --add-device --disk device=cdrom,target.dev="${config_image_drive}"
+                sudo virt-xml "${name}" --add-device --disk device=cdrom,target.dev="${config_image_drive}",target.bus=${CDROM_BUS}
 	    else
-	        sudo virt-xml "${name}" --add-device --disk "${config_image_dir}/agentconfig.noarch.iso,device=cdrom,target.dev=${config_image_drive}"
+	        sudo virt-xml "${name}" --add-device --disk "${config_image_dir}/agentconfig.noarch.iso,device=cdrom,target.dev=${config_image_drive},target.bus=${CDROM_BUS}"
 	    fi
         fi
         sudo virt-xml "${name}" --edit target=sda --disk="boot_order=1"
@@ -175,8 +180,8 @@ function attach_appliance_diskimage() {
         # Attach the appliance disk image and the config ISO 
         sudo virt-xml "${name}" --remove-device --disk all
         sudo virt-xml "${name}" --add-device --disk "${disk_image}",device=disk,target.dev=sda
-        sudo virt-xml "${name}" --add-device --disk "${config_image_dir}/agentconfig.noarch.iso,device=cdrom,target.dev=${config_image_drive}"
-        
+        sudo virt-xml "${name}" --add-device --disk "${config_image_dir}/agentconfig.noarch.iso,device=cdrom,target.dev=${config_image_drive},target.bus=${CDROM_BUS}"
+
         # Boot machine from the appliance disk image
         sudo virt-xml "${name}" --edit target=sda --disk="boot_order=1" --start
     done
@@ -190,7 +195,7 @@ function attach_agent_iso_no_registry() {
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
-        sudo virt-xml "${name}" --add-device --disk "${agent_iso_no_registry}",device=cdrom,target.dev=sdc
+        sudo virt-xml "${name}" --add-device --disk "${agent_iso_no_registry}",device=cdrom,target.dev=sdc,target.bus=${CDROM_BUS}
         sudo virt-xml "${name}" --edit target=sda --disk="boot_order=1"
         sudo virt-xml "${name}" --edit target=sdc --disk="boot_order=2" --start
     done
