@@ -31,7 +31,7 @@ function agent_create_iscsi_network() {
   <ip address="${ISCSI_NETWORK_SUBNET}.1" netmask="255.255.255.0">
     <dhcp>
       <range start='${ISCSI_NETWORK_SUBNET}.20' end='${ISCSI_NETWORK_SUBNET}.120'/>
-      <bootp file='http://${ISCSI_NETWORK_SUBNET}.1:8089/agent.x86_64-iscsi.ipxe'/>
+      <bootp file='http://${ISCSI_NETWORK_SUBNET}.1:8089/agent.$(uname -m)-iscsi.ipxe'/>
     </dhcp>
   </ip>
 </network>
@@ -79,7 +79,7 @@ function agent_create_iscsi_pxe_file() {
 
     # Set 'hostname' variable in file. It will be resolved by host during PXE boot
     # in order to access a unique target for this host.
-cat > "${boot_dir}/agent.x86_64-iscsi.ipxe" << EOF
+cat > "${boot_dir}/agent.$(uname -m)-iscsi.ipxe" << EOF
 #!ipxe
 set initiator-iqn ${ISCSI_INITIATOR_BASE}:\${hostname}
 sanboot --keep iscsi:${ISCSI_NETWORK_SUBNET}.1::::${ISCSI_INITIATOR_BASE}:\${hostname}
