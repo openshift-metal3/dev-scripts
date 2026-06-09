@@ -514,11 +514,11 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export NUM_MASTERS=3
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
-          export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+          export MASTER_MEMORY=${MASTER_MEMORY:-24576}
           export NUM_WORKERS=2
           export WORKER_VCPU=${WORKER_VCPU:-4}
           export WORKER_DISK=${WORKER_DISK:-100}
-          export WORKER_MEMORY=${WORKER_MEMORY:-9000}
+          export WORKER_MEMORY=${WORKER_MEMORY:-16384}
           ;;
       "SNO" )
           export NUM_MASTERS=1
@@ -568,9 +568,6 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
     if [ "${SCENARIO}" == "HA" ]; then
        if ((WORKER_VCPU < 5)); then
         export WORKER_VCPU=5
-      fi
-      if ((WORKER_MEMORY < 10000)); then
-        export WORKER_MEMORY=10000
       fi
     fi
     # Increase disk storage requirements for NoRegistryClusterInstall aka agent OVE ISO
