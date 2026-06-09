@@ -129,6 +129,15 @@ export VNC_CONSOLE=true
 if [[ $(uname -m) == "aarch64" ]]; then
   VNC_CONSOLE=false
   echo "libvirt_cdrombus: scsi" >> vm_setup_vars.yml
+  # On native aarch64 KVM (e.g. AWS Graviton), the upstream metal3-dev-env
+  # template hardcodes cortex-a57 for all aarch64 VMs. That model only works
+  # under qemu emulation; native KVM requires host-passthrough. Narrow the
+  # CPU conditional so native aarch64 falls through to host-passthrough,
+  # without affecting the <os> or <features> sections that must still fire.
+  TEMPLATE="${VM_SETUP_PATH}/roles/libvirt/templates/baremetalvm.xml.j2"
+  if [ -f "${TEMPLATE}" ]; then
+    sed -i '/{% if is_aarch64 %}/{N; /<!--/s/{% if is_aarch64 %}/{% if is_aarch64 and libvirt_domain_type == '"'"'qemu'"'"' %}/}' "${TEMPLATE}"
+  fi
 fi
 
 # playbooks depend on it
