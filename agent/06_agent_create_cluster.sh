@@ -201,6 +201,14 @@ function attach_agent_iso_no_registry() {
     done
 }
 
+function eject_agent_iso() {
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        sudo virsh change-media "${name}" sdc --eject --live
+    done
+}
+
 function automate_rendezvousIP_selection(){
   for (( n=0; n<${2}; n++ ))
     do
@@ -550,6 +558,15 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     attach_agent_iso worker "$NUM_WORKERS"
     attach_agent_iso arbiter "$NUM_ARBITERS"
 
+    if [[ "${ARCH}" == "aarch64" ]]; then
+        echo "aarch64: waiting for VMs to boot from ISO before ejecting CDROM..."
+        sleep 90
+        eject_agent_iso master "$NUM_MASTERS"
+        eject_agent_iso worker "$NUM_WORKERS"
+        eject_agent_iso arbiter "$NUM_ARBITERS"
+        echo "aarch64: CDROM media ejected from all VMs"
+    fi
+
     ;;
 
   "PXE" )
@@ -624,6 +641,14 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     echo "Waiting for 2 mins to arrive at agent-tui screen"
     sleep 120
+
+    if [[ "${ARCH}" == "aarch64" ]]; then
+        eject_agent_iso master "$NUM_MASTERS"
+        eject_agent_iso worker "$NUM_WORKERS"
+        eject_agent_iso arbiter "$NUM_ARBITERS"
+        echo "aarch64: CDROM media ejected from all VMs"
+    fi
+
     automate_rendezvousIP_selection master "$NUM_MASTERS"
     automate_rendezvousIP_selection worker "$NUM_WORKERS"
     automate_rendezvousIP_selection arbiter "$NUM_ARBITERS"
