@@ -559,8 +559,8 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     attach_agent_iso arbiter "$NUM_ARBITERS"
 
     if [[ "${ARCH}" == "aarch64" ]]; then
-        echo "aarch64: waiting for VMs to boot from ISO before ejecting CDROM..."
-        sleep 90
+        echo "aarch64: waiting 5 min for VMs to boot from ISO before ejecting CDROM..."
+        sleep 300
         eject_agent_iso master "$NUM_MASTERS"
         eject_agent_iso worker "$NUM_WORKERS"
         eject_agent_iso arbiter "$NUM_ARBITERS"
