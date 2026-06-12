@@ -201,6 +201,41 @@ EOF
   fi
 }
 
+function generate_extra_cluster_manifests_iri_v1() {
+  mkdir -p "${EXTRA_MANIFESTS_PATH}"
+
+  local release_version
+  release_version=$(oc adm release info --registry-config "$PULL_SECRET_FILE" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r '.metadata.version')
+
+  # For non-CI/nightly builds (stable, RC, DevPreview, GA), append architecture suffix
+  # ISO_NO_REGISTRY supports x86_64, so arch is always "x86_64"
+  local version_for_tag="${release_version}"
+
+  if [[ "${OPENSHIFT_RELEASE_TYPE}" != "ci" ]] && [[ "${OPENSHIFT_RELEASE_TYPE}" != "nightly" ]]; then
+    version_for_tag="${release_version}-x86_64"
+  fi
+
+  # Generate the OCP bundle string using the Tag logic
+  # Tag format: "ocp-release-bundle-{version}" truncated to 64 chars
+  local ocp_bundle_str="ocp-release-bundle-${version_for_tag}"
+  local max_length=64
+
+  if [[ ${#ocp_bundle_str} -gt ${max_length} ]]; then
+    ocp_bundle_str="${ocp_bundle_str:0:${max_length}}"
+  fi
+
+cat > "${EXTRA_MANIFESTS_PATH}/internalreleaseimage.yaml" << EOF
+apiVersion: machineconfiguration.openshift.io/v1
+kind: InternalReleaseImage
+metadata:
+  name: cluster
+spec:
+  releases:
+  - name: ${ocp_bundle_str}
+EOF
+
+}
+
 function oc_mirror_mce() {
    tmpimageset=$(mktemp --tmpdir "mceimageset--XXXXXXXXXX")
    _tmpfiles="$_tmpfiles $tmpimageset"
@@ -700,6 +735,7 @@ else
   if [[ "${NUM_MASTERS}" -gt "1" ]]; then
    add_dns_entry "${API_VIPS%"${VIPS_SEPARATOR}"*}" "api-int"
   fi
+  generate_extra_cluster_manifests_iri_v1
 fi
 
 enable_isolated_baremetal_network
