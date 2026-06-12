@@ -241,6 +241,69 @@ function check_assisted_install_UI(){
   done
 }
 
+function wait_for_hosts_installed() {
+    local rendezvousIP
+    rendezvousIP=$(getRendezvousIP)
+    local base_url="http://$(wrap_if_ipv6 "${rendezvousIP}"):3001"
+    local clusters_url="${base_url}/api/assisted-install/v2/clusters"
+    local expected_hosts=$(( NUM_MASTERS + NUM_WORKERS + NUM_ARBITERS ))
+    local max_attempts=120
+    local sleep_seconds=30
+    local cluster_id=""
+
+    echo "aarch64: waiting for all ${expected_hosts} hosts to reach 'installed' status before ejecting CDROM..."
+
+    set +x
+    for (( attempt=1; attempt<=max_attempts; attempt++ )); do
+        if [[ -z "${cluster_id}" ]]; then
+            cluster_id=$(curl -s -f "${clusters_url}" 2>/dev/null | jq -r '.[0].id // empty' 2>/dev/null) || true
+            if [[ -z "${cluster_id}" ]]; then
+                echo "  Attempt ${attempt}/${max_attempts}: assisted-service API not ready, retrying in ${sleep_seconds}s..."
+                sleep "${sleep_seconds}"
+                continue
+            fi
+        fi
+
+        local hosts_url="${clusters_url}/${cluster_id}/hosts"
+        local hosts_json
+        hosts_json=$(curl -s -f "${hosts_url}" 2>/dev/null) || true
+
+        if [[ -z "${hosts_json}" ]]; then
+            echo "  Attempt ${attempt}/${max_attempts}: could not reach hosts endpoint, retrying in ${sleep_seconds}s..."
+            sleep "${sleep_seconds}"
+            continue
+        fi
+
+        local statuses
+        statuses=$(echo "${hosts_json}" | jq -r '[.[].status] | join(",")' 2>/dev/null) || true
+
+        local error_count
+        error_count=$(echo "${hosts_json}" | jq '[.[].status | select(. == "error" or . == "cancelled")] | length' 2>/dev/null) || true
+        if [[ "${error_count}" -gt 0 ]]; then
+            set -x
+            echo "ERROR: ${error_count} host(s) in error/cancelled state. Statuses: ${statuses}"
+            return 1
+        fi
+
+        local installed_count
+        installed_count=$(echo "${hosts_json}" | jq '[.[].status | select(. == "installed")] | length' 2>/dev/null) || true
+
+        echo "  Attempt ${attempt}/${max_attempts}: ${installed_count:-0}/${expected_hosts} hosts installed (statuses: ${statuses:-unknown})"
+
+        if [[ "${installed_count}" -eq "${expected_hosts}" ]]; then
+            set -x
+            echo "aarch64: all ${expected_hosts} hosts have reached 'installed' status"
+            return 0
+        fi
+
+        sleep "${sleep_seconds}"
+    done
+
+    set -x
+    echo "ERROR: timed out after $((max_attempts * sleep_seconds / 60)) minutes waiting for hosts to reach 'installed' status"
+    return 1
+}
+
 function get_node0_ip() {
   # shellcheck disable=SC2059
   node0_name=$(printf "${MASTER_HOSTNAME_FORMAT}" 0)
@@ -559,8 +622,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     attach_agent_iso arbiter "$NUM_ARBITERS"
 
     if [[ "${ARCH}" == "aarch64" ]]; then
-        echo "aarch64: waiting 5 min for VMs to boot from ISO before ejecting CDROM..."
-        sleep 300
+        wait_for_hosts_installed || echo "WARNING: proceeding with CDROM eject despite host status issues"
         eject_agent_iso master "$NUM_MASTERS"
         eject_agent_iso worker "$NUM_WORKERS"
         eject_agent_iso arbiter "$NUM_ARBITERS"
