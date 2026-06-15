@@ -360,6 +360,15 @@ EOF
   fi
 }
 
+function bootstrap_in_place_config() {
+  if [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" ]]; then
+cat <<EOF
+bootstrapInPlace:
+  installationDisk: ${SNO_INSTALLATION_DISK}
+EOF
+  fi
+}
+
 function generate_ocp_install_config() {
     local outdir
 
@@ -406,14 +415,24 @@ controlPlane:
   name: master
   replicas: ${NUM_MASTERS}
   architecture: $(get_arch install_config)
-  platform:
-    baremetal: {}
+$([ "${BOOTSTRAP_IN_PLACE:-false}" != "true" ] && echo '  platform:
+    baremetal: {}')
 $(node_map_to_install_config_fencing_credentials)
 $(arbiter_stanza)
 $(featureSet)
 $(featureGates)
 $(osImageStream)
 $(capabilities_stanza)
+$(bootstrap_in_place_config)
+EOF
+
+  if [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" ]]; then
+    cat >> "${outdir}/install-config.yaml" << EOF
+platform:
+  none: {}
+EOF
+  else
+    cat >> "${outdir}/install-config.yaml" << EOF
 platform:
   baremetal:
 $(libvirturi)
@@ -429,25 +448,26 @@ $(loadbalancer_type)
     hosts:
 EOF
 
-  if [ -z "${HOSTS_SWAP_DEFINITION:-}" ]; then
-    cat >> "${outdir}/install-config.yaml" << EOF
+    if [ -z "${HOSTS_SWAP_DEFINITION:-}" ]; then
+      cat >> "${outdir}/install-config.yaml" << EOF
 $(node_map_to_install_config_hosts "$NUM_MASTERS" 0 master)
 $(node_map_to_install_config_hosts "$NUM_ARBITERS" "$NUM_MASTERS" arbiter)
 $(node_map_to_install_config_hosts "$NUM_WORKERS" $(( NUM_MASTERS + NUM_ARBITERS )) worker)
 EOF
-  else
-    cat >> "${outdir}/install-config.yaml" << EOF
+    else
+      cat >> "${outdir}/install-config.yaml" << EOF
 $(node_map_to_install_config_hosts "$NUM_WORKERS" $(( NUM_MASTERS + NUM_ARBITERS )) worker)
 $(node_map_to_install_config_hosts "$NUM_ARBITERS" "$NUM_MASTERS" arbiter)
 $(node_map_to_install_config_hosts "$NUM_MASTERS" 0 master)
 EOF
-  fi
+    fi
 
-  if ! is_lower_version "$(openshift_version "$OCP_DIR")" "4.22"; then
-    cat >> "${outdir}/install-config.yaml" << EOF
+    if ! is_lower_version "$(openshift_version "$OCP_DIR")" "4.22"; then
+      cat >> "${outdir}/install-config.yaml" << EOF
     bmcVerifyCA: |
 $(sudo sed 's/^/      /' "${WORKING_DIR}/virtualbmc/sushy-tools/cert.pem")
 EOF
+    fi
   fi
 
     cat >> "${outdir}/install-config.yaml" << EOF

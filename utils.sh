@@ -100,13 +100,8 @@ function custom_ntp(){
   fi
 }
 
-function create_cluster() {
-    local assets_dir
-
-    assets_dir="$1"
-
-    # Enable terraform debug logging
-    export TF_LOG=DEBUG
+function prepare_manifests() {
+    local assets_dir="$1"
 
     # Disable sigstore image policy verification for non-GA releases.
     # The installer adds a CVO override marking the ClusterImagePolicy as unmanaged,
@@ -194,6 +189,17 @@ function create_cluster() {
     mkdir -p "${assets_dir}/saved-assets"
     cp -av "${assets_dir}/openshift" "${assets_dir}/saved-assets"
     cp -av "${assets_dir}/manifests" "${assets_dir}/saved-assets"
+}
+
+function create_cluster() {
+    local assets_dir
+
+    assets_dir="$1"
+
+    # Enable terraform debug logging
+    export TF_LOG=DEBUG
+
+    prepare_manifests "${assets_dir}"
 
     if [ ! -z "${IGNITION_EXTRA:-}" ]; then
       $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create ignition-configs
@@ -209,6 +215,111 @@ function create_cluster() {
 
     trap auth_template_and_removetmp EXIT
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create cluster 2>&1 | grep --line-buffered -v 'password\|X-Auth-Token\|UserData:'
+}
+
+function create_bip_cluster() {
+    local assets_dir
+    assets_dir="$(realpath "$1")"
+
+    prepare_manifests "${assets_dir}"
+
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create single-node-ignition-config
+
+    local iso_dir="${assets_dir}/iso"
+    mkdir -p "${iso_dir}"
+
+    local live_iso="${iso_dir}/rhcos-live.iso"
+    local live_iso_name
+    live_iso_name=$(basename "${MACHINE_OS_LIVE_ISO_URL}")
+    local cached_iso="${IRONIC_DATA_DIR}/html/images/${live_iso_name}"
+
+    if [ ! -f "${cached_iso}" ]; then
+      echo "Downloading RHCOS live ISO..."
+      curl -g --insecure -L -o "${cached_iso}" "${MACHINE_OS_LIVE_ISO_URL}"
+      echo "${MACHINE_OS_LIVE_ISO_SHA256} $(basename "${cached_iso}")" | tee "${cached_iso}.sha256sum"
+      pushd "$(dirname "${cached_iso}")"
+      sha256sum --strict --check "${cached_iso}.sha256sum" || ( rm -f "${cached_iso}" ; exit 1 )
+      popd
+    fi
+    cp "${cached_iso}" "${live_iso}"
+
+    # Mark the provisioning network interface as unmanaged so that
+    # NetworkManager-wait-online does not block on it
+    local vm_name="${CLUSTER_NAME}_master_0"
+    local prov_mac
+    prov_mac=$(sudo virsh dumpxml "${vm_name}" | xmllint --xpath "string(//interface[descendant::source[@bridge='${PROVISIONING_NETWORK_NAME}']]/mac/@address)" -)
+    if [[ -n "${prov_mac}" ]]; then
+      local nmconn_dir="${iso_dir}/nm"
+      mkdir -p "${nmconn_dir}"
+      cat > "${nmconn_dir}/10-provisioning-unmanaged.nmconnection" << NMEOF
+[connection]
+id=provisioning-unmanaged
+type=ethernet
+autoconnect=false
+
+[ethernet]
+mac-address=${prov_mac}
+NMEOF
+      chmod 600 "${nmconn_dir}/10-provisioning-unmanaged.nmconnection"
+      sudo podman run --rm --privileged \
+          -v "${iso_dir}:/iso:z" -v "${nmconn_dir}:/nm:z" \
+          quay.io/coreos/coreos-installer:release \
+          iso network embed \
+          -k /nm/10-provisioning-unmanaged.nmconnection \
+          /iso/rhcos-live.iso
+    fi
+
+    local bip_iso="${iso_dir}/rhcos-bip.iso"
+    sudo podman run --rm --privileged \
+        -v "${assets_dir}:/data:z" -v "${iso_dir}:/iso:z" \
+        quay.io/coreos/coreos-installer:release \
+        iso ignition embed -i /data/bootstrap-in-place-for-live-iso.ign \
+        -o /iso/rhcos-bip.iso /iso/rhcos-live.iso
+
+    local master_mac
+    master_mac=$(sudo virsh dumpxml "${vm_name}" | xmllint --xpath "string(//interface[descendant::source[@bridge='${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
+
+    sudo virt-xml "${vm_name}" --add-device \
+        --disk "${bip_iso}",device=cdrom,target.dev=sdc
+    sudo virt-xml "${vm_name}" --edit target=sda --disk="boot_order=1"
+    sudo virt-xml "${vm_name}" --edit target=sdc --disk="boot_order=2" --start
+
+    # Wait for the node to get an IP via DHCP, then configure DNS to match
+    echo "Waiting for master node to obtain an IP address..."
+    local master_ip=""
+    for i in $(seq 1 60); do
+      if [[ "$IP_STACK" == "v4" ]] || [[ "$IP_STACK" == "v4v6" ]]; then
+        master_ip=$(ip -4 neigh show dev "${BAREMETAL_NETWORK_NAME}" \
+            | grep -i "${master_mac}" | awk '{print $1}' | head -1) || true
+      else
+        master_ip=$(ip -6 neigh show dev "${BAREMETAL_NETWORK_NAME}" \
+            | grep -i "${master_mac}" | grep -v '^fe80' | awk '{print $1}' | head -1) || true
+      fi
+      if [[ -n "${master_ip}" ]]; then
+        break
+      fi
+      sleep 5
+    done
+
+    if [[ -z "${master_ip}" ]]; then
+      echo "ERROR: Timed out waiting for master node to get an IP address"
+      exit 1
+    fi
+    echo "Master node IP: ${master_ip}"
+
+    configure_dnsmasq "${master_ip}" "${master_ip}"
+
+    # Add DNS entries to the libvirt network dnsmasq (the node queries this,
+    # not the NetworkManager dnsmasq on the hypervisor).
+    # Both hostnames must be in a single <host> element (libvirt rejects
+    # duplicate IPs across separate entries).
+    local net_name="${BAREMETAL_NETWORK_NAME}"
+    sudo virsh net-update "${net_name}" add dns-host \
+        "<host ip='${master_ip}'><hostname>api.${CLUSTER_DOMAIN}</hostname><hostname>api-int.${CLUSTER_DOMAIN}</hostname></host>" --live
+
+    trap auth_template_and_removetmp EXIT
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for bootstrap-complete
+    $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for install-complete 2>&1 | grep --line-buffered -v 'password\|X-Auth-Token\|UserData:'
 }
 
 function network_ip() {

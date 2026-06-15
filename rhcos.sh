@@ -23,6 +23,15 @@ if $OPENSHIFT_INSTALLER coreos print-stream-json >/dev/null 2>&1; then
     MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=$(jq -r ".architectures.$(uname -m).artifacts.qemu.formats[\"${TOP_LEVEL_FORMAT}\"].disk[\"uncompressed-sha256\"]" "$OCP_DIR/rhcos.json")
     export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256
     export MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}}
+
+    if [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" ]]; then
+        MACHINE_OS_INSTALLER_LIVE_ISO_URL=$(jq -r ".architectures.$(uname -m).artifacts.metal.formats.iso.disk.location" "$OCP_DIR/rhcos.json")
+        export MACHINE_OS_INSTALLER_LIVE_ISO_URL
+        MACHINE_OS_INSTALLER_LIVE_ISO_SHA256=$(jq -r ".architectures.$(uname -m).artifacts.metal.formats.iso.disk[\"sha256\"]" "$OCP_DIR/rhcos.json")
+        export MACHINE_OS_INSTALLER_LIVE_ISO_SHA256
+        export MACHINE_OS_LIVE_ISO_URL=${MACHINE_OS_LIVE_ISO_URL:-${MACHINE_OS_INSTALLER_LIVE_ISO_URL}}
+        export MACHINE_OS_LIVE_ISO_SHA256=${MACHINE_OS_LIVE_ISO_SHA256:-${MACHINE_OS_INSTALLER_LIVE_ISO_SHA256}}
+    fi
 else
   if [[ ! -f "$OCP_DIR/rhcos.json" ]]; then
     if [[ -v JOB_NAME ]] && [[ "$JOB_NAME" =~ "openshift-installer" ]]; then
@@ -66,4 +75,13 @@ else
   MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=$(jq -r '.images.qemu["uncompressed-sha256"]' "$OCP_DIR/rhcos.json")
   export MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256
   export MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256:-${MACHINE_OS_INSTALLER_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}}
+
+  if [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" ]]; then
+      MACHINE_OS_INSTALLER_LIVE_ISO_URL=$(jq -r '.baseURI + .images.iso.path' "$OCP_DIR/rhcos.json")
+      export MACHINE_OS_INSTALLER_LIVE_ISO_URL
+      MACHINE_OS_INSTALLER_LIVE_ISO_SHA256=$(jq -r '.images.iso.sha256' "$OCP_DIR/rhcos.json")
+      export MACHINE_OS_INSTALLER_LIVE_ISO_SHA256
+      export MACHINE_OS_LIVE_ISO_URL=${MACHINE_OS_LIVE_ISO_URL:-${MACHINE_OS_INSTALLER_LIVE_ISO_URL}}
+      export MACHINE_OS_LIVE_ISO_SHA256=${MACHINE_OS_LIVE_ISO_SHA256:-${MACHINE_OS_INSTALLER_LIVE_ISO_SHA256}}
+  fi
 fi
