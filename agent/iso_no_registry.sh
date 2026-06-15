@@ -64,15 +64,19 @@ function create_agent_iso_no_registry() {
   # Update release_info.json as its needed by CI tests
   save_release_info "${OPENSHIFT_RELEASE_IMAGE}" "${OCP_DIR}"
 
-  AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
-
-  # Extract agent-iso-builder source from container
-  id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") && \
-    podman cp "${id}":/src "${asset_dir}" && \
-    podman rm "${id}"
+  local src_dir
+  if [[ -n "${OPENSHIFT_AGENT_INSTALLER_UTILS_PATH:-}" ]]; then
+    src_dir="${OPENSHIFT_AGENT_INSTALLER_UTILS_PATH}/tools/iso_builder"
+  else
+    AGENT_ISO_BUILDER_IMAGE=$(getAgentISOBuilderImage)
+    id=$(podman create --pull always --authfile "${PULL_SECRET_FILE}" "${AGENT_ISO_BUILDER_IMAGE}") && \
+      podman cp "${id}":/src "${asset_dir}" && \
+      podman rm "${id}"
+    src_dir="${asset_dir}/src"
+  fi
 
   pushd .
-  cd "${asset_dir}"/src
+  cd "${src_dir}"
 
   # Determine release image URL
   local release_image_url
