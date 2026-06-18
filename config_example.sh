@@ -593,6 +593,14 @@ set -x
 #export ARBITER_DISK=50
 #export ARBITER_VCPU=2
 
+# FENCING_CREDENTIAL_IDENTIFIER -
+# Controls the identifier used in fencing credentials for Two Node Fencing.
+# Set to "hostname" to identify nodes by hostname (default), or "macAddress"
+# to identify nodes by their boot MAC address.
+# Default: "hostname"
+#
+#export FENCING_CREDENTIAL_IDENTIFIER=hostname
+
 # WORKER_HOSTNAME_FORMAT -
 # Set a custom hostname format for workers. This is a format string that should
 # include one %d field, which will be replaced with the number of the node.

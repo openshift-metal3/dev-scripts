@@ -354,19 +354,24 @@ function node_map_to_install_config_fencing_credentials() {
     credentials:
 EOF
     for ((idx=0; idx < NUM_MASTERS ; idx++)); do
-      # shellcheck disable=SC2059
-      hostname="$(printf "$MASTER_HOSTNAME_FORMAT" ${idx})"
-      # IP V6 and DualStack will force FQDN hostname for the VMs, we need to update
-      # this here to correctly set the hostname for the fencing credentials.
-      if [[ $IP_STACK != 'v4' ]]; then
-        hostname="${hostname}.${CLUSTER_DOMAIN}"
-      fi
       username=$(node_val ${idx} "driver_info.username")
       password=$(node_val ${idx} "driver_info.password")
       address=$(node_val ${idx} "driver_info.address")
 
+      if [[ "${FENCING_CREDENTIAL_IDENTIFIER}" == "macAddress" ]]; then
+        identifier_key="macAddress"
+        identifier_value=$(node_val ${idx} "ports[0].address")
+      else
+        # shellcheck disable=SC2059
+        identifier_value="$(printf "$MASTER_HOSTNAME_FORMAT" ${idx})"
+        if [[ $IP_STACK != 'v4' ]]; then
+          identifier_value="${identifier_value}.${CLUSTER_DOMAIN}"
+        fi
+        identifier_key="hostname"
+      fi
+
       cat <<EOF
-    - hostname: ${hostname}
+    - ${identifier_key}: ${identifier_value}
       address: ${address}
       username: ${username}
       password: ${password}
