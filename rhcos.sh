@@ -1,6 +1,6 @@
 if $OPENSHIFT_INSTALLER coreos print-stream-json >/dev/null 2>&1; then
     $OPENSHIFT_INSTALLER coreos print-stream-json > "$OCP_DIR/rhcos.json"
-    TOP_LEVEL_FORMAT="$(jq -r '.architectures.x86_64.artifacts.openstack.formats | keys[]' "$OCP_DIR/rhcos.json" | head -n1)"
+    TOP_LEVEL_FORMAT="$(jq -r ".architectures.$(uname -m).artifacts.openstack.formats | keys[]" "$OCP_DIR/rhcos.json" | head -n1)"
     MACHINE_OS_INSTALLER_IMAGE_URL=$(jq -r ".architectures.$(uname -m).artifacts.openstack.formats[\"${TOP_LEVEL_FORMAT}\"].disk.location" "$OCP_DIR/rhcos.json")
     export MACHINE_OS_INSTALLER_IMAGE_URL
     MACHINE_OS_INSTALLER_IMAGE_SHA256=$(jq -r ".architectures.$(uname -m).artifacts.openstack.formats[\"${TOP_LEVEL_FORMAT}\"].disk[\"sha256\"]" "$OCP_DIR/rhcos.json")

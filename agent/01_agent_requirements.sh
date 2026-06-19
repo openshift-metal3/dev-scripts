@@ -41,7 +41,7 @@ if [[ "${MIRROR_COMMAND}" == oc-mirror ]]; then
    oc_mirror_file=oc-mirror.tar.gz
    oc_mirror_exec=${oc_mirror_file%%.*}
    if [[ ! -f "/usr/local/bin/${oc_mirror_exec}" ]]; then
-      curl -O -L https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/${oc_mirror_file}
+      curl -O -L https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/stable/${oc_mirror_file}
       tar xzf ${oc_mirror_file}
       chmod +x "${oc_mirror_exec}"
       sudo mv -f "${oc_mirror_exec}" /usr/local/bin

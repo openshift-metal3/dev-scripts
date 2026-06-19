@@ -25,6 +25,14 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
   # Patch metal3-dev-env to use Ansible 8.x on centos9/rhel9.
   sed -i '/ANSIBLE_VERSION/{ s/10\.7\.0/8.7.0/; }' lib/common.sh
 
+  # Go tarball defaults hardcode linux-amd64; use GOARCH passed as extra var.
+  # Upstream fix: https://github.com/metal3-io/metal3-dev-env/pull/1694
+  GO_DEFAULTS="vm-setup/roles/packages_installation/defaults/main.yml"
+  if grep -q 'linux-amd64' "${GO_DEFAULTS}"; then
+    sed -i 's/go_tarball: "go{{ go_version }}.linux-amd64.tar.gz"/go_tarball: "go{{ go_version }}.linux-{{ GOARCH | default('\''amd64'\'') }}.tar.gz"/' \
+      "${GO_DEFAULTS}"
+  fi
+
   popd
 fi
 

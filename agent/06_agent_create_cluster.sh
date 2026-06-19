@@ -5,6 +5,11 @@ shopt -s nocasematch
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 ARCH=$(uname -m)
 
+CDROM_BUS="sata"
+if [[ "${ARCH}" == "aarch64" ]]; then
+    CDROM_BUS="scsi"
+fi
+
 LOGDIR="${SCRIPTDIR}/logs"
 source "$SCRIPTDIR/logging.sh"
 source "$SCRIPTDIR/common.sh"
@@ -143,13 +148,13 @@ function attach_agent_iso() {
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
-        sudo virt-xml "${name}" --add-device --disk "${agent_iso}",device=cdrom,target.dev=sdc
+        sudo virt-xml "${name}" --add-device --disk "${agent_iso}",device=cdrom,target.dev=sdc,target.bus=${CDROM_BUS}
 	if [ "${AGENT_USE_APPLIANCE_MODEL}" == true ]; then
 	    if [ "${AGENT_APPLIANCE_HOTPLUG}" == true ]; then
                 # Add the device with no image. It will be added later using change-media when config-drive is created
-                sudo virt-xml "${name}" --add-device --disk device=cdrom,target.dev="${config_image_drive}"
+                sudo virt-xml "${name}" --add-device --disk device=cdrom,target.dev="${config_image_drive}",target.bus=${CDROM_BUS}
 	    else
-	        sudo virt-xml "${name}" --add-device --disk "${config_image_dir}/agentconfig.noarch.iso,device=cdrom,target.dev=${config_image_drive}"
+	        sudo virt-xml "${name}" --add-device --disk "${config_image_dir}/agentconfig.noarch.iso,device=cdrom,target.dev=${config_image_drive},target.bus=${CDROM_BUS}"
 	    fi
         fi
         sudo virt-xml "${name}" --edit target=sda --disk="boot_order=1"
@@ -175,8 +180,8 @@ function attach_appliance_diskimage() {
         # Attach the appliance disk image and the config ISO 
         sudo virt-xml "${name}" --remove-device --disk all
         sudo virt-xml "${name}" --add-device --disk "${disk_image}",device=disk,target.dev=sda
-        sudo virt-xml "${name}" --add-device --disk "${config_image_dir}/agentconfig.noarch.iso,device=cdrom,target.dev=${config_image_drive}"
-        
+        sudo virt-xml "${name}" --add-device --disk "${config_image_dir}/agentconfig.noarch.iso,device=cdrom,target.dev=${config_image_drive},target.bus=${CDROM_BUS}"
+
         # Boot machine from the appliance disk image
         sudo virt-xml "${name}" --edit target=sda --disk="boot_order=1" --start
     done
@@ -190,9 +195,17 @@ function attach_agent_iso_no_registry() {
     for (( n=0; n<${2}; n++ ))
     do
         name=${CLUSTER_NAME}_${1}_${n}
-        sudo virt-xml "${name}" --add-device --disk "${agent_iso_no_registry}",device=cdrom,target.dev=sdc
+        sudo virt-xml "${name}" --add-device --disk "${agent_iso_no_registry}",device=cdrom,target.dev=sdc,target.bus=${CDROM_BUS}
         sudo virt-xml "${name}" --edit target=sda --disk="boot_order=1"
         sudo virt-xml "${name}" --edit target=sdc --disk="boot_order=2" --start
+    done
+}
+
+function eject_agent_iso() {
+    for (( n=0; n<${2}; n++ ))
+    do
+        name=${CLUSTER_NAME}_${1}_${n}
+        sudo virsh change-media "${name}" sdc --eject --live
     done
 }
 
@@ -226,6 +239,69 @@ function check_assisted_install_UI(){
       sleep 30
     fi
   done
+}
+
+function wait_for_hosts_installed() {
+    local rendezvousIP
+    rendezvousIP=$(getRendezvousIP)
+    local base_url="http://$(wrap_if_ipv6 "${rendezvousIP}"):3001"
+    local clusters_url="${base_url}/api/assisted-install/v2/clusters"
+    local expected_hosts=$(( NUM_MASTERS + NUM_WORKERS + NUM_ARBITERS ))
+    local max_attempts=120
+    local sleep_seconds=30
+    local cluster_id=""
+
+    echo "aarch64: waiting for all ${expected_hosts} hosts to reach 'installed' status before ejecting CDROM..."
+
+    set +x
+    for (( attempt=1; attempt<=max_attempts; attempt++ )); do
+        if [[ -z "${cluster_id}" ]]; then
+            cluster_id=$(curl -s -f "${clusters_url}" 2>/dev/null | jq -r '.[0].id // empty' 2>/dev/null) || true
+            if [[ -z "${cluster_id}" ]]; then
+                echo "  Attempt ${attempt}/${max_attempts}: assisted-service API not ready, retrying in ${sleep_seconds}s..."
+                sleep "${sleep_seconds}"
+                continue
+            fi
+        fi
+
+        local hosts_url="${clusters_url}/${cluster_id}/hosts"
+        local hosts_json
+        hosts_json=$(curl -s -f "${hosts_url}" 2>/dev/null) || true
+
+        if [[ -z "${hosts_json}" ]]; then
+            echo "  Attempt ${attempt}/${max_attempts}: could not reach hosts endpoint, retrying in ${sleep_seconds}s..."
+            sleep "${sleep_seconds}"
+            continue
+        fi
+
+        local statuses
+        statuses=$(echo "${hosts_json}" | jq -r '[.[].status] | join(",")' 2>/dev/null) || true
+
+        local error_count
+        error_count=$(echo "${hosts_json}" | jq '[.[].status | select(. == "error" or . == "cancelled")] | length' 2>/dev/null) || true
+        if [[ "${error_count}" -gt 0 ]]; then
+            set -x
+            echo "ERROR: ${error_count} host(s) in error/cancelled state. Statuses: ${statuses}"
+            return 1
+        fi
+
+        local installed_count
+        installed_count=$(echo "${hosts_json}" | jq '[.[].status | select(. == "installed")] | length' 2>/dev/null) || true
+
+        echo "  Attempt ${attempt}/${max_attempts}: ${installed_count:-0}/${expected_hosts} hosts installed (statuses: ${statuses:-unknown})"
+
+        if [[ "${installed_count}" -eq "${expected_hosts}" ]]; then
+            set -x
+            echo "aarch64: all ${expected_hosts} hosts have reached 'installed' status"
+            return 0
+        fi
+
+        sleep "${sleep_seconds}"
+    done
+
+    set -x
+    echo "ERROR: timed out after $((max_attempts * sleep_seconds / 60)) minutes waiting for hosts to reach 'installed' status"
+    return 1
 }
 
 function get_node0_ip() {
@@ -545,6 +621,14 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     attach_agent_iso worker "$NUM_WORKERS"
     attach_agent_iso arbiter "$NUM_ARBITERS"
 
+    if [[ "${ARCH}" == "aarch64" ]]; then
+        wait_for_hosts_installed || echo "WARNING: proceeding with CDROM eject despite host status issues"
+        eject_agent_iso master "$NUM_MASTERS"
+        eject_agent_iso worker "$NUM_WORKERS"
+        eject_agent_iso arbiter "$NUM_ARBITERS"
+        echo "aarch64: CDROM media ejected from all VMs"
+    fi
+
     ;;
 
   "PXE" )
@@ -619,6 +703,14 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     echo "Waiting for 2 mins to arrive at agent-tui screen"
     sleep 120
+
+    if [[ "${ARCH}" == "aarch64" ]]; then
+        eject_agent_iso master "$NUM_MASTERS"
+        eject_agent_iso worker "$NUM_WORKERS"
+        eject_agent_iso arbiter "$NUM_ARBITERS"
+        echo "aarch64: CDROM media ejected from all VMs"
+    fi
+
     automate_rendezvousIP_selection master "$NUM_MASTERS"
     automate_rendezvousIP_selection worker "$NUM_WORKERS"
     automate_rendezvousIP_selection arbiter "$NUM_ARBITERS"

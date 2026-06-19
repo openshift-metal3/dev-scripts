@@ -111,7 +111,7 @@ function create_agent_iso_no_registry() {
 
 # Deletes all files and directories under asset_dir
 # example, ocp/ostest/iso_builder/4.19.* 
-# except the final generated ISO file (agent-ove.x86_64.iso), 
+# except the final generated ISO file (agent-ove.${ARCH}.iso),
 # to free up disk space while preserving the built artifact.
 # Note: This optional cleanup is relevant only when the
 # AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is set as as true, 
@@ -124,8 +124,8 @@ function cleanup_diskspace_agent_iso_noregistry() {
 
     echo "Cleaning up directory: $dir"
 
-    # Delete all files and symlinks except the agent-ove.x86_64.iso
-    sudo find "$dir" \( -type f -o -type l \) ! -name 'agent-ove.x86_64.iso' -print -delete
+    # Delete all files and symlinks except the agent-ove ISO
+    sudo find "$dir" \( -type f -o -type l \) ! -name "agent-ove.${ARCH}.iso" -print -delete
 
     # Remove any empty directories left behind
     sudo find "$dir" -type d -empty -print -delete
