@@ -417,6 +417,21 @@ if [[ "${BMC_DRIVER}" != "redfish" ]] && [[ "${ENABLE_TWO_NODE_FENCING:-}" == "t
   exit 1
 fi
 
+# Bootstrap-in-Place (BiP) for Single Node OpenShift
+export BOOTSTRAP_IN_PLACE=${BOOTSTRAP_IN_PLACE:-false}
+export SNO_INSTALLATION_DISK=${SNO_INSTALLATION_DISK:-/dev/sda}
+
+if [[ "${BOOTSTRAP_IN_PLACE}" == "true" ]]; then
+  if [[ ${NUM_MASTERS} -ne 1 ]] || [[ ${NUM_WORKERS} -ne 0 ]]; then
+    echo "BOOTSTRAP_IN_PLACE requires NUM_MASTERS=1 and NUM_WORKERS=0 (SNO configuration)."
+    exit 1
+  fi
+  export MASTER_VCPU=${MASTER_VCPU:-16}
+  export MASTER_DISK=${MASTER_DISK:-120}
+  export MASTER_MEMORY=${MASTER_MEMORY:-32768}
+  export NETWORK_TYPE="OVNKubernetes"
+fi
+
 # Defaults the DISABLE_MULTICAST variable
 export DISABLE_MULTICAST=${DISABLE_MULTICAST:-false}
 

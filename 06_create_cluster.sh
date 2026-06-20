@@ -32,15 +32,19 @@ if [ -n "$EXTERNAL_LOADBALANCER" ]; then
   ./external_loadbalancer.sh &
 fi
 
-# Call openshift-installer to deploy the bootstrap node and masters
-create_cluster "${OCP_DIR}"
+if [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" ]]; then
+  create_bip_cluster "${OCP_DIR}"
+else
+  # Call openshift-installer to deploy the bootstrap node and masters
+  create_cluster "${OCP_DIR}"
 
-# Kill the dnsmasq container on the host since it is performing DHCP and doesn't
-# allow our pod in openshift to take over.  We don't want to take down all of ironic
-# as it makes cleanup "make clean" not work properly.
-for name in dnsmasq ironic-inspector ; do
-    sudo podman ps | grep -w "$name$" && sudo podman stop $name
-done
+  # Kill the dnsmasq container on the host since it is performing DHCP and doesn't
+  # allow our pod in openshift to take over.  We don't want to take down all of ironic
+  # as it makes cleanup "make clean" not work properly.
+  for name in dnsmasq ironic-inspector ; do
+      sudo podman ps | grep -w "$name$" && sudo podman stop $name
+  done
+fi
 
 
 # Default to emptyDir for image-reg storage

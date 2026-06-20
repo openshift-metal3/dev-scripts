@@ -830,6 +830,20 @@ set -x
 # export BOND_CONFIG='none'
 
 ################################################################################
+## Bootstrap-in-Place (BiP) for Single Node OpenShift
+##
+
+# When enabled, deploys SNO without Ironic or a bootstrap VM.
+# The single master bootstraps itself from a RHCOS live ISO with embedded ignition.
+# Use 'make sno_bip' instead of 'make' to skip the Ironic setup step.
+# Requires NUM_MASTERS=1 and NUM_WORKERS=0.
+# export BOOTSTRAP_IN_PLACE=true
+
+# The disk where CoreOS will be installed on the SNO node.
+# Default is /dev/vda (virtio disk for libvirt VMs).
+# export SNO_INSTALLATION_DISK="/dev/vda"
+
+################################################################################
 ## Agent Deployment
 ##
 
