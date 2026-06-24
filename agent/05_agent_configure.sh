@@ -385,6 +385,9 @@ function generate_cluster_manifests() {
     export AGENT_ROOT_DEVICE_HINTS=${ISCSI_DEVICE_NAME}
   fi
 
+  echo "DEBUG: FENCING_CREDENTIAL_IDENTIFIER=${FENCING_CREDENTIAL_IDENTIFIER:-NOT_SET}"
+  echo "DEBUG: AGENT_MASTER_MACS_STR=${AGENT_MASTER_MACS_STR:-NOT_SET}"
+
   # Create manifests
   ansible-playbook -vvv \
           -e install_path="${SCRIPTDIR}/${INSTALL_CONFIG_PATH}" \
