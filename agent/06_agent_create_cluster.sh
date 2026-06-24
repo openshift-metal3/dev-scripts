@@ -19,7 +19,6 @@ source "$SCRIPTDIR/validation.sh"
 source "$SCRIPTDIR/release_info.sh"
 source "$SCRIPTDIR/agent/common.sh"
 source "$SCRIPTDIR/agent/iscsi_utils.sh"
-source "$SCRIPTDIR/agent/iso_no_registry.sh"
 
 early_deploy_validation
 
@@ -90,19 +89,6 @@ function create_config_image() {
 }
 
 
-function assert_agent_no_registry_iso_size(){
-  agent_iso_no_registry=$(get_agent_iso_no_registry)
-  iso_size=$(stat -c%s "$agent_iso_no_registry")
-  
-  # With 4.19 tech preview, the expected ISO size is approximately 36GB
-  iso_size_limit=$((AGENT_OVE_ISO_SIZE * 1024 * 1024 * 1024))
-
-  if (( iso_size > iso_size_limit )); then
-    echo "Error: OVE ISO size of $agent_iso_no_registry is ${iso_size}, which exceeds the ${AGENT_OVE_ISO_SIZE}GB limit."
-    exit 1
-  fi
-}
-
 function set_device_config_image() {
 
     for (( n=0; n<${2}; n++ ))
@@ -125,18 +111,6 @@ function get_agent_iso() {
         agent_iso="${OCP_DIR}/agent.iso"
     fi
     echo "${agent_iso}"
-}
-
-function get_agent_iso_no_registry() {
-    local base_dir=$SCRIPTDIR/$OCP_DIR
-    local iso_name="agent-ove.${ARCH}.iso"
-    local agent_iso_no_registry=$
-    agent_iso_no_registry=$(find "$base_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
-    if [ -z "$agent_iso_no_registry" ]; then
-      echo "Error: No agent OVE ISO found matching ${iso_name} in ${base_dir}" >&2
-      exit 1
-    fi
-    echo "${agent_iso_no_registry}"
 }
 
 function attach_agent_iso() {
@@ -677,25 +651,8 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     sudo rm -rf "${OCP_DIR}/temp"
     ;;
   "ISO_NO_REGISTRY" )
-    # Build an (OVE) image which does not need registry setup 
-    # Run a script from agent-installer-utils which internally uses openshift-appliance
-    asset_dir=$SCRIPTDIR/$OCP_DIR/iso_builder
-    mkdir -p "${asset_dir}"
-    create_agent_iso_no_registry "${asset_dir}"
-
-    assert_agent_no_registry_iso_size
-
-    if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
-      # reclaim disk space by deleting unwanted cache, other files
-      cleanup_diskspace_agent_iso_noregistry "${asset_dir}"
-    fi
-
-    # Clean up registry data to save disk space after ISO is created
-    if [[ "${MIRROR_IMAGES}" == "true" ]]; then
-      echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
-      sudo rm -rf "${REGISTRY_DIR}/data"
-      echo "Registry data cleanup complete"
-    fi
+    # OVE ISO must already exist, built by the agent_build_ove_iso step
+    echo "Using pre-built OVE ISO: $(get_agent_iso_no_registry)"
 
     attach_agent_iso_no_registry master "$NUM_MASTERS"
     attach_agent_iso_no_registry worker "$NUM_WORKERS"

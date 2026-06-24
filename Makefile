@@ -1,4 +1,4 @@
-.PHONY: default all agent agent_cleanup agent_build_installer agent_configure agent_create_cluster infra_only sno_bip requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
+.PHONY: default all agent agent_cleanup agent_build_installer agent_build_ove_iso agent_configure agent_create_cluster infra_only sno_bip requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
 default: requirements configure build_installer ironic install_config ocp_run bell
 
 all: default
@@ -7,7 +7,7 @@ all: default
 assisted: assisted_deployment bell
 
 # Deploy cluster with agent installer flow
-agent: agent_requirements requirements configure agent_build_installer agent_prepare_release agent_configure agent_create_cluster 
+agent: agent_requirements requirements configure agent_build_installer agent_prepare_release agent_configure agent_build_ove_iso agent_create_cluster
 
 # Deploy cluster with agent installer flow and adds nodes after initial install
 # Requires at least 1 extra worker node to be configured with disk size at least 100Gß
@@ -40,6 +40,9 @@ agent_prepare_release:
 
 agent_configure:
 	./agent/05_agent_configure.sh
+
+agent_build_ove_iso:
+	./agent/05b_agent_build_ove_iso.sh
 
 agent_create_cluster:
 	./agent/06_agent_create_cluster.sh

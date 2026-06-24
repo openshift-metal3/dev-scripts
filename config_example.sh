@@ -933,6 +933,14 @@ set -x
 # The script method is recommended for local development as it allows faster iteration and easier debugging.
 # export AGENT_ISO_NO_REGISTRY_BUILD_METHOD=script
 
+# AGENT_OVE_ISO_PATH specifies the directory where the OVE ISO is built and searched for
+# when AGENT_E2E_TEST_BOOT_MODE is set to ISO_NO_REGISTRY.
+# Defaults to "$SCRIPTDIR/$OCP_DIR" (e.g. /path/to/dev-scripts/ocp/ostest).
+# In CI, this can be set to a shared filesystem path so that the ISO build step
+# (make agent_build_ove_iso) and the cluster deployment step (make agent) can run
+# as separate CI steps with independent timeouts, even from different working directories.
+# export AGENT_OVE_ISO_PATH=/shared/ove
+
 # Specifies the hostname of the node that should be identified and set as the rendezvous node 
 # during the OVE cluster installation process. This node acts as the bootstrap node in the cluster.
 # Accepts only master nodes.
