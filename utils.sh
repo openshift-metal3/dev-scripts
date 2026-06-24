@@ -226,6 +226,7 @@ function create_bip_cluster() {
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create single-node-ignition-config
 
     local iso_dir="${WORKING_DIR}/${CLUSTER_NAME}/iso"
+    rm -rf "${iso_dir}"
     mkdir -p "${iso_dir}"
 
     local live_iso="${iso_dir}/rhcos-live.iso"
@@ -270,7 +271,6 @@ NMEOF
     fi
 
     local bip_iso="${iso_dir}/rhcos-bip.iso"
-    rm -f "${bip_iso}"
     sudo podman run --rm --privileged \
         -v "${assets_dir}:/data:z" -v "${iso_dir}:/iso:z" \
         quay.io/coreos/coreos-installer:release \
