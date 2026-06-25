@@ -225,7 +225,8 @@ function create_bip_cluster() {
 
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug create single-node-ignition-config
 
-    local iso_dir="${assets_dir}/iso"
+    local iso_dir="${WORKING_DIR}/${CLUSTER_NAME}/iso"
+    rm -rf "${iso_dir}"
     mkdir -p "${iso_dir}"
 
     local live_iso="${iso_dir}/rhcos-live.iso"
@@ -275,6 +276,8 @@ NMEOF
         quay.io/coreos/coreos-installer:release \
         iso ignition embed -i /data/bootstrap-in-place-for-live-iso.ign \
         -o /iso/rhcos-bip.iso /iso/rhcos-live.iso
+
+    sudo chcon -t svirt_image_t "${bip_iso}"
 
     local master_mac
     master_mac=$(sudo virsh dumpxml "${vm_name}" | xmllint --xpath "string(//interface[descendant::source[@bridge='${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
