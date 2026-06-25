@@ -496,7 +496,38 @@ func virtualizationBundle(page *rod.Page, path string) error {
 	}
 
 	wait(5 * time.Second)
-	page.MustElement("button[name='next']").MustWaitEnabled().MustScrollIntoView().MustWaitEnabled()
+
+	logrus.Info("Looking for next button")
+	nextButton := page.MustElement("button[name='next']")
+	logrus.Info("Found next button")
+	err = saveFullPageScreenshot(page, timestampedPath(path, "next-button-found"))
+	if err != nil {
+		return err
+	}
+
+	logrus.Info("Waiting for the next button to be enabled")
+	wait(5 * time.Second)
+	nextButton.MustWaitEnabled()
+	err = saveFullPageScreenshot(page, timestampedPath(path, "next-button-enabled-1"))
+	if err != nil {
+		return err
+	}
+
+	logrus.Info("Waiting for the next button to be available in scrollable page")
+	wait(5 * time.Second)
+	nextButton.MustScrollIntoView()
+	err = saveFullPageScreenshot(page, timestampedPath(path, "next-button-scrollable"))
+	if err != nil {
+		return err
+	}
+
+	logrus.Info("Waiting for the next button to be enabled")
+	wait(5 * time.Second)
+	nextButton.MustWaitEnabled()
+	err = saveFullPageScreenshot(page, timestampedPath(path, "next-button-enabled-2"))
+	if err != nil {
+		return err
+	}
 
 	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {

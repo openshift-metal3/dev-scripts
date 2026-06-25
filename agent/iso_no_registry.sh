@@ -122,12 +122,10 @@ function cleanup_diskspace_agent_iso_noregistry() {
   for dir in "$asset_dir"/[0-9]*.[0-9]*.*; do
     [ -d "$dir" ] || continue
 
-    echo "Cleaning up directory: $dir"
-
     # Delete all files and symlinks except the agent-ove ISO
-    sudo find "$dir" \( -type f -o -type l \) ! -name "agent-ove.${ARCH}.iso" -print -delete
+    sudo find "$dir" \( -type f -o -type l \) ! -name "agent-ove.${ARCH}.iso" -delete
 
     # Remove any empty directories left behind
-    sudo find "$dir" -type d -empty -print -delete
+    sudo find "$dir" -type d -empty -delete
   done
 }
