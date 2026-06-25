@@ -107,6 +107,68 @@ function create_agent_iso_no_registry() {
 
   rm -rf "${asset_dir}"/src
   popd
+
+  inject_iri_manifest_into_ove_iso
+}
+
+function inject_iri_manifest_into_ove_iso() {
+  local agent_iso_no_registry
+  agent_iso_no_registry=$(get_agent_iso_no_registry)
+
+  local release_version
+  release_version=$(oc adm release info --registry-config "$PULL_SECRET_FILE" "$OPENSHIFT_RELEASE_IMAGE" -o json | jq -r '.metadata.version')
+
+  local version_for_tag="${release_version}"
+  if [[ "${OPENSHIFT_RELEASE_TYPE}" != "ci" ]] && [[ "${OPENSHIFT_RELEASE_TYPE}" != "nightly" ]]; then
+    version_for_tag="${release_version}-x86_64"
+  fi
+
+  local ocp_bundle_str="ocp-release-bundle-${version_for_tag}"
+  if [[ ${#ocp_bundle_str} -gt 64 ]]; then
+    ocp_bundle_str="${ocp_bundle_str:0:64}"
+  fi
+
+  local manifest_content
+  manifest_content=$(cat <<EOF
+apiVersion: machineconfiguration.openshift.io/v1
+kind: InternalReleaseImage
+metadata:
+  name: cluster
+spec:
+  releases:
+  - name: ${ocp_bundle_str}
+EOF
+)
+
+  local manifest_b64
+  manifest_b64=$(echo "${manifest_content}" | base64 -w 0)
+
+  local ign_temp_path
+  ign_temp_path="$(mktemp --directory)"
+
+  echo "Extracting OVE ISO ignition to inject IRI manifest..."
+  podman run --pull=newer --privileged --rm \
+    -v /run/udev:/run/udev \
+    -v "${agent_iso_no_registry}:/data/agent.iso" \
+    -w /data \
+    quay.io/coreos/coreos-installer:release iso ignition show agent.iso \
+    > "${ign_temp_path}/iso.ign"
+
+  jq --arg path "/etc/assisted/extra-manifests/internalreleaseimage.yaml" \
+     --arg source "data:text/plain;charset=utf-8;base64,${manifest_b64}" \
+     '.storage.files = [.storage.files[] | select(.path != $path)] + [{"path": $path, "mode": 420, "overwrite": true, "contents": {"source": $source}}]' \
+     < "${ign_temp_path}/iso.ign" > "${ign_temp_path}/modified.ign"
+
+  echo "Embedding modified ignition with IRI manifest..."
+  podman run --privileged --rm \
+    -v /run/udev:/run/udev \
+    -v "${agent_iso_no_registry}:/data/agent.iso" \
+    -v "${ign_temp_path}/modified.ign:/data/modified.ign" \
+    -w /data \
+    quay.io/coreos/coreos-installer:release iso ignition embed -f -i modified.ign agent.iso
+
+  rm -rf "${ign_temp_path}"
+  echo "IRI manifest injected into OVE ISO"
 }
 
 # Deletes all files and directories under asset_dir
