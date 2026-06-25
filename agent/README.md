@@ -34,7 +34,8 @@ Then run the `agent` target:
 | 02 | configure | Setup the network and VMs as per the specified configuration | no |
 | 03 | agent_build_installer | Builds (or extract from the release payload) the openshift installer | yes |
 | 04 | agent_configure | Further network customization and agent manifests creation (stored in `OCP_DIR`)  | yes |
-| 05 | agent_create_cluster | Generates the agent image using openshift installer and boots the VM | yes |
+| 05b | agent_build_ove_iso | Builds the OVE ISO for ISO_NO_REGISTRY mode (no-op for other modes) | yes |
+| 06 | agent_create_cluster | Generates the agent image using openshift installer and boots the VM | yes |
 | - | agent_cleanup | Deletes the agent manifests and images | yes | 
 
 # Agent artifacts

@@ -26,6 +26,7 @@ dev-scripts/
 │   ├── 03_agent_build_installer.sh
 │   ├── 04_agent_prepare_release.sh
 │   ├── 05_agent_configure.sh
+│   ├── 05b_agent_build_ove_iso.sh
 │   ├── 06_agent_create_cluster.sh
 │   ├── 07_agent_add_extraworker_nodes.sh
 │   └── docs/                        # Agent-specific documentation
@@ -341,6 +342,7 @@ cd agent/
 ./03_agent_build_installer.sh
 ./04_agent_prepare_release.sh
 ./05_agent_configure.sh
+./05b_agent_build_ove_iso.sh
 ./06_agent_create_cluster.sh
 ```
 

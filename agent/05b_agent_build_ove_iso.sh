@@ -1,16 +1,25 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 
-# OVE (OpenShift Virtualization Edition) ISO building utilities
-# Functions for creating agent ISOs without embedded registry
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+ARCH=$(uname -m)
 
-# Check if using a custom registry (not upstream quay.io or CI registry)
+LOGDIR="${SCRIPTDIR}/logs"
+source "$SCRIPTDIR/logging.sh"
+source "$SCRIPTDIR/common.sh"
+source "$SCRIPTDIR/network.sh"
+source "$SCRIPTDIR/utils.sh"
+source "$SCRIPTDIR/validation.sh"
+source "$SCRIPTDIR/release_info.sh"
+source "$SCRIPTDIR/agent/common.sh"
+
+early_deploy_validation
+
 function is_custom_registry() {
   [[ ! "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" =~ quay\.io ]] && \
   [[ ! "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" =~ registry\.ci\.openshift\.org ]]
 }
 
-# Determine release image URL based on mirror configuration
 function get_release_image_url() {
   if [[ "${MIRROR_IMAGES}" == "true" ]] && [[ -n "$(get_repo_overrides)" ]]; then
     echo "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}"
@@ -19,7 +28,6 @@ function get_release_image_url() {
   fi
 }
 
-# Build OVE ISO using script method
 function build_ove_iso_script() {
   local asset_dir=$1
   local release_image_url=$2
@@ -38,31 +46,25 @@ function build_ove_iso_script() {
     ${registry_cert_arg}
 }
 
-# Build OVE ISO using container method
 function build_ove_iso_container() {
   local asset_dir=$1
   local release_image_url=$2
 
-  # Build ISO in container
   make build-ove-iso-container \
     PULL_SECRET_FILE="${PULL_SECRET_FILE}" \
     RELEASE_IMAGE_URL="${release_image_url}" \
     ARCH="${ARCH}"
 
-  # Extract ISO from container
   ./hack/iso-from-container.sh
 
-  # Move to asset directory
   local iso_name="agent-ove.${ARCH}.iso"
   echo "Moving ${iso_name} to ${asset_dir}"
   mv "./output-iso/${iso_name}" "${asset_dir}"
 }
 
-# Create agent ISO without registry (OVE ISO)
 function create_agent_iso_no_registry() {
   local asset_dir=${1}
 
-  # Update release_info.json as its needed by CI tests
   save_release_info "${OPENSHIFT_RELEASE_IMAGE}" "${OCP_DIR}"
 
   local src_dir
@@ -79,12 +81,10 @@ function create_agent_iso_no_registry() {
   pushd .
   cd "${src_dir}"
 
-  # Determine release image URL
   local release_image_url
   release_image_url=$(get_release_image_url)
   echo "build_ove_iso will use release image ${release_image_url}"
 
-  # Prepare mirror and certificate arguments for script build method
   local mirror_path_arg=""
   local registry_cert_arg=""
 
@@ -92,13 +92,11 @@ function create_agent_iso_no_registry() {
     echo "Using pre-mirrored images from ${REGISTRY_DIR}"
     mirror_path_arg="--mirror-path ${REGISTRY_DIR}"
 
-    # Add registry certificate if using custom registry
     if is_custom_registry && [[ -f "${REGISTRY_DIR}/certs/${REGISTRY_CRT}" ]]; then
       registry_cert_arg="--registry-cert ${REGISTRY_DIR}/certs/${REGISTRY_CRT}"
     fi
   fi
 
-  # Build OVE ISO using selected method
   if [[ "${AGENT_ISO_NO_REGISTRY_BUILD_METHOD}" == "script" ]]; then
     build_ove_iso_script "${asset_dir}" "${release_image_url}" "${mirror_path_arg}" "${registry_cert_arg}"
   else
@@ -109,25 +107,58 @@ function create_agent_iso_no_registry() {
   popd
 }
 
-# Deletes all files and directories under asset_dir
-# example, ocp/ostest/iso_builder/4.19.* 
-# except the final generated ISO file (agent-ove.${ARCH}.iso),
-# to free up disk space while preserving the built artifact.
-# Note: This optional cleanup is relevant only when the
-# AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is set as as true, 
-function cleanup_diskspace_agent_iso_noregistry() {
- local asset_dir=${1%/}  # Remove trailing slash if present
+function assert_agent_no_registry_iso_size(){
+  agent_iso_no_registry=$(get_agent_iso_no_registry)
+  iso_size=$(stat -c%s "$agent_iso_no_registry")
 
-  # Iterate over all versioned directories
+  iso_size_limit=$((AGENT_OVE_ISO_SIZE * 1024 * 1024 * 1024))
+
+  if (( iso_size > iso_size_limit )); then
+    echo "Error: OVE ISO size of $agent_iso_no_registry is ${iso_size}, which exceeds the ${AGENT_OVE_ISO_SIZE}GB limit."
+    exit 1
+  fi
+}
+
+function cleanup_diskspace_agent_iso_noregistry() {
+  local asset_dir=${1%/}
+
   for dir in "$asset_dir"/[0-9]*.[0-9]*.*; do
     [ -d "$dir" ] || continue
 
     echo "Cleaning up directory: $dir"
 
-    # Delete all files and symlinks except the agent-ove ISO
-    sudo find "$dir" \( -type f -o -type l \) ! -name "agent-ove.${ARCH}.iso" -print -delete
+    sudo find "$dir" \( -type f -o -type l \) ! -name "agent-ove.${ARCH}.iso" -delete
 
-    # Remove any empty directories left behind
-    sudo find "$dir" -type d -empty -print -delete
+    sudo find "$dir" -type d -empty -delete
   done
 }
+
+# Main
+if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]]; then
+    echo "Skipping OVE ISO build: AGENT_E2E_TEST_BOOT_MODE=${AGENT_E2E_TEST_BOOT_MODE}"
+    exit 0
+fi
+
+if agent_iso=$(get_agent_iso_no_registry 2>/dev/null); then
+    echo "OVE ISO already exists at ${agent_iso}, skipping build"
+    exit 0
+fi
+
+asset_dir=${AGENT_OVE_ISO_PATH}/iso_builder
+mkdir -p "${asset_dir}"
+
+create_agent_iso_no_registry "${asset_dir}"
+
+assert_agent_no_registry_iso_size
+
+if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
+    cleanup_diskspace_agent_iso_noregistry "${asset_dir}"
+fi
+
+if [[ "${MIRROR_IMAGES}" == "true" ]]; then
+    echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
+    sudo rm -rf "${REGISTRY_DIR}/data"
+    echo "Registry data cleanup complete"
+fi
+
+echo "OVE ISO build complete"

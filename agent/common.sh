@@ -127,3 +127,15 @@ function getAgentISOBuilderImage() {
 function get_repo_overrides() {
     env | grep '_LOCAL_REPO=' | grep -o '^[^=]*' || true
 }
+
+function get_agent_iso_no_registry() {
+    local search_dir=${AGENT_OVE_ISO_PATH}
+    local iso_name="agent-ove.${ARCH}.iso"
+    local agent_iso_no_registry
+    agent_iso_no_registry=$(find "$search_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
+    if [ -z "$agent_iso_no_registry" ]; then
+      echo "Error: No agent OVE ISO found matching ${iso_name} in ${search_dir}" >&2
+      exit 1
+    fi
+    echo "${agent_iso_no_registry}"
+}
