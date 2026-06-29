@@ -614,12 +614,14 @@ function get_nodes_bmc_info() {
         sudo rm -f "$WORKING_DIR/virtualbmc/vbmc/master.pid"
         sudo podman run -d --net host --privileged --name vbmc \
              -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+             -v /var/run/libvirt:/var/run/libvirt \
              "${VBMC_IMAGE}"
       fi
 
       if ! is_running sushy-tools; then
         sudo podman run -d --net host --privileged --name sushy-tools \
              -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+             -v /var/run/libvirt:/var/run/libvirt \
              "${SUSHY_TOOLS_IMAGE}"
       fi
     fi
