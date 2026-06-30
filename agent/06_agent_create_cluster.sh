@@ -163,6 +163,100 @@ function attach_agent_iso() {
 
 }
 
+function redfish_curl() {
+    local user="$1" password="$2" url="$3"
+    shift 3
+    curl -s -u "${user}":"${password}" -k -H 'Content-Type: application/json' "$url" "$@"
+}
+
+function mount_agent_iso_baremetal() {
+    local iso_url="${BAREMETAL_ISO_SERVER}"
+    local total_nodes
+    total_nodes=$(jq '.nodes | length' "$NODES_FILE")
+
+    for (( i=0; i < total_nodes; i++ )); do
+        local address user password scheme system systemurl
+        address=$(jq -r ".nodes[$i].driver_info.address" "$NODES_FILE")
+        user=$(jq -r ".nodes[$i].driver_info.username" "$NODES_FILE")
+        password=$(jq -r ".nodes[$i].driver_info.password" "$NODES_FILE")
+        local node_name
+        node_name=$(jq -r ".nodes[$i].name" "$NODES_FILE")
+
+        if [[ ! $address =~ ^(redfish.*://)(.*)$ ]]; then
+            echo "ERROR: Unsupported BMC protocol for node $i ($address) — Redfish required"
+            exit 1
+        fi
+        scheme="https://"
+        system="${BASH_REMATCH[2]}"
+        if [[ ${BASH_REMATCH[1]} =~ http: ]]; then
+            scheme="http://"
+        fi
+        systemurl="${scheme}${system}"
+
+        local manager_id vmedia_uri cd_slot
+        manager_id=$(redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
+        vmedia_uri="${scheme}${system%%/Systems/*}${manager_id}/VirtualMedia"
+        cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[] | select(."@odata.id" | test("[Cc][Dd]|[Dd][Vv][Dd]|2")) | ."@odata.id"' | head -1)
+
+        if [[ -z "$cd_slot" ]]; then
+            cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[1]."@odata.id"')
+        fi
+
+        echo "Mounting ISO on ${node_name} via ${cd_slot}..."
+        redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}${cd_slot}/Actions/VirtualMedia.InsertMedia" \
+            -d "{\"Image\": \"${iso_url}\", \"Inserted\": true, \"WriteProtected\": true}"
+
+        local inserted
+        inserted=$(redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}${cd_slot}" | jq -r '.Inserted')
+        if [[ "$inserted" != "true" ]]; then
+            echo "WARNING: VirtualMedia reports Inserted=${inserted} for ${node_name}"
+        fi
+
+        redfish_curl "$user" "$password" "$systemurl" -X PATCH \
+            -d '{"Boot": {"BootSourceOverrideTarget": "Cd", "BootSourceOverrideEnabled": "Once"}}'
+
+        redfish_curl "$user" "$password" "$systemurl/Actions/ComputerSystem.Reset" \
+            -d '{"ResetType": "ForceRestart"}'
+
+        echo "Node ${node_name} booting from ISO"
+    done
+}
+
+function eject_agent_iso_baremetal() {
+    local total_nodes
+    total_nodes=$(jq '.nodes | length' "$NODES_FILE")
+
+    for (( i=0; i < total_nodes; i++ )); do
+        local address user password scheme system
+        address=$(jq -r ".nodes[$i].driver_info.address" "$NODES_FILE")
+        user=$(jq -r ".nodes[$i].driver_info.username" "$NODES_FILE")
+        password=$(jq -r ".nodes[$i].driver_info.password" "$NODES_FILE")
+        local node_name
+        node_name=$(jq -r ".nodes[$i].name" "$NODES_FILE")
+
+        if [[ ! $address =~ ^(redfish.*://)(.*)$ ]]; then
+            continue
+        fi
+        scheme="https://"
+        system="${BASH_REMATCH[2]}"
+        if [[ ${BASH_REMATCH[1]} =~ http: ]]; then
+            scheme="http://"
+        fi
+
+        local manager_id vmedia_uri cd_slot
+        manager_id=$(redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
+        vmedia_uri="${scheme}${system%%/Systems/*}${manager_id}/VirtualMedia"
+        cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[] | select(."@odata.id" | test("[Cc][Dd]|[Dd][Vv][Dd]|2")) | ."@odata.id"' | head -1)
+
+        if [[ -z "$cd_slot" ]]; then
+            cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[1]."@odata.id"')
+        fi
+
+        echo "Ejecting ISO from ${node_name}..."
+        redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}${cd_slot}/Actions/VirtualMedia.EjectMedia" -d '{}'
+    done
+}
+
 function attach_appliance_diskimage() {
     set_file_acl
 
@@ -305,6 +399,10 @@ function wait_for_hosts_installed() {
 }
 
 function get_node0_ip() {
+  if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+    echo "${BAREMETAL_IPS%%,*}"
+    return
+  fi
   # shellcheck disable=SC2059
   node0_name=$(printf "${MASTER_HOSTNAME_FORMAT}" 0)
   node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
@@ -617,16 +715,20 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
       fi
     fi
 
-    attach_agent_iso master "$NUM_MASTERS"
-    attach_agent_iso worker "$NUM_WORKERS"
-    attach_agent_iso arbiter "$NUM_ARBITERS"
+    if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+        mount_agent_iso_baremetal
+    else
+        attach_agent_iso master "$NUM_MASTERS"
+        attach_agent_iso worker "$NUM_WORKERS"
+        attach_agent_iso arbiter "$NUM_ARBITERS"
 
-    if [[ "${ARCH}" == "aarch64" ]]; then
-        wait_for_hosts_installed || echo "WARNING: proceeding with CDROM eject despite host status issues"
-        eject_agent_iso master "$NUM_MASTERS"
-        eject_agent_iso worker "$NUM_WORKERS"
-        eject_agent_iso arbiter "$NUM_ARBITERS"
-        echo "aarch64: CDROM media ejected from all VMs"
+        if [[ "${ARCH}" == "aarch64" ]]; then
+            wait_for_hosts_installed || echo "WARNING: proceeding with CDROM eject despite host status issues"
+            eject_agent_iso master "$NUM_MASTERS"
+            eject_agent_iso worker "$NUM_WORKERS"
+            eject_agent_iso arbiter "$NUM_ARBITERS"
+            echo "aarch64: CDROM media ejected from all VMs"
+        fi
     fi
 
     ;;
@@ -758,6 +860,10 @@ fi
 
 
 wait_for_cluster_ready
+
+if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+    eject_agent_iso_baremetal
+fi
 
 if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
   mce_complete_deployment

@@ -337,6 +337,10 @@ function set_api_and_ingress_vip() {
   if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
       get_vips
       configure_dnsmasq "${API_VIPS}" "${INGRESS_VIPS}"
+  elif [ "${NODES_PLATFORM}" == "baremetal" ] && [ -n "${BAREMETAL_API_VIP:-}" ]; then
+      API_VIPS="${BAREMETAL_API_VIP}"
+      INGRESS_VIPS="${BAREMETAL_INGRESS_VIP:-${BAREMETAL_API_VIP}}"
+      configure_dnsmasq "${API_VIPS}" "${INGRESS_VIPS}"
   else
       # Specific for users *NOT* using devscript with KVM (virsh) for deploy. (Reads: baremetal)
       if [[ -z "${EXTERNAL_SUBNET_V4}" ]]; then
