@@ -26,15 +26,14 @@ function build_ove_iso_script() {
   local mirror_path_arg=$3
   local registry_cert_arg=$4
 
+  # shellcheck disable=SC2086 # mirror_path_arg and registry_cert_arg intentionally unquoted for word splitting
   ./hack/build-ove-image.sh \
     --pull-secret-file "${PULL_SECRET_FILE}" \
     --release-image-url "${release_image_url}" \
     --ssh-key-file "${SSH_KEY_FILE}" \
     ${APPLIANCE_IMAGE:+--appliance-image "${APPLIANCE_IMAGE}"} \
     --dir "${asset_dir}" \
-    # shellckeck disable=SC2086 # build-ove-image.sh doesn't handle empty args
     ${mirror_path_arg} \
-    # shellckeck disable=SC2086 # build-ove-image.sh doesn't handle empty args
     ${registry_cert_arg}
 }
 

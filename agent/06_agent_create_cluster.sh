@@ -130,7 +130,7 @@ function get_agent_iso() {
 function get_agent_iso_no_registry() {
     local base_dir=$SCRIPTDIR/$OCP_DIR
     local iso_name="agent-ove.${ARCH}.iso"
-    local agent_iso_no_registry=$
+    local agent_iso_no_registry
     agent_iso_no_registry=$(find "$base_dir" -type f -name "$iso_name" 2>/dev/null | head -n 1)
     if [ -z "$agent_iso_no_registry" ]; then
       echo "Error: No agent OVE ISO found matching ${iso_name} in ${base_dir}" >&2
