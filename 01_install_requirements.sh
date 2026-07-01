@@ -116,8 +116,16 @@ case $DISTRO in
     sudo ln -s /usr/bin/python3 /usr/bin/python || true
     PYTHON_DEVEL="python3-devel"
     ;;
+  "rhel10"|"centos10")
+    sudo dnf -y install python3-pip
+    if sudo subscription-manager identity > /dev/null 2>&1; then
+      sudo subscription-manager repos --enable "codeready-builder-for-rhel-10-$(arch)-rpms" || true
+    fi
+    sudo ln -s /usr/bin/python3 /usr/bin/python || true
+    PYTHON_DEVEL="python3-devel"
+    ;;
   *)
-    echo -n "CentOS 9 or RHEL 9 required (el8 is no longer supported due to glibc requirements)"
+    echo -n "CentOS 9+, RHEL 9+, or compatible required (el8 is no longer supported due to glibc requirements)"
     exit 1
     ;;
 esac
