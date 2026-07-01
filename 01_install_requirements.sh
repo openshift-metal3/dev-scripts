@@ -33,6 +33,14 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
       "${GO_DEFAULTS}"
   fi
 
+  # RHEL 10: genisoimage replaced by xorriso (provides mkisofs),
+  # python3-bcrypt not in base repos (soft dep of passlib, not required).
+  if [[ "${DISTRO}" =~ ^(rhel10|centos10) ]]; then
+    PKG_DEFAULTS="vm-setup/roles/packages_installation/defaults/main.yml"
+    sed -i '/^      - genisoimage$/d' "${PKG_DEFAULTS}"
+    sed -i '/^      - python3-bcrypt$/d' "${PKG_DEFAULTS}"
+  fi
+
   popd
 fi
 
