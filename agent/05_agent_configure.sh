@@ -688,6 +688,10 @@ write_pull_secret
 sudo yum install -y nmstate
 
 if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+    # When 02_configure_host.sh is skipped (no libvirt), the NM dnsmasq
+    # plugin hasn't been activated. Enable it so configure_dnsmasq entries
+    # actually resolve.
+    switch_to_internal_dns
     get_baremetal_ips_and_macs
 else
     get_static_ips_and_macs
