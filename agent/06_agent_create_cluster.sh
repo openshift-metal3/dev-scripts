@@ -175,7 +175,7 @@ function mount_agent_iso_baremetal() {
     total_nodes=$(jq '.nodes | length' "$NODES_FILE")
 
     for (( i=0; i < total_nodes; i++ )); do
-        local address user password scheme system systemurl
+        local address user password scheme system systemurl bmc_base
         address=$(jq -r ".nodes[$i].driver_info.address" "$NODES_FILE")
         user=$(jq -r ".nodes[$i].driver_info.username" "$NODES_FILE")
         password=$(jq -r ".nodes[$i].driver_info.password" "$NODES_FILE")
@@ -192,10 +192,11 @@ function mount_agent_iso_baremetal() {
             scheme="http://"
         fi
         systemurl="${scheme}${system}"
+        bmc_base="${scheme}${system%%/*}"
 
         local manager_id vmedia_uri cd_slot
-        manager_id=$(redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
-        vmedia_uri="${scheme}${system%%/Systems/*}${manager_id}/VirtualMedia"
+        manager_id=$(redfish_curl "$user" "$password" "${bmc_base}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
+        vmedia_uri="${bmc_base}${manager_id}/VirtualMedia"
         cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[] | select(."@odata.id" | test("[Cc][Dd]|[Dd][Vv][Dd]|2")) | ."@odata.id"' | head -1)
 
         if [[ -z "$cd_slot" ]]; then
@@ -203,11 +204,11 @@ function mount_agent_iso_baremetal() {
         fi
 
         echo "Mounting ISO on ${node_name} via ${cd_slot}..."
-        redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}${cd_slot}/Actions/VirtualMedia.InsertMedia" \
+        redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.InsertMedia" \
             -d "{\"Image\": \"${iso_url}\", \"Inserted\": true, \"WriteProtected\": true}"
 
         local inserted
-        inserted=$(redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}${cd_slot}" | jq -r '.Inserted')
+        inserted=$(redfish_curl "$user" "$password" "${bmc_base}${cd_slot}" | jq -r '.Inserted')
         if [[ "$inserted" != "true" ]]; then
             echo "WARNING: VirtualMedia reports Inserted=${inserted} for ${node_name}"
         fi
@@ -227,7 +228,7 @@ function eject_agent_iso_baremetal() {
     total_nodes=$(jq '.nodes | length' "$NODES_FILE")
 
     for (( i=0; i < total_nodes; i++ )); do
-        local address user password scheme system
+        local address user password scheme system bmc_base
         address=$(jq -r ".nodes[$i].driver_info.address" "$NODES_FILE")
         user=$(jq -r ".nodes[$i].driver_info.username" "$NODES_FILE")
         password=$(jq -r ".nodes[$i].driver_info.password" "$NODES_FILE")
@@ -242,10 +243,11 @@ function eject_agent_iso_baremetal() {
         if [[ ${BASH_REMATCH[1]} =~ http: ]]; then
             scheme="http://"
         fi
+        bmc_base="${scheme}${system%%/*}"
 
         local manager_id vmedia_uri cd_slot
-        manager_id=$(redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
-        vmedia_uri="${scheme}${system%%/Systems/*}${manager_id}/VirtualMedia"
+        manager_id=$(redfish_curl "$user" "$password" "${bmc_base}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
+        vmedia_uri="${bmc_base}${manager_id}/VirtualMedia"
         cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[] | select(."@odata.id" | test("[Cc][Dd]|[Dd][Vv][Dd]|2")) | ."@odata.id"' | head -1)
 
         if [[ -z "$cd_slot" ]]; then
@@ -253,7 +255,7 @@ function eject_agent_iso_baremetal() {
         fi
 
         echo "Ejecting ISO from ${node_name}..."
-        redfish_curl "$user" "$password" "${scheme}${system%%/Systems/*}${cd_slot}/Actions/VirtualMedia.EjectMedia" -d '{}'
+        redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.EjectMedia" -d '{}'
     done
 }
 
