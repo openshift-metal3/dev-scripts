@@ -27,6 +27,23 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
 
 # TODO: remove once Python fixed OpenSSL regression
   sed -i '/name: "{{ packages.centos.common.packages }}"/a\      exclude: "openssl*"' vm-setup/roles/packages_installation/tasks/main.yml
+
+  # Go tarball defaults hardcode linux-amd64; use GOARCH passed as extra var.
+  # Upstream fix: https://github.com/metal3-io/metal3-dev-env/pull/1694
+  GO_DEFAULTS="vm-setup/roles/packages_installation/defaults/main.yml"
+  if grep -q 'linux-amd64' "${GO_DEFAULTS}"; then
+    sed -i 's/go_tarball: "go{{ go_version }}.linux-amd64.tar.gz"/go_tarball: "go{{ go_version }}.linux-{{ GOARCH | default('\''amd64'\'') }}.tar.gz"/' \
+      "${GO_DEFAULTS}"
+  fi
+
+  # RHEL 10: genisoimage replaced by xorriso (provides mkisofs),
+  # python3-bcrypt not in base repos (soft dep of passlib, not required).
+  if [[ "${DISTRO}" =~ ^(rhel10|centos10) ]]; then
+    PKG_DEFAULTS="vm-setup/roles/packages_installation/defaults/main.yml"
+    sed -i '/^      - genisoimage$/d' "${PKG_DEFAULTS}"
+    sed -i '/^      - python3-bcrypt$/d' "${PKG_DEFAULTS}"
+  fi
+
   popd
 fi
 
