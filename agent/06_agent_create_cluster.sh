@@ -203,6 +203,15 @@ function mount_agent_iso_baremetal() {
             cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[1]."@odata.id"')
         fi
 
+        local current_image
+        current_image=$(redfish_curl "$user" "$password" "${bmc_base}${cd_slot}" | jq -r '.Inserted // false')
+        if [[ "$current_image" == "true" ]]; then
+            echo "Ejecting existing VirtualMedia from ${node_name}..."
+            redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.EjectMedia" \
+                -d '{}'
+            sleep 2
+        fi
+
         echo "Mounting ISO on ${node_name} via ${cd_slot}..."
         redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.InsertMedia" \
             -d "{\"Image\": \"${iso_url}\", \"Inserted\": true, \"WriteProtected\": true}"
@@ -718,6 +727,15 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     fi
 
     if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+        # Stage the ISO where BAREMETAL_ISO_SERVER can serve it. The ISO is
+        # generated under OCP_DIR (relative to dev-scripts), but the HTTP
+        # server root may be elsewhere (e.g. WORKING_DIR under nginx).
+        iso_file="${OCP_DIR}/agent.$(uname -m).iso"
+        if [[ -f "$iso_file" ]]; then
+            serve_dir="${WORKING_DIR}/${CLUSTER_NAME}"
+            mkdir -p "$serve_dir"
+            ln -sf "$(realpath "$iso_file")" "${serve_dir}/agent.$(uname -m).iso"
+        fi
         mount_agent_iso_baremetal
     else
         attach_agent_iso master "$NUM_MASTERS"
