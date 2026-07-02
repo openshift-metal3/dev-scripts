@@ -130,6 +130,9 @@ function configure_node() {
       AGENT_NODES_IPSV6+=("$ipv6")
     fi
     AGENT_NODES_MACS+=("$node_mac")
+    if [[ "$node_type" == "master" ]]; then
+      AGENT_MASTER_MACS+=("$node_mac")
+    fi
     if [[ ! -z "${BOND_PRIMARY_INTERFACE:-}" ]]; then
       # For a bond, a random mac is added for the 2nd interface
       AGENT_NODES_MACS+=("$(sudo virsh domiflist "${cluster_name}" | grep "${BAREMETAL_NETWORK_NAME}" | grep -v "${node_mac}" | awk '{print $5}')")
@@ -316,6 +319,8 @@ function generate_cluster_manifests() {
 
   master_hostnames=$(printf '%s,' "${AGENT_MASTER_HOSTNAMES[@]}")
   export AGENT_MASTER_HOSTNAMES_STR=${master_hostnames::-1}
+  master_macs=$(printf '%s,' "${AGENT_MASTER_MACS[@]}")
+  export AGENT_MASTER_MACS_STR=${master_macs::-1}
   master_bmc_usernames=$(printf '%s,' "${AGENT_MASTER_BMC_USERNAMES[@]}")
   export AGENT_MASTER_BMC_USERNAMES_STR=${master_bmc_usernames::-1}
   master_bmc_passwords=$(printf '%s,' "${AGENT_MASTER_BMC_PASSWORDS[@]}")
@@ -379,6 +384,9 @@ function generate_cluster_manifests() {
   if [[ ${AGENT_E2E_TEST_BOOT_MODE} == ISCSI ]]; then
     export AGENT_ROOT_DEVICE_HINTS=${ISCSI_DEVICE_NAME}
   fi
+
+  echo "DEBUG: FENCING_CREDENTIAL_IDENTIFIER=${FENCING_CREDENTIAL_IDENTIFIER:-NOT_SET}"
+  echo "DEBUG: AGENT_MASTER_MACS_STR=${AGENT_MASTER_MACS_STR:-NOT_SET}"
 
   # Create manifests
   ansible-playbook -vvv \
