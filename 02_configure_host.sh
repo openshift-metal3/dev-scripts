@@ -97,19 +97,6 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
 
     switch_to_internal_dns
 
-    sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
-    echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
-
-    if use_registry "podman"; then
-        rm -f "${REGISTRY_CREDS}"
-        sudo podman login --authfile "${REGISTRY_CREDS}" \
-            -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" \
-            "${LOCAL_REGISTRY_DNS_NAME}":"${LOCAL_REGISTRY_PORT}"
-    elif ! use_registry "quay"; then
-        echo '{}' | sudo dd of="${REGISTRY_CREDS}"
-    fi
-    sudo chown "$USER":"$USER" "${REGISTRY_CREDS}"
-
     exit 0
 fi
 
