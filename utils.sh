@@ -179,6 +179,41 @@ function prepare_manifests() {
         sed -i s/"watchAllNamespaces: false"/"watchAllNamespaces: true"/ "${assets_dir}/openshift/99_baremetal-provisioning-config.yaml"
     fi
 
+    if [[ -n "${WORKER_COREOS_STREAM:-}" ]]; then
+        # Patch worker BMH manifests to use the specified CoreOS stream.
+        # This controls which IPA (kernel/initrd/rootfs) version is used
+        # during PXE boot for worker nodes.
+        for bmh_file in "${assets_dir}"/openshift/99_openshift-cluster-api_hosts-*.yaml; do
+            if ! grep -q 'installer.openshift.io/role: control-plane' "${bmh_file}"; then
+                sed -i "s/coreos.openshift.io\/stream: .*/coreos.openshift.io\/stream: ${WORKER_COREOS_STREAM}/" "${bmh_file}"
+            fi
+        done
+        # Patch worker MachineSet hostSelector to match the new stream
+        for ms_file in "${assets_dir}"/openshift/99_openshift-cluster-api_worker-machineset-*.yaml; do
+            sed -i "s/coreos.openshift.io\/stream: .*/coreos.openshift.io\/stream: ${WORKER_COREOS_STREAM}/" "${ms_file}"
+        done
+        # Set the worker MachineConfigPool to use the specified stream for
+        # the on-disk OS. Requires the OSStreams feature gate (TechPreviewNoUpgrade).
+        cat > "${assets_dir}/openshift/99_worker-osimagestream.yaml" <<EOF
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfigPool
+metadata:
+  labels:
+    machineconfiguration.openshift.io/mco-built-in: ""
+    pools.operator.machineconfiguration.openshift.io/worker: ""
+  name: worker
+spec:
+  machineConfigSelector:
+    matchLabels:
+      machineconfiguration.openshift.io/role: worker
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/worker: ""
+  osImageStream:
+    name: ${WORKER_COREOS_STREAM}
+EOF
+    fi
+
     if override_openshift_sdn_deprecation; then
       # We had to put `networkType: OVNKubernetes` in the install-config to make the
       # installer happy, so fix that now.
