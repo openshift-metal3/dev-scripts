@@ -1,0 +1,82 @@
+# IP stack configuration
+# Choices: v4, v6, v4v6, v6v4
+devscripts_ip_stack: v6
+devscripts_host_ip_stack: "{{ devscripts_ip_stack }}"
+
+# Provisioning network profile: Managed or Disabled
+devscripts_provisioning_network_profile: Managed
+
+# Network names (derived from cluster name by default)
+devscripts_provisioning_network_name: "{{ devscripts_cluster_name }}pr"
+devscripts_baremetal_network_name: "{{ devscripts_cluster_name }}bm"
+
+# Provisioning network CIDR — defaults depend on host_ip_stack.
+# Override explicitly or leave empty to use the ip-stack-based default.
+devscripts_provisioning_network: >-
+  {%- if devscripts_host_ip_stack in ['v4', 'v4v6'] -%}
+  172.22.0.0/24
+  {%- else -%}
+  fd00:1101::0/64
+  {%- endif -%}
+
+# External subnets — defaults depend on host_ip_stack.
+# For single-stack, the unused family is left empty.
+devscripts_external_subnet_v4: >-
+  {%- if devscripts_host_ip_stack in ['v4', 'v4v6', 'v6v4'] -%}
+  192.168.111.0/24
+  {%- else -%}
+  {%- endif -%}
+
+devscripts_external_subnet_v6: >-
+  {%- if devscripts_host_ip_stack in ['v6', 'v4v6', 'v6v4'] -%}
+  fd2e:6f44:5dd8:c956::/120
+  {%- else -%}
+  {%- endif -%}
+
+# Cluster networking — defaults depend on ip_stack.
+devscripts_cluster_subnet_v4: >-
+  {%- if devscripts_ip_stack in ['v4', 'v4v6', 'v6v4'] -%}
+  10.128.0.0/14
+  {%- else -%}
+  {%- endif -%}
+
+devscripts_cluster_subnet_v6: >-
+  {%- if devscripts_ip_stack in ['v6', 'v4v6', 'v6v4'] -%}
+  fd01::/48
+  {%- else -%}
+  {%- endif -%}
+
+devscripts_cluster_host_prefix_v4: >-
+  {%- if devscripts_ip_stack in ['v4', 'v4v6', 'v6v4'] -%}
+  23
+  {%- else -%}
+  {%- endif -%}
+
+devscripts_cluster_host_prefix_v6: >-
+  {%- if devscripts_ip_stack in ['v6', 'v4v6', 'v6v4'] -%}
+  64
+  {%- else -%}
+  {%- endif -%}
+
+devscripts_service_subnet_v4: >-
+  {%- if devscripts_ip_stack in ['v4', 'v4v6', 'v6v4'] -%}
+  172.30.0.0/16
+  {%- else -%}
+  {%- endif -%}
+
+devscripts_service_subnet_v6: >-
+  {%- if devscripts_ip_stack in ['v6', 'v4v6', 'v6v4'] -%}
+  fd02::/112
+  {%- else -%}
+  {%- endif -%}
+
+# Network type — OVNKubernetes is required for IPv6 and dual-stack.
+# For IPv4-only on OCP < 4.15, OpenShiftSDN was the default.
+devscripts_network_type: OVNKubernetes
+
+# Provisioning interface inside the cluster nodes
+devscripts_cluster_provisioning_interface: enp1s0
+
+# Proxy settings (set devscripts_installer_proxy to true to enable)
+devscripts_installer_proxy: false
+devscripts_installer_proxy_port: 8215
