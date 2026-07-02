@@ -478,7 +478,7 @@ func virtualizationBundle(page *rod.Page, path string) error {
 		logrus.Info("Looking for Single Operators button (SNO)...")
 		wait(5 * time.Second)
 
-		singleOpsButton, err := page.Timeout(10*time.Second).ElementR("button", "Single Operators")
+		singleOpsButton, err := page.Timeout(10*time.Second).ElementR("button", "[Ss]ingle [Oo]perators")
 		if err != nil {
 			return fmt.Errorf("Single Operators button not found: %v", err)
 		}
