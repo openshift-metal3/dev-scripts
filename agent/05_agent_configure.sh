@@ -197,9 +197,18 @@ function get_baremetal_ips_and_macs() {
     local total_nodes
     total_nodes=$(jq '.nodes | length' "$NODES_FILE")
 
+    local -a data_macs=()
+    if [[ -n "${BAREMETAL_MACS:-}" ]]; then
+        IFS=',' read -ra data_macs <<< "${BAREMETAL_MACS}"
+    fi
+
     for (( i=0; i < total_nodes; i++ )); do
         local mac hostname ip
-        mac=$(node_val "$i" "ports[0].address")
+        if [[ ${#data_macs[@]} -gt 0 ]]; then
+            mac="${data_macs[$i]}"
+        else
+            mac=$(node_val "$i" "ports[0].address")
+        fi
         hostname=$(node_val "$i" "name")
         ip="${ips[$i]}"
 
