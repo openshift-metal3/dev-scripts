@@ -25,8 +25,6 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
   # Patch metal3-dev-env to use Ansible 8.x on centos9/rhel9.
   sed -i '/ANSIBLE_VERSION/{ s/10\.7\.0/8.7.0/; }' lib/common.sh
 
-# TODO: remove once Python fixed OpenSSL regression
-  sed -i '/name: "{{ packages.centos.common.packages }}"/a\      exclude: "openssl*"' vm-setup/roles/packages_installation/tasks/main.yml
   popd
 fi
 
@@ -53,11 +51,6 @@ old_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
 MAX_RETRIES=5
 # Delay between attempts (in seconds)
 _YUM_RETRY_BACKOFF=15
-
-# TODO: remove once Python fixed OpenSSL regression
-sudo dnf install -y --allowerasing openssl-3.5.5-3.el9 openssl-devel-3.5.5-3.el9 openssl-libs-3.5.5-3.el9
-sudo dnf install -y python3-dnf-plugin-versionlock
-sudo dnf versionlock add openssl openssl-libs openssl-devel
 
 attempt=1
 while (( attempt <= MAX_RETRIES )); do
