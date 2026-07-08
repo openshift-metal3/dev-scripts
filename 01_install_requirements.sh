@@ -29,7 +29,7 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
 fi
 
 # Python test build
-dnf upgrade --allowerasing --nobest https://kojihub.stream.centos.org/kojifiles/work/tasks/6369/6346369/python3{,-libs}-3.9.25-8.el9.x86_64.rpm
+dnf install -y --allowerasing --nobest https://kojihub.stream.centos.org/kojifiles/work/tasks/6369/6346369/python3{,-libs,-devel}-3.9.25-8.el9.x86_64.rpm
 
 # This must be aligned with the metal3-dev-env pinned version above, see
 # https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
