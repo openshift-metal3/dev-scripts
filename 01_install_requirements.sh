@@ -52,9 +52,29 @@ MAX_RETRIES=5
 _YUM_RETRY_BACKOFF=15
 
 # TODO: remove once Python fixed OpenSSL regression
-sudo dnf install -y --allowerasing openssl-3.5.5-3.el9 openssl-devel-3.5.5-3.el9 openssl-libs-3.5.5-3.el9
-sudo dnf install -y python3-dnf-plugin-versionlock
-sudo dnf versionlock add openssl openssl-libs openssl-devel
+# Install any available openssl version below 3.5.7
+available_openssl=$(sudo dnf repoquery --refresh --showduplicates openssl 2>/dev/null | \
+    sed 's/openssl-[0-9]*://' | \
+    sed 's/\.[^.]*$//' | \
+    awk -F'-' '{
+        split($1, ver, ".")
+        if (ver[1] < 3 || (ver[1] == 3 && ver[2] < 5) || (ver[1] == 3 && ver[2] == 5 && ver[3] < 7)) {
+            print $0
+        }
+    }' | \
+    tail -1)
+
+if [ -n "$available_openssl" ]; then
+    echo "Installing openssl version $available_openssl (< 3.5.7)"
+    sudo dnf install -y --allowerasing \
+        "openssl-${available_openssl}" \
+        "openssl-devel-${available_openssl}" \
+        "openssl-libs-${available_openssl}"
+    sudo dnf install -y python3-dnf-plugin-versionlock
+    sudo dnf versionlock add openssl openssl-libs openssl-devel
+else
+    echo "Warning: No openssl version < 3.5.7 found in repositories. Skipping openssl downgrade."
+fi
 
 attempt=1
 while (( attempt <= MAX_RETRIES )); do
