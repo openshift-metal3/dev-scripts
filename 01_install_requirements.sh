@@ -51,14 +51,11 @@ MAX_RETRIES=5
 # Delay between attempts (in seconds)
 _YUM_RETRY_BACKOFF=15
 
-# TODO: remove once Python fixed OpenSSL regression
-sudo dnf install -y --allowerasing openssl-3.5.5-3.el9 openssl-devel-3.5.5-3.el9 openssl-libs-3.5.5-3.el9
-sudo dnf install -y python3-dnf-plugin-versionlock
-sudo dnf versionlock add openssl openssl-libs openssl-devel
-
 attempt=1
 while (( attempt <= MAX_RETRIES )); do
-    if sudo dnf -y upgrade --nobest; then
+    # TODO: remove --exclude once Python fixed OpenSSL regression
+    # https://github.com/python/cpython/issues/151504
+    if sudo dnf -y upgrade --nobest --exclude='openssl*'; then
         echo "System upgraded successfully."
         break
     else
