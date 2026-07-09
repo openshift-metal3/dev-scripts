@@ -86,3 +86,6 @@ sudo rm -rf /etc/exports.d/dev-scripts.exports /opt/dev-scripts/nfsshare
 
 # Remove the optional LLDP ToR switch emulation
 lldp/cleanup_lldp_tor.sh
+
+# Remove the optional top-of-rack BGP speaker
+bgp/cleanup_bgp_tor.sh || true
