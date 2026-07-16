@@ -166,11 +166,14 @@ function attach_agent_iso() {
 function redfish_curl() {
     local user="$1" password="$2" url="$3"
     shift 3
-    curl -s -u "${user}":"${password}" -k -H 'Content-Type: application/json' "$url" "$@"
+    curl -sf -u "${user}":"${password}" -k -H 'Content-Type: application/json' "$url" "$@"
 }
 
+# Mounts the agent ISO via Redfish VirtualMedia on each baremetal node.
+# Currently tested on HPE iLO; other vendors may need Ironic's boot interface
+# for vendor-specific VirtualMedia quirks.
 function mount_agent_iso_baremetal() {
-    local iso_url="${BAREMETAL_ISO_SERVER}"
+    local iso_url="${AGENT_BAREMETAL_ISO_SERVER}"
     local total_nodes
     total_nodes=$(jq '.nodes | length' "$NODES_FILE")
 
@@ -194,6 +197,7 @@ function mount_agent_iso_baremetal() {
         systemurl="${scheme}${system}"
         bmc_base="${scheme}${system%%/*}"
 
+        # VirtualMedia via Managers — deprecated in Redfish spec, but required on HPE iLO.
         local manager_id vmedia_uri cd_slot
         manager_id=$(redfish_curl "$user" "$password" "${bmc_base}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
         vmedia_uri="${bmc_base}${manager_id}/VirtualMedia"
@@ -208,7 +212,7 @@ function mount_agent_iso_baremetal() {
         if [[ "$current_image" == "true" ]]; then
             echo "Ejecting existing VirtualMedia from ${node_name}..."
             redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.EjectMedia" \
-                -d '{}'
+                -d '{}' || true
             sleep 2
         fi
 
@@ -254,6 +258,7 @@ function eject_agent_iso_baremetal() {
         fi
         bmc_base="${scheme}${system%%/*}"
 
+        # VirtualMedia via Managers — see mount_agent_iso_baremetal().
         local manager_id vmedia_uri cd_slot
         manager_id=$(redfish_curl "$user" "$password" "${bmc_base}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
         vmedia_uri="${bmc_base}${manager_id}/VirtualMedia"
@@ -264,7 +269,7 @@ function eject_agent_iso_baremetal() {
         fi
 
         echo "Ejecting ISO from ${node_name}..."
-        redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.EjectMedia" -d '{}'
+        redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.EjectMedia" -d '{}' || true
     done
 }
 
@@ -411,7 +416,7 @@ function wait_for_hosts_installed() {
 
 function get_node0_ip() {
   if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
-    echo "${BAREMETAL_IPS%%,*}"
+    echo "${AGENT_BAREMETAL_IPS%%,*}"
     return
   fi
   # shellcheck disable=SC2059
@@ -727,7 +732,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     fi
 
     if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
-        # Stage the ISO where BAREMETAL_ISO_SERVER can serve it. The ISO is
+        # Stage the ISO where AGENT_BAREMETAL_ISO_SERVER can serve it. The ISO is
         # generated under OCP_DIR (relative to dev-scripts), but the HTTP
         # server root may be elsewhere (e.g. WORKING_DIR under nginx).
         iso_file="${OCP_DIR}/agent.$(uname -m).iso"

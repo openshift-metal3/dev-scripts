@@ -101,7 +101,7 @@ fi
 
 function getRendezvousIP() {
     if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
-        echo "${BAREMETAL_IPS%%,*}"
+        echo "${AGENT_BAREMETAL_IPS%%,*}"
         return
     fi
     node_zero_mac_address=$(sudo virsh domiflist "${AGENT_RENDEZVOUS_NODE_HOSTNAME}" | awk '$3 == "ostestbm" {print $5}')

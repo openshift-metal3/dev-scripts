@@ -193,13 +193,13 @@ function get_baremetal_ips_and_macs() {
     AGENT_EXTRA_WORKERS_MACS=()
     AGENT_EXTRA_WORKERS_HOSTNAMES=()
 
-    IFS=',' read -ra ips <<< "${BAREMETAL_IPS}"
+    IFS=',' read -ra ips <<< "${AGENT_BAREMETAL_IPS}"
     local total_nodes
     total_nodes=$(jq '.nodes | length' "$NODES_FILE")
 
     local -a data_macs=()
-    if [[ -n "${BAREMETAL_MACS:-}" ]]; then
-        IFS=',' read -ra data_macs <<< "${BAREMETAL_MACS}"
+    if [[ -n "${AGENT_BAREMETAL_MACS:-}" ]]; then
+        IFS=',' read -ra data_macs <<< "${AGENT_BAREMETAL_MACS}"
     fi
 
     for (( i=0; i < total_nodes; i++ )); do
