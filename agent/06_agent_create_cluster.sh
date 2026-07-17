@@ -296,7 +296,9 @@ function enable_assisted_service_ui() {
 
 function wait_for_cluster_ready() {
   local openshift_install
-  openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+  openshift_install="$(realpath "${OPENSHIFT_INSTALLER:-${OCP_DIR}/openshift-install}")"
+
+
   local dir="${OCP_DIR}"
   if [[ "${AGENT_USE_APPLIANCE_MODEL}" == true || "${AGENT_E2E_TEST_BOOT_MODE}" == "DISKIMAGE" ]]; then
      dir="${config_image_dir}"
@@ -522,7 +524,9 @@ function put_operator_file() {
 if [[ "${AGENT_E2E_TEST_BOOT_MODE}" != "ISO_NO_REGISTRY" ]]; then
   asset_dir="${1:-${OCP_DIR}}"
   config_image_dir="${1:-${OCP_DIR}/configimage}"
-  openshift_install="$(realpath "${OCP_DIR}/openshift-install")"
+  openshift_install="$(realpath "${OPENSHIFT_INSTALLER:-${OCP_DIR}/openshift-install}")"
+
+
 fi
 
 case "${AGENT_E2E_TEST_BOOT_MODE}" in
