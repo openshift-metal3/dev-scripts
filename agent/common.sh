@@ -120,7 +120,7 @@ function getAgentISOBuilderImage() {
     full_ocp_version=$(skopeo inspect --authfile "$PULL_SECRET_FILE" "docker://$OPENSHIFT_RELEASE_IMAGE" | jq -r '.Labels["io.openshift.release"]')
     major_minor_patch_version=$(echo "\"$full_ocp_version\"" | jq -r 'split("-")[0]')
     major_minor_version=$(echo "$major_minor_patch_version" | cut -d'.' -f1,2 )
-    agent_iso_builder_image="registry.ci.openshift.org/ocp/${major_minor_version}:agent-iso-builder"
+    agent_iso_builder_image="quay-proxy.ci.openshift.org/openshift/ci:ocp_${major_minor_version}_agent-iso-builder"
     echo "${agent_iso_builder_image}"
 }
 
