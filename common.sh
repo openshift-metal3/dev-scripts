@@ -708,3 +708,8 @@ if [ "${OPENSHIFT_CI}" == true ] ; then
 fi
 
 export ENABLE_CAPI_E2E=${ENABLE_CAPI_E2E:-}
+
+# Optional LLDP top-of-rack switch emulation on the libvirt tap devices
+# (see config_example.sh)
+export ENABLE_LLDP_TOR=${ENABLE_LLDP_TOR:-}
+export LLDP_TOR_SYSTEM_NAME=${LLDP_TOR_SYSTEM_NAME:-lldp-switch}
