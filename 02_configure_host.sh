@@ -512,3 +512,8 @@ if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
     sudo systemctl start nfs-server
     sudo exportfs -a
 fi
+
+# Optionally emulate a top-of-rack LLDP switch towards the cluster VMs
+if [[ -n "${ENABLE_LLDP_TOR:-}" ]]; then
+    lldp/configure_lldp_tor.sh
+fi

@@ -83,3 +83,6 @@ sudo pkill -f oc.*proxy
 
 # Remove image-reg nfsshare
 sudo rm -rf /etc/exports.d/dev-scripts.exports /opt/dev-scripts/nfsshare
+
+# Remove the optional LLDP ToR switch emulation
+lldp/cleanup_lldp_tor.sh

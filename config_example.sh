@@ -1056,3 +1056,16 @@ set -x
 # a complete isolation.
 #
 # export AGENT_ISOLATED_NETWORK=""
+
+# ENABLE_LLDP_TOR -
+# Emulate a top-of-rack LLDP switch on the hypervisor: run lldpd bound to
+# the libvirt tap devices (vnet*) so cluster nodes receive LLDPDUs inbound
+# on their NICs, exactly like from a real switch port. Consumed e.g. by the
+# kubernetes-nmstate LLDP e2e tests, which expect a neighbor with system
+# name "lldp-switch" on the primary NIC.
+# Default is unset.
+#
+#export ENABLE_LLDP_TOR=true
+#
+# Advertised LLDP system name (default lldp-switch):
+#export LLDP_TOR_SYSTEM_NAME=lldp-switch
