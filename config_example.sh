@@ -222,6 +222,25 @@ set -x
 #export METALLB_IMAGE_BASE=
 #export METALLB_IMAGE_TAG=
 
+# ENABLE_BGP_TOR -
+# Deploy an FRR container on the host network acting as a top-of-rack BGP
+# speaker for the baremetal network. Cluster nodes can peer with it (e.g.
+# BGP-based VIP management, enhancement 1982) via dynamic neighbors; routes
+# learned from the cluster are installed on the host, so VIPs advertised
+# over BGP are reachable from the hypervisor.
+# The speaker listens on the whole external subnet; set the ASNs to match
+# your cluster's install-config platform.baremetal.bgpVIPConfig.
+# Default is unset.
+#
+#export ENABLE_BGP_TOR=true
+#
+# ASN of the ToR speaker (default 64513) and expected cluster ASN (64512):
+#export BGP_TOR_ASN=64513
+#export BGP_CLUSTER_ASN=64512
+#
+# FRR container image:
+#export BGP_TOR_IMAGE=quay.io/frrouting/frr:9.1.0
+
 # PERSISTENT_IMAGEREG
 # Default: false
 # Enables dev-scripts to setup and use nfs on the host as persistent storage

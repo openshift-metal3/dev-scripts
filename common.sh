@@ -713,3 +713,10 @@ export ENABLE_CAPI_E2E=${ENABLE_CAPI_E2E:-}
 # (see config_example.sh)
 export ENABLE_LLDP_TOR=${ENABLE_LLDP_TOR:-}
 export LLDP_TOR_SYSTEM_NAME=${LLDP_TOR_SYSTEM_NAME:-lldp-switch}
+
+# Optional top-of-rack BGP speaker on the baremetal network
+# (see config_example.sh)
+export ENABLE_BGP_TOR=${ENABLE_BGP_TOR:-}
+export BGP_TOR_ASN=${BGP_TOR_ASN:-64513}
+export BGP_CLUSTER_ASN=${BGP_CLUSTER_ASN:-64512}
+export BGP_TOR_IMAGE=${BGP_TOR_IMAGE:-quay.io/frrouting/frr:9.1.0}

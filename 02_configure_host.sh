@@ -517,3 +517,8 @@ fi
 if [[ -n "${ENABLE_LLDP_TOR:-}" ]]; then
     lldp/configure_lldp_tor.sh
 fi
+
+# Optionally run a top-of-rack BGP speaker on the baremetal network
+if [[ -n "${ENABLE_BGP_TOR:-}" ]]; then
+    bgp/configure_bgp_tor.sh
+fi
