@@ -411,6 +411,9 @@ if [[ -z ${AGENT_E2E_TEST_SCENARIO:-} ]] && [[ ${NUM_ARBITERS} -eq 0 ]] && [[ ${
   export ENABLE_TWO_NODE_FENCING="true"
 fi
 
+# Controls whether fencing credentials use "hostname" or "macAddress" to identify nodes
+export FENCING_CREDENTIAL_IDENTIFIER=${FENCING_CREDENTIAL_IDENTIFIER:-hostname}
+
 # Only redfish BMC driver is supported for two node fencing
 if [[ "${BMC_DRIVER}" != "redfish" ]] && [[ "${ENABLE_TWO_NODE_FENCING:-}" == "true" ]]; then
   printf "Only redfish BMC driver is supported for Two Node Fencing deployments: BMC_DRIVER=%s, ENABLE_TWO_NODE_FENCING=%s" "${BMC_DRIVER}" "${ENABLE_TWO_NODE_FENCING}"
