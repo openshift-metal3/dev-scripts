@@ -988,7 +988,8 @@ function add_local_certificate_as_trusted() {
 
 function verify_pull_secret() {
   # Do some PULL_SECRET sanity checking
-  if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.ci.openshift.org"* ]]; then
+  if [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"registry.ci.openshift.org"* ]] || \
+     [[ "${OPENSHIFT_RELEASE_IMAGE}" == *"quay-proxy.ci.openshift.org"* ]]; then
       if [[ ${#CI_TOKEN} = 0 ]]; then
           error "Please login to https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ and copy the token from the login command from the menu in the top right corner to set CI_TOKEN."
           exit 1
@@ -1016,14 +1017,18 @@ function write_pull_secret() {
 
     verify_pull_secret
 
-    # Get a current pull secret for registry.ci.openshift.org using the token
+    # Get a current pull secret for the CI registry using the token
     tmpkubeconfig=$(mktemp --tmpdir "kubeconfig--XXXXXXXXXX")
     _tmpfiles="$_tmpfiles $tmpkubeconfig"
     oc login "https://${CI_SERVER}:6443" --kubeconfig="$tmpkubeconfig" --token="${CI_TOKEN}"
     tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
     echo '{}' > "$tmppullsecret"
     _tmpfiles="$_tmpfiles $tmppullsecret"
-    oc registry login --kubeconfig="$tmpkubeconfig" --to="$tmppullsecret"
+    oc --kubeconfig="$tmpkubeconfig" whoami -t | \
+        podman login "${CI_REGISTRY}" \
+            --username "$(oc --kubeconfig="$tmpkubeconfig" whoami)" \
+            --password-stdin \
+            --authfile "$tmppullsecret"
 
     # Combine the personal pull secret with the ones for the CI
     # registry and the local registry credentials.
