@@ -638,6 +638,16 @@ set -x
 #export WORKER_DISK=60
 #export WORKER_VCPU=4
 
+# WORKER_COREOS_STREAM -
+# Override the CoreOS stream label on worker BareMetalHost manifests and the
+# worker MachineSet hostSelector. This controls which IPA (kernel/initrd/rootfs)
+# is used during PXE boot for worker nodes. For example, set to "rhel-10" to
+# boot workers with the RHEL 10 IPA while masters remain on the default stream.
+# Requires matching stream-prefixed images in the machine-os-images container.
+# Default: unset (use the installer's default, typically "rhel-9").
+#
+#export WORKER_COREOS_STREAM=rhel-10
+
 # NUM_EXTRA_WORKERS - Indicate number of extra VMs to create but not deploy.
 # Default: 0
 #
