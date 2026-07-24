@@ -499,6 +499,38 @@ set -x
 #
 #export NODES_PLATFORM=baremetal
 
+# --- Baremetal platform variables ---
+# BAREMETAL_API_VIP and BAREMETAL_INGRESS_VIP are platform-level (used by
+# both IPI and ABI). AGENT_BAREMETAL_* vars are ABI-specific.
+
+# BAREMETAL_API_VIP -
+# API virtual IP for dnsmasq DNS on the provisioning host.
+# Required when NODES_PLATFORM=baremetal.
+#
+#export BAREMETAL_API_VIP="10.1.155.100"
+
+# BAREMETAL_INGRESS_VIP -
+# Ingress virtual IP. Defaults to BAREMETAL_API_VIP if unset
+# (common for 2-node TNF where API and ingress share a VIP).
+#
+#export BAREMETAL_INGRESS_VIP="10.1.155.101"
+
+# --- Baremetal ABI (Agent-Based Installation) variables ---
+# These are used when NODES_PLATFORM=baremetal with the agent installer (make agent).
+
+# AGENT_BAREMETAL_IPS -
+# Comma-separated node IPs, order matches NODES_FILE entries.
+# Required when NODES_PLATFORM=baremetal with agent installer.
+#
+#export AGENT_BAREMETAL_IPS="10.1.155.10,10.1.155.11"
+
+# AGENT_BAREMETAL_ISO_SERVER -
+# Full HTTP URL where the agent ISO is staged for Redfish VirtualMedia boot.
+# Must be an HTTP server reachable from the BMCs.
+# Required when NODES_PLATFORM=baremetal with agent installer.
+#
+#export AGENT_BAREMETAL_ISO_SERVER="http://10.1.235.49:8080/agent.x86_64.iso"
+
 # ENABLE_WORKLOAD_PARTITIONING -
 # Set to any non zero length string value to enable workload partitioning in the install config.
 #

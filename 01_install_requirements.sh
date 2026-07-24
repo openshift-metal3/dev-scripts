@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset dba726c297571cc24a5205e873ad9e66ad1c719c --hard
+  git reset 501505cdd2133d1bea93f99ca697e6cd1d42a97b --hard
 
   # Ansible 9+ requires Python 3.10+, but CentOS Stream 9 ships Python 3.9.
   # Patch metal3-dev-env to use Ansible 8.x on centos9/rhel9.
@@ -27,6 +27,7 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
 
 # TODO: remove once Python fixed OpenSSL regression
   sed -i '/name: "{{ packages.centos.common.packages }}"/a\      exclude: "openssl*"' vm-setup/roles/packages_installation/tasks/main.yml
+
   popd
 fi
 
@@ -139,8 +140,16 @@ case $DISTRO in
     sudo ln -s /usr/bin/python3 /usr/bin/python || true
     PYTHON_DEVEL="python3-devel"
     ;;
+  "rhel10"|"centos10")
+    sudo dnf -y install python3-pip
+    if sudo subscription-manager identity > /dev/null 2>&1; then
+      sudo subscription-manager repos --enable "codeready-builder-for-rhel-10-$(arch)-rpms" || true
+    fi
+    sudo ln -s /usr/bin/python3 /usr/bin/python || true
+    PYTHON_DEVEL="python3-devel"
+    ;;
   *)
-    echo -n "CentOS 9 or RHEL 9 required (el8 is no longer supported due to glibc requirements)"
+    echo -n "CentOS 9+, RHEL 9+, or compatible required (el8 is no longer supported due to glibc requirements)"
     exit 1
     ;;
 esac
