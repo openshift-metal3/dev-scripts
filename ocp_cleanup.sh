@@ -12,9 +12,9 @@ if sudo systemctl is-active fix_certs.timer; then
   sudo systemctl stop fix_certs.timer
 fi
 
-if [ -d "${OCP_DIR}" ]; then
-    "${OCP_DIR}/openshift-install" --dir "${OCP_DIR}" --log-level=debug destroy bootstrap
-    "${OCP_DIR}/openshift-install" --dir "${OCP_DIR}" --log-level=debug destroy cluster
+if [ -d ${OCP_DIR} ]; then
+    ${OPENSHIFT_INSTALLER} --dir "${OCP_DIR}" --log-level=debug destroy bootstrap
+    ${OPENSHIFT_INSTALLER} --dir "${OCP_DIR}" --log-level=debug destroy cluster
     sudo rm -rf "${OCP_DIR}"
 fi
 
