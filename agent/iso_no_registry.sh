@@ -75,17 +75,6 @@ function create_agent_iso_no_registry() {
     src_dir="${asset_dir}/src"
   fi
 
-  # Workaround: set APPLIANCE_IMAGE to use quay-proxy if not already set,
-  # since the upstream build-ove-image.sh still defaults to registry.ci.openshift.org
-  # TODO: remove once https://github.com/openshift/agent-installer-utils is updated
-  if [[ -z "${APPLIANCE_IMAGE}" ]]; then
-    local full_ocp_version major_minor_version
-    full_ocp_version=$(skopeo inspect --authfile "$PULL_SECRET_FILE" "docker://$OPENSHIFT_RELEASE_IMAGE" | jq -r '.Labels["io.openshift.release"]')
-    major_minor_version=$(echo "$full_ocp_version" | grep -oP '^\d+\.\d+')
-    export APPLIANCE_IMAGE="quay-proxy.ci.openshift.org/openshift/ci:ocp_${major_minor_version}_agent-preinstall-image-builder"
-    echo "Using APPLIANCE_IMAGE=${APPLIANCE_IMAGE}"
-  fi
-
   pushd .
   cd "${src_dir}"
 
