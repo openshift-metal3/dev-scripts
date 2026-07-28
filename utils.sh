@@ -1024,6 +1024,9 @@ function write_pull_secret() {
     tmppullsecret=$(mktemp --tmpdir "pullsecret--XXXXXXXXXX")
     echo '{}' > "$tmppullsecret"
     _tmpfiles="$_tmpfiles $tmppullsecret"
+    # Pull secret for registry.ci.openshift.org (auto-discovered from the cluster)
+    oc registry login --kubeconfig="$tmpkubeconfig" --to="$tmppullsecret"
+    # Pull secret for quay-proxy.ci.openshift.org
     oc --kubeconfig="$tmpkubeconfig" whoami -t | \
         podman login "${CI_REGISTRY}" \
             --username "$(oc --kubeconfig="$tmpkubeconfig" whoami)" \
