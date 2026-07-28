@@ -100,6 +100,10 @@ if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
 fi
 
 function getRendezvousIP() {
+    if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+        echo "${AGENT_BAREMETAL_IPS%%,*}"
+        return
+    fi
     node_zero_mac_address=$(sudo virsh domiflist "${AGENT_RENDEZVOUS_NODE_HOSTNAME}" | awk '$3 == "ostestbm" {print $5}')
     # ip neigh can return multiple addresses (IPv4, link-local IPv6, global IPv6)
     # on separate lines. Filter to a single appropriate address.

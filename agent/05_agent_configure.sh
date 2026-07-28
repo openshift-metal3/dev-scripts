@@ -182,6 +182,51 @@ function get_static_ips_and_macs() {
     fi
 }
 
+function get_baremetal_ips_and_macs() {
+    AGENT_NODES_IPS=()
+    AGENT_NODES_IPSV6=()
+    AGENT_NODES_MACS=()
+    AGENT_NODES_HOSTNAMES=()
+    AGENT_MASTER_HOSTNAMES=()
+    AGENT_EXTRA_WORKERS_IPS=()
+    AGENT_EXTRA_WORKERS_IPSV6=()
+    AGENT_EXTRA_WORKERS_MACS=()
+    AGENT_EXTRA_WORKERS_HOSTNAMES=()
+
+    IFS=',' read -ra ips <<< "${AGENT_BAREMETAL_IPS}"
+    local total_nodes
+    total_nodes=$(jq '.nodes | length' "$NODES_FILE")
+
+    local -a data_macs=()
+    if [[ -n "${AGENT_BAREMETAL_MACS:-}" ]]; then
+        IFS=',' read -ra data_macs <<< "${AGENT_BAREMETAL_MACS}"
+    fi
+
+    for (( i=0; i < total_nodes; i++ )); do
+        local mac hostname ip
+        if [[ ${#data_macs[@]} -gt 0 ]]; then
+            mac="${data_macs[$i]}"
+        else
+            mac=$(node_val "$i" "ports[0].address")
+        fi
+        hostname=$(node_val "$i" "name")
+        ip="${ips[$i]}"
+
+        add_ip_host_entry "$ip" "$hostname"
+
+        if (( i < NUM_MASTERS )); then
+            AGENT_NODES_IPS+=("$ip")
+            AGENT_NODES_MACS+=("$mac")
+            AGENT_NODES_HOSTNAMES+=("$hostname")
+            AGENT_MASTER_HOSTNAMES+=("$hostname")
+        else
+            AGENT_EXTRA_WORKERS_IPS+=("$ip")
+            AGENT_EXTRA_WORKERS_MACS+=("$mac")
+            AGENT_EXTRA_WORKERS_HOSTNAMES+=("$hostname")
+        fi
+    done
+}
+
 function generate_extra_cluster_manifests() {
 
   mkdir -p "${EXTRA_MANIFESTS_PATH}"
@@ -653,7 +698,15 @@ write_pull_secret
 # This is temporary and will go away when https://github.com/nmstate/nmstate is used
 sudo yum install -y nmstate
 
-get_static_ips_and_macs
+if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+    # When 02_configure_host.sh is skipped (no libvirt), the NM dnsmasq
+    # plugin hasn't been activated. Enable it so configure_dnsmasq entries
+    # actually resolve.
+    switch_to_internal_dns
+    get_baremetal_ips_and_macs
+else
+    get_static_ips_and_macs
+fi
 
 get_nodes_bmc_info
 
@@ -700,8 +753,15 @@ else
   # For ISO_NO_REGISTRY mode with workers, add api-int to libvirt DNS
   # Workers need to resolve api-int during bootstrap before joining the cluster
   if [[ "${NUM_MASTERS}" -gt "1" ]]; then
-   add_dns_entry "${API_VIPS%"${VIPS_SEPARATOR}"*}" "api-int"
+    if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+      add_dnsmasq_multi_entry "apiintvip" "${API_VIPS}"
+      sudo systemctl reload NetworkManager
+    else
+      add_dns_entry "${API_VIPS%"${VIPS_SEPARATOR}"*}" "api-int"
+    fi
   fi
 fi
 
-enable_isolated_baremetal_network
+if [[ "${NODES_PLATFORM}" != "baremetal" ]]; then
+    enable_isolated_baremetal_network
+fi

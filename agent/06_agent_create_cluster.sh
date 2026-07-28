@@ -163,6 +163,116 @@ function attach_agent_iso() {
 
 }
 
+function redfish_curl() {
+    local user="$1" password="$2" url="$3"
+    shift 3
+    curl -sf -u "${user}":"${password}" -k -H 'Content-Type: application/json' "$url" "$@"
+}
+
+# Mounts the agent ISO via Redfish VirtualMedia on each baremetal node.
+# Currently tested on HPE iLO; other vendors may need Ironic's boot interface
+# for vendor-specific VirtualMedia quirks.
+function mount_agent_iso_baremetal() {
+    local iso_url="${AGENT_BAREMETAL_ISO_SERVER}"
+    local total_nodes
+    total_nodes=$(jq '.nodes | length' "$NODES_FILE")
+
+    for (( i=0; i < total_nodes; i++ )); do
+        local address user password scheme system systemurl bmc_base
+        address=$(jq -r ".nodes[$i].driver_info.address" "$NODES_FILE")
+        user=$(jq -r ".nodes[$i].driver_info.username" "$NODES_FILE")
+        password=$(jq -r ".nodes[$i].driver_info.password" "$NODES_FILE")
+        local node_name
+        node_name=$(jq -r ".nodes[$i].name" "$NODES_FILE")
+
+        if [[ ! $address =~ ^(redfish.*://)(.*)$ ]]; then
+            echo "ERROR: Unsupported BMC protocol for node $i ($address) — Redfish required"
+            exit 1
+        fi
+        scheme="https://"
+        system="${BASH_REMATCH[2]}"
+        if [[ ${BASH_REMATCH[1]} =~ http: ]]; then
+            scheme="http://"
+        fi
+        systemurl="${scheme}${system}"
+        bmc_base="${scheme}${system%%/*}"
+
+        # VirtualMedia via Managers — deprecated in Redfish spec, but required on HPE iLO.
+        local manager_id vmedia_uri cd_slot
+        manager_id=$(redfish_curl "$user" "$password" "${bmc_base}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
+        vmedia_uri="${bmc_base}${manager_id}/VirtualMedia"
+        cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[] | select(."@odata.id" | test("[Cc][Dd]|[Dd][Vv][Dd]|2")) | ."@odata.id"' | head -1)
+
+        if [[ -z "$cd_slot" ]]; then
+            cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[1]."@odata.id"')
+        fi
+
+        local current_image
+        current_image=$(redfish_curl "$user" "$password" "${bmc_base}${cd_slot}" | jq -r '.Inserted // false')
+        if [[ "$current_image" == "true" ]]; then
+            echo "Ejecting existing VirtualMedia from ${node_name}..."
+            redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.EjectMedia" \
+                -d '{}' || true
+            sleep 2
+        fi
+
+        echo "Mounting ISO on ${node_name} via ${cd_slot}..."
+        redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.InsertMedia" \
+            -d "{\"Image\": \"${iso_url}\", \"Inserted\": true, \"WriteProtected\": true}"
+
+        local inserted
+        inserted=$(redfish_curl "$user" "$password" "${bmc_base}${cd_slot}" | jq -r '.Inserted')
+        if [[ "$inserted" != "true" ]]; then
+            echo "WARNING: VirtualMedia reports Inserted=${inserted} for ${node_name}"
+        fi
+
+        redfish_curl "$user" "$password" "$systemurl" -X PATCH \
+            -d '{"Boot": {"BootSourceOverrideTarget": "Cd", "BootSourceOverrideEnabled": "Once"}}'
+
+        redfish_curl "$user" "$password" "$systemurl/Actions/ComputerSystem.Reset" \
+            -d '{"ResetType": "ForceRestart"}'
+
+        echo "Node ${node_name} booting from ISO"
+    done
+}
+
+function eject_agent_iso_baremetal() {
+    local total_nodes
+    total_nodes=$(jq '.nodes | length' "$NODES_FILE")
+
+    for (( i=0; i < total_nodes; i++ )); do
+        local address user password scheme system bmc_base
+        address=$(jq -r ".nodes[$i].driver_info.address" "$NODES_FILE")
+        user=$(jq -r ".nodes[$i].driver_info.username" "$NODES_FILE")
+        password=$(jq -r ".nodes[$i].driver_info.password" "$NODES_FILE")
+        local node_name
+        node_name=$(jq -r ".nodes[$i].name" "$NODES_FILE")
+
+        if [[ ! $address =~ ^(redfish.*://)(.*)$ ]]; then
+            continue
+        fi
+        scheme="https://"
+        system="${BASH_REMATCH[2]}"
+        if [[ ${BASH_REMATCH[1]} =~ http: ]]; then
+            scheme="http://"
+        fi
+        bmc_base="${scheme}${system%%/*}"
+
+        # VirtualMedia via Managers — see mount_agent_iso_baremetal().
+        local manager_id vmedia_uri cd_slot
+        manager_id=$(redfish_curl "$user" "$password" "${bmc_base}/redfish/v1/Managers" | jq -r '.Members[0]."@odata.id"')
+        vmedia_uri="${bmc_base}${manager_id}/VirtualMedia"
+        cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[] | select(."@odata.id" | test("[Cc][Dd]|[Dd][Vv][Dd]|2")) | ."@odata.id"' | head -1)
+
+        if [[ -z "$cd_slot" ]]; then
+            cd_slot=$(redfish_curl "$user" "$password" "$vmedia_uri" | jq -r '.Members[1]."@odata.id"')
+        fi
+
+        echo "Ejecting ISO from ${node_name}..."
+        redfish_curl "$user" "$password" "${bmc_base}${cd_slot}/Actions/VirtualMedia.EjectMedia" -d '{}' || true
+    done
+}
+
 function attach_appliance_diskimage() {
     set_file_acl
 
@@ -305,6 +415,10 @@ function wait_for_hosts_installed() {
 }
 
 function get_node0_ip() {
+  if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+    echo "${AGENT_BAREMETAL_IPS%%,*}"
+    return
+  fi
   # shellcheck disable=SC2059
   node0_name=$(printf "${MASTER_HOSTNAME_FORMAT}" 0)
   node0_ip=$(sudo virsh net-dumpxml ostestbm | xmllint --xpath "string(//dns[*]/host/hostname[. = '${node0_name}']/../@ip)" -)
@@ -617,16 +731,29 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
       fi
     fi
 
-    attach_agent_iso master "$NUM_MASTERS"
-    attach_agent_iso worker "$NUM_WORKERS"
-    attach_agent_iso arbiter "$NUM_ARBITERS"
+    if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+        # Stage the ISO where AGENT_BAREMETAL_ISO_SERVER can serve it. The ISO is
+        # generated under OCP_DIR (relative to dev-scripts), but the HTTP
+        # server root may be elsewhere (e.g. WORKING_DIR under nginx).
+        iso_file="${OCP_DIR}/agent.$(uname -m).iso"
+        if [[ -f "$iso_file" ]]; then
+            serve_dir="${WORKING_DIR}/${CLUSTER_NAME}"
+            mkdir -p "$serve_dir"
+            ln -sf "$(realpath "$iso_file")" "${serve_dir}/agent.$(uname -m).iso"
+        fi
+        mount_agent_iso_baremetal
+    else
+        attach_agent_iso master "$NUM_MASTERS"
+        attach_agent_iso worker "$NUM_WORKERS"
+        attach_agent_iso arbiter "$NUM_ARBITERS"
 
-    if [[ "${ARCH}" == "aarch64" ]]; then
-        wait_for_hosts_installed || echo "WARNING: proceeding with CDROM eject despite host status issues"
-        eject_agent_iso master "$NUM_MASTERS"
-        eject_agent_iso worker "$NUM_WORKERS"
-        eject_agent_iso arbiter "$NUM_ARBITERS"
-        echo "aarch64: CDROM media ejected from all VMs"
+        if [[ "${ARCH}" == "aarch64" ]]; then
+            wait_for_hosts_installed || echo "WARNING: proceeding with CDROM eject despite host status issues"
+            eject_agent_iso master "$NUM_MASTERS"
+            eject_agent_iso worker "$NUM_WORKERS"
+            eject_agent_iso arbiter "$NUM_ARBITERS"
+            echo "aarch64: CDROM media ejected from all VMs"
+        fi
     fi
 
     ;;
@@ -758,6 +885,10 @@ fi
 
 
 wait_for_cluster_ready
+
+if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+    eject_agent_iso_baremetal
+fi
 
 if [ ! -z "${AGENT_DEPLOY_MCE}" ]; then
   mce_complete_deployment
