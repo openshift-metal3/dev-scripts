@@ -86,6 +86,20 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]] && [ -n "$NODES_FILE" ] ; then
     set -x
 fi
 
+if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
+    sudo systemctl enable --now firewalld
+    configure_chronyd
+
+    sudo firewall-cmd --zone=public --add-port=80/tcp --add-port=53/tcp --add-port=53/udp \
+        --add-port=8000/tcp --add-port="${LOCAL_REGISTRY_PORT}"/tcp \
+        --add-port="${INSTALLER_PROXY_PORT}"/tcp --add-port="${AGENT_BOOT_SERVER_PORT}"/tcp \
+        --add-port=3260/tcp
+
+    switch_to_internal_dns
+
+    exit 0
+fi
+
 # TODO - move this to metal3-dev-env.
 # This is to address the following error:
 #   "msg": "internal error: Check the host setup: enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss. Interfaces to look at: eno2"
