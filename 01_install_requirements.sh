@@ -25,9 +25,6 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
   # Patch metal3-dev-env to use Ansible 8.x on centos9/rhel9.
   sed -i '/ANSIBLE_VERSION/{ s/10\.7\.0/8.7.0/; }' lib/common.sh
 
-# TODO: remove once Python fixed OpenSSL regression
-  sed -i '/name: "{{ packages.centos.common.packages }}"/a\      exclude: "openssl*"' vm-setup/roles/packages_installation/tasks/main.yml
-
   popd
 fi
 
@@ -51,35 +48,6 @@ old_version=$(sudo dnf info NetworkManager | grep Version | cut -d ':' -f 2)
 MAX_RETRIES=5
 # Delay between attempts (in seconds)
 _YUM_RETRY_BACKOFF=15
-
-# TODO: remove once Python fixed OpenSSL regression
-# Install any available openssl version below 3.5.5-5 (3.5.5-5+ and 3.5.7+ are broken)
-available_openssl=$(sudo dnf repoquery --refresh --showduplicates openssl 2>/dev/null | \
-    sed 's/openssl-[0-9]*://' | \
-    sed 's/\.[^.]*$//' | \
-    awk -F'-' '{
-        split($1, ver, ".")
-        rel = int($2)
-        if (ver[1] < 3 ||
-            (ver[1] == 3 && ver[2] < 5) ||
-            (ver[1] == 3 && ver[2] == 5 && ver[3] < 5) ||
-            (ver[1] == 3 && ver[2] == 5 && ver[3] == 5 && rel < 5)) {
-            print $0
-        }
-    }' | \
-    tail -1)
-
-if [ -n "$available_openssl" ]; then
-    echo "Installing openssl version $available_openssl (< 3.5.5-5)"
-    sudo dnf install -y --allowerasing \
-        "openssl-${available_openssl}" \
-        "openssl-devel-${available_openssl}" \
-        "openssl-libs-${available_openssl}"
-    sudo dnf install -y python3-dnf-plugin-versionlock
-    sudo dnf versionlock add openssl openssl-libs openssl-devel
-else
-    echo "Warning: No openssl version < 3.5.5-5 found in repositories. Skipping openssl downgrade."
-fi
 
 attempt=1
 while (( attempt <= MAX_RETRIES )); do
