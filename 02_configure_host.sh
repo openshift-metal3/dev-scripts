@@ -97,6 +97,29 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
 
     switch_to_internal_dns
 
+    # Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME
+    sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
+    echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
+
+    # When MIRROR_IMAGES is configured, the local registry must be running
+    # before 04_setup_ironic.sh attempts to mirror release images into it.
+    # This covers virtual-baremetal (sushy-emulator) CI environments that
+    # set NODES_PLATFORM=baremetal together with MIRROR_IMAGES=true.
+    if use_registry "podman"; then
+        setup_local_registry
+        rm -f "${REGISTRY_CREDS}"
+        sudo podman login --authfile "${REGISTRY_CREDS}" \
+            -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" \
+            "${LOCAL_REGISTRY_DNS_NAME}":"${LOCAL_REGISTRY_PORT}"
+    elif use_registry ""; then
+        setup_local_registry
+    else
+        echo '{}' | sudo dd of="${REGISTRY_CREDS}"
+    fi
+    if [ -f "${REGISTRY_CREDS}" ]; then
+        sudo chown "$USER":"$USER" "${REGISTRY_CREDS}"
+    fi
+
     exit 0
 fi
 
