@@ -54,6 +54,7 @@ function early_deploy_validation() {
     CHECK_OC_TOOL_PRESENCE=${1:-"false"}
 
     early_either_validation
+    early_bgp_vip_validation
 
     if [ ! -s "${PERSONAL_PULL_SECRET}" ] && [ "${OPENSHIFT_RELEASE_TYPE}" != "okd" ]; then
         error "${PERSONAL_PULL_SECRET} is missing or empty"
@@ -91,6 +92,24 @@ function early_deploy_validation() {
             exit 1
         fi
     fi
+}
+
+function early_bgp_vip_validation() {
+    if [[ "${BGP_VIP_MANAGEMENT:-false}" != "true" ]]; then
+        return 0
+    fi
+    if [[ "${ENABLE_BGP_TOR:-false}" != "true" ]]; then
+        error "BGP_VIP_MANAGEMENT needs a BGP peer for the cluster to talk to; set ENABLE_BGP_TOR=true"
+        exit 1
+    fi
+    case "${FEATURE_SET:-}" in
+        DevPreviewNoUpgrade|CustomNoUpgrade)
+            ;;
+        *)
+            error "BGP_VIP_MANAGEMENT requires the BGPBasedVIPManagement feature gate; set FEATURE_SET=DevPreviewNoUpgrade (or CustomNoUpgrade with the gate enabled)"
+            exit 1
+            ;;
+    esac
 }
 
 # Perform validation steps that we only want done when trying to clean

@@ -238,6 +238,21 @@ set -x
 #export BGP_TOR_ASN=64513
 #export BGP_CLUSTER_ASN=64512
 #
+
+# BGP_VIP_MANAGEMENT -
+# Render platform.baremetal.bgpVIPConfig into the install-config so the
+# cluster advertises its API/ingress VIPs over BGP instead of managing them
+# with keepalived (enhancement 1982, DevPreview). Requires ENABLE_BGP_TOR
+# (the peer the cluster speaks to) and a FEATURE_SET that enables the
+# BGPBasedVIPManagement gate (DevPreviewNoUpgrade). The local ASN defaults
+# to BGP_CLUSTER_ASN, the peer ASN to BGP_TOR_ASN, and the peer address to
+# the ToR address on the external subnet; override the peer address with
+# BGP_VIP_PEER_ADDRESS if your topology differs.
+# Default is unset.
+#
+#export BGP_VIP_MANAGEMENT=true
+#export BGP_VIP_PEER_ADDRESS=
+#
 # FRR container image:
 #export BGP_TOR_IMAGE=quay.io/frrouting/frr:9.1.0
 
