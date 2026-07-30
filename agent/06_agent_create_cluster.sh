@@ -335,6 +335,44 @@ function automate_rendezvousIP_selection(){
     done
 }
 
+function automate_static_networking(){
+  local node_type=$1
+  local node_count=$2
+  local base_ip=80
+
+  # Compute IP offset: masters start at 80, workers continue after masters,
+  # arbiters continue after workers
+  local offset=0
+  case "$node_type" in
+    master) offset=0 ;;
+    worker) offset=$NUM_MASTERS ;;
+    arbiter) offset=$(( NUM_MASTERS + NUM_WORKERS )) ;;
+  esac
+
+  local hostname_format
+  case "$node_type" in
+    master) hostname_format="$MASTER_HOSTNAME_FORMAT" ;;
+    worker) hostname_format="$WORKER_HOSTNAME_FORMAT" ;;
+    arbiter) hostname_format="$ARBITER_HOSTNAME_FORMAT" ;;
+  esac
+
+  for (( n=0; n<node_count; n++ ))
+    do
+        name=${CLUSTER_NAME}_${node_type}_${n}
+        node_ip="192.168.111.$(( base_ip + offset + n ))"
+        # shellcheck disable=SC2059
+        node_hostname="$(printf "$hostname_format" "$n")"
+
+        sudo virsh screenshot "$name" "${OCP_DIR}/${name}_console_screenshot_before_static_networking.ppm"
+
+        echo "Configuring static IP ${node_ip} and hostname ${node_hostname} on ${name}"
+        ./agent/e2e/agent-tui/automate-no-registry-agent-tui-static.sh "$name" "$node_ip" "$node_hostname"
+
+        sudo virsh screenshot "$name" "${OCP_DIR}/${name}_console_screenshot_after_static_networking.ppm"
+        echo "Finished configuring static networking for $name"
+    done
+}
+
 function check_assisted_install_UI(){
   local rendezvousIP
   rendezvousIP=$(getRendezvousIP)
@@ -838,9 +876,15 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
         echo "aarch64: CDROM media ejected from all VMs"
     fi
 
-    automate_rendezvousIP_selection master "$NUM_MASTERS"
-    automate_rendezvousIP_selection worker "$NUM_WORKERS"
-    automate_rendezvousIP_selection arbiter "$NUM_ARBITERS"
+    if [[ "${AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING:-false}" == "true" ]]; then
+        automate_static_networking master "$NUM_MASTERS"
+        automate_static_networking worker "$NUM_WORKERS"
+        automate_static_networking arbiter "$NUM_ARBITERS"
+    else
+        automate_rendezvousIP_selection master "$NUM_MASTERS"
+        automate_rendezvousIP_selection worker "$NUM_WORKERS"
+        automate_rendezvousIP_selection arbiter "$NUM_ARBITERS"
+    fi
 
     check_assisted_install_UI
 

@@ -97,9 +97,17 @@ if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
     if [[ -z "${NETWORKING_MODE}" ]]; then
         export NETWORKING_MODE="DHCP"
     fi
+    # When true, static IPs are configured via nmtui in the TUI
+    # instead of using DHCP addresses
+    export AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING=${AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING:-false}
 fi
 
 function getRendezvousIP() {
+    # When static networking is configured via TUI, the rendezvous IP is known
+    if [[ "${AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING:-false}" == "true" ]]; then
+        echo "192.168.111.80"
+        return
+    fi
     if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
         echo "${AGENT_BAREMETAL_IPS%%,*}"
         return

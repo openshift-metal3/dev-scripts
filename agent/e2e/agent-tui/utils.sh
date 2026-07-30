@@ -35,7 +35,7 @@ function pressKey() {
     echo "$msg"
   fi	
 
-  local node_name=$4
+  local node_name=${4:-}
   for i in $(seq 1 "$numReps"); do
     _pressKey "$keyCode" "$node_name"
   done
@@ -46,7 +46,7 @@ function pressEnter() {
 }
 
 function pressTab() {
-  pressKey "$1" KEY_TAB "$2"
+  pressKey "$1" KEY_TAB "$2" "${3:-}"
 }
 
 function pressDown() {
@@ -54,11 +54,11 @@ function pressDown() {
 }
 
 function pressBackspace() {
-  pressKey "$1" KEY_BACKSPACE "$2"
+  pressKey "$1" KEY_BACKSPACE "$2" "${3:-}"
 }
 
 function pressEsc() {
-  pressKey "$1" KEY_ESC "$2"
+  pressKey "$1" KEY_ESC "$2" "${3:-}"
 }
 
 function pressKeys(){
@@ -85,6 +85,10 @@ function pressKeys(){
       c="DOT"
     elif [[ $c =~ [':'] ]]; then
       c="LEFTSHIFT KEY_SEMICOLON"
+    elif [[ $c =~ ['/'] ]]; then
+      c="SLASH"
+    elif [[ $c == '-' ]]; then
+      c="MINUS"
     fi
 
     local keyCode="KEY_"$c
