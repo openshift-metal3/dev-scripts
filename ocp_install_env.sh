@@ -198,6 +198,20 @@ EOF
     fi
 }
 
+function bgp_vip_config() {
+    if [[ "${BGP_VIP_MANAGEMENT:-false}" == "true" ]]; then
+        local peer_address
+        peer_address="${BGP_VIP_PEER_ADDRESS:-$(nth_ip "${EXTERNAL_SUBNET_V4}" 1)}"
+cat <<EOF
+    bgpVIPConfig:
+      localASN: ${BGP_CLUSTER_ASN:-64512}
+      peers:
+      - peerAddress: ${peer_address}
+        peerASN: ${BGP_TOR_ASN:-64513}
+EOF
+    fi
+}
+
 function featureSet() {
     if [[ -n "${FEATURE_SET:-}" ]]; then
 cat <<EOF
@@ -445,6 +459,7 @@ $(setVIPs apivips)
 $(setVIPs ingressvips)
 $(dnsvip)
 $(loadbalancer_type)
+$(bgp_vip_config)
     hosts:
 EOF
 
