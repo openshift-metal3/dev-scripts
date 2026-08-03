@@ -189,7 +189,7 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
   export OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-$(echo "$OPENSHIFT_RELEASE_IMAGE" | sed "s/.*:\([[:digit:]]\.[[:digit:]]*\).*/\1/")}
 fi
 
-OPENSHIFT_RELEASE_TAG=$(echo "$OPENSHIFT_RELEASE_IMAGE" | sed -E 's/[[:alnum:]\/.-]*(release|okd).*://')
+OPENSHIFT_RELEASE_TAG="${OPENSHIFT_RELEASE_IMAGE##*:}"
 export OPENSHIFT_RELEASE_TAG
 
 # Use "ipmi" for 4.3 as it didn't support redfish, for other versions
@@ -336,6 +336,7 @@ set +x
 export CI_TOKEN=${CI_TOKEN:-}
 set -x
 export CI_SERVER=${CI_SERVER:-api.ci.l2s4.p1.openshiftapps.com}
+export CI_REGISTRY=${CI_REGISTRY:-quay-proxy.ci.openshift.org}
 export PERSONAL_PULL_SECRET=${PERSONAL_PULL_SECRET:-$SCRIPTDIR/pull_secret.json}
 
 # Ensure working dir is always different than script dir. If not, some

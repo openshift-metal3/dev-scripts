@@ -13,10 +13,16 @@ export CI_TOKEN=''
 set -x
 
 # CI_SERVER -
-# When testing e.g cluster-bot builds, you must change CI_TOKEN to one
-# from a different cluster, in which case this should be updated
+# API server of the CI cluster used to authenticate and obtain
+# registry credentials. Default: api.ci.l2s4.p1.openshiftapps.com
 #
 #export CI_SERVER=api.ci.l2s4.p1.openshiftapps.com
+
+# CI_REGISTRY -
+# The CI image registry. Default: quay-proxy.ci.openshift.org
+# To use the old integrated registry:
+#
+#export CI_REGISTRY=registry.ci.openshift.org
 
 # OPENSHIFT_CI
 # This variable is intended to indicate that dev-scripts is running in a CI environment,
