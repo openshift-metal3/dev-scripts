@@ -127,7 +127,7 @@ esac
 # overwrite an existing installation of the golang version, though,
 # so check if we have a yq before installing.
 if ! which yq >/dev/null 2>&1; then
-    sudo python -m pip install 'yq>=3,<4'
+    sudo python -m pip install 'yq>=3,<4' 'argcomplete<3.7'
 else
     echo "Using yq from $(which yq)"
 fi
