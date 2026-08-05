@@ -170,6 +170,9 @@ fi
 # and lxml for the pyxpath script
 sudo python -m pip install netaddr lxml
 
+# argcomplete 3.7.1 uses PEP 604 type unions (str | bytes) which require
+# Python 3.10+, breaking on the Python 3.9 shipped with CentOS Stream 9.
+sudo python -m pip install 'argcomplete<3.7.1'
 sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
 
 pushd "${METAL3_DEV_ENV_PATH}"
