@@ -1010,8 +1010,12 @@ function write_pull_secret() {
     if [ "${OPENSHIFT_CI}" == true ]; then
         # We don't need to fetch a personal pull secret with the
         # token, but we still need to merge what we're given with the
-        # credentials for the local reigstry.
-        jq -s '.[0] * .[1]' "${REGISTRY_CREDS}" "${PERSONAL_PULL_SECRET}" > "${PULL_SECRET_FILE}"
+        # credentials for the local registry when mirroring is enabled.
+        if use_registry ""; then
+            jq -s '.[0] * .[1]' "${REGISTRY_CREDS}" "${PERSONAL_PULL_SECRET}" > "${PULL_SECRET_FILE}"
+        else
+            cp "${PERSONAL_PULL_SECRET}" "${PULL_SECRET_FILE}"
+        fi
         return
     fi
 
@@ -1033,9 +1037,13 @@ function write_pull_secret() {
             --password-stdin \
             --authfile "$tmppullsecret"
 
-    # Combine the personal pull secret with the ones for the CI
-    # registry and the local registry credentials.
-    jq -s '.[0] * .[1] * .[2]' "${PERSONAL_PULL_SECRET}" "${REGISTRY_CREDS}" "${tmppullsecret}" > "${PULL_SECRET_FILE}"
+    # Combine the personal pull secret with the CI registry credentials,
+    # and with the local registry credentials only when mirroring is enabled.
+    if use_registry ""; then
+        jq -s '.[0] * .[1] * .[2]' "${PERSONAL_PULL_SECRET}" "${REGISTRY_CREDS}" "${tmppullsecret}" > "${PULL_SECRET_FILE}"
+    else
+        jq -s '.[0] * .[1]' "${PERSONAL_PULL_SECRET}" "${tmppullsecret}" > "${PULL_SECRET_FILE}"
+    fi
 }
 
 function switch_to_internal_dns() {
