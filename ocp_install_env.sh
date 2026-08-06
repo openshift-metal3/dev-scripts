@@ -200,7 +200,7 @@ EOF
 
 function bgp_vip_config() {
     if [[ "${BGP_VIP_MANAGEMENT:-false}" == "true" ]]; then
-        local peer_address
+        local peer_address peer_address_v6
         peer_address="${BGP_VIP_PEER_ADDRESS:-$(nth_ip "${EXTERNAL_SUBNET_V4}" 1)}"
 cat <<EOF
     bgpVIPConfig:
@@ -209,6 +209,15 @@ cat <<EOF
       - peerAddress: ${peer_address}
         peerASN: ${BGP_TOR_ASN:-64513}
 EOF
+        # dual-stack: peer with the ToR over IPv6 as well, so the
+        # secondary-family VIPs have a same-family BGP session
+        if [[ -n "${EXTERNAL_SUBNET_V6:-}" ]]; then
+            peer_address_v6="${BGP_VIP_PEER_ADDRESS_V6:-$(nth_ip "${EXTERNAL_SUBNET_V6}" 1)}"
+cat <<EOF
+      - peerAddress: ${peer_address_v6}
+        peerASN: ${BGP_TOR_ASN:-64513}
+EOF
+        fi
     fi
 }
 
