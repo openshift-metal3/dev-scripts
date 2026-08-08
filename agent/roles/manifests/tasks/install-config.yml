@@ -9,6 +9,14 @@
     dest: "{{ install_path }}/install-config.yaml"
   when: platform_type != "baremetal" and platform_type != "vsphere"
 
+- name: DEBUG fencing vars
+  debug:
+    msg: >
+      fencing_credential_identifier={{ fencing_credential_identifier }}
+      agent_master_macs={{ agent_master_macs }}
+      enable_two_node_fencing={{ enable_two_node_fencing }}
+  when: platform_type == "baremetal"
+
 - name: write the install-config.yaml
   template:
     src: "templates/install-config_baremetal_yaml.j2"
