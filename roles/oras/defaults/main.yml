@@ -1,0 +1,5 @@
+---
+oras_version: "1.2.2"
+oras_install_dir: "/usr/local/bin"
+oras_download_dir: "/tmp"
+oras_architecture: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
