@@ -1015,6 +1015,14 @@ set -x
 # As the size of the ISO increases in future, increase the expected ISO size accordingly.
 # export AGENT_OVE_ISO_SIZE=40
 
+# AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING controls whether the ISO_NO_REGISTRY
+# test configures static networking on each node via the TUI (nmtui) instead of
+# using DHCP. When set to 'true', the TUI automation script will navigate nmtui
+# to configure a static IP on each node before proceeding with rendezvous IP
+# selection. Static IPs are assigned starting at 192.168.111.80 (rendezvous node),
+# incrementing by 1 for each additional node.
+# Requires: AGENT_E2E_TEST_BOOT_MODE=ISO_NO_REGISTRY
+# export AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING=true
 
 # Uncomment and set the following value to "true" to enable a test scenario
 # where the DNS is disabled on the hosts by setting its IP address to an incorrect value.
