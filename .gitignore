@@ -19,3 +19,7 @@ assets/templates/99_master-chronyd-redhat.yaml
 assets/templates/99_worker-chronyd-redhat.yaml
 
 pull_secret.json
+
+# Auto-generated ansible vars (may contain secrets)
+ansible/.config_vars.yml
+ansible/.runtime_vars.yml
