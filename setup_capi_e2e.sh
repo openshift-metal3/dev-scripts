@@ -18,4 +18,13 @@ while ! oc get namespace openshift-cluster-api 2>/dev/null; do
     sleep 5
 done
 oc apply -f ocp/ostest/extra_host_manifests.yaml
-oc get secret worker-user-data-managed -n openshift-machine-api -o yaml | sed 's/namespace: .*/namespace: openshift-cluster-api/' | oc apply -f -
+
+# Copy the managed secret to the CAPI namespace.  Remove metadata fields to
+# prevent conflicts.
+oc get secret worker-user-data-managed -n openshift-machine-api -o yaml | \
+    sed \
+    -e 's/namespace: .*/namespace: openshift-cluster-api/' \
+    -e '/^  resourceVersion:/d' \
+    -e '/^  uid:/d' \
+    -e '/^  creationTimestamp:/d' | \
+    oc apply -f -
