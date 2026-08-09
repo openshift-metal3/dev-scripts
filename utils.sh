@@ -1030,10 +1030,14 @@ function write_pull_secret() {
     _tmpfiles="$_tmpfiles $tmppullsecret"
     # Pull secret for registry.ci.openshift.org (auto-discovered from the cluster)
     oc registry login --kubeconfig="$tmpkubeconfig" --to="$tmppullsecret"
-    # Pull secret for quay-proxy.ci.openshift.org
+    # Pull secret for quay-proxy.ci.openshift.org.
+    # Replace ':' in the username: oc whoami for a ServiceAccount returns
+    # system:serviceaccount:..., which breaks HTTP Basic Auth on quay-proxy.
+    # Humans (Rover) keep a usable whoami; SAs become colon-free.
+    # Docs: https://docs.ci.openshift.org/how-tos/use-registries-in-build-farm/
     oc --kubeconfig="$tmpkubeconfig" whoami -t | \
         podman login "${CI_REGISTRY}" \
-            --username "$(oc --kubeconfig="$tmpkubeconfig" whoami)" \
+            --username "$(oc --kubeconfig="$tmpkubeconfig" whoami | tr ':' '_')" \
             --password-stdin \
             --authfile "$tmppullsecret"
 
