@@ -92,6 +92,26 @@ fi
 
 if [[ -n "${APPLY_EXTRA_WORKERS:-}" ]]; then
     if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_host_manifests.yaml" ]]; then
+        # Wait for all worker Machines to have a BMH assigned before applying
+        # extra workers, to prevent the machine-api from claiming extra worker
+        # hosts for the primary MachineSet (race when regular workers are slow
+        # to register via Redfish).
+        echo "Waiting for all ${NUM_WORKERS} worker machines to have a host assigned..."
+        timeout 30m bash -c '
+            while true; do
+                ASSIGNED=$(oc get machines -n openshift-machine-api \
+                    -l machine.openshift.io/cluster-api-machine-role=worker \
+                    -o json 2>/dev/null | \
+                    jq "[.items[].metadata.annotations // {} | .[\"metal3.io/BareMetalHost\"] // empty] | length")
+                if [[ "${ASSIGNED}" -ge "'"${NUM_WORKERS}"'" ]]; then
+                    echo "All '"${NUM_WORKERS}"' worker machines have a host assigned"
+                    break
+                fi
+                echo "Waiting: ${ASSIGNED}/'"${NUM_WORKERS}"' worker machines have a host assigned"
+                sleep 10
+            done
+        '
+
         oc apply -f "${OCP_DIR}/extra_host_manifests.yaml"
 
         for h in $(jq -r '.[].name' "${EXTRA_BAREMETALHOSTS_FILE}"); do
