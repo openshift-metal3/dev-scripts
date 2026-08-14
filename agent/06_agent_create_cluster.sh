@@ -393,7 +393,7 @@ function verify_static_networking(){
         # coreos-installer --copy-network) at that point, so the static IP is not
         # immediately reachable. Retry until the node comes up before failing.
         local actual_hostname=""
-        local retries=40   # up to ~20 min at 30s interval
+        local retries=10   # up to ~5 min at 30s interval
         local i
         for (( i=1; i<=retries; i++ )); do
             if actual_hostname=$(${SSH} "core@${node_ip}" hostname 2>/dev/null) && [[ -n "${actual_hostname}" ]]; then
