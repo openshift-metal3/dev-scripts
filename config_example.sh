@@ -994,15 +994,6 @@ set -x
 # As the size of the ISO increases in future, increase the expected ISO size accordingly.
 # export AGENT_OVE_ISO_SIZE=40
 
-# AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING controls whether the ISO_NO_REGISTRY
-# test configures static networking on each node via the TUI (nmtui) instead of
-# using DHCP. When set to 'true', the TUI automation script will navigate nmtui
-# to configure a static IP on each node before proceeding with rendezvous IP
-# selection. Static IPs are assigned starting at 192.168.111.80 (rendezvous node),
-# incrementing by 1 for each additional node.
-# Requires: AGENT_E2E_TEST_BOOT_MODE=ISO_NO_REGISTRY
-# export AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING=true
-
 # Uncomment and set the following value to "true" to enable a test scenario
 # where the DNS is disabled on the hosts by setting its IP address to an incorrect value.
 # Uncomment and set the following value to one or more test cases below.
@@ -1018,6 +1009,19 @@ set -x
 # workflow to continue ending with a successful cluster installation. If it fails to fix the issue
 # then the wait-for commands should timeout and fail.
 # This test case is only supported when IP_STACK=v4.
+#
+# 2. 'static_ip' test case:
+# Configures static networking on the nodes via the agent TUI (nmtui) instead of
+# using DHCP, then verifies at the end of the installation that each node came up
+# with the configured static IP and hostname. During the agent TUI automation a
+# new NetworkManager connection is created on each node with a static IPv4
+# address and hostname; static IPs are assigned starting at 192.168.111.80
+# (rendezvous node), incrementing by 1 for each additional node. After the
+# installation completes, the test ssh's to each node at its assigned static IP
+# and confirms the hostname matches, failing the deployment if any node is not
+# reachable at its static IP.
+# This test case requires AGENT_E2E_TEST_BOOT_MODE=ISO_NO_REGISTRY and is only
+# supported when IP_STACK=v4.
 #
 # export AGENT_TEST_CASES='bad_dns'
 

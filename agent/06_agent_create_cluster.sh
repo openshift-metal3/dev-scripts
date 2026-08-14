@@ -335,41 +335,69 @@ function automate_rendezvousIP_selection(){
     done
 }
 
+function hostname_format_for_node_type(){
+  case "$1" in
+    master) echo "$MASTER_HOSTNAME_FORMAT" ;;
+    worker) echo "$WORKER_HOSTNAME_FORMAT" ;;
+    arbiter) echo "$ARBITER_HOSTNAME_FORMAT" ;;
+  esac
+}
+
+# Configuration step of the 'static_ip' test case: drive the agent TUI to
+# assign a static IP and hostname to each node of the given type. The static
+# IPs are derived from staticIPForNode (see agent/common.sh).
 function automate_static_networking(){
   local node_type=$1
   local node_count=$2
-  local base_ip=80
-
-  # Compute IP offset: masters start at 80, workers continue after masters,
-  # arbiters continue after workers
-  local offset=0
-  case "$node_type" in
-    master) offset=0 ;;
-    worker) offset=$NUM_MASTERS ;;
-    arbiter) offset=$(( NUM_MASTERS + NUM_WORKERS )) ;;
-  esac
 
   local hostname_format
-  case "$node_type" in
-    master) hostname_format="$MASTER_HOSTNAME_FORMAT" ;;
-    worker) hostname_format="$WORKER_HOSTNAME_FORMAT" ;;
-    arbiter) hostname_format="$ARBITER_HOSTNAME_FORMAT" ;;
-  esac
+  hostname_format="$(hostname_format_for_node_type "$node_type")"
 
   for (( n=0; n<node_count; n++ ))
     do
         name=${CLUSTER_NAME}_${node_type}_${n}
-        node_ip="192.168.111.$(( base_ip + offset + n ))"
+        node_ip="$(staticIPForNode "$node_type" "$n")"
         # shellcheck disable=SC2059
         node_hostname="$(printf "$hostname_format" "$n")"
 
         sudo virsh screenshot "$name" "${OCP_DIR}/${name}_console_screenshot_before_static_networking.ppm"
 
         echo "Configuring static IP ${node_ip} and hostname ${node_hostname} on ${name}"
-        ./agent/e2e/agent-tui/automate-no-registry-agent-tui-static.sh "$name" "$node_ip" "$node_hostname"
+        ./agent/e2e/agent-tui/test-static-ip.sh "$name" "$node_ip" "$node_hostname"
 
         sudo virsh screenshot "$name" "${OCP_DIR}/${name}_console_screenshot_after_static_networking.ppm"
         echo "Finished configuring static networking for $name"
+    done
+}
+
+# Verification step of the 'static_ip' test case: confirm each node of the given
+# type is reachable at the static IP it was assigned via the agent TUI, and that
+# its hostname was applied. Exits non-zero if any node fails verification.
+function verify_static_networking(){
+  local node_type=$1
+  local node_count=$2
+
+  local hostname_format
+  hostname_format="$(hostname_format_for_node_type "$node_type")"
+
+  for (( n=0; n<node_count; n++ ))
+    do
+        node_ip="$(staticIPForNode "$node_type" "$n")"
+        # shellcheck disable=SC2059
+        expected_hostname="$(printf "$hostname_format" "$n")"
+
+        echo "Verifying ${node_type}-${n} is reachable at static IP ${node_ip} with hostname ${expected_hostname}"
+        local actual_hostname
+        if ! actual_hostname=$(timeout 60 ${SSH} "core@${node_ip}" hostname 2>/dev/null); then
+            echo "ERROR: static_ip test case failed - could not ssh to ${node_type}-${n} at static IP ${node_ip}"
+            return 1
+        fi
+        # Compare the short hostname (strip any domain suffix)
+        if [[ "${actual_hostname%%.*}" != "${expected_hostname}" ]]; then
+            echo "ERROR: static_ip test case failed - node at ${node_ip} has hostname '${actual_hostname}', expected '${expected_hostname}'"
+            return 1
+        fi
+        echo "Verified ${node_type}-${n}: reachable at ${node_ip} with hostname ${expected_hostname}"
     done
 }
 
@@ -876,7 +904,7 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
         echo "aarch64: CDROM media ejected from all VMs"
     fi
 
-    if [[ "${AGENT_ISO_NO_REGISTRY_STATIC_NETWORKING:-false}" == "true" ]]; then
+    if [[ "${AGENT_TEST_CASES:-}" =~ "static_ip" ]]; then
         automate_static_networking master "$NUM_MASTERS"
         automate_static_networking worker "$NUM_WORKERS"
         automate_static_networking arbiter "$NUM_ARBITERS"
@@ -896,6 +924,18 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     pushd agent/isobuilder/ui_driven_cluster_installation
     RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$ocp_dir_abs_path INGRESS_VIPS=$INGRESS_VIPS API_VIPS=$API_VIPS go run main.go
     popd
+
+    # Verification step of the 'static_ip' test case: now that installation has
+    # completed, confirm each node came up with the static IP and hostname that
+    # were configured via the agent TUI.
+    if [[ "${AGENT_TEST_CASES:-}" =~ "static_ip" ]]; then
+        echo "Running test scenario: verify static IPs configured via agent-tui"
+        verify_static_networking master "$NUM_MASTERS"
+        verify_static_networking worker "$NUM_WORKERS"
+        verify_static_networking arbiter "$NUM_ARBITERS"
+        echo "Finished verifying static networking on all nodes"
+    fi
+
     exit 0
     ;;
 esac

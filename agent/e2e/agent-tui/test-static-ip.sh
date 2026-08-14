@@ -1,5 +1,20 @@
 #!/bin/bash
-
+#
+# test-static-ip.sh - first step of the 'static_ip' e2e test case.
+#
+# This script performs the *configuration* step of the static IP test: for a
+# single node it drives the agent TUI (and nmtui within it) via "virsh send-key"
+# to assign a static IPv4 address and hostname, then enters the rendezvous IP.
+# It creates a NEW NetworkManager connection (rather than editing the existing
+# DHCP one) so that coreos-installer's --copy-network preserves the static
+# config into the installed system.
+#
+# The matching *verification* step runs at the end of the installation (see
+# verify_static_networking in agent/06_agent_create_cluster.sh), which confirms
+# each node is reachable at its assigned static IP with the expected hostname.
+#
+# Usage: test-static-ip.sh <node_name> <node_ip> <node_hostname>
+#
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../../" && pwd )"
 source "$SCRIPTDIR/common.sh"
 source "$SCRIPTDIR/agent/common.sh"
