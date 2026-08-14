@@ -346,7 +346,7 @@ function hostname_format_for_node_type(){
 # Configuration step of the 'static_ip' test case: drive the agent TUI to
 # assign a static IP and hostname to each node of the given type. The static
 # IPs are derived from staticIPForNode (see agent/common.sh).
-function automate_static_networking(){
+function test_case_do_static_ip(){
   local node_type=$1
   local node_count=$2
 
@@ -373,7 +373,7 @@ function automate_static_networking(){
 # Verification step of the 'static_ip' test case: confirm each node of the given
 # type is reachable at the static IP it was assigned via the agent TUI, and that
 # its hostname was applied. Exits non-zero if any node fails verification.
-function verify_static_networking(){
+function test_case_verify_static_ip(){
   local node_type=$1
   local node_count=$2
 
@@ -393,7 +393,7 @@ function verify_static_networking(){
         # coreos-installer --copy-network) at that point, so the static IP is not
         # immediately reachable. Retry until the node comes up before failing.
         local actual_hostname=""
-        local retries=40   # up to ~20 min at 30s interval
+        local retries=10   # up to ~5 min at 30s interval
         local i
         for (( i=1; i<=retries; i++ )); do
             if actual_hostname=$(${SSH} "core@${node_ip}" hostname 2>/dev/null) && [[ -n "${actual_hostname}" ]]; then
@@ -636,8 +636,11 @@ function mce_complete_deployment() {
   mce_apply_postinstallation_manifests "${mceManifests}"
 }
 
-function run_agent_test_cases() {
-  if [[ $AGENT_TEST_CASES =~ "bad_dns" ]]; then
+# Configuration step of the 'bad_dns' test case: wait for the nodes to reach the
+# agent-tui check screen (failing because of the bad DNS record injected into
+# agent-config.yaml), then fix the DNS on master-0 via agent-tui so the
+# installation can proceed.
+function test_case_do_bad_dns() {
     # wait 5 minutes for VMs to load and arrive at agent-tui check screen
     echo "Running test scenario: bad DNS record(s) in agent-config.yaml"
     echo "Waiting for 5 mins to arrive at agent-tui check screen"
@@ -659,6 +662,11 @@ function run_agent_test_cases() {
     sudo virsh screenshot "$name" "${OCP_DIR}/${name}_console_screenshot_after_dns_fix.ppm"
 
     echo "Finished fixing DNS through agent-tui"
+}
+
+function run_agent_test_cases() {
+  if [[ $AGENT_TEST_CASES =~ "bad_dns" ]]; then
+    test_case_do_bad_dns
   fi
 }
 
@@ -921,9 +929,14 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     fi
 
     if [[ "${AGENT_TEST_CASES:-}" =~ "static_ip" ]]; then
-        automate_static_networking master "$NUM_MASTERS"
-        automate_static_networking worker "$NUM_WORKERS"
-        automate_static_networking arbiter "$NUM_ARBITERS"
+        # The static_ip test case configures IPv4 static addresses only.
+        if [[ "${IP_STACK}" != "v4" ]]; then
+            echo "ERROR: the 'static_ip' test case is only supported with IP_STACK=v4 (got '${IP_STACK}')"
+            exit 1
+        fi
+        test_case_do_static_ip master "$NUM_MASTERS"
+        test_case_do_static_ip worker "$NUM_WORKERS"
+        test_case_do_static_ip arbiter "$NUM_ARBITERS"
     else
         automate_rendezvousIP_selection master "$NUM_MASTERS"
         automate_rendezvousIP_selection worker "$NUM_WORKERS"
@@ -946,9 +959,9 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     # were configured via the agent TUI.
     if [[ "${AGENT_TEST_CASES:-}" =~ "static_ip" ]]; then
         echo "Running test scenario: verify static IPs configured via agent-tui"
-        verify_static_networking master "$NUM_MASTERS"
-        verify_static_networking worker "$NUM_WORKERS"
-        verify_static_networking arbiter "$NUM_ARBITERS"
+        test_case_verify_static_ip master "$NUM_MASTERS"
+        test_case_verify_static_ip worker "$NUM_WORKERS"
+        test_case_verify_static_ip arbiter "$NUM_ARBITERS"
         echo "Finished verifying static networking on all nodes"
     fi
 
