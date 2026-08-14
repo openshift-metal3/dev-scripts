@@ -387,8 +387,24 @@ function verify_static_networking(){
         expected_hostname="$(printf "$hostname_format" "$n")"
 
         echo "Verifying ${node_type}-${n} is reachable at static IP ${node_ip} with hostname ${expected_hostname}"
-        local actual_hostname
-        if ! actual_hostname=$(timeout 60 ${SSH} "core@${node_ip}" hostname 2>/dev/null); then
+
+        # The UI reports the console URL as soon as it is available, but the
+        # nodes are still rebooting and finalizing (applying the static IP via
+        # coreos-installer --copy-network) at that point, so the static IP is not
+        # immediately reachable. Retry until the node comes up before failing.
+        local actual_hostname=""
+        local retries=40   # up to ~20 min at 30s interval
+        local i
+        for (( i=1; i<=retries; i++ )); do
+            if actual_hostname=$(${SSH} "core@${node_ip}" hostname 2>/dev/null) && [[ -n "${actual_hostname}" ]]; then
+                break
+            fi
+            actual_hostname=""
+            echo "Waiting for ${node_type}-${n} to be reachable at ${node_ip} (attempt ${i}/${retries})"
+            sleep 30
+        done
+
+        if [[ -z "${actual_hostname}" ]]; then
             echo "ERROR: static_ip test case failed - could not ssh to ${node_type}-${n} at static IP ${node_ip}"
             return 1
         fi
