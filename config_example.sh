@@ -50,10 +50,10 @@ set -x
 # OPENSHIFT_RELEASE_STREAM -
 # Select a different release stream from which to pull the latest image, if the
 # image name is not specified.
-# Default: 4.22
+# Default: 5.1
 # NOTE: Do not use for arm64, instead override OPENSHIFT_RELEASE_IMAGE
 #
-#export OPENSHIFT_RELEASE_STREAM=4.22
+#export OPENSHIFT_RELEASE_STREAM=5.1
 
 # OPENSHIFT_RELEASE_TYPE -
 # Select a different release type from which to pull the latest image.
