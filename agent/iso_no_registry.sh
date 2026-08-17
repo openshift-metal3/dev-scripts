@@ -57,6 +57,104 @@ function build_ove_iso_container() {
   mv "./output-iso/${iso_name}" "${asset_dir}"
 }
 
+# Inject the local SSH public key into a pre-built OVE ISO's embedded live ignition.
+#
+# Locally-built ISOs (build-ove-image.sh --ssh-key-file) but a pre-built ISO
+# fetched via AGENT_OVE_ISO_SOURCE may not. This adds the key to the 'core' user.
+# Note that if the pre-built ISO already has the ssh key this will not create
+# a duplicate but it will overwrite the current key.
+function inject_ssh_key_into_ove_iso() {
+  local iso="${1}"
+  local dir base tmp ssh_pub coreos_installer
+
+  if [[ ! -f "${SSH_KEY_FILE}" ]]; then
+    echo "Warning: SSH_KEY_FILE (${SSH_KEY_FILE}) not found; skipping SSH key injection." >&2
+    return 0
+  fi
+
+  dir=$(dirname "${iso}")
+  base=$(basename "${iso}")
+  ssh_pub=$(cat "${SSH_KEY_FILE}")
+  tmp=$(mktemp -d)
+
+  echo "Injecting SSH key from ${SSH_KEY_FILE} into ${iso}"
+
+  coreos_installer=(sudo podman run --privileged --rm -v /run/udev:/run/udev
+    -v "${dir}:/data" -v "${tmp}:/cfg" -w /data quay.io/coreos/coreos-installer:release)
+
+  # Extract the ISO's existing embedded live ignition so we can preserve it.
+  if ! "${coreos_installer[@]}" iso ignition show "/data/${base}" > "${tmp}/iso.ign" 2>/dev/null \
+      || ! jq -e . "${tmp}/iso.ign" >/dev/null 2>&1; then
+    # No embedded ignition (or unreadable) - start from a minimal 3.2.0 config.
+    echo '{"ignition":{"version":"3.2.0"}}' > "${tmp}/iso.ign"
+  fi
+
+  # Append our key to the 'core' user (create it if absent), keeping any existing keys.
+  jq --arg key "${ssh_pub}" '
+    .passwd = (.passwd // {}) |
+    .passwd.users = (.passwd.users // []) |
+    if any(.passwd.users[]; .name == "core")
+    then .passwd.users |= map(
+           if .name == "core"
+           then .sshAuthorizedKeys = ((.sshAuthorizedKeys // []) + [$key] | unique)
+           else . end)
+    else .passwd.users += [{"name": "core", "sshAuthorizedKeys": [$key]}]
+    end
+  ' "${tmp}/iso.ign" > "${tmp}/iso-ssh.ign"
+
+  # Re-embed the augmented ignition in place (-f overwrites the existing one).
+  "${coreos_installer[@]}" iso ignition embed -f -i "/cfg/iso-ssh.ign" "/data/${base}"
+
+  rm -rf "${tmp}"
+  echo "SSH key injected into ${iso}"
+}
+
+# Obtain a pre-built OVE ISO from AGENT_OVE_ISO_SOURCE instead of building it locally.
+# The resulting ISO is placed at "${asset_dir}/agent-ove.${ARCH}.iso", where
+# get_agent_iso_no_registry looks for it. The source may be:
+#   - a quay.io/redhat-user-workloads/... container image (ISO extracted from the image)
+#   - a local path/filename to an already-downloaded ISO
+#
+# Direct https downloads (e.g. mirror.openshift.com / the Red Hat content-gateway) are
+# not supported here because they require Red Hat SSO authentication. Download such ISOs
+# separately and pass the resulting local file path as AGENT_OVE_ISO_SOURCE.
+function fetch_agent_iso_no_registry() {
+  local asset_dir=${1}
+  local dest="${asset_dir}/agent-ove.${ARCH}.iso"
+
+  mkdir -p "${asset_dir}"
+
+  if [[ "${AGENT_OVE_ISO_SOURCE}" == *"redhat-user-workloads"* ]]; then
+    # Intermediate build published as a container image - extract the ISO from it.
+    echo "Extracting OVE ISO from container image ${AGENT_OVE_ISO_SOURCE}"
+    local id
+    id=$(sudo podman create --arch amd64 "${AGENT_OVE_ISO_SOURCE}")
+    sudo podman cp "${id}:/agent-ove.x86_64.iso" "${dest}"
+    sudo podman rm "${id}"
+  elif [[ "${AGENT_OVE_ISO_SOURCE}" =~ ^https?:// ]]; then
+    # Direct URLs are not supported - they require Red Hat SSO authentication.
+    echo "Error: direct URL downloads are not supported for AGENT_OVE_ISO_SOURCE." >&2
+    echo "       The content-gateway/mirror URLs require Red Hat SSO authentication." >&2
+    echo "       Download the ISO separately and set AGENT_OVE_ISO_SOURCE to the local file path," >&2
+    echo "       or use a quay.io/redhat-user-workloads/... container image reference." >&2
+    exit 1
+  else
+    # Treat as a local path/filename to an already-downloaded ISO.
+    echo "Using local OVE ISO ${AGENT_OVE_ISO_SOURCE}"
+    if [[ ! -f "${AGENT_OVE_ISO_SOURCE}" ]]; then
+      echo "Error: OVE ISO file not found: ${AGENT_OVE_ISO_SOURCE}" >&2
+      exit 1
+    fi
+    cp "${AGENT_OVE_ISO_SOURCE}" "${dest}"
+  fi
+
+  # A pre-built ISO has no SSH key baked in - add ours so we can ssh into the
+  # live/bootstrap OVE environment (and the installed nodes once it propagates).
+  inject_ssh_key_into_ove_iso "${dest}"
+
+  echo "OVE ISO available at ${dest}"
+}
+
 # Create agent ISO without registry (OVE ISO)
 function create_agent_iso_no_registry() {
   local asset_dir=${1}
