@@ -32,6 +32,12 @@ export PATH_CONF_DNSMASQ="/etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME
 export IP_STACK=${IP_STACK:-"v6"}
 export HOST_IP_STACK=${HOST_IP_STACK:-${IP_STACK}}
 
+# NAT64/DNS64 configuration for IPv6-only clusters on IPv4 hosts
+export ENABLE_NAT64=${ENABLE_NAT64:-false}
+export NAT64_PREFIX=${NAT64_PREFIX:-"64:ff9b::/96"}
+export NAT64_V4_POOL=${NAT64_V4_POOL:-"192.168.255.0/24"}
+export NAT64_V4_ADDR=${NAT64_V4_ADDR:-"192.168.255.1"}
+
 # Record the pre-defaulting NETWORK_TYPE
 export ORIG_NETWORK_TYPE=${NETWORK_TYPE:-""}
 
@@ -96,7 +102,12 @@ if [[ "$HOST_IP_STACK" = "v4" ]]
 then
   export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"172.22.0.0/24"}
   export EXTERNAL_SUBNET_V4=${EXTERNAL_SUBNET_V4:-"192.168.111.0/24"}
-  export EXTERNAL_SUBNET_V6=""
+  if [[ "${ENABLE_NAT64}" == "true" ]]; then
+    # NAT64: bridge needs IPv6 for cluster VMs even though host is IPv4-only
+    export EXTERNAL_SUBNET_V6=${EXTERNAL_SUBNET_V6:-"fd2e:6f44:5dd8:c956::/120"}
+  else
+    export EXTERNAL_SUBNET_V6=""
+  fi
 elif [[ "$HOST_IP_STACK" = "v6" ]]; then
   export PROVISIONING_NETWORK=${PROVISIONING_NETWORK:-"fd00:1101::0/64"}
   export EXTERNAL_SUBNET_V4=""
@@ -112,6 +123,10 @@ elif [[ "$HOST_IP_STACK" = "v6v4" ]]; then
 else
   echo "Unexpected setting for HOST_IP_STACK: '${HOST_IP_STACK}'"
   exit 1
+fi
+
+if [[ "${ENABLE_NAT64}" == "true" ]]; then
+  export NAT64_V6_ADDR=${NAT64_V6_ADDR:-$(nth_ip "$EXTERNAL_SUBNET_V6" 3)}
 fi
 
 function openshift_sdn_deprecated() {
@@ -140,7 +155,8 @@ elif [[ "$IP_STACK" = "v6" ]]; then
   export SERVICE_SUBNET_V4=""
   export SERVICE_SUBNET_V6=${SERVICE_SUBNET_V6:-"fd02::/112"}
   export NETWORK_TYPE=${NETWORK_TYPE:-"OVNKubernetes"}
-  if [[ ${AGENT_E2E_TEST_BOOT_MODE} != "ISO_NO_REGISTRY" ]]; then
+  if [[ "${ENABLE_NAT64}" != "true" ]] && [[ ${AGENT_E2E_TEST_BOOT_MODE} != "ISO_NO_REGISTRY" ]]; then
+    # NAT64 provides external registry access, so mirroring is not required
     export MIRROR_IMAGES=${MIRROR_IMAGES:-true}
   fi
 elif [[ "$IP_STACK" = "v4v6" || "$IP_STACK" = "v6v4" ]]; then
@@ -256,7 +272,7 @@ function get_vips() {
     # Returns:
     #     None
     #
-    if [[ -n "${EXTERNAL_SUBNET_V4}" ]]; then
+    if [[ -n "${EXTERNAL_SUBNET_V4}" ]] && [[ "${IP_STACK}" != "v6" ]]; then
         API_VIPS_V4=$(dig +noall +answer "api.${CLUSTER_DOMAIN}" @"$(network_ip "${BAREMETAL_NETWORK_NAME}" v4)" | awk '{print $NF}')
         if [ -z "$EXTERNAL_LOADBALANCER" ]; then
           INGRESS_VIPS_V4=$(nth_ip "$EXTERNAL_SUBNET_V4" 4)
@@ -265,7 +281,7 @@ function get_vips() {
         fi
     fi
 
-    if [[ -n "${EXTERNAL_SUBNET_V6}" ]]; then
+    if [[ -n "${EXTERNAL_SUBNET_V6}" ]] && [[ "${IP_STACK}" != "v4" ]]; then
         API_VIPS_V6=$(dig -t AAAA +noall +answer "api.${CLUSTER_DOMAIN}" @"$(network_ip "${BAREMETAL_NETWORK_NAME}" v6)" | awk '{print $NF}')
         if [ -z "$EXTERNAL_LOADBALANCER" ]; then
           INGRESS_VIPS_V6=$(nth_ip "$EXTERNAL_SUBNET_V6" 4)

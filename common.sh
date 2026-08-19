@@ -433,6 +433,18 @@ if [[ "${BOOTSTRAP_IN_PLACE}" == "true" ]]; then
   export NETWORK_TYPE="OVNKubernetes"
 fi
 
+# Validate NAT64 configuration
+if [[ "${ENABLE_NAT64:-false}" == "true" ]]; then
+  if [[ "${IP_STACK:-v6}" != "v6" ]]; then
+    error "ENABLE_NAT64=true requires IP_STACK=v6 (got IP_STACK=${IP_STACK:-v6})"
+    exit 1
+  fi
+  if [[ "${HOST_IP_STACK:-${IP_STACK:-v6}}" != "v4" ]]; then
+    error "ENABLE_NAT64=true requires HOST_IP_STACK=v4 (got HOST_IP_STACK=${HOST_IP_STACK:-${IP_STACK:-v6}})"
+    exit 1
+  fi
+fi
+
 # Defaults the DISABLE_MULTICAST variable
 export DISABLE_MULTICAST=${DISABLE_MULTICAST:-false}
 

@@ -4,6 +4,7 @@ set -euxo pipefail
 source logging.sh
 source common.sh
 source network.sh
+source nat64.sh
 source utils.sh
 source validation.sh
 source oc_mirror.sh
@@ -293,6 +294,13 @@ if [ "${NUM_EXTRA_WORKERS}" -ne 0 ] || [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
   fi
 fi
 
+# For NAT64 (IPv6-only cluster on an IPv4-only host) the BMC emulator must be
+# reached over IPv6 by the in-cluster Ironic pods; rewrite the node BMC addresses
+# to the host's IPv6 baremetal address.
+if [[ "${ENABLE_NAT64}" == "true" ]]; then
+    nat64_fixup_bmc_addresses
+fi
+
 # shellcheck disable=SC2034
 ZONE="\nZONE=libvirt"
 
@@ -474,6 +482,12 @@ if [ "$EXT_IF" ]; then
   sudo $IPTABLES -A FORWARD --in-interface "${BAREMETAL_NETWORK_NAME}" -j ACCEPT
 fi
 
+# When NAT64 is enabled, ensure IPv6 forwarding rules are set for the bridge
+if [[ "${ENABLE_NAT64}" == "true" ]]; then
+  sudo ip6tables -A FORWARD --in-interface "${BAREMETAL_NETWORK_NAME}" -j ACCEPT 2>/dev/null || true
+  sudo ip6tables -A FORWARD --out-interface "${BAREMETAL_NETWORK_NAME}" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
+fi
+
 # Switch NetworkManager to internal DNS
 if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
   switch_to_internal_dns
@@ -536,6 +550,12 @@ fi
 sudo virsh net-list | grep "${PROVISIONING_NETWORK_NAME}" || sudo virsh net-start "${PROVISIONING_NETWORK_NAME}"
 sudo virsh net-list | grep "${BAREMETAL_NETWORK_NAME}" || sudo virsh net-start "${BAREMETAL_NETWORK_NAME}"
 
+# Configure NAT64/DNS64 if enabled
+if [[ "${ENABLE_NAT64}" == "true" ]]; then
+    configure_nat64_bridge_ipv6
+    configure_tayga
+    configure_dns64
+fi
 
 # Setup a single nfs export for image registry
 if [ "${PERSISTENT_IMAGEREG}" == true ] ; then

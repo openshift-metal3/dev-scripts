@@ -18,7 +18,8 @@ if [ -d "${OCP_DIR}" ]; then
     sudo rm -rf "${OCP_DIR}"
 fi
 
-sudo rm -rf "/etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf"
+sudo rm -rf /etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf
+sudo rm -f /etc/NetworkManager/dnsmasq.d/nat64-dns64.conf
 
 # Cleanup ssh keys for baremetal network
 if [ -f "$HOME/.ssh/known_hosts" ]; then

@@ -207,6 +207,19 @@ if [[ "${NODES_PLATFORM:-}" == "baremetal" ]] ; then
     sudo dnf -y install ipmitool
 fi
 
+# Install NAT64 dependencies if enabled
+if [[ "${ENABLE_NAT64:-false}" == "true" ]]; then
+    echo "Installing NAT64 dependencies (TAYGA, unbound)..."
+    # TAYGA provides the NAT64 translation; unbound provides DNS64 synthesis.
+    # unbound is used rather than CoreDNS because its built-in dns64 module
+    # reliably synthesizes AAAA records (the CoreDNS dns64 plugin build did not).
+    sudo dnf -y install tayga unbound
+    # We run our own DNS64 unbound instance on a dedicated port; make sure the
+    # stock unbound.service does not also grab port 53 and clash with the host
+    # NetworkManager resolver.
+    sudo systemctl disable --now unbound.service 2>/dev/null || true
+fi
+
 retry_with_timeout 5 60 "curl -L $OPENSHIFT_CLIENT_TOOLS_URL | sudo tar -U -C /usr/local/bin -xzf -"
 sudo chmod +x /usr/local/bin/oc
 oc version --client -o json
