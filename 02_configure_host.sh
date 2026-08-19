@@ -555,6 +555,10 @@ if [[ "${ENABLE_NAT64}" == "true" ]]; then
     configure_nat64_bridge_ipv6
     configure_tayga
     configure_dns64
+    # Make the sushy BMC cert valid for the IPv6 baremetal address so the
+    # IPv6-only in-cluster Ironic can reach the BMC. Must run before step 05
+    # embeds this cert into the install-config trust bundle.
+    nat64_fixup_sushy_cert
 fi
 
 # Setup a single nfs export for image registry

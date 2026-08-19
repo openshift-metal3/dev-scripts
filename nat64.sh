@@ -211,6 +211,60 @@ function nat64_fixup_bmc_addresses() {
     done
 }
 
+# Regenerate the sushy-tools BMC emulator TLS certificate so it is valid for the
+# host's IPv6 baremetal address in addition to its IPv4 one. metal3-dev-env only
+# puts the IPv4 baremetal address in the cert's SAN, but for NAT64 the in-cluster
+# Ironic pods are IPv6-only and must reach the BMC over IPv6; without the IPv6 SAN
+# they reject the redfish connection with an "IP address mismatch" TLS error.
+# (On OCP >= 4.22 dev-scripts no longer emits disableCertificateVerification, so
+# certificate verification is always on and the cert MUST carry the IPv6 SAN.)
+#
+# This must run before 05_create_install_config.sh, which embeds this cert into the
+# install-config trust bundle (see ocp_install_env.sh). The existing key is reused
+# and the sushy-tools container is restarted so it serves the new cert. Idempotent
+# and a no-op when sushy or the IPv6 address is not present.
+function nat64_fixup_sushy_cert() {
+    local sushy_dir="${WORKING_DIR}/virtualbmc/sushy-tools"
+    local cert="${sushy_dir}/cert.pem"
+    local key="${sushy_dir}/key.pem"
+    local v4host v6host
+    v4host=$(nth_ip "${EXTERNAL_SUBNET_V4}" 1)
+    v6host=$(nth_ip "${EXTERNAL_SUBNET_V6}" 1)
+    if [[ ! -f "${cert}" || ! -f "${key}" || -z "${v6host}" ]]; then
+        echo "nat64_fixup_sushy_cert: sushy cert/key or IPv6 host address missing, skipping"
+        return 0
+    fi
+
+    # Already valid for the IPv6 address? Nothing to do.
+    if sudo openssl x509 -in "${cert}" -noout -text 2>/dev/null | grep -qiF "${v6host}"; then
+        echo "sushy BMC cert already valid for ${v6host}"
+        return 0
+    fi
+
+    echo "Regenerating sushy BMC cert with SANs IP:${v4host}, IP:${v6host} for NAT64..."
+    local tmp
+    tmp=$(mktemp -d)
+    cat > "${tmp}/san.cnf" <<EOF
+[req]
+distinguished_name = dn
+prompt = no
+[dn]
+CN = metal3.io
+[SAN]
+subjectAltName = IP:${v4host},IP:${v6host}
+basicConstraints = CA:TRUE,pathlen:0
+EOF
+    sudo openssl req -x509 -key "${key}" -out "${tmp}/cert.pem" -days 3650 \
+        -subj "/CN=metal3.io" -config "${tmp}/san.cnf" -extensions SAN
+    sudo cp "${tmp}/cert.pem" "${cert}"
+    rm -rf "${tmp}"
+
+    # Restart sushy so it serves the regenerated certificate.
+    sudo podman restart sushy-tools 2>/dev/null || true
+
+    echo "sushy BMC cert regenerated for ${v4host} and ${v6host}"
+}
+
 # Remove the legacy CoreDNS DNS64 service (superseded by unbound). No-op if absent.
 function _nat64_remove_legacy_coredns() {
     if sudo systemctl is-active --quiet coredns-nat64.service 2>/dev/null; then
