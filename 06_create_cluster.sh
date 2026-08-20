@@ -92,25 +92,31 @@ fi
 
 if [[ -n "${APPLY_EXTRA_WORKERS:-}" ]]; then
     if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_host_manifests.yaml" ]]; then
-        # Wait for all worker Machines to have a BMH assigned before applying
-        # extra workers, to prevent the machine-api from claiming extra worker
-        # hosts for the primary MachineSet (race when regular workers are slow
-        # to register via Redfish).
+        # Give regular worker Machines time to claim their BMHs before
+        # introducing extra workers.  This reduces the chance of machine-api
+        # grabbing an extra worker host for the primary MachineSet when a
+        # regular worker is slow to register (e.g. Redfish).  If they don't
+        # all register within the timeout we proceed anyway — some
+        # environments have permanently-unreachable worker BMHs and rely on
+        # the extra worker filling the gap.
+        EXTRA_WORKER_WAIT_RETRIES=${EXTRA_WORKER_WAIT_RETRIES:-120}
         echo "Waiting for all ${NUM_WORKERS} worker machines to have a host assigned..."
-        timeout 30m bash -c '
-            while true; do
-                ASSIGNED=$(oc get machines -n openshift-machine-api \
-                    -l machine.openshift.io/cluster-api-machine-role=worker \
-                    -o json 2>/dev/null | \
-                    jq "[.items[].metadata.annotations // {} | .[\"metal3.io/BareMetalHost\"] // empty] | length")
-                if [[ "${ASSIGNED}" -ge "'"${NUM_WORKERS}"'" ]]; then
-                    echo "All '"${NUM_WORKERS}"' worker machines have a host assigned"
-                    break
-                fi
-                echo "Waiting: ${ASSIGNED}/'"${NUM_WORKERS}"' worker machines have a host assigned"
-                sleep 10
-            done
-        '
+        ASSIGNED=0
+        for ((i = 0; i < EXTRA_WORKER_WAIT_RETRIES; i++)); do
+            ASSIGNED=$(oc get machines -n openshift-machine-api \
+                -l machine.openshift.io/cluster-api-machine-role=worker \
+                -o json 2>/dev/null | \
+                jq "[.items[].metadata.annotations // {} | .[\"metal3.io/BareMetalHost\"] // empty] | length")
+            if [[ "${ASSIGNED}" -ge "${NUM_WORKERS}" ]]; then
+                echo "All ${NUM_WORKERS} worker machines have a host assigned"
+                break
+            fi
+            echo "Waiting: ${ASSIGNED}/${NUM_WORKERS} worker machines have a host assigned"
+            sleep 10
+        done
+        if [[ "${ASSIGNED}" -lt "${NUM_WORKERS}" ]]; then
+            echo "WARNING: only ${ASSIGNED}/${NUM_WORKERS} worker machines have a host assigned, proceeding with extra workers anyway"
+        fi
 
         oc apply -f "${OCP_DIR}/extra_host_manifests.yaml"
 
