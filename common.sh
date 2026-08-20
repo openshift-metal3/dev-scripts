@@ -433,18 +433,6 @@ if [[ "${BOOTSTRAP_IN_PLACE}" == "true" ]]; then
   export NETWORK_TYPE="OVNKubernetes"
 fi
 
-# Validate NAT64 configuration
-if [[ "${ENABLE_NAT64:-false}" == "true" ]]; then
-  if [[ "${IP_STACK:-v6}" != "v6" ]]; then
-    error "ENABLE_NAT64=true requires IP_STACK=v6 (got IP_STACK=${IP_STACK:-v6})"
-    exit 1
-  fi
-  if [[ "${HOST_IP_STACK:-${IP_STACK:-v6}}" != "v4" ]]; then
-    error "ENABLE_NAT64=true requires HOST_IP_STACK=v4 (got HOST_IP_STACK=${HOST_IP_STACK:-${IP_STACK:-v6}})"
-    exit 1
-  fi
-fi
-
 # Defaults the DISABLE_MULTICAST variable
 export DISABLE_MULTICAST=${DISABLE_MULTICAST:-false}
 
@@ -642,6 +630,33 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
   if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "PXE" ]] || [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" ]]; then
     LIBVIRT_FIRMWARE=bios
   fi
+fi
+
+# Validate NAT64 configuration. This must run after the agent scenario parsing
+# above, which derives IP_STACK from AGENT_E2E_TEST_SCENARIO; validating earlier
+# would only ever see the default IP_STACK and silently pass for v4/dual-stack
+# agent scenarios.
+if [[ "${ENABLE_NAT64:-false}" == "true" ]]; then
+  if [[ "${IP_STACK:-v6}" != "v6" ]]; then
+    error "ENABLE_NAT64=true requires IP_STACK=v6 (got IP_STACK=${IP_STACK:-v6})"
+    exit 1
+  fi
+  if [[ "${HOST_IP_STACK:-${IP_STACK:-v6}}" != "v4" ]]; then
+    error "ENABLE_NAT64=true requires HOST_IP_STACK=v4 (got HOST_IP_STACK=${HOST_IP_STACK:-${IP_STACK:-v6}})"
+    exit 1
+  fi
+  # The IPv6-only in-cluster Ironic can only reach the BMC emulator over IPv6,
+  # which only sushy/redfish listens on; vbmc (ipmi) binds IPv4 only. Reject the
+  # ipmi and mixed drivers rather than silently leaving those BMCs unreachable.
+  if [[ "${BMC_DRIVER}" != "redfish" && "${BMC_DRIVER}" != "redfish-virtualmedia" ]]; then
+    error "ENABLE_NAT64=true requires a redfish-based BMC_DRIVER (redfish or redfish-virtualmedia), got BMC_DRIVER=${BMC_DRIVER}"
+    exit 1
+  fi
+  # NAT64 provides external registry access, so image mirroring is skipped and no
+  # local registry is created. Default MIRROR_IMAGES to false here (before the
+  # registry-override decision later in this file) so the installer is not pointed
+  # at a registry that was never stood up.
+  export MIRROR_IMAGES=${MIRROR_IMAGES:-false}
 fi
 
 if [[ ! -z ${AGENT_E2E_TEST_BOOT_MODE} ]]; then

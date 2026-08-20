@@ -444,9 +444,11 @@ set -x
 # ENABLE_NAT64 -
 # Enable NAT64/DNS64 to allow IPv6-only clusters (IP_STACK=v6) to run on
 # IPv4-only hosts (HOST_IP_STACK=v4). Uses TAYGA for NAT64 translation and
-# CoreDNS for DNS64 synthesis, enabling cluster VMs to reach external IPv4
+# unbound for DNS64 synthesis, enabling cluster VMs to reach external IPv4
 # resources (e.g. container registries) via synthesized IPv6 addresses.
-# Requires: IP_STACK=v6 and HOST_IP_STACK=v4
+# Requires: IP_STACK=v6, HOST_IP_STACK=v4, and a redfish-based BMC_DRIVER
+# (redfish or redfish-virtualmedia) since the IPv6-only in-cluster Ironic can
+# only reach the BMC emulator over IPv6 (vbmc/ipmi listens on IPv4 only).
 # Default: false
 #
 #export ENABLE_NAT64=true
@@ -471,6 +473,24 @@ set -x
 # Default: "192.168.255.1"
 #
 #export NAT64_V4_ADDR="192.168.255.1"
+
+# NAT64_V6_ADDR -
+# TAYGA's own IPv6 address (source of the ICMPv6 errors it generates, e.g.
+# for PMTUD). Defaults to the 3rd address of EXTERNAL_SUBNET_V6, which is
+# on-link on the baremetal bridge. If you carve TAYGA its own subnet, set this
+# to an address outside any locally-attached subnet and route it to the NAT64
+# TUN device so error replies are delivered symmetrically.
+# Default: nth_ip(EXTERNAL_SUBNET_V6, 3)
+#
+#export NAT64_V6_ADDR="fd2e:6f44:5dd8:c956::3"
+
+# NAT64_DNS64_UPSTREAM -
+# Space-separated upstream resolver(s) the DNS64 unbound instance forwards to.
+# By default these are auto-discovered from the host's resolver config; set this
+# explicitly when the host has no usable upstream in resolv.conf (otherwise DNS64
+# falls back to 8.8.8.8, which is usually unreachable on a firewalled NAT64 host).
+#
+#export NAT64_DNS64_UPSTREAM="10.0.0.53"
 
 # ENABLE_BOOTSTRAP_STATIC_IP -
 # Configure a static IP for the bootstrap VM external NIC

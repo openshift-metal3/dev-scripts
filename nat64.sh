@@ -4,6 +4,7 @@
 
 export NAT64_TAYGA_CONF="/etc/tayga.conf"
 export NAT64_TAYGA_DATA_DIR="/var/db/tayga"
+export NAT64_TAYGA_SERVICE="nat64-tayga"
 export NAT64_TUN_INTERFACE="nat64"
 export NAT64_DNS64_PORT="5353"
 export NAT64_UNBOUND_CONF="/etc/unbound/unbound-dns64.conf"
@@ -45,27 +46,36 @@ dynamic-pool ${NAT64_V4_POOL}
 data-dir ${NAT64_TAYGA_DATA_DIR}
 EOF
 
-    # Create the TUN device via TAYGA
-    sudo tayga --mktun
+    # Run TAYGA as a systemd service so the translator, its TUN device, routes and
+    # forwarding survive a host reboot (mirroring the unbound DNS64 service). All
+    # setup lives in ExecStartPre so it is re-established on every (re)start; the
+    # '-' prefix and the -C||-A guard keep it idempotent (re-running 02_configure_host
+    # no longer fails on an already-existing TUN device).
+    sudo tee "/etc/systemd/system/${NAT64_TAYGA_SERVICE}.service" > /dev/null <<EOF
+[Unit]
+Description=TAYGA NAT64 translator
+After=network.target
 
-    # Configure the TUN interface
-    sudo ip link set "${NAT64_TUN_INTERFACE}" up
+[Service]
+Type=simple
+ExecStartPre=-/usr/sbin/tayga --mktun
+ExecStartPre=/usr/sbin/ip link set ${NAT64_TUN_INTERFACE} up
+ExecStartPre=-/usr/sbin/ip route add ${NAT64_V4_POOL} dev ${NAT64_TUN_INTERFACE}
+ExecStartPre=-/usr/sbin/ip -6 route add ${NAT64_PREFIX} dev ${NAT64_TUN_INTERFACE}
+ExecStartPre=/usr/sbin/sysctl -w net.ipv4.ip_forward=1
+ExecStartPre=/bin/bash -c '/usr/sbin/iptables -t nat -C POSTROUTING -s ${NAT64_V4_POOL} -j MASQUERADE 2>/dev/null || /usr/sbin/iptables -t nat -A POSTROUTING -s ${NAT64_V4_POOL} -j MASQUERADE'
+ExecStart=/usr/sbin/tayga --nodetach -c ${NAT64_TAYGA_CONF}
+Restart=on-failure
+RestartSec=5
 
-    # Add IPv4 route for the NAT64 pool via the TUN interface
-    sudo ip route add "${NAT64_V4_POOL}" dev "${NAT64_TUN_INTERFACE}" 2>/dev/null || true
+[Install]
+WantedBy=multi-user.target
+EOF
 
-    # Add IPv6 route for the NAT64 prefix via the TUN interface
-    sudo ip -6 route add "${NAT64_PREFIX}" dev "${NAT64_TUN_INTERFACE}" 2>/dev/null || true
-
-    # Enable IPv4 forwarding
-    sudo sysctl -w net.ipv4.ip_forward=1
-
-    # Set up iptables MASQUERADE for translated traffic
-    sudo iptables -t nat -C POSTROUTING -s "${NAT64_V4_POOL}" -j MASQUERADE 2>/dev/null || \
-        sudo iptables -t nat -A POSTROUTING -s "${NAT64_V4_POOL}" -j MASQUERADE
-
-    # Start TAYGA daemon
-    sudo tayga
+    sudo systemctl daemon-reload
+    sudo systemctl enable "${NAT64_TAYGA_SERVICE}.service"
+    # restart (not just start) so a re-run picks up any config/unit changes.
+    sudo systemctl restart "${NAT64_TAYGA_SERVICE}.service"
 
     echo "TAYGA NAT64 daemon started (prefix=${NAT64_PREFIX}, pool=${NAT64_V4_POOL})"
 }
@@ -77,18 +87,36 @@ function configure_dns64() {
     # it does not hold the DNS64 port.
     _nat64_remove_legacy_coredns
 
-    # Discover the host's real upstream resolvers. NAT64 hosts frequently cannot
-    # reach public resolvers (e.g. 8.8.8.8) through their firewall, so forward
-    # DNS64 queries to whatever resolvers the host itself uses. When NetworkManager
-    # runs in dnsmasq mode /etc/resolv.conf points at a loopback stub and the real
-    # upstream servers live in no-stub-resolv.conf.
-    local upstreams
-    upstreams=$(awk '/^nameserver/ && $2 != "127.0.0.1" && $2 != "::1" {print $2}' /run/NetworkManager/no-stub-resolv.conf 2>/dev/null)
+    # Determine the upstream resolvers DNS64 forwards to. An explicit
+    # NAT64_DNS64_UPSTREAM (space-separated) always wins. Otherwise discover the
+    # host's real resolvers: NAT64 hosts frequently cannot reach public resolvers
+    # (e.g. 8.8.8.8) through their firewall, so we forward to whatever the host
+    # itself uses. When NetworkManager runs in dnsmasq mode /etc/resolv.conf points
+    # at a loopback stub and the real upstream servers live in no-stub-resolv.conf.
+    local upstreams="${NAT64_DNS64_UPSTREAM:-}"
+    if [[ -z "${upstreams//[[:space:]]/}" ]]; then
+        upstreams=$(awk '/^nameserver/ && $2 != "127.0.0.1" && $2 != "::1" {print $2}' /run/NetworkManager/no-stub-resolv.conf 2>/dev/null)
+    fi
     if [[ -z "${upstreams//[[:space:]]/}" ]]; then
         upstreams=$(awk '/^nameserver/ && $2 != "127.0.0.1" && $2 != "::1" {print $2}' /etc/resolv.conf 2>/dev/null)
     fi
-    upstreams=${upstreams:-8.8.8.8}
+    if [[ -z "${upstreams//[[:space:]]/}" ]]; then
+        # Fall back to a public resolver so DNS64 still comes up, but warn loudly:
+        # on a firewalled NAT64 host 8.8.8.8 is usually unreachable and every DNS64
+        # lookup will time out. Set NAT64_DNS64_UPSTREAM to fix this deliberately.
+        echo "WARNING: could not discover any host upstream resolver for DNS64;" >&2
+        echo "WARNING: falling back to 8.8.8.8, which is often unreachable on a" >&2
+        echo "WARNING: firewalled NAT64 host. Set NAT64_DNS64_UPSTREAM to override." >&2
+        upstreams=8.8.8.8
+    fi
     echo "DNS64 upstream resolvers: ${upstreams}"
+
+    # NOTE: this unbound instance is a non-validating DNS64 forwarder. dns64-synthall
+    # rewrites AAAA answers into ${NAT64_PREFIX}, which is fundamentally incompatible
+    # with DNSSEC AAAA validation, and it implicitly trusts the host's upstream
+    # resolvers (discovered above). That trust model matches the rest of dev-scripts
+    # (a lab/CI tool on a controlled network); do not treat this resolver as a
+    # security boundary.
 
     # Write the unbound DNS64 config. dns64-synthall makes unbound synthesize an
     # AAAA in ${NAT64_PREFIX} for EVERY name, even ones that already have a native
@@ -155,6 +183,15 @@ EOF
     echo "unbound DNS64 configured on port ${NAT64_DNS64_PORT}"
 }
 
+# Bounded dummy-interface name for a libvirt network. Linux caps interface names
+# at 15 chars (IFNAMSIZ-1); a long ${net} would overflow "${net}-dmy", the create
+# would fail and the bridge would be left without carrier (so its IPv6 never comes
+# up). Truncate ${net} so the "-dmy" suffix always fits. Used by both the create
+# and cleanup paths so they always agree on the name.
+function _nat64_dummy_ifname() {
+    echo "${1:0:11}-dmy"
+}
+
 # Rewrite a libvirt network's dnsmasq so it forwards exclusively to the DNS64
 # resolver, then recreate the bridge carrier/addr_gen so its IPv6 (and thus DNS)
 # is up before the VMs boot. Safe to call for a network that does not exist.
@@ -177,12 +214,17 @@ function _nat64_point_libvirt_dns64() {
     sudo virsh net-destroy "${net}"
     sudo virsh net-undefine "${net}"
     sudo virsh net-define "${xml}"
+    # net-undefine clears the autostart flag metal3-dev-env set; restore it so the
+    # network still comes up after a host reboot.
+    sudo virsh net-autostart "${net}"
     sudo virsh net-start "${net}"
 
     # net-destroy drops the bridge; restore a dummy for carrier and addr_gen_mode=0
     # so the network's IPv6 address comes up before the VMs provide carrier (needed
     # for IPv6 on EL9).
-    sudo ip link add name "${net}-dmy" up master "${net}" type dummy 2>/dev/null || true
+    local dmy
+    dmy=$(_nat64_dummy_ifname "${net}")
+    sudo ip link add name "${dmy}" up master "${net}" type dummy 2>/dev/null || true
     echo 0 | sudo dd of="/proc/sys/net/ipv6/conf/${net}/addr_gen_mode" 2>/dev/null || true
 }
 
@@ -205,9 +247,22 @@ function nat64_fixup_bmc_addresses() {
         [[ -n "${f}" && -f "${f}" ]] || continue
         tmp="${f}.nat64"
         # Literal (non-regex) host replacement via split/join on the "//host:" token.
-        jq --arg old "//${v4host}:" --arg new "//[${v6host}]:" \
-            '(.nodes[]?.driver_info.address) |= (. / $old | join($new))' \
-            "${f}" > "${tmp}" && mv "${tmp}" "${f}"
+        # select(.address? != null) skips nodes without a BMC address (e.g. a
+        # manually-edited inventory) instead of aborting jq on a null/string divide.
+        # On success copy back through the original file (preserving its mode/owner
+        # rather than replacing it with a fresh-umask temp via mv); always remove the
+        # temp so a jq failure does not strand a partial ".nat64" file.
+        if jq --arg old "//${v4host}:" --arg new "//[${v6host}]:" \
+            '(.nodes[]?.driver_info | select(.address? != null) | .address) |= (. / $old | join($new))' \
+            "${f}" > "${tmp}"; then
+            # Overwrite in place with sudo: ${f} may be root-owned (written by an
+            # earlier privileged step) while its directory is user-writable, so a
+            # plain ">" redirect fails with EACCES. cp onto the existing file also
+            # keeps its original mode/owner rather than replacing it with a
+            # fresh-umask temp (which a plain "mv" would have done).
+            sudo cp "${tmp}" "${f}"
+        fi
+        rm -f "${tmp}"
     done
 }
 
@@ -230,13 +285,21 @@ function nat64_fixup_sushy_cert() {
     local v4host v6host
     v4host=$(nth_ip "${EXTERNAL_SUBNET_V4}" 1)
     v6host=$(nth_ip "${EXTERNAL_SUBNET_V6}" 1)
-    if [[ ! -f "${cert}" || ! -f "${key}" || -z "${v6host}" ]]; then
+    # Probe for the cert/key under sudo: ${WORKING_DIR}/virtualbmc is root-owned and
+    # root-only (drwxr-x---), so the invoking user cannot traverse it and a plain
+    # "[[ -f ]]" would report the files missing even when they exist, silently
+    # skipping the fixup (leaving sushy serving an IPv4-only cert that the IPv6-only
+    # in-cluster Ironic rejects). The rest of this function already uses sudo.
+    if ! sudo test -f "${cert}" || ! sudo test -f "${key}" || [[ -z "${v6host}" ]]; then
         echo "nat64_fixup_sushy_cert: sushy cert/key or IPv6 host address missing, skipping"
         return 0
     fi
 
-    # Already valid for the IPv6 address? Nothing to do.
-    if sudo openssl x509 -in "${cert}" -noout -text 2>/dev/null | grep -qiF "${v6host}"; then
+    # Already valid for the IPv6 address? Nothing to do. Use openssl's own SAN
+    # matching (-checkip) rather than grepping the text dump: openssl renders IPv6
+    # SANs in uncompressed form, so a substring match for the compressed address
+    # never matched and the cert was needlessly regenerated on every run.
+    if sudo openssl x509 -in "${cert}" -noout -checkip "${v6host}" >/dev/null 2>&1; then
         echo "sushy BMC cert already valid for ${v6host}"
         return 0
     fi
@@ -272,7 +335,10 @@ function _nat64_remove_legacy_coredns() {
     fi
     sudo systemctl disable coredns-nat64.service 2>/dev/null || true
     sudo rm -f /etc/systemd/system/coredns-nat64.service
-    sudo rm -rf /etc/coredns
+    # NOTE: deliberately do NOT "rm -rf /etc/coredns" here. This helper runs on
+    # every configure_dns64 call, and /etc/coredns may hold an unrelated host-owned
+    # CoreDNS configuration. Stopping/removing our own service is enough to free the
+    # DNS64 port.
     sudo systemctl daemon-reload
 }
 
@@ -296,7 +362,7 @@ function cleanup_nat64() {
     # Remove the per-network DNS64 dummy carrier interfaces
     local net
     for net in "${BAREMETAL_NETWORK_NAME}" ${EXTRA_NETWORK_NAMES:-}; do
-        sudo ip link del "${net}-dmy" 2>/dev/null || true
+        sudo ip link del "$(_nat64_dummy_ifname "${net}")" 2>/dev/null || true
     done
     # Remove the legacy baremetal dummy name used by earlier revisions
     sudo ip link del bm-ipv6-dummy 2>/dev/null || true
@@ -307,9 +373,21 @@ function cleanup_nat64() {
         sudo systemctl reload NetworkManager
     fi
 
-    # Stop TAYGA
+    # Stop and disable the TAYGA systemd service
+    if sudo systemctl is-active --quiet "${NAT64_TAYGA_SERVICE}.service" 2>/dev/null; then
+        sudo systemctl stop "${NAT64_TAYGA_SERVICE}.service"
+    fi
+    sudo systemctl disable "${NAT64_TAYGA_SERVICE}.service" 2>/dev/null || true
+    sudo rm -f "/etc/systemd/system/${NAT64_TAYGA_SERVICE}.service"
+    sudo systemctl daemon-reload
+    # Kill any stray bare tayga daemon FIRST, then tear down the TUN device: tayga
+    # holds the TUN open, so --rmtun before the process is gone leaves it orphaned.
+    # Match by exact process name (the cmdline is "/usr/sbin/tayga ...", so an
+    # "^tayga" -f pattern never matched). Delete the device explicitly as a backstop
+    # in case --rmtun fails (e.g. the tayga binary is already gone).
+    sudo pkill -x tayga 2>/dev/null || true
     sudo tayga --rmtun 2>/dev/null || true
-    sudo pkill -f "^tayga" 2>/dev/null || true
+    sudo ip link del "${NAT64_TUN_INTERFACE}" 2>/dev/null || true
 
     # Remove NAT64 routes
     sudo ip route del "${NAT64_V4_POOL}" dev "${NAT64_TUN_INTERFACE}" 2>/dev/null || true
@@ -317,6 +395,10 @@ function cleanup_nat64() {
 
     # Remove iptables masquerade rule
     sudo iptables -t nat -D POSTROUTING -s "${NAT64_V4_POOL}" -j MASQUERADE 2>/dev/null || true
+
+    # Remove the IPv6 FORWARD rules added by 02_configure_host.sh for NAT64
+    sudo ip6tables -D FORWARD --in-interface "${BAREMETAL_NETWORK_NAME}" -j ACCEPT 2>/dev/null || true
+    sudo ip6tables -D FORWARD --out-interface "${BAREMETAL_NETWORK_NAME}" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
 
     # Clean up TAYGA data and config
     sudo rm -rf "${NAT64_TAYGA_DATA_DIR}"

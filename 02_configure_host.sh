@@ -484,8 +484,12 @@ fi
 
 # When NAT64 is enabled, ensure IPv6 forwarding rules are set for the bridge
 if [[ "${ENABLE_NAT64}" == "true" ]]; then
-  sudo ip6tables -A FORWARD --in-interface "${BAREMETAL_NETWORK_NAME}" -j ACCEPT 2>/dev/null || true
-  sudo ip6tables -A FORWARD --out-interface "${BAREMETAL_NETWORK_NAME}" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
+  # Check-then-add so re-running does not accumulate duplicate rules; cleanup_nat64
+  # removes these with the matching -D commands.
+  sudo ip6tables -C FORWARD --in-interface "${BAREMETAL_NETWORK_NAME}" -j ACCEPT 2>/dev/null || \
+    sudo ip6tables -A FORWARD --in-interface "${BAREMETAL_NETWORK_NAME}" -j ACCEPT
+  sudo ip6tables -C FORWARD --out-interface "${BAREMETAL_NETWORK_NAME}" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || \
+    sudo ip6tables -A FORWARD --out-interface "${BAREMETAL_NETWORK_NAME}" -m state --state RELATED,ESTABLISHED -j ACCEPT
 fi
 
 # Switch NetworkManager to internal DNS

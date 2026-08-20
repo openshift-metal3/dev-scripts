@@ -110,8 +110,15 @@ case $DISTRO in
     ;;
   "rhel10"|"centos10")
     sudo dnf -y install python3-pip
-    if sudo subscription-manager identity > /dev/null 2>&1; then
-      sudo subscription-manager repos --enable "codeready-builder-for-rhel-10-$(arch)-rpms" || true
+    if [[ $DISTRO == "centos10" ]]; then
+      sudo dnf config-manager --set-enabled crb
+      sudo dnf -y install epel-release
+    elif [[ $DISTRO == "rhel10" ]]; then
+      if sudo subscription-manager identity > /dev/null 2>&1; then
+        sudo subscription-manager repos --enable "codeready-builder-for-rhel-10-$(arch)-rpms" || true
+      fi
+      # EPEL provides tayga (needed for NAT64); mirror the EL9 rhel handling.
+      sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
     fi
     sudo ln -s /usr/bin/python3 /usr/bin/python || true
     PYTHON_DEVEL="python3-devel"
