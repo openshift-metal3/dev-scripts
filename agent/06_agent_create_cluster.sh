@@ -808,20 +808,28 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     # Run a script from agent-installer-utils which internally uses openshift-appliance
     asset_dir=$SCRIPTDIR/$OCP_DIR/iso_builder
     mkdir -p "${asset_dir}"
-    create_agent_iso_no_registry "${asset_dir}"
 
-    assert_agent_no_registry_iso_size
+    if [[ -n "${AGENT_OVE_ISO_SOURCE}" ]]; then
+      # A pre-built OVE ISO was provided - fetch it instead of building one locally.
+      fetch_agent_iso_no_registry "${asset_dir}"
 
-    if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
-      # reclaim disk space by deleting unwanted cache, other files
-      cleanup_diskspace_agent_iso_noregistry "${asset_dir}"
-    fi
+      assert_agent_no_registry_iso_size
+    else
+      create_agent_iso_no_registry "${asset_dir}"
 
-    # Clean up registry data to save disk space after ISO is created
-    if [[ "${MIRROR_IMAGES}" == "true" ]]; then
-      echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
-      sudo rm -rf "${REGISTRY_DIR}/data"
-      echo "Registry data cleanup complete"
+      assert_agent_no_registry_iso_size
+
+      if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
+        # reclaim disk space by deleting unwanted cache, other files
+        cleanup_diskspace_agent_iso_noregistry "${asset_dir}"
+      fi
+
+      # Clean up registry data to save disk space after ISO is created
+      if [[ "${MIRROR_IMAGES}" == "true" ]]; then
+        echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
+        sudo rm -rf "${REGISTRY_DIR}/data"
+        echo "Registry data cleanup complete"
+      fi
     fi
 
     attach_agent_iso_no_registry master "$NUM_MASTERS"

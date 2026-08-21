@@ -612,7 +612,29 @@ func networkingDetails(page *rod.Page, path string) error {
 		}
 	}
 
-	page.MustElement("#form-input-sshPublicKey-field").MustInput(sshPublicKey)
+	// The "Host SSH Public Key" section offers a "Use the same host discovery SSH key"
+	// checkbox. When it is checked - e.g. the boot ISO already provided a host discovery
+	// SSH key (as with a pre-built OVE ISO) - the manual key text field is not rendered,
+	// so unconditionally waiting for it would hang forever. Only enter the key if the
+	// field is actually present and empty; otherwise the cluster already has an SSH key.
+	sshField, sshErr := page.Timeout(15 * time.Second).Element("#form-input-sshPublicKey-field")
+	if sshErr != nil || sshField == nil {
+		logrus.Info("SSH public key field not present (using host discovery SSH key); skipping input")
+	} else {
+		sshField.MustScrollIntoView()
+		existing := strings.TrimSpace(sshField.MustProperty("value").String())
+		if existing == "" {
+			if inputErr := rod.Try(func() {
+				sshField.Timeout(30 * time.Second).MustWaitInteractable().MustInput(sshPublicKey)
+			}); inputErr != nil {
+				_ = saveFullPageScreenshot(page, timestampedPath(path, "ssh-input-failed"))
+				logrus.Warnf("skipping SSH key input (field not interactable): %v", inputErr)
+			}
+		} else {
+			logrus.Info("SSH public key already populated; skipping input")
+		}
+	}
+
 	page.MustElement(`button[name="next"]`).MustWaitEnabled()
 
 	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
