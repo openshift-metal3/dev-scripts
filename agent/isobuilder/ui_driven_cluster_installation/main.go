@@ -854,8 +854,15 @@ func runDownloadLogs() {
 	browser := rod.New().ControlURL(url).MustConnect()
 	defer browser.MustClose()
 
-	// Navigate to base URL - UI will redirect to current cluster
-	page := browser.MustPage(getBaseURL(ipStack, rendezvousIP))
+	// Navigate to base URL - UI will redirect to current cluster. After a
+	// successful installation the rendezvous node reboots to join the cluster
+	// and the GUI is no longer running, so connection refused is expected.
+	uiURL := getBaseURL(ipStack, rendezvousIP)
+	page, err := browser.Page(proto.TargetCreateTarget{URL: uiURL})
+	if err != nil {
+		logrus.Infof("Assisted Installer UI at %s is not reachable (expected after successful installation): %v", uiURL, err)
+		return
+	}
 	page.MustWaitLoad()
 
 	logrus.Info("Connected to Assisted Installer UI")
