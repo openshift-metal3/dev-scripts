@@ -83,7 +83,7 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
             EXTRA_PKGS_FILE=$(cd "$OLDPWD"; realpath "$EXTRA_PKGS_FILE")
             cp "$EXTRA_PKGS_FILE" "$REPOPATH"
             EXTRA_PKGS_FILE_NAME=$(basename "$EXTRA_PKGS_FILE")
-            BUILD_COMMAND_ARGS+=" --build-arg EXTRA_PKGS_LIST=$EXTRA_PKGS_FILE_NAME"
+            BUILD_COMMAND_ARGS+="EXTRA_PKGS_LIST=$EXTRA_PKGS_FILE_NAME"
         fi
 
         # If we built a custom base image, we should use it as a new base in
@@ -93,7 +93,7 @@ for IMAGE_VAR in $(env | grep "_LOCAL_IMAGE=" | grep -o "^[^=]*") ; do
             sed -i "s/^FROM [^ ]*/FROM ${BASE_IMAGE_DIR}/g" "${IMAGE_DOCKERFILE}"
         fi
 
-        sudo podman build --network host --authfile "$PULL_SECRET_FILE" "$BUILD_COMMAND_ARGS" -t "${!IMAGE_VAR}" -f "$IMAGE_DOCKERFILE" .
+        sudo podman build --network host --authfile "$PULL_SECRET_FILE" --build-arg "$BUILD_COMMAND_ARGS" -t "${!IMAGE_VAR}" -f "$IMAGE_DOCKERFILE" .
         cd -
         sudo podman push --tls-verify=false --authfile "$PULL_SECRET_FILE" "${!IMAGE_VAR}" "${!IMAGE_VAR}"
     fi
