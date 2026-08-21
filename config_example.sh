@@ -253,11 +253,22 @@ set -x
 # BGPBasedVIPManagement gate (DevPreviewNoUpgrade). The local ASN defaults
 # to BGP_CLUSTER_ASN, the peer ASN to BGP_TOR_ASN, and the peer address to
 # the ToR address on the external subnet; override the peer address with
-# BGP_VIP_PEER_ADDRESS if your topology differs.
+# BGP_VIP_PEER_ADDRESS if your topology differs. On dual-stack deployments
+# a second peer is rendered for the ToR's IPv6 address on the external v6
+# subnet (override with BGP_VIP_PEER_ADDRESS_V6).
 # Default is unset.
 #
 #export BGP_VIP_MANAGEMENT=true
 #export BGP_VIP_PEER_ADDRESS=
+#export BGP_VIP_PEER_ADDRESS_V6=
+#
+# Every optional peer field (port, timers, password, BFD, eBGP multihop)
+# is set on purpose so the full rendering path is exercised end to end;
+# the ToR is configured to match. Timers are Go durations of whole
+# seconds; the session password must match on both ends.
+#export BGP_VIP_HOLD_TIME=90s
+#export BGP_VIP_KEEPALIVE_TIME=30s
+#export BGP_VIP_PASSWORD=dev-scripts-bgp
 #
 # FRR container image:
 #export BGP_TOR_IMAGE=quay.io/frrouting/frr:9.1.0
