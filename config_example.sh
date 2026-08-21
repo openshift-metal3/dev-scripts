@@ -441,6 +441,57 @@ set -x
 #export EXTERNAL_SUBNET_V4="192.168.111.0/24"
 #export EXTERNAL_SUBNET_V6="fd2e:6f44:5dd8:c956::/120"
 
+# ENABLE_NAT64 -
+# Enable NAT64/DNS64 to allow IPv6-only clusters (IP_STACK=v6) to run on
+# IPv4-only hosts (HOST_IP_STACK=v4). Uses TAYGA for NAT64 translation and
+# unbound for DNS64 synthesis, enabling cluster VMs to reach external IPv4
+# resources (e.g. container registries) via synthesized IPv6 addresses.
+# Requires: IP_STACK=v6, HOST_IP_STACK=v4, and a redfish-based BMC_DRIVER
+# (redfish or redfish-virtualmedia) since the IPv6-only in-cluster Ironic can
+# only reach the BMC emulator over IPv6 (vbmc/ipmi listens on IPv4 only).
+# Default: false
+#
+#export ENABLE_NAT64=true
+
+# NAT64_PREFIX -
+# IPv6 prefix used for NAT64 address translation. Packets sent to addresses
+# in this prefix are translated to IPv4 by TAYGA.
+# Default: "64:ff9b::/96"
+# Note: The well-known prefix 64:ff9b::/96 cannot reach RFC1918 addresses.
+# Use a ULA prefix (e.g. "fd00:64::/96") if you need to reach private IPv4.
+#
+#export NAT64_PREFIX="64:ff9b::/96"
+
+# NAT64_V4_POOL -
+# IPv4 address pool used by TAYGA for dynamic NAT64 mappings.
+# Default: "192.168.255.0/24"
+#
+#export NAT64_V4_POOL="192.168.255.0/24"
+
+# NAT64_V4_ADDR -
+# TAYGA's own IPv4 address on the NAT64 TUN interface.
+# Default: "192.168.255.1"
+#
+#export NAT64_V4_ADDR="192.168.255.1"
+
+# NAT64_V6_ADDR -
+# TAYGA's own IPv6 address (source of the ICMPv6 errors it generates, e.g.
+# for PMTUD). Defaults to the 3rd address of EXTERNAL_SUBNET_V6, which is
+# on-link on the baremetal bridge. If you carve TAYGA its own subnet, set this
+# to an address outside any locally-attached subnet and route it to the NAT64
+# TUN device so error replies are delivered symmetrically.
+# Default: nth_ip(EXTERNAL_SUBNET_V6, 3)
+#
+#export NAT64_V6_ADDR="fd2e:6f44:5dd8:c956::3"
+
+# NAT64_DNS64_UPSTREAM -
+# Space-separated upstream resolver(s) the DNS64 unbound instance forwards to.
+# By default these are auto-discovered from the host's resolver config; set this
+# explicitly when the host has no usable upstream in resolv.conf (otherwise DNS64
+# falls back to 8.8.8.8, which is usually unreachable on a firewalled NAT64 host).
+#
+#export NAT64_DNS64_UPSTREAM="10.0.0.53"
+
 # ENABLE_BOOTSTRAP_STATIC_IP -
 # Configure a static IP for the bootstrap VM external NIC
 # (Currently this just expects a non-empty value, the IP is fixed to .9)
