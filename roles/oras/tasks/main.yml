@@ -1,0 +1,43 @@
+---
+- name: Create temporary download directory
+  ansible.builtin.file:
+    path: "{{ oras_download_dir }}/oras-install"
+    state: directory
+    mode: '0755'
+
+- name: Download ORAS CLI
+  ansible.builtin.get_url:
+    url: "https://github.com/oras-project/oras/releases/download/v{{ oras_version }}/oras_{{ oras_version }}_linux_{{ oras_architecture }}.tar.gz"
+    dest: "{{ oras_download_dir }}/oras_{{ oras_version }}_linux_{{ oras_architecture }}.tar.gz"
+    mode: '0644'
+
+- name: Extract ORAS CLI
+  ansible.builtin.unarchive:
+    src: "{{ oras_download_dir }}/oras_{{ oras_version }}_linux_{{ oras_architecture }}.tar.gz"
+    dest: "{{ oras_download_dir }}/oras-install"
+    remote_src: yes
+
+- name: Install ORAS CLI binary
+  ansible.builtin.copy:
+    src: "{{ oras_download_dir }}/oras-install/oras"
+    dest: "{{ oras_install_dir }}/oras"
+    mode: '0755'
+    remote_src: yes
+  become: yes
+
+- name: Clean up download files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ oras_download_dir }}/oras_{{ oras_version }}_linux_{{ oras_architecture }}.tar.gz"
+    - "{{ oras_download_dir }}/oras-install"
+
+- name: Verify ORAS CLI installation
+  ansible.builtin.command: "{{ oras_install_dir }}/oras version"
+  register: oras_version_output
+  changed_when: false
+
+- name: Display ORAS CLI version
+  ansible.builtin.debug:
+    msg: "ORAS CLI installed successfully: {{ oras_version_output.stdout }}"
