@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
+source "${SCRIPTDIR}/network.sh"
+
 export AGENT_STATIC_IP_NODE0_ONLY=${AGENT_STATIC_IP_NODE0_ONLY:-"false"}
 export AGENT_NMSTATE_DHCP=${AGENT_NMSTATE_DHCP:-"false"}
 
@@ -49,10 +51,6 @@ export EXTRA_MANIFESTS_PATH="${OCP_DIR}/openshift"
 # 3. ISCSI, to contain the iPXE file needed for iSCSI booting
 export BOOT_SERVER_DIR=${WORKING_DIR}/boot-artifacts
 export PXE_BOOT_FILE=agent.$(uname -m).ipxe
-# FIXME:  agent/common.sh is sourced without network.sh
-# wrap_if_ipv6 and PROVISIONING_HOST_EXTERNAL_IP are undefined
-# errors masked by export which returns true
-# shellcheck disable=SC2155,SC2086
 export BOOT_SERVER_URL=http://$(wrap_if_ipv6 ${PROVISIONING_HOST_EXTERNAL_IP:-}):${AGENT_BOOT_SERVER_PORT}
 
 # Configure the instances for PXE booting
