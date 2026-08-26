@@ -127,6 +127,14 @@ fi
 
 if [[ "${ENABLE_NAT64}" == "true" ]]; then
   export NAT64_V6_ADDR=${NAT64_V6_ADDR:-$(nth_ip "$EXTERNAL_SUBNET_V6" 3)}
+  # Under NAT64 the host is IPv4-only externally (PROVISIONING_HOST_EXTERNAL_IP is
+  # the IPv4 baremetal address), but it also carries an IPv6 baremetal address on
+  # the bridge (see nat64.sh). Export it so host services that IPv6-only cluster
+  # nodes must reach (e.g. the image-registry NFS export) can be published over it.
+  # Not overridable: it must stay in lockstep with the same address nat64.sh puts
+  # on the bridge and into the sushy cert SAN (also nth_ip "$EXTERNAL_SUBNET_V6" 1);
+  # an independent override here would publish an AAAA the bridge never answers.
+  export PROVISIONING_HOST_EXTERNAL_IP_V6=$(nth_ip "$EXTERNAL_SUBNET_V6" 1)
 fi
 
 function openshift_sdn_deprecated() {

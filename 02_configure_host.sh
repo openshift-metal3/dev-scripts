@@ -101,6 +101,11 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
     # Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME
     sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
     echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
+    # Under NAT64 the cluster is IPv6-only; also publish an AAAA record so nodes can
+    # reach host services (e.g. the image-registry NFS export) over the host's IPv6
+    # baremetal address. The sed cleanup above matches by name, so it removes both
+    # lines on re-run (idempotent).
+    [ -n "${PROVISIONING_HOST_EXTERNAL_IP_V6:-}" ] && echo "${PROVISIONING_HOST_EXTERNAL_IP_V6} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
 
     # When MIRROR_IMAGES is configured, the local registry must be running
     # before 04_setup_ironic.sh attempts to mirror release images into it.
@@ -500,6 +505,11 @@ fi
 # Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME
 sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
 echo "${PROVISIONING_HOST_EXTERNAL_IP} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
+# Under NAT64 the cluster is IPv6-only; also publish an AAAA record so nodes can
+# reach host services (e.g. the image-registry NFS export) over the host's IPv6
+# baremetal address. The sed cleanup above matches by name, so it removes both
+# lines on re-run (idempotent).
+[ -n "${PROVISIONING_HOST_EXTERNAL_IP_V6:-}" ] && echo "${PROVISIONING_HOST_EXTERNAL_IP_V6} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
 
 if use_registry "podman"; then
     # Remove any previous file, or podman login panics when reading the
