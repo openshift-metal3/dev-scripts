@@ -645,12 +645,35 @@ if [[ "${ENABLE_NAT64:-false}" == "true" ]]; then
     error "ENABLE_NAT64=true requires HOST_IP_STACK=v4 (got HOST_IP_STACK=${HOST_IP_STACK:-${IP_STACK:-v6}})"
     exit 1
   fi
-  # The IPv6-only in-cluster Ironic can only reach the BMC emulator over IPv6,
-  # which only sushy/redfish listens on; vbmc (ipmi) binds IPv4 only. Reject the
-  # ipmi and mixed drivers rather than silently leaving those BMCs unreachable.
-  if [[ "${BMC_DRIVER}" != "redfish" && "${BMC_DRIVER}" != "redfish-virtualmedia" ]]; then
-    error "ENABLE_NAT64=true requires a redfish-based BMC_DRIVER (redfish or redfish-virtualmedia), got BMC_DRIVER=${BMC_DRIVER}"
-    exit 1
+  # The IPv6-only in-cluster Ironic reaches redfish (sushy) over the host's native
+  # IPv6 address, and reaches ipmi (vbmc, IPv4-only) via NAT64 translation of its
+  # IPv4 address (see nat64_fixup_bmc_addresses). Allow redfish, redfish-virtualmedia,
+  # ipmi and mixed; idrac/others are not emulated here, so still reject them.
+  case "${BMC_DRIVER}" in
+    redfish|redfish-virtualmedia|ipmi|mixed) ;;
+    *)
+      error "ENABLE_NAT64=true supports BMC_DRIVER redfish, redfish-virtualmedia, ipmi or mixed, got BMC_DRIVER=${BMC_DRIVER}"
+      exit 1
+      ;;
+  esac
+  # ipmi BMCs are reached through NAT64 by embedding their RFC1918 IPv4 address in
+  # NAT64_PREFIX. RFC 6052 forbids using the well-known prefix 64:ff9b::/96 for
+  # non-global (RFC1918) IPv4, so mixed/ipmi need a ULA prefix. Default one here
+  # (exported before network.sh applies its own 64:ff9b default), and reject an
+  # explicit well-known prefix rather than failing opaquely at BMC registration.
+  if [[ "${BMC_DRIVER}" == "mixed" || "${BMC_DRIVER}" == "ipmi" ]]; then
+    export NAT64_PREFIX=${NAT64_PREFIX:-"fd00:64::/96"}
+    if [[ "${NAT64_PREFIX}" == 64:ff9b::* ]]; then
+      error "ENABLE_NAT64=true with BMC_DRIVER=${BMC_DRIVER} cannot use the well-known NAT64 prefix ${NAT64_PREFIX} to reach the RFC1918 BMC network; set a ULA prefix, e.g. NAT64_PREFIX=fd00:64::/96"
+      exit 1
+    fi
+    # nat64_embed_v4 embeds the BMC's IPv4 in the last 32 bits, which is only the
+    # correct RFC 6052 layout for a /96 whose text ends in "::". Reject anything
+    # else here rather than silently producing an unreachable BMC address.
+    if [[ ! "${NAT64_PREFIX}" =~ ::/96$ ]]; then
+      error "ENABLE_NAT64=true with BMC_DRIVER=${BMC_DRIVER} requires a /96 NAT64_PREFIX ending in '::' (e.g. fd00:64::/96) to embed the ipmi BMC IPv4 address, got NAT64_PREFIX=${NAT64_PREFIX}"
+      exit 1
+    fi
   fi
   # NAT64 provides external registry access, so image mirroring is skipped and no
   # local registry is created. Default MIRROR_IMAGES to false here (before the

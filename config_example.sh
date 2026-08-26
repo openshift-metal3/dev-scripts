@@ -446,9 +446,12 @@ set -x
 # IPv4-only hosts (HOST_IP_STACK=v4). Uses TAYGA for NAT64 translation and
 # unbound for DNS64 synthesis, enabling cluster VMs to reach external IPv4
 # resources (e.g. container registries) via synthesized IPv6 addresses.
-# Requires: IP_STACK=v6, HOST_IP_STACK=v4, and a redfish-based BMC_DRIVER
-# (redfish or redfish-virtualmedia) since the IPv6-only in-cluster Ironic can
-# only reach the BMC emulator over IPv6 (vbmc/ipmi listens on IPv4 only).
+# Requires: IP_STACK=v6 and HOST_IP_STACK=v4. Supported BMC_DRIVERs: redfish,
+# redfish-virtualmedia, ipmi and mixed. redfish (sushy) is reached over the host's
+# native IPv6 address; ipmi (vbmc, IPv4-only) is reached through NAT64 by embedding
+# its IPv4 address in NAT64_PREFIX. Because that embedding targets the RFC1918
+# baremetal network, BMC_DRIVER=mixed/ipmi requires a ULA NAT64_PREFIX (defaulted to
+# fd00:64::/96) -- the well-known 64:ff9b::/96 cannot carry RFC1918 (RFC 6052).
 # Default: false
 #
 #export ENABLE_NAT64=true
@@ -456,9 +459,11 @@ set -x
 # NAT64_PREFIX -
 # IPv6 prefix used for NAT64 address translation. Packets sent to addresses
 # in this prefix are translated to IPv4 by TAYGA.
-# Default: "64:ff9b::/96"
+# Default: "64:ff9b::/96" (redfish drivers), or "fd00:64::/96" when
+# BMC_DRIVER=mixed/ipmi (those reach the RFC1918 BMC network through NAT64).
 # Note: The well-known prefix 64:ff9b::/96 cannot reach RFC1918 addresses.
 # Use a ULA prefix (e.g. "fd00:64::/96") if you need to reach private IPv4.
+# Only the /96 length is supported for BMC address embedding.
 #
 #export NAT64_PREFIX="64:ff9b::/96"
 
