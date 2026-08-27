@@ -3,6 +3,8 @@ set -x
 
 source logging.sh
 source common.sh
+source network.sh
+source nat64.sh
 source utils.sh
 source validation.sh
 
@@ -31,6 +33,12 @@ ansible-playbook \
     -e "nodes_file=$NODES_FILE" \
     -i "${VM_SETUP_PATH}/inventory.ini" \
     -b -vvv "${VM_SETUP_PATH}/teardown-playbook.yml"
+
+# Always clean up NAT64/DNS64. cleanup_nat64 is fully idempotent (every step is a
+# no-op when nothing is present), so run it unconditionally rather than gating on
+# the current ENABLE_NAT64 value: otherwise unsetting ENABLE_NAT64 before teardown
+# would strand the unbound service, dnsmasq drop-in, TUN device, routes and rules.
+cleanup_nat64
 
 sudo rm -rf "/etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf" /etc/yum.repos.d/delorean*
 sudo rm -rf /etc/NetworkManager/conf.d/dnsmasq.conf
