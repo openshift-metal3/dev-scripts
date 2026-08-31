@@ -690,7 +690,10 @@ function enable_isolated_baremetal_network() {
     # Remove the forward block
     sudo sed -i "/<forward\( [^>]*\)\?>/,/<\/forward>/d" "${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}"
     # Add a default route (will be required by assisted-service pre-flight validations)
-    sudo sed -i "/<\/dnsmasq:options>/i   <dnsmasq:option value='dhcp-option=3,${PROVISIONING_HOST_EXTERNAL_IP}'/>" "${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}"
+    # dhcp-option=3 (router) is DHCPv4-only; IPv6 uses Router Advertisements instead.
+    if [[ "${IP_STACK}" != "v6" ]]; then
+      sudo sed -i "/<\/dnsmasq:options>/i   <dnsmasq:option value='dhcp-option=3,${PROVISIONING_HOST_EXTERNAL_IP}'/>" "${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}"
+    fi
 
     # Update the baremetal network
     sudo virsh net-destroy "${BAREMETAL_NETWORK_NAME}"
