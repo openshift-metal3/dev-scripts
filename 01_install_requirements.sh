@@ -19,7 +19,7 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
   # TODO -- come up with a plan for continuously updating this
   # Note we only do this in the case where METAL3_DEV_ENV is
   # unset, to enable developer testing of local checkouts
-  git reset 501505cdd2133d1bea93f99ca697e6cd1d42a97b --hard
+  git reset 981963c51fa6fbad95433c6e68976081664be3d7 --hard
 
   # Ansible 9+ requires Python 3.10+, but CentOS Stream 9 ships Python 3.9.
   # Patch metal3-dev-env to use Ansible 8.x on centos9/rhel9.
@@ -154,7 +154,7 @@ VERSION="go${GO_VERSION}"
 OS="linux"
 
 GO_CHECKSUM="$(
-  curl -s "https://go.dev/dl/?mode=json&include=all" | jq -r \
+  curl -fsS "https://go.dev/dl/?mode=json&include=all" | jq -r \
     --arg version "$VERSION" \
     --arg os "$OS" \
     --arg arch "$GOARCH" \
@@ -169,6 +169,7 @@ GO_CHECKSUM="$(
 
 if [ -z "$GO_CHECKSUM" ]; then
   echo "Error: Could not find checksum for $VERSION ($OS/$GOARCH)" >&2
+  exit 1
 else
   echo "Checksum: $GO_CHECKSUM"
 fi
