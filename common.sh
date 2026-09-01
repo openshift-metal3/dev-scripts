@@ -150,7 +150,7 @@ fi
 function get_latest_ci_image() {
     # shellcheck disable=SC2034
     for i in {1..3}; do
-        if curl -L "https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest"| grep -o 'registry.ci.openshift.org[^"]\+'; then
+        if curl -L "https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/${OPENSHIFT_RELEASE_STREAM}.0-0.${OPENSHIFT_RELEASE_TYPE}/latest"| grep -oE '(quay-proxy|registry)\.ci\.openshift\.org[^"]+'; then
             return
         fi
         echo "Failed to get CI image" 1>&2
