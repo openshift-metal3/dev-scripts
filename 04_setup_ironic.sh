@@ -215,9 +215,10 @@ fi
 
 # cached images to the bootstrap VM
 sudo -E podman pull --authfile "${PULL_SECRET_FILE}" "${IRONIC_IMAGE}" || echo "WARNING: Could not pull latest $IRONIC_IMAGE; will try to use cached images instead"
-sudo podman run -d --net host --privileged --name "httpd-${PROVISIONING_NETWORK_NAME}" --pod ironic-pod \
+sudo podman run -d --net host --name "httpd-${PROVISIONING_NETWORK_NAME}" --pod ironic-pod \
      --env PROVISIONING_INTERFACE="${PROVISIONING_NETWORK_NAME}" \
-     -v "$IRONIC_DATA_DIR:/shared" --entrypoint /bin/runhttpd "${IRONIC_IMAGE}"
+     -v "$IRONIC_DATA_DIR:/shared" --security-opt label=disable \
+     --entrypoint /bin/runhttpd "${IRONIC_IMAGE}"
 
 if [ "$NODES_PLATFORM" = "libvirt" ]; then
     if ! is_running vbmc; then
@@ -225,16 +226,22 @@ if [ "$NODES_PLATFORM" = "libvirt" ]; then
         # has told us the process isn't there but sometimes when it
         # dies it leaves the file.
         sudo rm -f "$WORKING_DIR/virtualbmc/vbmc/master.pid"
-        sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
-             -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+        sudo podman run -d --net host --name vbmc --pod ironic-pod \
+             -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc \
+             -v /root/.ssh/id_rsa_virt_power:/root/ssh/id_rsa_virt_power:ro \
+             -v /root/.ssh/id_rsa_virt_power.pub:/root/ssh/id_rsa_virt_power.pub:ro \
              -v /var/run/libvirt:/var/run/libvirt \
+             --security-opt label=disable \
              "${VBMC_IMAGE}"
     fi
 
     if ! is_running sushy-tools; then
-        sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
-             -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+        sudo podman run -d --net host --name sushy-tools --pod ironic-pod \
+             -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy \
+             -v /root/.ssh/id_rsa_virt_power:/root/ssh/id_rsa_virt_power:ro \
+             -v /root/.ssh/id_rsa_virt_power.pub:/root/ssh/id_rsa_virt_power.pub:ro \
              -v /var/run/libvirt:/var/run/libvirt \
+             --security-opt label=disable \
              "${SUSHY_TOOLS_IMAGE}"
     fi
 fi
