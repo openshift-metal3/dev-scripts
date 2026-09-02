@@ -628,7 +628,7 @@ function image_mirror_config {
         INDENTED_CERT=$( cat "$REGISTRY_DIR/certs/$REGISTRY_CRT" | awk '{ print " ", $0 }' )
         if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]] && [[ ! -s ${MIRROR_LOG_FILE} ]]; then
             # shellcheck disable=SC1091
-            . /tmp/mirrored_release_image
+            . "${WORKING_DIR}/mirrored_release_image"
             # shellcheck disable=SC2001
             TAGGED=$(echo "$MIRRORED_RELEASE_IMAGE" | sed -e 's/release://')
             RELEASE=$(echo "$MIRRORED_RELEASE_IMAGE" | grep -o 'registry.ci.openshift.org[^":\@]\+')
@@ -696,7 +696,7 @@ function setup_legacy_release_mirror {
     if [[ "$exit_code" != "0" ]]; then
       exit "$exit_code"
     fi
-    echo "export MIRRORED_RELEASE_IMAGE=$OPENSHIFT_RELEASE_IMAGE" > /tmp/mirrored_release_image
+    echo "export MIRRORED_RELEASE_IMAGE=$OPENSHIFT_RELEASE_IMAGE" > "${WORKING_DIR}/mirrored_release_image"
 
     #To ensure that you use the correct images for the version of OpenShift Container Platform that you selected,
     #you must extract the installation program from the mirrored content:
