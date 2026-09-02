@@ -99,7 +99,32 @@ if [ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISO_NO_REGISTRY" ] ; then
     fi
 fi
 
+# Static IP assignment for the 'static_ip' agent TUI test case.
+# The rendezvous node (first master) is assigned .80 and each subsequent node
+# increments by one, ordered masters, then workers, then arbiters.
+export AGENT_STATIC_IP_PREFIX="192.168.111"
+export AGENT_STATIC_IP_BASE=80
+
+# staticIPForNode <node_type> <index> - echo the static IP assigned to a node.
+function staticIPForNode() {
+    local node_type=$1
+    local index=$2
+    local offset=0
+    case "${node_type}" in
+        master) offset=0 ;;
+        worker) offset=${NUM_MASTERS} ;;
+        arbiter) offset=$(( NUM_MASTERS + NUM_WORKERS )) ;;
+    esac
+    echo "${AGENT_STATIC_IP_PREFIX}.$(( AGENT_STATIC_IP_BASE + offset + index ))"
+}
+
 function getRendezvousIP() {
+    # For the 'static_ip' test case the rendezvous node is assigned a known
+    # static IP via the agent TUI, so return that directly.
+    if [[ "${AGENT_TEST_CASES:-}" =~ "static_ip" ]]; then
+        staticIPForNode master 0
+        return
+    fi
     if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
         echo "${AGENT_BAREMETAL_IPS%%,*}"
         return

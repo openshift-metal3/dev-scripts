@@ -335,6 +335,88 @@ function automate_rendezvousIP_selection(){
     done
 }
 
+function hostname_format_for_node_type(){
+  case "$1" in
+    master) echo "$MASTER_HOSTNAME_FORMAT" ;;
+    worker) echo "$WORKER_HOSTNAME_FORMAT" ;;
+    arbiter) echo "$ARBITER_HOSTNAME_FORMAT" ;;
+  esac
+}
+
+# Configuration step of the 'static_ip' test case: drive the agent TUI to
+# assign a static IP and hostname to each node of the given type. The static
+# IPs are derived from staticIPForNode (see agent/common.sh).
+function test_case_do_static_ip(){
+  local node_type=$1
+  local node_count=$2
+
+  local hostname_format
+  hostname_format="$(hostname_format_for_node_type "$node_type")"
+
+  for (( n=0; n<node_count; n++ ))
+    do
+        name=${CLUSTER_NAME}_${node_type}_${n}
+        node_ip="$(staticIPForNode "$node_type" "$n")"
+        # shellcheck disable=SC2059
+        node_hostname="$(printf "$hostname_format" "$n")"
+
+        sudo virsh screenshot "$name" "${OCP_DIR}/${name}_console_screenshot_before_static_networking.ppm"
+
+        echo "Configuring static IP ${node_ip} and hostname ${node_hostname} on ${name}"
+        ./agent/e2e/agent-tui/test-static-ip.sh "$name" "$node_ip" "$node_hostname"
+
+        sudo virsh screenshot "$name" "${OCP_DIR}/${name}_console_screenshot_after_static_networking.ppm"
+        echo "Finished configuring static networking for $name"
+    done
+}
+
+# Verification step of the 'static_ip' test case: confirm each node of the given
+# type is reachable at the static IP it was assigned via the agent TUI, and that
+# its hostname was applied. Exits non-zero if any node fails verification.
+function test_case_verify_static_ip(){
+  local node_type=$1
+  local node_count=$2
+
+  local hostname_format
+  hostname_format="$(hostname_format_for_node_type "$node_type")"
+
+  for (( n=0; n<node_count; n++ ))
+    do
+        node_ip="$(staticIPForNode "$node_type" "$n")"
+        # shellcheck disable=SC2059
+        expected_hostname="$(printf "$hostname_format" "$n")"
+
+        echo "Verifying ${node_type}-${n} is reachable at static IP ${node_ip} with hostname ${expected_hostname}"
+
+        # The UI reports the console URL as soon as it is available, but the
+        # nodes are still rebooting and finalizing (applying the static IP via
+        # coreos-installer --copy-network) at that point, so the static IP is not
+        # immediately reachable. Retry until the node comes up before failing.
+        local actual_hostname=""
+        local retries=10   # up to ~5 min at 30s interval
+        local i
+        for (( i=1; i<=retries; i++ )); do
+            if actual_hostname=$(${SSH} "core@${node_ip}" hostname 2>/dev/null) && [[ -n "${actual_hostname}" ]]; then
+                break
+            fi
+            actual_hostname=""
+            echo "Waiting for ${node_type}-${n} to be reachable at ${node_ip} (attempt ${i}/${retries})"
+            sleep 30
+        done
+
+        if [[ -z "${actual_hostname}" ]]; then
+            echo "ERROR: static_ip test case failed - could not ssh to ${node_type}-${n} at static IP ${node_ip}"
+            return 1
+        fi
+        # Compare the short hostname (strip any domain suffix)
+        if [[ "${actual_hostname%%.*}" != "${expected_hostname}" ]]; then
+            echo "ERROR: static_ip test case failed - node at ${node_ip} has hostname '${actual_hostname}', expected '${expected_hostname}'"
+            return 1
+        fi
+        echo "Verified ${node_type}-${n}: reachable at ${node_ip} with hostname ${expected_hostname}"
+    done
+}
+
 function check_assisted_install_UI(){
   local rendezvousIP
   rendezvousIP=$(getRendezvousIP)
@@ -554,8 +636,11 @@ function mce_complete_deployment() {
   mce_apply_postinstallation_manifests "${mceManifests}"
 }
 
-function run_agent_test_cases() {
-  if [[ $AGENT_TEST_CASES =~ "bad_dns" ]]; then
+# Configuration step of the 'bad_dns' test case: wait for the nodes to reach the
+# agent-tui check screen (failing because of the bad DNS record injected into
+# agent-config.yaml), then fix the DNS on master-0 via agent-tui so the
+# installation can proceed.
+function test_case_do_bad_dns() {
     # wait 5 minutes for VMs to load and arrive at agent-tui check screen
     echo "Running test scenario: bad DNS record(s) in agent-config.yaml"
     echo "Waiting for 5 mins to arrive at agent-tui check screen"
@@ -577,6 +662,11 @@ function run_agent_test_cases() {
     sudo virsh screenshot "$name" "${OCP_DIR}/${name}_console_screenshot_after_dns_fix.ppm"
 
     echo "Finished fixing DNS through agent-tui"
+}
+
+function run_agent_test_cases() {
+  if [[ $AGENT_TEST_CASES =~ "bad_dns" ]]; then
+    test_case_do_bad_dns
   fi
 }
 
@@ -838,9 +928,20 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
         echo "aarch64: CDROM media ejected from all VMs"
     fi
 
-    automate_rendezvousIP_selection master "$NUM_MASTERS"
-    automate_rendezvousIP_selection worker "$NUM_WORKERS"
-    automate_rendezvousIP_selection arbiter "$NUM_ARBITERS"
+    if [[ "${AGENT_TEST_CASES:-}" =~ "static_ip" ]]; then
+        # The static_ip test case configures IPv4 static addresses only.
+        if [[ "${IP_STACK}" != "v4" ]]; then
+            echo "ERROR: the 'static_ip' test case is only supported with IP_STACK=v4 (got '${IP_STACK}')"
+            exit 1
+        fi
+        test_case_do_static_ip master "$NUM_MASTERS"
+        test_case_do_static_ip worker "$NUM_WORKERS"
+        test_case_do_static_ip arbiter "$NUM_ARBITERS"
+    else
+        automate_rendezvousIP_selection master "$NUM_MASTERS"
+        automate_rendezvousIP_selection worker "$NUM_WORKERS"
+        automate_rendezvousIP_selection arbiter "$NUM_ARBITERS"
+    fi
 
     check_assisted_install_UI
 
@@ -852,6 +953,18 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     pushd agent/isobuilder/ui_driven_cluster_installation
     RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$ocp_dir_abs_path INGRESS_VIPS=$INGRESS_VIPS API_VIPS=$API_VIPS go run main.go
     popd
+
+    # Verification step of the 'static_ip' test case: now that installation has
+    # completed, confirm each node came up with the static IP and hostname that
+    # were configured via the agent TUI.
+    if [[ "${AGENT_TEST_CASES:-}" =~ "static_ip" ]]; then
+        echo "Running test scenario: verify static IPs configured via agent-tui"
+        test_case_verify_static_ip master "$NUM_MASTERS"
+        test_case_verify_static_ip worker "$NUM_WORKERS"
+        test_case_verify_static_ip arbiter "$NUM_ARBITERS"
+        echo "Finished verifying static networking on all nodes"
+    fi
+
     exit 0
     ;;
 esac
