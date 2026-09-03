@@ -126,15 +126,6 @@
   - ansible_os_family == "RedHat"
   become: true
 
-- name: Whitelist bridges for unprivileged access on Ubuntu or Fedora
-  lineinfile:
-    dest: '/etc/qemu/bridge.conf'
-    line: "allow {{ item.bridge }}"
-    create: yes
-  with_items: "{{ networks }}"
-  when:
-  - ansible_facts['distribution'] == "Ubuntu"
-  become: true
 
 # We're going to want to store things in `working_dir` so ensure it
 # exists first.  `working_dir` is a directory on the target host.
