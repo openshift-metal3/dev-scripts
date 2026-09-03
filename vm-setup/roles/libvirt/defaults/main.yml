@@ -12,8 +12,8 @@ libvirt_volume_pool: oooq_pool
 libvirt_diskdev: sda
 libvirt_cdromdev: sdb
 libvirt_diskbus: scsi
-libvirt_cdrombus: sata
-libvirt_arch: x86_64
+libvirt_cdrombus: "{{ 'scsi' if ansible_architecture == 'aarch64' else 'sata' }}"
+libvirt_arch: "{{ ansible_architecture }}"
 libvirt_cpu_mode: host-model
 libvirt_firmware: uefi
 libvirt_secure_boot: false
@@ -23,11 +23,10 @@ libvirt_aarch64_cpu_model: cortex-a57
 libvirt_log_path: "/var/log/libvirt/qemu"
 
 # how many disks should be created when using extradisks
-extradisks_list:
-- vdb
+extradisks_list: "{{ (lookup('env', 'VM_EXTRADISKS_LIST') or 'vdb').split() }}"
 
 # size of the disks to create when using extradisks
-extradisks_size: 8G
+extradisks_size: "{{ lookup('env', 'VM_EXTRADISKS_SIZE') or '8G' }}"
 
 # The name of the libvirt service.
 libvirtd_service: libvirtd

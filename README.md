@@ -456,9 +456,8 @@ xfs_info /mount-point
 If you see `ftype=1` then you have d_type support.
 
 ### Modifying cpu/memory/disk resources
-The default cpu/memory/disk resources when using virtual machines are provided
-by the [vm_setup_vars.yml](vm_setup_vars.yml) file, which sets some dev-scripts
-variables that override the defaults in metal3-dev-env.
+The default cpu/memory/disk resources when using virtual machines are defined
+in `vm-setup/roles/common/defaults/main.yml`.
 
 The VM resources can be overridden by setting the following environment variables
 in `config_$USER.sh` (check `config_example.sh` for recommended defaults):
@@ -624,5 +623,5 @@ will timeout.
 
 ### Deploy nodes with extra disks?
 
-Open `vm_setup_vars.yml` and modify the flavor you want to have extra disks, set
-`extradisks: true` and modify `extradisks_size` if necessary.
+Set `VM_EXTRADISKS=true` in your config and optionally set `VM_EXTRADISKS_LIST`
+and `VM_EXTRADISKS_SIZE` to control which disks are added and their size.

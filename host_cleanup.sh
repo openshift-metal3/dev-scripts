@@ -13,7 +13,6 @@ early_cleanup_validation
 export ANSIBLE_FORCE_COLOR=true
 
 ansible-playbook \
-    -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
     -e "cluster_name=${CLUSTER_NAME}" \
     -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \

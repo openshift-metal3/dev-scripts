@@ -147,11 +147,6 @@ configure_chronyd
 # Open BGP port for no-overlay mode enabled for default network
 sudo firewall-cmd --zone=libvirt --add-port=179/tcp
 
-export VNC_CONSOLE=true
-if [[ $(uname -m) == "aarch64" ]]; then
-  VNC_CONSOLE=false
-  echo "libvirt_cdrombus: scsi" >> vm_setup_vars.yml
-fi
 
 # playbooks depend on it
 if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
@@ -186,7 +181,6 @@ if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
 fi
 
 ansible-playbook \
-    -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
     -e "cluster_name=${CLUSTER_NAME}" \
     -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
@@ -207,8 +201,6 @@ ansible-playbook \
     -e "virtualbmc_base_port=$VBMC_BASE_PORT" \
     -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
     -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
-    -e "libvirt_arch=$(uname -m)" \
-    -e "enable_vnc_console=$VNC_CONSOLE" \
     -i "${VM_SETUP_PATH}/inventory.ini" \
     -b -vvv "${VM_SETUP_PATH}/setup-playbook.yml"
 
