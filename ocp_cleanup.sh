@@ -73,9 +73,3 @@ fi
 # Cleanup chrony configuration
 sudo sed -ie '/^allow /d' /etc/chrony.conf
 
-# Restore file after workaround
-if [ -d "${METAL3_DEV_ENV_PATH}" ]; then
-  cd "${METAL3_DEV_ENV_PATH}" || exit 1
-  git checkout vm-setup/roles/packages_installation/tasks/centos_required_packages.yml
-fi
-
