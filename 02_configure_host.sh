@@ -36,20 +36,12 @@ if [ ! -f "$HOME/.ssh/id_rsa.pub" ]; then
     ssh-keygen -f ~/.ssh/id_rsa -t rsa -P ""
 fi
 
-# root needs a private key to talk to libvirt
-# See vm-setup/roles/virtbmc/tasks/configure-vbmc.yml
-# FIXME(shardy) this should be in the ansible role ...
-if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
-  sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
-  sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
-fi
 
 # This script will create some libvirt VMs do act as "dummy baremetal"
 # then configure python-virtualbmc to control them - these can later
 # be deployed via the install process similar to how we test TripleO
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
-# FIXME(shardy) output an error message temporarily since we've broken an interface
 export VM_NODES_FILE=${VM_NODES_FILE:-}
 if [ ! -z "${VM_NODES_FILE}" ]; then
   echo "VM_NODES_FILE is no longer supported"
@@ -125,14 +117,6 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
     exit 0
 fi
 
-# This is to address the following error:
-#   "msg": "internal error: Check the host setup: enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss. Interfaces to look at: eno2"
-# This comes from libvirt when trying to create the ostestbm network.
-for n in /proc/sys/net/ipv6/conf/* ; do
-  if [ -f "$n/accept_ra" ]; then
-    sudo sysctl -w net/ipv6/conf/"$(basename "$n")"/accept_ra=2
-  fi
-done
 
 export ANSIBLE_FORCE_COLOR=true
 

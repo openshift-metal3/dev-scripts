@@ -1,5 +1,19 @@
 ---
 
+- name: Generate root SSH key for libvirt access
+  command: ssh-keygen -f /root/.ssh/id_rsa_virt_power -t rsa -N ""
+  args:
+    creates: /root/.ssh/id_rsa_virt_power
+  become: true
+
+- name: Authorize root SSH key for libvirt access
+  lineinfile:
+    dest: /root/.ssh/authorized_keys
+    line: "{{ lookup('file', '/root/.ssh/id_rsa_virt_power.pub') }}"
+    create: yes
+    mode: '0600'
+  become: true
+
 - name: Create VirtualBMC directories
   file:
     path: "{{ item }}"

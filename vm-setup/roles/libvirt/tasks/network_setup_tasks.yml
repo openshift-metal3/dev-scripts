@@ -1,3 +1,14 @@
+# accept_ra=2 is required before creating libvirt networks: without it, libvirt
+# refuses to start a network when IPv6 forwarding is enabled alongside RA routes.
+- name: Set accept_ra=2 on all interfaces to allow libvirt IPv6 networks
+  shell: |
+    for iface in $(ls /proc/sys/net/ipv6/conf/); do
+      test -f /proc/sys/net/ipv6/conf/${iface}/accept_ra && \
+        sysctl -w net.ipv6.conf.${iface}.accept_ra=2
+    done
+  become: true
+  changed_when: false
+
 # If virtualport_type is defined for any networks, include OVS dependencies
 - when: networks|selectattr('virtualport_type', 'defined')|map(attribute='name')|list|length > 0
   block:
