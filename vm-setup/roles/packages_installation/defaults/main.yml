@@ -1,65 +1,4 @@
 packages:
-  ubuntu:
-    common:
-      packages:
-      - python3-setuptools
-      - zlib1g-dev
-      - openssh-server
-      - wget
-      - curl
-      - dnsmasq
-      - nmap
-      - ovmf
-      - patch
-      - psmisc
-      - libvirt-clients
-      - libvirt-dev
-      - bridge-utils
-      - jq
-      - unzip
-      - genisoimage
-      - qemu-kvm
-      - libguestfs-tools
-      - gir1.2-polkit-1.0
-      - libpolkit-agent-1-0
-      - libpolkit-gobject-1-0
-      - apache2-utils
-    podman:
-      packages:
-      - apt-transport-https
-      - ca-certificates
-      - gnupg-agent
-      - software-properties-common
-    jammy:
-      packages:
-      - apparmor
-      - apparmor-profiles-extra
-      - apparmor-utils
-      - libvirt-daemon
-      - libvirt-daemon-system
-      - libssl-dev
-      - netcat
-    noble:
-      packages:
-      - apparmor
-      - apparmor-profiles-extra
-      - apparmor-utils
-      - libvirt-daemon
-      - libvirt-daemon-system
-      - libssl-dev
-      - netcat-traditional
-    pip3:
-    - python-apt
-    - kubernetes==25.3.0
-    - pyYAML
-    - virtualbmc
-    - lxml
-    - netaddr
-    - libvirt-python
-    - six
-    - docker-py
-    - jmespath
-    - passlib
   centos:
     common:
       packages:
@@ -104,32 +43,7 @@ packages:
     - jmespath
     - kubernetes==25.3.0
     - passlib
-  suse:
-    common:
-      packages:
-      - jq
-      - qemu-img
-      - libvirt
-      - libvirt-devel
-      - dnsmasq
-      - virt-install
-      - unzip
-      - nmap
-      - docker
-      - podman
-      - python311-setuptools
-      - python311-lxml
-      - python311-netaddr
-      - python311-libvirt-python
-      - python311-passlib
-      - python311-cryptography
-      - qemu-hw-display-virtio-gpu
-      - apache2-utils
-    pip3:
-    - jmespath
-    - pyYAML
-    - kubernetes==25.3.0
-DAEMON_JSON_PATH: "{{ metal3_dir }}/vm-setup/roles/packages_installation/files"
+DAEMON_JSON_PATH: ""
 CONTAINER_RUNTIME: "{{ lookup('env', 'CONTAINER_RUNTIME') }}"
 OS_VERSION_ID: "{{ lookup('env', 'OS_VERSION_ID') }}"
 REGISTRY: "{{ lookup('env', 'REGISTRY') }}"
