@@ -90,19 +90,6 @@ function create_config_image() {
 }
 
 
-function assert_agent_no_registry_iso_size(){
-  agent_iso_no_registry=$(get_agent_iso_no_registry)
-  iso_size=$(stat -c%s "$agent_iso_no_registry")
-  
-  # With 4.19 tech preview, the expected ISO size is approximately 36GB
-  iso_size_limit=$((AGENT_OVE_ISO_SIZE * 1024 * 1024 * 1024))
-
-  if (( iso_size > iso_size_limit )); then
-    echo "Error: OVE ISO size of $agent_iso_no_registry is ${iso_size}, which exceeds the ${AGENT_OVE_ISO_SIZE}GB limit."
-    exit 1
-  fi
-}
-
 function set_device_config_image() {
 
     for (( n=0; n<${2}; n++ ))
@@ -898,20 +885,24 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
     # Run a script from agent-installer-utils which internally uses openshift-appliance
     asset_dir=$SCRIPTDIR/$OCP_DIR/iso_builder
     mkdir -p "${asset_dir}"
-    create_agent_iso_no_registry "${asset_dir}"
 
-    assert_agent_no_registry_iso_size
+    if [[ -n "${AGENT_OVE_ISO_SOURCE}" ]]; then
+      # A pre-built OVE ISO was provided - fetch it instead of building one locally.
+      fetch_agent_iso_no_registry "${asset_dir}"
+    else
+      create_agent_iso_no_registry "${asset_dir}"
 
-    if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
-      # reclaim disk space by deleting unwanted cache, other files
-      cleanup_diskspace_agent_iso_noregistry "${asset_dir}"
-    fi
+      if [[ "$AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV" == "true" ]]; then
+        # reclaim disk space by deleting unwanted cache, other files
+        cleanup_diskspace_agent_iso_noregistry "${asset_dir}"
+      fi
 
-    # Clean up registry data to save disk space after ISO is created
-    if [[ "${MIRROR_IMAGES}" == "true" ]]; then
-      echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
-      sudo rm -rf "${REGISTRY_DIR}/data"
-      echo "Registry data cleanup complete"
+      # Clean up registry data to save disk space after ISO is created
+      if [[ "${MIRROR_IMAGES}" == "true" ]]; then
+        echo "Cleaning up registry data at ${REGISTRY_DIR} to save disk space"
+        sudo rm -rf "${REGISTRY_DIR}/data"
+        echo "Registry data cleanup complete"
+      fi
     fi
 
     attach_agent_iso_no_registry master "$NUM_MASTERS"

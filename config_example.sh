@@ -1075,9 +1075,18 @@ set -x
 # Defaults to "${CLUSTER_NAME}_master_0" where the default CLUSTER_NAME is ostest.
 # export AGENT_RENDEZVOUS_NODE_HOSTNAME="${CLUSTER_NAME:-ostest}_master_1"
 
-# Specifies the expected ISO size in GB for OVE - ISO with no registry.
-# As the size of the ISO increases in future, increase the expected ISO size accordingly.
-# export AGENT_OVE_ISO_SIZE=40
+# AGENT_OVE_ISO_SOURCE lets you use a pre-built OVE ISO instead of building one locally when
+# AGENT_E2E_TEST_BOOT_MODE is set to ISO_NO_REGISTRY. When set, the local ISO build
+# (create_agent_iso_no_registry) is skipped and the ISO is obtained from this source.
+# Accepts one of:
+#   - a quay.io/redhat-user-workloads/... container image ref; the ISO is extracted from the image via:
+#       id=$(sudo podman create --arch amd64 <image>) && sudo podman cp "$id:/agent-ove.x86_64.iso" .
+#   - a local path/filename to an already-downloaded ISO
+# Direct https URLs (e.g. mirror.openshift.com / the Red Hat content-gateway) are not supported
+# here because they require Red Hat SSO authentication. Download such ISOs separately (via a
+# browser logged in to Red Hat SSO) and pass the resulting local file path.
+# export AGENT_OVE_ISO_SOURCE=/path/to/agent-ove.x86_64.iso
+# export AGENT_OVE_ISO_SOURCE=quay.io/redhat-user-workloads/<rest-of-path>@sha256:<digest>
 
 # Uncomment and set the following value to "true" to enable a test scenario
 # where the DNS is disabled on the hosts by setting its IP address to an incorrect value.

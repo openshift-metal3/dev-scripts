@@ -18,6 +18,16 @@ export AGENT_MINIMAL_ISO=${AGENT_MINIMAL_ISO:-"false"}
 # OVE ISO build method: "script" uses build-ove-image.sh, "container" uses Dockerfile-based build
 export AGENT_ISO_NO_REGISTRY_BUILD_METHOD=${AGENT_ISO_NO_REGISTRY_BUILD_METHOD:-"script"}
 
+# Optional: use a pre-built OVE ISO instead of building one locally (ISO_NO_REGISTRY mode).
+# When set, the ISO build (create_agent_iso_no_registry) is skipped and the ISO is obtained
+# from this source. Accepts one of:
+#   - a quay.io/redhat-user-workloads/... container image ref (ISO extracted from the image)
+#   - a local path/filename to an already-downloaded ISO
+# Direct https downloads (mirror.openshift.com / Red Hat content-gateway) are not supported
+# because they require Red Hat SSO authentication; download those ISOs separately and pass
+# the resulting local file path here.
+export AGENT_OVE_ISO_SOURCE=${AGENT_OVE_ISO_SOURCE:-""}
+
 export BOND_CONFIG=${BOND_CONFIG:-"none"}
 
 export ISCSI_NETWORK="iscsi"
