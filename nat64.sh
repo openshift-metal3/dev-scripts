@@ -238,7 +238,7 @@ function _nat64_point_libvirt_dns64() {
     sudo virsh net-destroy "${net}" 2>/dev/null || true
     sudo virsh net-undefine "${net}"
     sudo virsh net-define "${xml}"
-    # net-undefine clears the autostart flag metal3-dev-env set; restore it so the
+    # net-undefine clears the autostart flag; restore it so the
     # network still comes up after a host reboot.
     sudo virsh net-autostart "${net}"
     sudo virsh net-start "${net}"
@@ -324,7 +324,7 @@ function nat64_fixup_bmc_addresses() {
 }
 
 # Regenerate the sushy-tools BMC emulator TLS certificate so it is valid for the
-# host's IPv6 baremetal address in addition to its IPv4 one. metal3-dev-env only
+# host's IPv6 baremetal address in addition to its IPv4 one. vm-setup only
 # puts the IPv4 baremetal address in the cert's SAN, but for NAT64 the in-cluster
 # Ironic pods are IPv6-only and must reach the BMC over IPv6; without the IPv6 SAN
 # they reject the redfish connection with an "IP address mismatch" TLS error.

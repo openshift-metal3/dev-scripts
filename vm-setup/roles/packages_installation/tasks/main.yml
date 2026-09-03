@@ -1,0 +1,186 @@
+- name: Install packages on Ubuntu
+  block:
+  - name: Install required packages for Ubuntu
+    include_tasks: ubuntu_required_packages.yml
+  - name: Install common packages using standard package manager for Ubuntu
+    package:
+      name: "{{ packages.ubuntu.common.packages}}"
+      state: present
+  - name: Install packages using standard package manager for Ubuntu 22.04
+    when: ansible_distribution_version == "22.04"
+    package:
+      name: "{{ packages.ubuntu.jammy.packages}}"
+      state: present
+    become: yes
+  - name: Install packages using standard package manager for Ubuntu 24.04
+    when: ansible_distribution_version == "24.04"
+    package:
+      name: "{{ packages.ubuntu.noble.packages}}"
+      state: present
+    become: yes
+  - name: Install packages specific to Podman
+    package:
+      name: "{{ packages.ubuntu.podman.packages}}"
+      state: present
+    when: CONTAINER_RUNTIME == "podman"
+    become: yes
+  - name: Install packages using pip3
+    pip:
+      executable: "{{ ANSIBLE_VENV | default('/usr') }}/bin/pip"
+      name: "{{ packages.ubuntu.pip3 }}"
+      state: present
+    when: ansible_distribution_version != "24.04"
+  - name: Install packages using pip3 on Ubuntu Noble
+    pip:
+      break_system_packages: true
+      executable: "{{ ANSIBLE_VENV | default('/usr') }}/bin/pip"
+      name: "{{ packages.ubuntu.pip3 }}"
+      state: present
+    when: ansible_distribution_version == "24.04"
+  - name: Add TPM emulator
+    block:
+    - name: Add TPM emulator PPA
+      apt_repository:
+        repo: 'ppa:smoser/swtpm'
+        state: present
+      become: yes
+    - name: Install TPM emulator packages
+      package:
+        name:
+        - swtpm
+        - libtpms
+        state: present
+      become: yes
+    when: tpm_emulator|default(false)|bool
+  become: yes
+  when: ansible_facts['distribution'] == "Ubuntu"
+
+- name: Install packages on CentOS/RHEL
+  block:
+  - name: Clean DNF cache to avoid stale metadata
+    command: dnf clean all
+    changed_when: false
+
+  - name: Refresh DNF cache
+    dnf:
+      update_cache: yes
+    retries: 5
+    delay: 30
+    register: cache_result
+    until: cache_result is succeeded
+
+  - name: Install packages on CentOS/RHEL
+    package:
+      name: "{{ packages.centos.common.packages }}"
+      state: present
+      nobest: true
+    retries: 5
+    delay: 30
+    register: pkg_result
+    until: pkg_result is succeeded
+  - name: Install EL9-specific packages (genisoimage, python3-bcrypt)
+    when: ansible_distribution_major_version == "9"
+    package:
+      name: "{{ packages.centos.el9.packages }}"
+      state: present
+      nobest: true
+    retries: 5
+    delay: 30
+    register: el9_pkg_result
+    until: el9_pkg_result is succeeded
+  - name: Install EL10-specific packages (xorriso replaces genisoimage)
+    when: ansible_distribution_major_version == "10"
+    package:
+      name: "{{ packages.centos.el10.packages }}"
+      state: present
+      nobest: true
+    retries: 5
+    delay: 30
+    register: el10_pkg_result
+    until: el10_pkg_result is succeeded
+  - name: Install packages using pip3
+    pip:
+      executable: "{{ ANSIBLE_VENV | default('/usr') }}/bin/pip"
+      name: "{{ packages.centos.pip3 }}"
+      state: present
+  - name: Perform CentOS/RHEL required configurations
+    include_tasks: centos_required_packages.yml
+  - name: Install TPM emulator packages
+    when: tpm_emulator|default(false)|bool
+    package:
+      name:
+      - swtpm
+      - swtpm-tools
+      state: present
+    become: yes
+  become: yes
+  when: ansible_os_family == "RedHat"
+
+- name: Install packages on openSUSE Leap 15 SP6
+  block:
+  - name: Install packages on openSUSE Leap 15
+    package:
+      name: "{{ packages.suse.common.packages }}"
+      state: present
+
+  - name: Install packages using pip3
+    pip:
+      virtualenv: "{{ ANSIBLE_VENV }}"
+      name: "{{ packages.suse.pip3 }}"
+      state: present
+
+  - name: Perform Suse required configurations
+    include_tasks: suse_required_packages.yml
+  become: yes
+  when: ansible_os_family == "Suse"
+
+- name: Install Go from official source
+  block:
+  - name: Check if Go is already installed
+    command: /usr/local/go/bin/go version
+    ignore_errors: true
+    register: go_version_result
+    changed_when: false
+
+  - name: Remove current installation
+    file:
+      state: absent
+      path: /usr/local/go
+    when:
+    - go_version_result is succeeded
+    - go_version not in go_version_result.stdout
+
+  - name: Ensure /usr/local/src directory exists
+    ansible.builtin.file:
+      path: /usr/local/src
+      state: directory
+      mode: '0755'
+
+  - name: Download Go tarball from official source
+    get_url:
+      url: "{{ go_download_url }}"
+      dest: /usr/local/src/{{ go_tarball }}
+    when: go_version_result is failed or go_version not in go_version_result.stdout
+
+  - name: Extract Go tarball
+    unarchive:
+      src: /usr/local/src/{{ go_tarball }}
+      dest: /usr/local
+      remote_src: yes
+    when: go_version_result is failed or go_version not in go_version_result.stdout
+
+  - name: Add Go to system-wide $PATH
+    copy:
+      dest: /etc/profile.d/go-path.sh
+      content: |
+        export PATH=$PATH:/usr/local/go/bin
+      mode: '0644'
+
+  - name: Verify Go installation
+    command: /usr/local/go/bin/go version
+    register: go_version_output
+    changed_when: false
+
+  - name: Display Go version
+    debug:
+      msg: "{{ go_version_output.stdout }}"

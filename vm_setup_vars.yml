@@ -1,12 +1,11 @@
 # Here we put the ansible vars to override some defaults in the vm-setup
-# playbooks/roles, ref https://github.com/metal3-io/metal3-dev-env
+# playbooks/roles
 
 # Currently this is required because of hard-coded node-name expectations in the
 # openshift-installer terraform templates
 ironic_prefix: "{{ ironic_prefix }}"
 
-# We enable more memory and masters in dev-scripts compared to the minimal setup
-# in metal3-dev-env
+# dev-scripts uses more memory and masters than the vm-setup defaults
 num_masters: 3
 num_workers: 1
 num_arbiters: "{{ lookup('env', 'NUM_ARBITERS') | default(0) }}"

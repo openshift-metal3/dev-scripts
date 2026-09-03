@@ -10,26 +10,6 @@ source validation.sh
 
 early_deploy_validation true
 
-if [ -z "${METAL3_DEV_ENV:-}" ]; then
-  export REPO_PATH=${WORKING_DIR}
-  sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
-  pushd "${METAL3_DEV_ENV_PATH}"
-  # Pin to a specific metal3-dev-env commit to ensure we catch breaking
-  # changes before they're used by everyone and CI.
-  # TODO -- come up with a plan for continuously updating this
-  # Note we only do this in the case where METAL3_DEV_ENV is
-  # unset, to enable developer testing of local checkouts
-  git reset 501505cdd2133d1bea93f99ca697e6cd1d42a97b --hard
-
-  # Ansible 9+ requires Python 3.10+, but CentOS Stream 9 ships Python 3.9.
-  # Patch metal3-dev-env to use Ansible 8.x on centos9/rhel9.
-  sed -i '/ANSIBLE_VERSION/{ s/10\.7\.0/8.7.0/; }' lib/common.sh
-
-  popd
-fi
-
-# This must be aligned with the metal3-dev-env pinned version above, see
-# https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
 export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"8.7.0"}
 
 # Speed up dnf downloads
@@ -79,10 +59,7 @@ fi
 # shellcheck disable=SC1091
 source /etc/os-release
 
-# NOTE(elfosardo): Hacks required for legacy and missing things due to bump in
-#metal3-dev-env commit hash.
-# All of those are needed because we're still behind for OS support.
-# passlib needs to be installed as system dependency
+# NOTE(elfosardo): passlib needs to be installed as system dependency
 if [[ -x "/usr/libexec/platform-python" ]]; then
   sudo /usr/libexec/platform-python -m pip install passlib || sudo dnf -y install python3-pip && sudo /usr/libexec/platform-python -m pip install passlib
 fi
@@ -179,8 +156,7 @@ sudo python -m pip install netaddr lxml
 
 sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
 
-pushd "${METAL3_DEV_ENV_PATH}"
-ansible-galaxy install -r vm-setup/requirements.yml
+ansible-galaxy install -r "${VM_SETUP_PATH}/requirements.yml"
 # Let's temporarily pin these collections to the latest compatible with ansible-2.15
 #ansible-galaxy collection install --upgrade ansible.netcommon ansible.posix ansible.utils community.general
 ansible-galaxy collection install 'ansible.netcommon<8.0.0' ansible.posix 'ansible.utils<6.0.0' community.general
@@ -191,9 +167,8 @@ ANSIBLE_FORCE_COLOR=true ansible-playbook \
   -e "go_custom_mirror=$GO_CUSTOM_MIRROR" \
   -e "go_checksum=$GO_CHECKSUM" \
   -e "GOARCH=$GOARCH" \
-  -i vm-setup/inventory.ini \
-  -b -vvv vm-setup/install-package-playbook.yml
-popd
+  -i "${VM_SETUP_PATH}/inventory.ini" \
+  -b -vvv "${VM_SETUP_PATH}/install-package-playbook.yml"
 
 if [ -n "${KNI_INSTALL_FROM_GIT:-}" ]; then
     # zip is required for building the installer from source
