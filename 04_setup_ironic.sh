@@ -186,8 +186,8 @@ if  sudo podman pod exists ironic-pod ; then
     sudo podman pod rm ironic-pod -f
 fi
 
-# Create pod
-sudo podman pod create -n ironic-pod
+# Create pod exposing the sushy-tools port
+sudo podman pod create -n ironic-pod -p 8000:8000
 
 IRONIC_IMAGE=${IRONIC_LOCAL_IMAGE:-$IRONIC_IMAGE}
 
@@ -225,16 +225,22 @@ if [ "$NODES_PLATFORM" = "libvirt" ]; then
         # has told us the process isn't there but sometimes when it
         # dies it leaves the file.
         sudo rm -f "$WORKING_DIR/virtualbmc/vbmc/master.pid"
-        sudo podman run -d --net host --privileged --name vbmc --pod ironic-pod \
-             -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc -v "/root/.ssh":/root/ssh \
+        sudo podman run -d --net host --name vbmc --pod ironic-pod \
+             -v "$WORKING_DIR/virtualbmc/vbmc":/root/.vbmc \
+             -v /root/.ssh/id_rsa_virt_power:/root/ssh/id_rsa_virt_power:ro \
+             -v /root/.ssh/id_rsa_virt_power.pub:/root/ssh/id_rsa_virt_power.pub:ro \
              -v /var/run/libvirt:/var/run/libvirt \
+             --security-opt label=disable \
              "${VBMC_IMAGE}"
     fi
 
     if ! is_running sushy-tools; then
-        sudo podman run -d --net host --privileged --name sushy-tools --pod ironic-pod \
-             -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy -v "/root/.ssh":/root/ssh \
+        sudo podman run -d --name sushy-tools --pod ironic-pod \
+             -v "$WORKING_DIR/virtualbmc/sushy-tools":/root/sushy \
+             -v /root/.ssh/id_rsa_virt_power:/root/ssh/id_rsa_virt_power:ro \
+             -v /root/.ssh/id_rsa_virt_power.pub:/root/ssh/id_rsa_virt_power.pub:ro \
              -v /var/run/libvirt:/var/run/libvirt \
+             --security-opt label=disable \
              "${SUSHY_TOOLS_IMAGE}"
     fi
 fi
