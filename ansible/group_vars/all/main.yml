@@ -1,0 +1,43 @@
+# Cluster identity
+devscripts_cluster_name: ostest
+devscripts_base_domain: test.metalkube.org
+devscripts_working_dir: /opt/dev-scripts
+devscripts_ssh_pub_key: "{{ lookup('file', ansible_env.HOME + '/.ssh/id_rsa.pub') }}"
+
+# Release image
+# These mirror the bash defaults from common.sh.
+# Set devscripts_release_image to pin an explicit image and skip resolution.
+devscripts_release_stream: "4.22"
+devscripts_release_type: nightly
+devscripts_release_image: ""
+devscripts_openshift_version: ""
+
+# CI mode — when true, skips pull-secret merge, uses mixed BMC driver, etc.
+devscripts_openshift_ci: false
+
+# Security and features
+devscripts_fips_mode: false
+devscripts_feature_set: ""
+devscripts_feature_gates: ""
+devscripts_os_image_stream: ""
+
+# Capabilities
+devscripts_baseline_capability_set: ""
+devscripts_additional_capabilities: ""
+
+# Workload partitioning (set to true to add cpuPartitioningMode: AllNodes)
+devscripts_enable_workload_partitioning: false
+
+# Node counts
+devscripts_num_masters: 3
+devscripts_num_workers: 2
+devscripts_num_arbiters: 0
+devscripts_num_extra_workers: 0
+
+# BMC driver: redfish, redfish-virtualmedia, ipmi, mixed
+devscripts_bmc_driver: redfish
+
+# Misc
+devscripts_disable_multicast: false
+devscripts_enable_bootstrap_static_ip: false
+devscripts_external_loadbalancer: false
