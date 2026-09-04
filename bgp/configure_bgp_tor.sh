@@ -62,6 +62,8 @@ router bgp ${BGP_TOR_ASN}
  no bgp ebgp-requires-policy
  neighbor CLUSTER peer-group
  neighbor CLUSTER remote-as ${BGP_CLUSTER_ASN}
+ neighbor CLUSTER password ${BGP_VIP_PASSWORD:-dev-scripts-bgp}
+ neighbor CLUSTER bfd
 ${LISTEN_RANGES}${ADDRESS_FAMILIES}!
 EOF
 
@@ -80,7 +82,7 @@ eigrpd=no
 babeld=no
 sharpd=no
 pbrd=no
-bfdd=no
+bfdd=yes
 fabricd=no
 vrrpd=no
 pathd=no
@@ -88,10 +90,16 @@ pathd=no
 vtysh_enable=yes
 zebra_options="  -A 127.0.0.1 -s 90000000"
 bgpd_options="   -A 127.0.0.1"
+bfdd_options="   -A 127.0.0.1"
 EOF
 
 sudo firewall-cmd --zone=libvirt --permanent --add-port=179/tcp
 sudo firewall-cmd --zone=libvirt --add-port=179/tcp
+# BFD control and echo (single hop, RFC 5881)
+for port in 3784 3785; do
+    sudo firewall-cmd --zone=libvirt --permanent --add-port=${port}/udp
+    sudo firewall-cmd --zone=libvirt --add-port=${port}/udp
+done
 
 sudo podman run -d --replace --name "${BGP_TOR_NAME}" --net host --privileged \
     -v "${BGP_TOR_DIR}/frr.conf:/etc/frr/frr.conf:z" \
