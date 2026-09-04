@@ -574,7 +574,7 @@ func networkingDetails(page *rod.Page, path string) error {
 	apiVip := apiVips
 	ingressVip := ingressVips
 
-	if ipStack == "v4" {
+	if ipStack == "v4" || ipStack == "v6" {
 		page.MustElement("#form-radio-stackType-singleStack-field")
 		logrus.Info("Selected IPV4 networking stack")
 		if getControlPlaneCount() == 1 {

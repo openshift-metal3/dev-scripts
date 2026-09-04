@@ -695,6 +695,17 @@ function enable_isolated_baremetal_network() {
       sudo sed -i "/<\/dnsmasq:options>/i   <dnsmasq:option value='dhcp-option=3,${PROVISIONING_HOST_EXTERNAL_IP}'/>" "${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}"
     fi
 
+    # For IPv6, libvirt generates ra-param=*,0,0 for isolated networks (no
+    # <forward> block), which sets router-lifetime to 0 in all Router
+    # Advertisements. This means dnsmasq never advertises a default route,
+    # causing the assisted-service "default route" validation to fail.
+    # Override this by appending ra-param with a non-zero lifetime (1800s).
+    # Options in <dnsmasq:options> are placed after libvirt's auto-generated
+    # config, so the last ra-param wins.
+    if [[ "${IP_STACK}" == "v6" || "${IP_STACK}" == "v4v6" || "${IP_STACK}" == "v6v4" ]]; then
+      sudo sed -i "/<\/dnsmasq:options>/i   <dnsmasq:option value='ra-param=*,0,1800'/>" "${WORKING_DIR}/${BAREMETAL_NETWORK_NAME}"
+    fi
+
     # Update the baremetal network
     sudo virsh net-destroy "${BAREMETAL_NETWORK_NAME}"
     sudo virsh net-undefine "${BAREMETAL_NETWORK_NAME}"
