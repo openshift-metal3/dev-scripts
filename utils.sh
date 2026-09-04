@@ -595,8 +595,7 @@ function generate_auth_template {
         fi
     fi
 
-    # For compatibility with metal3-dev-env openstackclient.sh
-    # which mounts a config dir into the ironic-client container
+    # openstackclient.sh mounts this dir into the ironic-client container
     mkdir -p _clouds_yaml
     ln -f clouds.yaml _clouds_yaml
     set -x

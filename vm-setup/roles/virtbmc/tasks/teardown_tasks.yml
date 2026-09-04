@@ -1,0 +1,15 @@
+---
+
+- name: Remove virtualbmc directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+  # From old systemd virtualbmc service
+  - "/etc/virtualbmc"
+  - "/var/log/virtualbmc"
+  - "/root/.vbmc/"
+  # Containerized version working dir
+  - "{{ working_dir }}/virtualbmc"
+  become: true
+

@@ -1,20 +1,26 @@
-# Here we put the ansible vars to override some defaults in the vm-setup
-# playbooks/roles, ref https://github.com/metal3-io/metal3-dev-env
+non_root_user: "{{ lookup('env', 'USER') }}"
 
-# Currently this is required because of hard-coded node-name expectations in the
-# openshift-installer terraform templates
-ironic_prefix: "{{ ironic_prefix }}"
+cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('ostest.test.metalkube.org', true) }}"
 
-# We enable more memory and masters in dev-scripts compared to the minimal setup
-# in metal3-dev-env
-num_masters: 3
-num_workers: 1
-num_arbiters: "{{ lookup('env', 'NUM_ARBITERS') | default(0) }}"
-num_extraworkers: 0
-num_armworkers: 0
-num_landingzones: "{{ lookup('env', 'NUM_LANDINGZONE') | default(0) }}"
-extradisks_list: "{{ lookup('env', 'VM_EXTRADISKS_LIST').split(' ') | default(['vdb']) }}"
-extradisks_size: "{{ lookup('env', 'VM_EXTRADISKS_SIZE') | default(['8G']) }}"
+libvirt_nic_model: virtio
+
+default_disk: 50
+default_memory: 4096
+default_vcpu: 2
+extradisks: false
+tpm_emulator: "{{ lookup('env', 'VM_TPM_EMULATOR')|default(false, true) }}"
+virtualbmc_base_port: 6230
+
+# VM counts — all overridable via explicit -e args on the playbook command line
+num_masters: "{{ lookup('env', 'NUM_MASTERS') | default(3) | int }}"
+num_workers: "{{ lookup('env', 'NUM_WORKERS') | default(1) | int }}"
+num_arbiters: "{{ lookup('env', 'NUM_ARBITERS') | default(0) | int }}"
+num_extraworkers: "{{ lookup('env', 'NUM_EXTRA_WORKERS') | default(0) | int }}"
+num_armworkers: "{{ lookup('env', 'NUM_ARM_WORKERS') | default(0) | int }}"
+num_landingzones: "{{ lookup('env', 'NUM_LANDINGZONE') | default(0) | int }}"
+
+ironic_prefix: ""
+
 flavors:
   master:
     memory: "{{ lookup('env', 'MASTER_MEMORY') }}"
@@ -22,35 +28,30 @@ flavors:
     vcpu: "{{ lookup('env', 'MASTER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
     architecture: "{{ libvirt_arch }}"
-
   arbiter:
     memory: "{{ lookup('env', 'ARBITER_MEMORY') }}"
     disk: "{{ lookup('env', 'ARBITER_DISK') }}"
     vcpu: "{{ lookup('env', 'ARBITER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
     architecture: "{{ libvirt_arch }}"
-
   worker:
     memory: "{{ lookup('env', 'WORKER_MEMORY') }}"
     disk: "{{ lookup('env', 'WORKER_DISK') }}"
     vcpu: "{{ lookup('env', 'WORKER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
     architecture: "{{ libvirt_arch }}"
-
   extraworker:
     memory: "{{ lookup('env', 'EXTRA_WORKER_MEMORY') }}"
     disk: "{{ lookup('env', 'EXTRA_WORKER_DISK') }}"
     vcpu: "{{ lookup('env', 'EXTRA_WORKER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
     architecture: "{{ libvirt_arch }}"
-
   armworker:
     memory: "{{ lookup('env', 'EXTRA_WORKER_MEMORY') }}"
     disk: "{{ lookup('env', 'EXTRA_WORKER_DISK') }}"
     vcpu: "{{ lookup('env', 'EXTRA_WORKER_VCPU') }}"
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
     architecture: "aarch64"
-
   landingzone:
     memory: "{{ lookup('env', 'LANDINGZONE_MEMORY') | default('8192') }}"
     disk: "{{ lookup('env', 'LANDINGZONE_DISK') | default('60') }}"
@@ -58,29 +59,36 @@ flavors:
     extradisks: "{{ lookup('env', 'VM_EXTRADISKS') | default(false) }}"
     architecture: "{{ libvirt_arch }}"
 
-# For OpenShift we create some additional DNS records for the API/DNS VIPs
+enable_vnc_console: "{{ ansible_architecture != 'aarch64' }}"
+
+libvirt_volume_path: "{{ working_dir }}/pool"
+libvirt_uri: qemu:///system
+ssh_user: root
+
+# Network CIDRs read from dev-scripts environment
 baremetal_network_cidr_v4: "{{ lookup('env', 'EXTERNAL_SUBNET_V4') }}"
 baremetal_network_cidr_v6: "{{ lookup('env', 'EXTERNAL_SUBNET_V6') }}"
 baremetal_network_cidr: "{{ baremetal_network_cidr_v4 | default(baremetal_network_cidr_v6, true) }}"
 
+# DNS extra hosts for OpenShift API/ingress VIPs
 dns_dualstackhost:
-  - ip: "{{ baremetal_network_cidr_v6 | nthhost(5) }}"
+  - ip: "{{ baremetal_network_cidr_v6 | ansible.utils.nthhost(5) }}"
     hostnames:
       - "api"
 
 dns_extrahosts:
-  - ip: "{{ baremetal_network_cidr | nthhost(5) }}"
+  - ip: "{{ baremetal_network_cidr | ansible.utils.nthhost(5) }}"
     hostnames:
       - "api"
-  - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
+  - ip: "{{ baremetal_network_cidr | ansible.utils.nthhost(2) }}"
     hostnames:
       - "ns1"
-  - ip: "{{ baremetal_network_cidr | nthhost(1) }}"
+  - ip: "{{ baremetal_network_cidr | ansible.utils.nthhost(1) }}"
     hostnames:
       - "virthost"
 
 dns_externalhosts:
-  - ip: "{{ baremetal_network_cidr | nthhost(1) }}"
+  - ip: "{{ baremetal_network_cidr | ansible.utils.nthhost(1) }}"
     hostnames:
       - "virthost"
       - "api"
@@ -91,24 +99,24 @@ hosts_config: "{{ lookup('template', network_config_folder + '/hosts.yaml', erro
 dns_customhosts: "{{ [] if not network_config_folder else hosts_config }}"
 
 provisioning_network:
-  - name: "{{ provisioning_network_name  }}"
-    bridge: "{{ provisioning_network_name  }}"
+  - name: "{{ provisioning_network_name }}"
+    bridge: "{{ provisioning_network_name }}"
     forward_mode: bridge
 
 external_network:
   - name: "{{ baremetal_network_name }}"
     bridge: "{{ baremetal_network_name }}"
-    forward_mode: "{{ 'bridge' if lookup('env', 'MANAGE_BR_BRIDGE') == 'n' else 'nat' if not lookup('env', 'INSTALLER_PROXY') else 'route'}}"
-    address_v4: "{{ baremetal_network_cidr_v4|nthhost(1)|default('', true) }}"
-    netmask_v4: "{{ baremetal_network_cidr_v4|ipaddr('netmask') }}"
-    address_v6: "{{ baremetal_network_cidr_v6|nthhost(1)|default('', true) }}"
-    prefix_v6: "{{ baremetal_network_cidr_v6|ipaddr('prefix') }}"
+    forward_mode: "{{ 'bridge' if lookup('env', 'MANAGE_BR_BRIDGE') == 'n' else 'nat' if not lookup('env', 'INSTALLER_PROXY') else 'route' }}"
+    address_v4: "{{ baremetal_network_cidr_v4 | ansible.utils.nthhost(1) | default('', true) }}"
+    netmask_v4: "{{ baremetal_network_cidr_v4 | ansible.utils.ipaddr('netmask') }}"
+    address_v6: "{{ baremetal_network_cidr_v6 | ansible.utils.nthhost(1) | default('', true) }}"
+    prefix_v6: "{{ baremetal_network_cidr_v6 | ansible.utils.ipaddr('prefix') }}"
     dhcp_range_v4:
-      - "{{ baremetal_network_cidr_v4|nthhost(20) }}"
-      - "{{ baremetal_network_cidr_v4|nthhost(60) }}"
+      - "{{ baremetal_network_cidr_v4 | ansible.utils.nthhost(20) }}"
+      - "{{ baremetal_network_cidr_v4 | ansible.utils.nthhost(60) }}"
     dhcp_range_v6:
-      - "{{ baremetal_network_cidr_v6|nthhost(20) }}"
-      - "{{ baremetal_network_cidr_v6|nthhost(60) }}"
+      - "{{ baremetal_network_cidr_v6 | ansible.utils.nthhost(20) }}"
+      - "{{ baremetal_network_cidr_v6 | ansible.utils.nthhost(60) }}"
     lease_expiry: "{{ lookup('env', 'DHCP_LEASE_EXPIRY') }}"
     nat_port_range:
       - 1024

@@ -69,7 +69,6 @@ function playbook() {
 	fi
 
 	ansible-playbook \
-		-e @vm_setup_vars.yml \
 		-e "ironic_prefix=${REMOTE_CLUSTER_NAME}_" \
 		-e "cluster_name=${REMOTE_CLUSTER_NAME}" \
 		-e "working_dir=$WORKING_DIR" \

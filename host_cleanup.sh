@@ -10,15 +10,9 @@ source validation.sh
 
 early_cleanup_validation
 
-if [ -z "${METAL3_DEV_ENV}" ]; then
-  export REPO_PATH=${WORKING_DIR}
-  sync_repo_and_patch metal3-dev-env https://github.com/metal3-io/metal3-dev-env.git
-fi
-
 export ANSIBLE_FORCE_COLOR=true
 
 ansible-playbook \
-    -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
     -e "cluster_name=${CLUSTER_NAME}" \
     -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \

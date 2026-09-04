@@ -15,9 +15,6 @@ early_deploy_validation
 # Manage libvirtd services based on OS
 # Get a dedicated method, making it easier to duplicate
 # or move in order to expose it to some other parts if needed.
-# This is the same method as defined in metal3-dev-env via that
-# commit:
-# https://github.com/metal3-io/metal3-dev-env/pull/1313/commits/a6a79685986f9d7cb18c4eb680ee4d2a759e99dc
 #
 manage_libvirtd() {
   case ${DISTRO} in
@@ -39,21 +36,12 @@ if [ ! -f "$HOME/.ssh/id_rsa.pub" ]; then
     ssh-keygen -f ~/.ssh/id_rsa -t rsa -P ""
 fi
 
-# root needs a private key to talk to libvirt
-# See vm-setup/roles/virtbmc/tasks/configure-vbmc.yml
-# in https://github.com/metal3-io/metal3-dev-env.git
-# FIXME(shardy) this should be in the ansible role ...
-if sudo [ ! -f /root/.ssh/id_rsa_virt_power ]; then
-  sudo ssh-keygen -f /root/.ssh/id_rsa_virt_power -P ""
-  sudo cat /root/.ssh/id_rsa_virt_power.pub | sudo tee -a /root/.ssh/authorized_keys
-fi
 
 # This script will create some libvirt VMs do act as "dummy baremetal"
 # then configure python-virtualbmc to control them - these can later
 # be deployed via the install process similar to how we test TripleO
 # Note we copy the playbook so the roles/modules from tripleo-quickstart
 # are found without a special ansible.cfg
-# FIXME(shardy) output an error message temporarily since we've broken an interface
 export VM_NODES_FILE=${VM_NODES_FILE:-}
 if [ ! -z "${VM_NODES_FILE}" ]; then
   echo "VM_NODES_FILE is no longer supported"
@@ -129,15 +117,6 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
     exit 0
 fi
 
-# TODO - move this to metal3-dev-env.
-# This is to address the following error:
-#   "msg": "internal error: Check the host setup: enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss. Interfaces to look at: eno2"
-# This comes from libvirt when trying to create the ostestbm network.
-for n in /proc/sys/net/ipv6/conf/* ; do
-  if [ -f "$n/accept_ra" ]; then
-    sudo sysctl -w net/ipv6/conf/"$(basename "$n")"/accept_ra=2
-  fi
-done
 
 export ANSIBLE_FORCE_COLOR=true
 
@@ -168,11 +147,6 @@ configure_chronyd
 # Open BGP port for no-overlay mode enabled for default network
 sudo firewall-cmd --zone=libvirt --add-port=179/tcp
 
-export VNC_CONSOLE=true
-if [[ $(uname -m) == "aarch64" ]]; then
-  VNC_CONSOLE=false
-  echo "libvirt_cdrombus: scsi" >> vm_setup_vars.yml
-fi
 
 # playbooks depend on it
 if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
@@ -207,7 +181,6 @@ if [ "${NUM_ARM_WORKERS}" -ne 0 ]; then
 fi
 
 ansible-playbook \
-    -e @vm_setup_vars.yml \
     -e "ironic_prefix=${CLUSTER_NAME}_" \
     -e "cluster_name=${CLUSTER_NAME}" \
     -e "provisioning_network_name=${PROVISIONING_NETWORK_NAME}" \
@@ -228,14 +201,11 @@ ansible-playbook \
     -e "virtualbmc_base_port=$VBMC_BASE_PORT" \
     -e "master_hostname_format=$MASTER_HOSTNAME_FORMAT" \
     -e "worker_hostname_format=$WORKER_HOSTNAME_FORMAT" \
-    -e "libvirt_arch=$(uname -m)" \
-    -e "enable_vnc_console=$VNC_CONSOLE" \
     -i "${VM_SETUP_PATH}/inventory.ini" \
     -b -vvv "${VM_SETUP_PATH}/setup-playbook.yml"
 
 # NOTE(elfosardo): /usr/share/OVMF/OVMF_CODE.fd does not exist in the ovmf
-# package anymore, so we need to create a link to that until metal3-dev-env
-# fixes that, probably when switching to UEFI by default
+# package anymore, so we need to create a link to that until edk2-ovmf is fixed.
 if ! [[ -f /usr/share/OVMF/OVMF_CODE.fd || -L /usr/share/OVMF/OVMF_CODE.fd ]]; then
   sudo ln -s /usr/share/edk2/ovmf/OVMF_CODE.fd /usr/share/OVMF/
 fi
@@ -243,7 +213,7 @@ fi
 # Fix network topology for Landing Zone use case:
 # Cluster node VMs (masters/workers) should only have cluster network (baremetal network)
 # Landing Zone VMs should have both BMC network (provisioning network) and cluster network
-# This is necessary because metal3-dev-env attaches all networks to all VMs
+# This is necessary because vm-setup attaches all networks to all VMs
 if [ "${NUM_LANDINGZONE:-0}" -gt 0 ]; then
   echo "Configuring network topology: removing BMC network from cluster node VMs..."
 
@@ -530,8 +500,7 @@ fi
 sudo chown "$USER":"$USER" "${REGISTRY_CREDS}"
 ls -l "${REGISTRY_CREDS}"
 
-# metal3-dev-env contains a script to run the baremetal ironic client in a
-# container, place a link to it if its not installed
+# Place a link to the baremetal ironic client wrapper script if not already installed
 IRONICCLIENT_PATH="${IRONICCLIENT_PATH:-/usr/local/bin/baremetal}"
 if ! command -v baremetal | grep -v "${IRONICCLIENT_PATH}"; then
     sudo ln -sf "${METAL3_DEV_ENV_PATH}/openstackclient.sh" "${IRONICCLIENT_PATH}"

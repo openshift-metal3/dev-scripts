@@ -1,0 +1,108 @@
+{% set is_aarch64 = flavors[item.flavor].architecture == 'aarch64' %}
+{% set is_x86_64 = flavors[item.flavor].architecture == 'x86_64' %}
+{% set effective_domain_type = 'qemu' if flavors[item.flavor].architecture != host_architecture else libvirt_domain_type %}
+<domain type='{{ effective_domain_type }}'>
+  <name>{{ item.name }}</name>
+  <memory unit='MiB'>{{ flavors[item.flavor].memory }}</memory>
+  <vcpu>{{ flavors[item.flavor].vcpu }}</vcpu>
+
+  {{baremetal_vm_xml|default('')}}
+
+{% if is_aarch64 %}
+  <os{% if libvirt_firmware == 'uefi' %} firmware='efi'{% endif %}>
+    <type arch='aarch64' machine='virt'>hvm</type>
+{% if libvirt_firmware == 'uefi' %}
+    <loader readonly='yes' type='pflash' format='raw'>/usr/share/edk2/aarch64/QEMU_EFI-pflash.raw</loader>
+    <nvram template='/usr/share/edk2/aarch64/vars-template-pflash.raw' templateFormat='raw' format='raw'/>
+{% endif %}
+    <boot dev='network'/>
+  </os>
+{% elif is_x86_64 %}
+  <os>
+    <type arch='x86_64' machine='q35'>hvm</type>
+{% if libvirt_firmware == 'uefi' %}
+{% if libvirt_secure_boot|bool %}
+     <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>
+{% elif host_os == 'centos' or host_os == 'rhel' %}
+     <loader readonly='yes' type='pflash'>/usr/share/edk2/ovmf/OVMF_CODE.fd</loader>
+{% elif host_distro == 'ubuntu24' %}
+     <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>
+{% elif host_distro == 'opensuse-leap15' %}
+     <loader readonly='yes' type='pflash'>/usr/share/qemu/ovmf-x86_64-4m-code.bin</loader>
+{% else %}
+     <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.fd</loader>
+{% endif %}
+{% endif %}
+    <boot dev='network'/>
+    <bootmenu enable='no'/>
+    <bios useserial='yes' rebootTimeout='10000'/>
+  </os>
+{% endif %}
+
+  <features>
+    <acpi/>
+{% if not is_aarch64 %}
+    <apic/>
+    <pae/>
+{% endif %}
+  </features>
+{% if is_aarch64 and effective_domain_type == 'qemu' %}
+  <cpu mode='custom' match='exact' check='none'>
+    <model fallback='forbid'>{{ libvirt_aarch64_cpu_model }}</model>
+  </cpu>
+{% elif effective_domain_type == 'qemu' %}
+  <cpu mode='host-model'/>
+{% else %}
+  <cpu mode='host-passthrough'/>
+{% endif %}
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <disk type="file" device="cdrom">
+      <target dev='{{ libvirt_cdromdev }}' bus='{{ libvirt_cdrombus }}'/>
+      <readonly/>
+    </disk>
+    <disk type='volume' device='disk'>
+      <driver name='qemu' type='qcow2' cache='unsafe'/>
+      <source pool='{{ libvirt_volume_pool }}' volume='{{ item.name }}.qcow2'/>
+      <target dev='{{ libvirt_diskdev }}' bus='{{ libvirt_diskbus }}'/>
+    </disk>
+{% if libvirt_diskbus == 'scsi' %}
+  <controller type='scsi' model='virtio-scsi' />
+{% endif %}
+{% if tpm_emulator|bool %}
+    <tpm model='tpm-tis'>
+      <backend type='emulator' version='2.0'/>
+    </tpm>
+{% endif %}
+{% for network in networks %}
+    <interface type='bridge'>
+      <mac address='{{ node_mac_map.get(item.name).get(network.name) }}'/>
+      <source bridge='{{ network.bridge }}'/>
+      <model type='{{ libvirt_nic_model }}'/>
+{% if network.virtualport_type is defined %}
+      <virtualport type='{{ network.virtualport_type }}'/>
+{% endif %}
+    </interface>
+{% endfor %}
+    <serial type='pty'>
+      <log file="{{ libvirt_log_path }}/{{ item.name }}-serial0.log" append="on"/>
+    </serial>
+    <console type='pty'/>
+
+{% if enable_vnc_console|bool %}
+{% if not is_aarch64 %}
+    <input type='mouse' bus='ps2'/>
+{% endif %}
+    <graphics type='vnc' port='-1' autoport='yes' />
+    <video>
+      <model type='{% if is_aarch64 %}ramfb{% else %}virtio{% endif %}' vram='9216' heads='1'/>
+    </video>
+{% endif %}
+
+    {{baremetal_vm_device_xml|default('')}}
+
+  </devices>
+</domain>
