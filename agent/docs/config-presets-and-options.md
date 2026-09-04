@@ -102,7 +102,7 @@ When setting the above variables to true you also might want to set the followin
 | LOCAL_REGISTRY_DNS_NAME | virthost.$CLUSTER_NAME.test.metalkube.org       | String - Web domain     | Local image registry DNS name.                                           |
 | LOCAL_REGISTRY_PORT     | 5000                                            | String - Port Number    | Local image registry port.                                               |
 | REGISTRY_USER           | ocp-user                                        | String                  | Local image registry user.                                               |
-| REGISTRY_PASS           | ocp-pass                                        | String                  | Local image registry user's password.                                    |
+| REGISTRY_PASS           | <generated>                                     | String                  | Local image registry user's password.                                    |
 | REGISTRY_DIR            | $WORKING_DIR/registry                           | String - Directory path | Base directory for the local image registry.                             |
 | REGISTRY_CREDS          | $HOME/$USER-private-mirror-$CLUSTER_NAME.json   | String - File path      | Location of the local registry mirror's credentials.                     |
 | MIRROR_OLM              |                                                 | String - List           | Comma-separated list of OLM operators to mirror into the local registry. |
