@@ -25,6 +25,17 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
   # Patch metal3-dev-env to use Ansible 8.x on centos9/rhel9.
   sed -i '/ANSIBLE_VERSION/{ s/10\.7\.0/8.7.0/; }' lib/common.sh
 
+  # HACK: Go download retries + mirror
+  # until it merges and we can bump the pinned hash above.
+  # https://github.com/metal3-io/metal3-dev-env/pull/1725
+  sed -i \
+    -e '/# Construct Go download URL and tarball name/a go_mirror: "https://go.dev/dl"' \
+    -e "s#^go_download_url:.*#go_download_url: \"{{ go_mirror | regex_replace('/\$', '') }}/{{ go_tarball }}\"#" \
+    vm-setup/roles/packages_installation/defaults/main.yml
+  sed -i \
+    -e '/dest: \/usr\/local\/src\/{{ go_tarball }}/a\      timeout: 30\n    register: go_download_result\n    until: go_download_result is succeeded\n    retries: 10\n    delay: 30' \
+    vm-setup/roles/packages_installation/tasks/main.yml
+
   popd
 fi
 
