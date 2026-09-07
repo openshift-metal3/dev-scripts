@@ -1181,12 +1181,7 @@ set -x
 #
 # export AGENT_MINIMAL_ISO=true
 
-# Alternative local path to the metal3-dev-env repository.
-# Optionally set this to a path to use a local dev copy of
-# metal3-dev-env, otherwise it's cloned to $WORKING_DIR
-# The location won't be synced or updated preserving any local
-# changes applied to it.
-# export METAL3_DEV_ENV=''
+# (No longer used — vm-setup is now vendored inside dev-scripts)
 
 # AGENT_ROOT_DEVICE_HINTS
 # Default: Undefined

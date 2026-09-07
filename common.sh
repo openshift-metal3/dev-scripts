@@ -283,15 +283,11 @@ EXTRA_BAREMETALHOSTS_FILE=${EXTRA_BAREMETALHOSTS_FILE:-"${OCP_DIR}/extra_baremet
 EXTRA_ARM_BAREMETALHOSTS_FILE=${EXTRA_ARM_BAREMETALHOSTS_FILE:-"${OCP_DIR}/extra_arm_baremetalhosts.json"}
 export BMO_WATCH_ALL_NAMESPACES=${BMO_WATCH_ALL_NAMESPACES:-"false"}
 
-# Optionally set this to a path to use a local dev copy of
-# metal3-dev-env, otherwise it's cloned to $WORKING_DIR
-export METAL3_DEV_ENV=${METAL3_DEV_ENV:-}
-if [ -z "${METAL3_DEV_ENV}" ]; then
-  export METAL3_DEV_ENV_PATH="${WORKING_DIR}/metal3-dev-env"
-else
-  export METAL3_DEV_ENV_PATH="${METAL3_DEV_ENV}"
-fi
-export VM_SETUP_PATH="${METAL3_DEV_ENV_PATH}/vm-setup"
+# vm-setup roles are vendored in dev-scripts
+export VM_SETUP_PATH="${BASH_SOURCE[0]%/*}/vm-setup"
+# METAL3_DEV_ENV_PATH points to dev-scripts itself so the openstackclient.sh
+# symlink in 02_configure_host.sh continues to resolve correctly.
+export METAL3_DEV_ENV_PATH="${BASH_SOURCE[0]%/*}"
 export CONTAINER_RUNTIME="podman"
 
 export NUM_MASTERS=${NUM_MASTERS:-"3"}
@@ -323,6 +319,7 @@ export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
 # VBMC and Redfish images
 export VBMC_IMAGE=${VBMC_IMAGE:-"quay.io/metal3-io/vbmc"}
 export SUSHY_TOOLS_IMAGE=${SUSHY_TOOLS_IMAGE:-"quay.io/metal3-io/sushy-tools"}
+export IRONIC_CLIENT_IMAGE=${IRONIC_CLIENT_IMAGE:-"quay.io/metal3-io/ironic-client"}
 export VBMC_BASE_PORT=${VBMC_BASE_PORT:-"6230"}
 export VBMC_MAX_PORT=$((VBMC_BASE_PORT + NUM_MASTERS + NUM_ARBITERS + NUM_WORKERS + NUM_EXTRA_WORKERS + NUM_ARM_WORKERS + NUM_LANDINGZONE - 1))
 export REDFISH_EMULATOR_IGNORE_BOOT_DEVICE="${REDFISH_EMULATOR_IGNORE_BOOT_DEVICE:-False}"
