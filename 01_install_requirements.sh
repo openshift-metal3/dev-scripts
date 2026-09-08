@@ -29,11 +29,11 @@ if [ -z "${METAL3_DEV_ENV:-}" ]; then
   # until it merges and we can bump the pinned hash above.
   # https://github.com/metal3-io/metal3-dev-env/pull/1725
   sed -i \
-    -e '/# Construct Go download URL and tarball name/a go_mirror: "https://go.dev/dl"' \
-    -e "s#^go_download_url:.*#go_download_url: \"{{ go_mirror | regex_replace('/\$', '') }}/{{ go_tarball }}\"#" \
+    -e '/# Construct Go download URL and tarball name/a go_custom_mirror: "https://go.dev/dl"\ngo_checksum: ""' \
+    -e "s#^go_download_url:.*#go_download_url: \"{{ go_custom_mirror | regex_replace('/\$', '') }}/{{ go_tarball }}\"#" \
     vm-setup/roles/packages_installation/defaults/main.yml
   sed -i \
-    -e '/dest: \/usr\/local\/src\/{{ go_tarball }}/a\      timeout: 30\n    register: go_download_result\n    until: go_download_result is succeeded\n    retries: 10\n    delay: 30' \
+    -e '/dest: \/usr\/local\/src\/{{ go_tarball }}/a\      checksum: "{{ ('"'"'sha256:'"'"' ~ go_checksum) if (go_checksum | length > 0) else omit }}"\n      timeout: 30\n    register: go_download_result\n    until: go_download_result is succeeded\n    retries: 10\n    delay: 30' \
     vm-setup/roles/packages_installation/tasks/main.yml
 
   popd
