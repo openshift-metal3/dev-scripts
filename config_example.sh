@@ -534,6 +534,13 @@ set -x
 # ENABLE_BOOTSTRAP_STATIC_IP option above).
 # export EXTERNAL_LOADBALANCER=1
 
+# ADDN_DNS -
+# Additional DNS server for the dev-scripts host (not the target cluster).
+# This server will be used after dev-scripts reconfigures networking on the
+# host. It defaults to the first non-loopback IP from resolv.conf, but it's
+# safer to set this value explicitly if DNS does not come from DHCP.
+# ADDN_DNS=8.8.8.8
+
 ################################################################################
 ## VM Settings
 ##

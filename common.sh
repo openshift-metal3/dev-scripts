@@ -393,6 +393,25 @@ if [ ! -f "$IRONIC_IMAGES_DIR/.permissions" ]; then
   touch "$IRONIC_IMAGES_DIR/.permissions"
 fi
 
+# NOTE(dtantsur): NetworkManager is very keen on nuking any existing DNS
+# configuration, even if it does not have any configuration itself. Detect and
+# cache ADDN_DNS for later use.
+if [[ -z "${ADDN_DNS}" ]]; then
+    # Current information from resolv.conf takes priority.
+    for addr in $(awk '/nameserver/ { print $2; }' /etc/resolv.conf); do
+        if ! [[ "$(ipcalc --addrspace ${addr})" =~ Loopback ]]; then
+            ADDN_DNS="${addr}"
+            echo "${ADDN_DNS}" > "${WORKING_DIR}/nameserver"
+            break
+        fi
+    done
+
+    # If nothing in resolv.conf, check the cache from a previous run.
+    if [[ -z "${ADDN_DNS}" ]] && [[ -f "${WORKING_DIR}/nameserver" ]]; then
+        ADDN_DNS=$(<"${WORKING_DIR}/nameserver")
+    fi
+fi
+
 # Defaults the variable to enable testing a custom machine-api-operator image
 export TEST_CUSTOM_MAO=${TEST_CUSTOM_MAO:-false}
 
