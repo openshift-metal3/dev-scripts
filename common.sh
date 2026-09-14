@@ -128,7 +128,9 @@ if [[ -z "${REGISTRY_PASS:-}" ]]; then
         chmod 0600 "${REGISTRY_PASS_FILE}"
         uuidgen > "${REGISTRY_PASS_FILE}"
     fi
+    set +x
     REGISTRY_PASS=$(<"${REGISTRY_PASS_FILE}")
+    set -x
 fi
 export REGISTRY_PASS
 
