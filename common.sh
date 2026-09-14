@@ -393,6 +393,14 @@ if [ ! -f "$IRONIC_IMAGES_DIR/.permissions" ]; then
   touch "$IRONIC_IMAGES_DIR/.permissions"
 fi
 
+# NOTE(dtantsur): dev-scripts uses ipcalc before 01_install_requirements.sh
+# runs, both here and in network.sh.
+if ! command -v ipcalc > /dev/null; then
+    sudo dnf install ipcalc -y \
+        --setopt install_weak_deps=false \
+        --setopt fastestmirror=1
+fi
+
 # NOTE(dtantsur): NetworkManager is very keen on nuking any existing DNS
 # configuration, even if it does not have any configuration itself. Detect and
 # cache ADDN_DNS for later use.
