@@ -41,8 +41,6 @@ ansible-playbook \
 cleanup_nat64
 
 sudo rm -rf "/etc/NetworkManager/dnsmasq.d/openshift-${CLUSTER_NAME}.conf" /etc/yum.repos.d/delorean*
-sudo rm -rf /etc/NetworkManager/conf.d/dnsmasq.conf
-sudo rm -rf /etc/NetworkManager/dnsmasq.d/upstream.conf
 if systemctl is-active --quiet NetworkManager; then
   sudo systemctl reload NetworkManager
 else
