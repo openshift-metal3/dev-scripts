@@ -52,6 +52,7 @@ function add_dns_entry {
       echo "${ip} console-openshift-console.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
       echo "${ip} oauth-openshift.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
       echo "${ip} thanos-querier-openshift-monitoring.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
+      echo "${ip} prometheus-k8s-openshift-monitoring.apps.${CLUSTER_DOMAIN}" | sudo tee -a /etc/hosts
     fi
 }
 
@@ -757,7 +758,7 @@ else
   else
     ip=${AGENT_NODES_IPSV6[0]}
   fi
-  configure_dnsmasq "${ip}" ""
+  configure_dnsmasq "${ip}" "${ip}"
 fi
 
 if [[ "${AGENT_PLATFORM_TYPE}" == "external" ]] || [[ "${AGENT_PLATFORM_TYPE}" == "vsphere" ]]; then
