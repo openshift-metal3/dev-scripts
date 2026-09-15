@@ -77,20 +77,10 @@ function extract_rhcos_json() {
 }
 
 function baremetal_network_configuration() {
-  if [[ "$(openshift_version "$OCP_DIR")" == "4.3" ]]; then
-    return
-  fi
-
   if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
 cat <<EOF
     provisioningNetwork: "${PROVISIONING_NETWORK_PROFILE}"
 EOF
-    if printf '%s\n4.6\n' "$(openshift_version)" | sort -V -C; then
-cat <<EOF
-    provisioningHostIP: "${CLUSTER_PROVISIONING_IP}"
-    bootstrapProvisioningIP: "${BOOTSTRAP_PROVISIONING_IP}"
-EOF
-    fi
   else
 cat <<EOF
     provisioningBridge: ${PROVISIONING_NETWORK_NAME}
@@ -115,15 +105,6 @@ cat <<EOF
     bootstrapExternalStaticDNS: "${PROVISIONING_HOST_EXTERNAL_IP}"
 EOF
     fi
-  fi
-}
-
-function dnsvip() {
-  # dnsVIP was removed from 4.5
-  if printf '%s\n4.4\n' "$(openshift_version)" | sort -V -C; then
-cat <<EOF
-    dnsVIP: ${DNS_VIP}
-EOF
   fi
 }
 
@@ -366,14 +347,6 @@ function override_openshift_sdn_deprecation() {
   [[ "${ORIG_NETWORK_TYPE}" = "OpenShiftSDN" ]] && openshift_sdn_deprecated
 }
 
-function cluster_os_image() {
-  if is_lower_version "$(openshift_version)" 4.10; then
-cat <<EOF
-    clusterOSImage: http://$(wrap_if_ipv6 "$MIRROR_IP")/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_IMAGE_SHA256}
-EOF
-  fi
-}
-
 function bootstrap_in_place_config() {
   if [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" ]]; then
 cat <<EOF
@@ -454,10 +427,8 @@ $(baremetal_network_configuration)
     externalBridge: ${BAREMETAL_NETWORK_NAME}
 $(external_mac)
     bootstrapOSImage: http://$(wrap_if_ipv6 "$MIRROR_IP")/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_UNCOMPRESSED_SHA256}
-$(cluster_os_image)
 $(setVIPs apivips)
 $(setVIPs ingressvips)
-$(dnsvip)
 $(loadbalancer_type)
 $(bgp_vip_config)
     hosts:

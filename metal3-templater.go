@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"net/url"
 	"os"
 	"strings"
 	"text/template"
@@ -19,7 +18,6 @@ type templater struct {
 	ProvisioningIP             string
 	ProvisioningDHCPRange      string
 	ClusterProvisioningURLHost string
-	MachineOSImageURL          string
 
 	// Ironic clouds.yaml data
 	AuthType                string
@@ -75,22 +73,12 @@ func main() {
 	var provisioningInterface string
 	var provisioningNetwork string
 	var clusterIP string
-	var imageURL string
 	var ocpVersionUsesInspector bool
-
-	noauthCmd := flag.NewFlagSet("noauth", flag.ExitOnError)
-	noauthCmd.StringVar(&templateFile, "template-file", "", "Template File")
-	noauthCmd.StringVar(&provisioningInterface, "provisioning-interface", "", "Cluster provisioning Interface")
-	noauthCmd.StringVar(&provisioningNetwork, "provisioning-network", "", "Provisioning Network CIDR")
-	noauthCmd.StringVar(&imageURL, "image-url", "", "Image URL")
-	noauthCmd.StringVar(&bootstrapIP, "bootstrap-ip", "", "Bootstrap IP address")
-	noauthCmd.StringVar(&clusterIP, "cluster-ip", "", "Cluster IP address")
 
 	httpBasicCmd := flag.NewFlagSet("http_basic", flag.ExitOnError)
 	httpBasicCmd.StringVar(&templateFile, "template-file", "", "Template File")
 	httpBasicCmd.StringVar(&provisioningInterface, "provisioning-interface", "", "Cluster provisioning Interface")
 	httpBasicCmd.StringVar(&provisioningNetwork, "provisioning-network", "", "Provisioning Network CIDR")
-	httpBasicCmd.StringVar(&imageURL, "image-url", "", "Image URL")
 	httpBasicCmd.StringVar(&bootstrapIP, "bootstrap-ip", "", "Bootstrap IP address")
 	httpBasicCmd.StringVar(&clusterIP, "cluster-ip", "", "Cluster IP address")
 	httpBasicCmd.BoolVar(&ocpVersionUsesInspector, "ocp-version-uses-inspector", false, "")
@@ -115,19 +103,10 @@ func main() {
 
 		templateData.BootstrapIronicURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP, "6385"))
 		templateData.BootstrapInspectorURL = fmt.Sprintf("http://%s", net.JoinHostPort(bootstrapIP, "5050"))
-	case "noauth":
-		noauthCmd.Parse(os.Args[2:])
-		if !(noauthCmd.NFlag() == 6 && noauthCmd.NArg() == 0) {
-			fmt.Printf("Usage: <prog> noauth -template-file=TEMPLATE_FILE -provisioning-interface=INTERFACE -provisioning-network=NETWORK -bootstrap-ip=BOOTSTRAP_IP -cluster-ip=CLUSTER_IP -image-url=IMAGE_URL\n")
-			os.Exit(1)
-		}
-
-		templateData.AuthType = "none"
-		templateData.OCPVersionUsesInspector = true
 	case "http_basic":
 		httpBasicCmd.Parse(os.Args[2:])
-		if !(httpBasicCmd.NFlag() >= 7 && httpBasicCmd.NArg() == 0) {
-			fmt.Printf("Usage: <prog> http_basic [-ocp-version-uses-inspector] -ironic-basic-auth=<user>:<password> [-inspector-basic-auth=<user>:<password>] -template-file=TEMPLATE_FILE -provisioning-interface=INTERFACE -provisioning-network=NETWORK -bootstrap-ip=BOOTSTRAP_IP -cluster-ip=CLUSTER_IP -image-url=IMAGE_URL\n")
+		if !(httpBasicCmd.NFlag() >= 6 && httpBasicCmd.NArg() == 0) {
+			fmt.Printf("Usage: <prog> http_basic [-ocp-version-uses-inspector] -ironic-basic-auth=<user>:<password> [-inspector-basic-auth=<user>:<password>] -template-file=TEMPLATE_FILE -provisioning-interface=INTERFACE -provisioning-network=NETWORK -bootstrap-ip=BOOTSTRAP_IP -cluster-ip=CLUSTER_IP\n")
 			os.Exit(1)
 		}
 
@@ -157,7 +136,7 @@ func main() {
 		}
 
 	default:
-		fmt.Println("Expected 'bootstrap' 'noauth' or 'http_basic' subcommands\n")
+		fmt.Println("Expected 'bootstrap' or 'http_basic' subcommands")
 		os.Exit(1)
 	}
 
@@ -165,14 +144,6 @@ func main() {
 		templateData.ProvisioningInterface = provisioningInterface
 
 		ipnet := ipnet.MustParseCIDR(provisioningNetwork)
-
-		// Image URL
-		url, err := url.Parse(imageURL)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		templateData.MachineOSImageURL = url.String()
 
 		// DHCP Range
 		startIP, _ := cidr.Host(&ipnet.IPNet, 10)
