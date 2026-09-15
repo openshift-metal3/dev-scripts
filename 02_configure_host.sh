@@ -114,9 +114,11 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
     if use_registry "podman"; then
         setup_local_registry
         rm -f "${REGISTRY_CREDS}"
+        set +x
         sudo podman login --authfile "${REGISTRY_CREDS}" \
             -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" \
             "${LOCAL_REGISTRY_DNS_NAME}":"${LOCAL_REGISTRY_PORT}"
+        set -x
     elif use_registry ""; then
         setup_local_registry
     else
@@ -516,9 +518,11 @@ if use_registry "podman"; then
     # blank authfile with a "assignment to entry in nil map" error
     rm -f "${REGISTRY_CREDS}"
     # create authfile for local registry
+    set +x
     sudo podman login --authfile "${REGISTRY_CREDS}" \
         -u "${REGISTRY_USER}" -p "${REGISTRY_PASS}" \
         "${LOCAL_REGISTRY_DNS_NAME}":"${LOCAL_REGISTRY_PORT}"
+    set -x
 elif ! use_registry "quay"; then
     # Create a blank authfile in order to have something valid when we read it in 04_setup_ironic.sh
     echo '{}' | sudo dd of="${REGISTRY_CREDS}"

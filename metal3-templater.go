@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -33,10 +34,39 @@ type templater struct {
 	OCPVersionUsesInspector bool
 }
 
+func readCreds(fileName string) (user string, password string, err error) {
+	if fileName == "" {
+		err = errors.New("expected credentials")
+		return
+	}
+
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		err = fmt.Errorf("%s: %w", fileName, err)
+		return
+	}
+
+	parts := strings.SplitN(string(content), ":", 2)
+	if len(parts) < 2 {
+		err = fmt.Errorf("%s: must contain a colon as a separator", fileName)
+		return
+	}
+
+	user = strings.TrimSpace(parts[0])
+	password = strings.TrimSpace(parts[1])
+	if user == "" || password == "" {
+		err = fmt.Errorf("%s: empty user or password", fileName)
+	}
+
+	return
+}
+
 func main() {
 
 	var templateFile string
 	var bootstrapIP string
+	var ironicCredFile string
+	var inspectorCredFile string
 
 	bootstrapCmd := flag.NewFlagSet("bootstrap", flag.ExitOnError)
 	bootstrapCmd.StringVar(&templateFile, "template-file", "", "Template File")
@@ -65,8 +95,8 @@ func main() {
 	httpBasicCmd.StringVar(&clusterIP, "cluster-ip", "", "Cluster IP address")
 	httpBasicCmd.BoolVar(&ocpVersionUsesInspector, "ocp-version-uses-inspector", false, "")
 
-	ironicCred := httpBasicCmd.String("ironic-basic-auth", "", "ironic credentials <user>:<password>")
-	inspectorCred := httpBasicCmd.String("inspector-basic-auth", "", "inspector crdentials <user>:<password>")
+	httpBasicCmd.StringVar(&ironicCredFile, "ironic-basic-auth", "", "ironic credentials: file with <user>:<password>")
+	httpBasicCmd.StringVar(&inspectorCredFile, "inspector-basic-auth", "", "inspector crdentials: file with <user>:<password>")
 
 	if len(os.Args) < 2 {
 		fmt.Printf("Expected 'bootstrap' 'noauth' or 'http_basic' subcommands\n")
@@ -101,26 +131,28 @@ func main() {
 			os.Exit(1)
 		}
 
-		if !strings.Contains(*ironicCred, ":") {
-			fmt.Printf("The value for ironic-basic-auth should contain ':' as delimiter to separate username and password")
+		ironicUser, ironicPassword, err := readCreds(ironicCredFile)
+		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		if ocpVersionUsesInspector && !strings.Contains(*inspectorCred, ":") {
-			fmt.Printf("The value for inspector-basic-auth should contain ':' as delimiter to separate username and password")
-			os.Exit(1)
+		var inspectorUser, inspectorPassword string
+		if ocpVersionUsesInspector {
+			inspectorUser, inspectorPassword, err = readCreds(inspectorCredFile)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 		}
-
-		ironicAuth := strings.Split(*ironicCred, ":")
 
 		templateData.AuthType = "http_basic"
-		templateData.IronicUser = ironicAuth[0]
-		templateData.IronicPassword = ironicAuth[1]
+		templateData.IronicUser = ironicUser
+		templateData.IronicPassword = ironicPassword
 
 		if ocpVersionUsesInspector {
-			inspectorAuth := strings.Split(*inspectorCred, ":")
-			templateData.InspectorUser = inspectorAuth[0]
-			templateData.InspectorPassword = inspectorAuth[1]
+			templateData.InspectorUser = inspectorUser
+			templateData.InspectorPassword = inspectorPassword
 			templateData.OCPVersionUsesInspector = true
 		}
 
