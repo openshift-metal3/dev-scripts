@@ -1,0 +1,185 @@
+apiVersion: v1
+baseDomain: {{ devscripts_base_domain }}
+{% if devscripts_enable_workload_partitioning | bool %}
+cpuPartitioningMode: AllNodes
+{% endif %}
+networking:
+  networkType: {{ devscripts_network_type }}
+{% if devscripts_ip_stack == 'v4' %}
+  machineNetwork:
+  - cidr: {{ devscripts_external_subnet_v4 }}
+  clusterNetwork:
+  - cidr: {{ devscripts_cluster_subnet_v4 }}
+    hostPrefix: {{ devscripts_cluster_host_prefix_v4 }}
+  serviceNetwork:
+  - {{ devscripts_service_subnet_v4 }}
+{% elif devscripts_ip_stack == 'v6' %}
+  machineNetwork:
+  - cidr: {{ devscripts_external_subnet_v6 }}
+  clusterNetwork:
+  - cidr: {{ devscripts_cluster_subnet_v6 }}
+    hostPrefix: {{ devscripts_cluster_host_prefix_v6 }}
+  serviceNetwork:
+  - {{ devscripts_service_subnet_v6 }}
+{% elif devscripts_ip_stack == 'v4v6' %}
+  machineNetwork:
+  - cidr: {{ devscripts_external_subnet_v4 }}
+  - cidr: {{ devscripts_external_subnet_v6 }}
+  clusterNetwork:
+  - cidr: {{ devscripts_cluster_subnet_v4 }}
+    hostPrefix: {{ devscripts_cluster_host_prefix_v4 }}
+  - cidr: {{ devscripts_cluster_subnet_v6 }}
+    hostPrefix: {{ devscripts_cluster_host_prefix_v6 }}
+  serviceNetwork:
+  - {{ devscripts_service_subnet_v4 }}
+  - {{ devscripts_service_subnet_v6 }}
+{% elif devscripts_ip_stack == 'v6v4' %}
+  machineNetwork:
+  - cidr: {{ devscripts_external_subnet_v6 }}
+  - cidr: {{ devscripts_external_subnet_v4 }}
+  clusterNetwork:
+  - cidr: {{ devscripts_cluster_subnet_v6 }}
+    hostPrefix: {{ devscripts_cluster_host_prefix_v6 }}
+  - cidr: {{ devscripts_cluster_subnet_v4 }}
+    hostPrefix: {{ devscripts_cluster_host_prefix_v4 }}
+  serviceNetwork:
+  - {{ devscripts_service_subnet_v6 }}
+  - {{ devscripts_service_subnet_v4 }}
+{% endif %}
+metadata:
+  name: {{ devscripts_cluster_name }}
+compute:
+- name: worker
+  replicas: {{ devscripts_num_workers }}
+  architecture: {{ devscripts_arch }}
+controlPlane:
+  name: master
+  replicas: {{ devscripts_num_masters }}
+  architecture: {{ devscripts_arch }}
+  platform:
+    baremetal: {}
+{% if devscripts_enable_two_node_fencing | bool and devscripts_fencing_credentials | length > 0 %}
+  fencing:
+    credentials:
+{% for cred in devscripts_fencing_credentials %}
+    - hostname: {{ cred.hostname }}
+      address: {{ cred.address }}
+      username: {{ cred.username }}
+      password: {{ cred.password }}
+{% if cred.certificate_verification is defined %}
+      certificateVerification: {{ cred.certificate_verification }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if devscripts_num_arbiters | int > 0 %}
+arbiter:
+  name: arbiter
+  replicas: {{ devscripts_num_arbiters }}
+  hyperthreading: Enabled
+  architecture: {{ devscripts_arch }}
+  platform:
+    baremetal: {}
+{% endif %}
+{% if devscripts_feature_set %}
+featureSet: "{{ devscripts_feature_set }}"
+{% endif %}
+{% if devscripts_feature_gates %}
+featureGates:
+{% for gate in devscripts_feature_gates.split(',') %}
+- {{ gate }}
+{% endfor %}
+{% endif %}
+{% if devscripts_os_image_stream %}
+osImageStream: "{{ devscripts_os_image_stream }}"
+{% endif %}
+{% if devscripts_baseline_capability_set %}
+capabilities:
+  baselineCapabilitySet: "{{ devscripts_baseline_capability_set }}"
+{% if devscripts_additional_capabilities %}
+  additionalEnabledCapabilities:
+{% for cap in devscripts_additional_capabilities.split(',') %}
+  - {{ cap }}
+{% endfor %}
+{% endif %}
+{% endif %}
+platform:
+  baremetal:
+{% if devscripts_remote_libvirt | int != 0 %}
+    libvirtURI: qemu+ssh://{{ devscripts_provisioning_host_user }}@{{ devscripts_provisioning_host_ip | ansible.utils.ipwrap }}/system
+{% endif %}
+{% if devscripts_provisioning_network_profile == 'Disabled' %}
+    provisioningNetwork: "{{ devscripts_provisioning_network_profile }}"
+    provisioningHostIP: "{{ devscripts_cluster_provisioning_ip }}"
+    bootstrapProvisioningIP: "{{ devscripts_bootstrap_provisioning_ip }}"
+{% else %}
+    provisioningBridge: {{ devscripts_provisioning_network_name }}
+    provisioningNetworkCIDR: {{ devscripts_provisioning_network }}
+    provisioningNetworkInterface: {{ devscripts_cluster_provisioning_interface }}
+{% endif %}
+{% if devscripts_enable_bootstrap_static_ip | bool %}
+    bootstrapExternalStaticIP: "{{ devscripts_bootstrap_static_ip }}"
+    bootstrapExternalStaticGateway: "{{ devscripts_provisioning_host_external_ip }}"
+{% endif %}
+    externalBridge: {{ devscripts_baremetal_network_name }}
+    bootstrapOSImage: http://{{ devscripts_mirror_ip | ansible.utils.ipwrap }}/images/{{ devscripts_machine_os_bootstrap_image_name }}?sha256={{ devscripts_machine_os_bootstrap_image_sha256 }}
+{% if devscripts_api_vips | length > 0 %}
+    apiVIPs:
+{% for vip in devscripts_api_vips %}
+    - {{ vip }}
+{% endfor %}
+{% endif %}
+{% if devscripts_ingress_vips | length > 0 %}
+    ingressVIPs:
+{% for vip in devscripts_ingress_vips %}
+    - {{ vip }}
+{% endfor %}
+{% endif %}
+{% if devscripts_external_loadbalancer | bool %}
+    loadBalancer:
+      type: UserManaged
+{% endif %}
+    hosts:
+{% for host in devscripts_install_hosts %}
+      - name: {{ host.name }}
+        role: {{ host.role }}
+        bootMACAddress: {{ host.mac }}
+        bootMode: {{ host.boot_mode | default('UEFI') }}
+        bmc:
+          address: {{ host.bmc_address }}
+          username: {{ host.bmc_username }}
+          password: {{ host.bmc_password }}
+{% if host.disable_certificate_verification is defined %}
+          disableCertificateVerification: {{ host.disable_certificate_verification }}
+{% endif %}
+{% if devscripts_network_config_folder and host.network_config is defined %}
+{{ host.network_config | indent(8, first=true) }}
+{% endif %}
+        rootDeviceHints:
+          deviceName: "{{ devscripts_root_disk_name }}"
+{% if host.role in ['master', 'arbiter'] %}
+        hardwareProfile: default
+{% else %}
+        hardwareProfile: unknown
+{% endif %}
+{% endfor %}
+{% if devscripts_bmc_verify_ca is defined and devscripts_bmc_verify_ca | trim %}
+    bmcVerifyCA: |
+{{ devscripts_bmc_verify_ca | indent(6, first=true) }}
+{% endif %}
+{% if imageContentSources is defined %}
+{{ imageContentSources }}
+{% endif %}
+{% if devscripts_additional_trust_bundle_content is defined and devscripts_additional_trust_bundle_content | trim %}
+additionalTrustBundle: |
+{{ devscripts_additional_trust_bundle_content | indent(2, first=true) }}
+{% endif %}
+pullSecret: |
+  {{ devscripts_pull_secret_content }}
+sshKey: "{{ devscripts_ssh_pub_key | trim }}"
+fips: {{ devscripts_fips_mode | bool | lower }}
+{% if devscripts_installer_proxy | bool %}
+proxy:
+  httpProxy: {{ devscripts_http_proxy }}
+  httpsProxy: {{ devscripts_https_proxy }}
+  noProxy: {{ devscripts_no_proxy }}
+{% endif %}
