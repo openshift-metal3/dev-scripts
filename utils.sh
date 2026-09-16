@@ -558,16 +558,25 @@ function generate_auth_template {
 
     VERSION=$(openshift_version "$OCP_DIR")
 
+    IRONIC_CREDS="$WORKING_DIR/ironic-creds"
+    INSPECTOR_CREDS="$WORKING_DIR/inspector-creds"
+    touch "$IRONIC_CREDS" "$INSPECTOR_CREDS"
+    chmod 0600 "$IRONIC_CREDS" "$INSPECTOR_CREDS"
+
     if [[ "$OCP_VERSIONS_NOAUTH" == *"$VERSION"* ]]; then
         go run metal3-templater.go "noauth" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
     else
         IRONIC_USER=$( (oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
+        set +x
         IRONIC_PASSWORD=$( (oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
-        IRONIC_CREDS="$IRONIC_USER:$IRONIC_PASSWORD"
+        echo "$IRONIC_USER:$IRONIC_PASSWORD" > "$IRONIC_CREDS"
+        set -x
         if [[ "$OCP_VERSIONS_INSPECTOR" == *"$VERSION"* ]]; then
             INSPECTOR_USER=$( (oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
+            set +x
             INSPECTOR_PASSWORD=$( (oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
-            INSPECTOR_CREDS="$INSPECTOR_USER:$INSPECTOR_PASSWORD"
+            echo "$INSPECTOR_USER:$INSPECTOR_PASSWORD" > "$INSPECTOR_CREDS"
+            set -x
         fi
         CLUSTER_IRONIC_IP=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o jsonpath="{.items[0].status.hostIP}" || echo "")
 
@@ -775,7 +784,9 @@ EOF
 
     popd || exit 1
 
+    set +x
     htpasswd -bBc "${REGISTRY_DIR}/auth/htpasswd" "${REGISTRY_USER}" "${REGISTRY_PASS}"
+    set -x
 
     sudo cp "${REGISTRY_DIR}/certs/${REGISTRY_CRT}" /etc/pki/ca-trust/source/anchors/
     sudo update-ca-trust

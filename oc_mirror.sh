@@ -35,10 +35,12 @@ function update_docker_config() {
    # ignoring --authfile for source registry auth. Explicitly refresh the CI registry
    # login so the podman auth store has fresh credentials.
    local ci_token ci_user ci_password
+   set +x
    ci_token=$(jq -r '.auths["registry.ci.openshift.org"].auth' "${PULL_SECRET_FILE}" | base64 -d)
    ci_user=$(echo "$ci_token" | cut -d: -f1)
    ci_password=$(echo "$ci_token" | cut -d: -f2-)
    podman login registry.ci.openshift.org --username "$ci_user" --password "$ci_password" 2>/dev/null || true
+   set -x
 }
 
 function setup_quay_mirror_registry() {
@@ -50,11 +52,14 @@ function setup_quay_mirror_registry() {
 
    mkdir -p "${WORKING_DIR}/quay-install"
    pushd "${WORKING_DIR}/mirror-registry"
+
+   set +x
    sudo ./mirror-registry install --quayHostname "${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}" --quayRoot "${WORKING_DIR}/quay-install/" --initUser "${REGISTRY_USER}" --initPassword "${REGISTRY_PASS}" --sslCheckSkip -v
 
    quay_auths=$(echo -n "${REGISTRY_USER}:${REGISTRY_PASS}" | base64 -w0)
-
    add_auth_to_pull_secret "${quay_auths}"
+   set -x
+
    popd
 }
 
