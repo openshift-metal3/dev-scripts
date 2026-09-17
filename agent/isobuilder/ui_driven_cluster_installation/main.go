@@ -29,6 +29,10 @@ import (
 const (
 	defaultControlPlaneCount = 3
 	downloadAttempts         = 3
+
+	// sshKeySectionTimeout bounds how long to wait for the SSH public key
+	// section of the Networking page to render.
+	sshKeySectionTimeout = 30 * time.Second
 )
 
 var (
@@ -612,13 +616,56 @@ func networkingDetails(page *rod.Page, path string) error {
 		}
 	}
 
-	page.MustElement("#form-input-sshPublicKey-field").MustInput(sshPublicKey)
+	if err = enterSSHPublicKey(page); err != nil {
+		return err
+	}
 	page.MustElement(`button[name="next"]`).MustWaitEnabled()
 
 	err = saveFullPageScreenshot(page, timestampedPath(path, "end"))
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// enterSSHPublicKey fills in the "Host SSH Public Key for troubleshooting after
+// installation" section of the Networking page.
+//
+// The assisted UI renders that section in one of two ways: when the infra-env
+// has no SSH key of its own it shows an empty sshPublicKey text area, but when
+// the infra-env already has one - as it does with a pre-built OVE ISO, whose
+// key is injected at fetch time - it shows a checked "Use the same host
+// discovery SSH key" checkbox instead and never renders the text area. Wait for
+// whichever variant the UI puts on the page, and only type when there is
+// somewhere to type. Match on the field ids: the checkbox label differs between
+// single-cluster (OVE) mode and the regular one, see
+// https://github.com/openshift-assisted/assisted-installer-ui/pull/4038.
+func enterSSHPublicKey(page *rod.Page) error {
+	const (
+		sshFieldSelector = "#form-input-sshPublicKey-field"
+		shareKeySelector = "#form-checkbox-shareDiscoverySshKey-field"
+	)
+
+	var sshField *rod.Element
+	if _, err := page.Timeout(sshKeySectionTimeout).Race().
+		Element(sshFieldSelector).Handle(func(el *rod.Element) error {
+		sshField = el
+		return nil
+	}).
+		Element(shareKeySelector).Handle(func(el *rod.Element) error {
+		return nil
+	}).
+		Do(); err != nil {
+		return fmt.Errorf("the SSH public key section did not render within %s: %v", sshKeySectionTimeout, err)
+	}
+
+	if sshField == nil {
+		logrus.Info("Reusing the host discovery SSH key from the ISO")
+		return nil
+	}
+
+	logrus.Info("Entering the SSH public key")
+	sshField.CancelTimeout().MustInput(sshPublicKey)
 	return nil
 }
 
