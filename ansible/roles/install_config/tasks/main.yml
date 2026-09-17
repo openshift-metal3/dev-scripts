@@ -1,0 +1,119 @@
+---
+- name: Validate node count
+  ansible.builtin.assert:
+    that:
+      - devscripts_nodes | length >= (devscripts_num_masters | int) + (devscripts_num_workers | int)
+    fail_msg: >-
+      {{ devscripts_nodes_file }} contains {{ devscripts_nodes | length }} nodes,
+      but {{ devscripts_num_masters }} masters and {{ devscripts_num_workers }} workers requested
+
+- name: Detect architecture
+  ansible.builtin.set_fact:
+    devscripts_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+
+- name: Create OCP directory
+  ansible.builtin.file:
+    path: "{{ devscripts_ocp_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Write baremetalhosts.json
+  ansible.builtin.copy:
+    content: "{{ {'nodes': devscripts_nodes} | to_nice_json }}"
+    dest: "{{ devscripts_baremetalhosts_file }}"
+    mode: "0644"
+
+- name: Build install hosts list
+  ansible.builtin.set_fact:
+    devscripts_install_hosts: "{{ _masters + _arbiters + _workers }}"
+  vars:
+    _masters: >-
+      {{ devscripts_nodes[:devscripts_num_masters | int] | devscripts_to_host_entries('master') }}
+    _arbiters: >-
+      {{ devscripts_nodes[devscripts_num_masters | int:(devscripts_num_masters | int + devscripts_num_arbiters | int)]
+         | devscripts_to_host_entries('arbiter') }}
+    _workers: >-
+      {{ devscripts_nodes[(devscripts_num_masters | int + devscripts_num_arbiters | int):
+                          (devscripts_num_masters | int + devscripts_num_arbiters | int + devscripts_num_workers | int)]
+         | devscripts_to_host_entries('worker') }}
+
+- name: Resolve VIPs from subnets
+  ansible.builtin.set_fact:
+    devscripts_api_vips: "{{ _api_vips | select | list }}"
+    devscripts_ingress_vips: "{{ _ingress_vips | select | list }}"
+  vars:
+    _api_v4: >-
+      {{ devscripts_external_subnet_v4 | ansible.utils.nthhost(5)
+         if devscripts_external_subnet_v4 else '' }}
+    _api_v6: >-
+      {{ devscripts_external_subnet_v6 | ansible.utils.nthhost(5)
+         if devscripts_external_subnet_v6 else '' }}
+    _ingress_offset: "{{ 1 if devscripts_external_loadbalancer | bool else 4 }}"
+    _ingress_v4: >-
+      {{ devscripts_external_subnet_v4 | ansible.utils.nthhost(_ingress_offset | int)
+         if devscripts_external_subnet_v4 else '' }}
+    _ingress_v6: >-
+      {{ devscripts_external_subnet_v6 | ansible.utils.nthhost(_ingress_offset | int)
+         if devscripts_external_subnet_v6 else '' }}
+    _api_vips: >-
+      {% if devscripts_ip_stack in ['v4', 'v4v6'] -%}
+      {{ [_api_v4, _api_v6] }}
+      {%- else -%}
+      {{ [_api_v6, _api_v4] }}
+      {%- endif %}
+    _ingress_vips: >-
+      {% if devscripts_ip_stack in ['v4', 'v4v6'] -%}
+      {{ [_ingress_v4, _ingress_v6] }}
+      {%- else -%}
+      {{ [_ingress_v6, _ingress_v4] }}
+      {%- endif %}
+
+- name: Load pull secret
+  ansible.builtin.set_fact:
+    devscripts_pull_secret_content: >-
+      {{ lookup('file', _pull_secret_file) | from_json | to_json }}
+  vars:
+    _pull_secret_file: >-
+      {{ devscripts_registry_creds
+         if devscripts_mirror_images | bool
+         else devscripts_pull_secret_file }}
+  no_log: true
+
+- name: Build fencing credentials
+  when: devscripts_enable_two_node_fencing | bool
+  ansible.builtin.set_fact:
+    devscripts_fencing_credentials: "{{ _creds }}"
+  vars:
+    _creds: >-
+      {% set result = [] -%}
+      {% for idx in range(devscripts_num_masters | int) -%}
+      {% set node = devscripts_nodes[idx] -%}
+      {% set hostname = devscripts_master_hostname_format | format(idx) -%}
+      {% set fqdn = hostname + '.' + devscripts_cluster_domain
+                    if devscripts_ip_stack != 'v4' else hostname -%}
+      {% set _ = result.append({
+        'hostname': fqdn,
+        'address': node.driver_info.address,
+        'username': node.driver_info.username,
+        'password': node.driver_info.password,
+      }) -%}
+      {% endfor -%}
+      {{ result }}
+
+- name: Set empty fencing credentials
+  when: not (devscripts_enable_two_node_fencing | bool)
+  ansible.builtin.set_fact:
+    devscripts_fencing_credentials: []
+
+- name: Render install-config.yaml
+  ansible.builtin.template:
+    src: install-config.yaml.j2
+    dest: "{{ devscripts_ocp_dir }}/install-config.yaml"
+    mode: "0644"
+
+- name: Save install-config.yaml backup
+  ansible.builtin.copy:
+    src: "{{ devscripts_ocp_dir }}/install-config.yaml"
+    dest: "{{ devscripts_ocp_dir }}/install-config.yaml.save"
+    remote_src: true
+    mode: "0644"
