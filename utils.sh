@@ -123,7 +123,14 @@ function prepare_manifests() {
 
     if [ -z "${NTP_SERVERS:-}" ];
     then
-      export NTP_SERVERS="$PROVISIONING_HOST_EXTERNAL_IP"
+      if [[ "${ENABLE_NAT64:-false}" == "true" ]]; then
+        # v6-only cluster: nodes must reach the host over its IPv6 bridge address;
+        # the IPv4 PROVISIONING_HOST_EXTERNAL_IP is unroutable from the nodes and a
+        # raw literal cannot traverse DNS64/NAT64.
+        export NTP_SERVERS="${PROVISIONING_HOST_EXTERNAL_IP_V6}"
+      else
+        export NTP_SERVERS="${PROVISIONING_HOST_EXTERNAL_IP}"
+      fi
     fi
     custom_ntp "${assets_dir}/openshift"
 
