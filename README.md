@@ -587,6 +587,51 @@ $ oc scale machineset ostest-worker-0 --replicas=3 -n openshift-machine-api
 machineset.machine.openshift.io/ostest-worker-0 scaled
 ```
 
+### Rendering externally managed physical workers
+
+The extra-worker variables above create libvirt VMs. To describe physical
+workers that already exist and are managed outside dev-scripts, set
+`EXTERNAL_WORKERS_FILE` to a JSON inventory before running
+`05_create_install_config.sh` or `make install_config`:
+
+```bash
+export EXTERNAL_WORKERS_FILE=/path/to/external-workers.json
+make install_config
+```
+
+See [`docs/external-worker.example.json`](docs/external-worker.example.json)
+for the input format. The inventory can include an existing BMC credential
+Secret reference, labels, root-device hints, custom deploy and user-data
+references, and host-specific pre-provisioning nmstate. It must not contain BMC
+credential values. The network-data Secret key defaults to `nmstate`; set
+`preprovisioningNetworkData.dataKey` to `networkData` for releases that require
+the older key.
+
+The generated `${OCP_DIR}/external_worker_manifests.json` contains an offline
+`BareMetalHost`, a claim-barrier ConfigMap, and, when requested, a
+non-credential network-data Secret for each worker. The BMH `consumerRef`
+points to the barrier, preventing Machine API from claiming it if a Machine is
+already waiting for an available host. Metal3 can still register and inspect
+the BMH. The renderer does not apply resources, manage the external server, or
+start disk provisioning. After the cluster is healthy and the referenced BMC
+credential Secrets exist, review the output before applying it:
+
+```bash
+oc apply -f "${OCP_DIR}/external_worker_manifests.json"
+```
+
+An offline BMH may still be registered and inspected by Metal3. Confirm the
+target host, NIC, installation disk, and current Machine/MachineSet state
+before releasing its claim barrier. Removing `consumerRef` makes the inspected
+BMH eligible for matching Machines and can therefore start disk-destructive
+provisioning:
+
+```bash
+oc patch baremetalhost -n openshift-machine-api external-worker-0 \
+  --type=json -p='[{"op":"remove","path":"/spec/consumerRef"}]'
+oc delete configmap -n openshift-machine-api external-worker-0
+```
+
 ### Deploying dummy remote cluster nodes
 
 It is possible to add remote site nodes along with their own L2 network. To do so, use the
