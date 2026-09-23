@@ -38,10 +38,12 @@ fi
 
 if [[ "${MIRROR_COMMAND}" == oc-mirror ]]; then
 
-   oc_mirror_file=oc-mirror.tar.gz
-   oc_mirror_exec=${oc_mirror_file%%.*}
+   # oc-mirror is no longer part of the OpenShift payload, it is published separately
+   # under https://mirror.openshift.com/pub/cgw/oc-mirror/latest/
+   oc_mirror_file=oc-mirror-rhel9-linux-$(uname -m | sed 's/aarch64/arm64/;s/x86_64/amd64/').tar.gz
+   oc_mirror_exec=oc-mirror
    if [[ ! -f "/usr/local/bin/${oc_mirror_exec}" ]]; then
-      curl -O -L https://mirror.openshift.com/pub/openshift-v4/$(uname -m)/clients/ocp/stable/${oc_mirror_file}
+      curl -O -L https://mirror.openshift.com/pub/cgw/oc-mirror/latest/${oc_mirror_file}
       tar xzf ${oc_mirror_file}
       chmod +x "${oc_mirror_exec}"
       sudo mv -f "${oc_mirror_exec}" /usr/local/bin
