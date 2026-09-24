@@ -123,7 +123,7 @@ function prepare_manifests() {
 
     if [ -z "${NTP_SERVERS:-}" ];
     then
-      if [[ "${ENABLE_NAT64:-false}" == "true" ]]; then
+      if [[ "${ENABLE_NAT64:-}" == "true" ]]; then
         # v6-only cluster: nodes must reach the host over its IPv6 bridge address;
         # the IPv4 PROVISIONING_HOST_EXTERNAL_IP is unroutable from the nodes and a
         # raw literal cannot traverse DNS64/NAT64.
