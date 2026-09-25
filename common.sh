@@ -279,10 +279,12 @@ FILESYSTEM=${FILESYSTEM:="/"}
 export NODES_FILE=${NODES_FILE:-"${WORKING_DIR}/${CLUSTER_NAME}/ironic_nodes.json"}
 export EXTRA_NODES_FILE=${EXTRA_NODES_FILE:-"${WORKING_DIR}/${CLUSTER_NAME}/extra_ironic_nodes.json"}
 export ARM_NODES_FILE=${ARM_NODES_FILE:-"${WORKING_DIR}/${CLUSTER_NAME}/arm_ironic_nodes.json"}
+export EXTERNAL_WORKERS_FILE=${EXTERNAL_WORKERS_FILE:-}
 NODES_PLATFORM=${NODES_PLATFORM:-"libvirt"}
 BAREMETALHOSTS_FILE=${BAREMETALHOSTS_FILE:-"${OCP_DIR}/baremetalhosts.json"}
 EXTRA_BAREMETALHOSTS_FILE=${EXTRA_BAREMETALHOSTS_FILE:-"${OCP_DIR}/extra_baremetalhosts.json"}
 EXTRA_ARM_BAREMETALHOSTS_FILE=${EXTRA_ARM_BAREMETALHOSTS_FILE:-"${OCP_DIR}/extra_arm_baremetalhosts.json"}
+EXTERNAL_WORKERS_MANIFEST=${EXTERNAL_WORKERS_MANIFEST:-"${OCP_DIR}/external_worker_manifests.json"}
 export BMO_WATCH_ALL_NAMESPACES=${BMO_WATCH_ALL_NAMESPACES:-"false"}
 
 # Optionally set this to a path to use a local dev copy of
