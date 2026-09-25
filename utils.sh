@@ -141,12 +141,6 @@ function prepare_manifests() {
 
     find assets/generated -name '*.yaml' -exec cp -f {} "${assets_dir}/openshift" \;
 
-    if [[ "${IP_STACK}" == "v4v6" && "$(openshift_version "$OCP_DIR")" =~ 4.[67] ]]; then
-        # The IPv6DualStack feature is not on by default in 4.6 and 4.7 and needs
-        # to be manually enabled
-        cp assets/ipv6-dual-stack-no-upgrade.yaml "${assets_dir}/openshift/."
-    fi
-
     if [[  ! -z "${ENABLE_CBO_TEST:-}" ]]; then
       # Create an empty image to be used by the CBO test deployment
       EMPTY_IMAGE=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/empty:latest
@@ -560,7 +554,6 @@ function generate_auth_template {
     fi
 
     # clouds.yaml
-    OCP_VERSIONS_NOAUTH="4.3 4.4 4.5"
     OCP_VERSIONS_INSPECTOR="4.12 4.13 4.14 4.15 4.16"
 
     VERSION=$(openshift_version "$OCP_DIR")
@@ -570,44 +563,40 @@ function generate_auth_template {
     touch "$IRONIC_CREDS" "$INSPECTOR_CREDS"
     chmod 0600 "$IRONIC_CREDS" "$INSPECTOR_CREDS"
 
-    if [[ "$OCP_VERSIONS_NOAUTH" == *"$VERSION"* ]]; then
-        go run metal3-templater.go "noauth" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > clouds.yaml
-    else
-        IRONIC_USER=$( (oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
+    IRONIC_USER=$( (oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
+    set +x
+    IRONIC_PASSWORD=$( (oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
+    echo "$IRONIC_USER:$IRONIC_PASSWORD" > "$IRONIC_CREDS"
+    set -x
+    if [[ "$OCP_VERSIONS_INSPECTOR" == *"$VERSION"* ]]; then
+        INSPECTOR_USER=$( (oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
         set +x
-        IRONIC_PASSWORD=$( (oc -n openshift-machine-api  get secret/metal3-ironic-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
-        echo "$IRONIC_USER:$IRONIC_PASSWORD" > "$IRONIC_CREDS"
+        INSPECTOR_PASSWORD=$( (oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
+        echo "$INSPECTOR_USER:$INSPECTOR_PASSWORD" > "$INSPECTOR_CREDS"
         set -x
+    fi
+    CLUSTER_IRONIC_IP=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o jsonpath="{.items[0].status.hostIP}" || echo "")
+
+    # TODO(dtantsur): fetch the TLS public key, store it locally and link from clouds.yaml.
+
+    if [ ! -z "${CLUSTER_IRONIC_IP}" ]; then
         if [[ "$OCP_VERSIONS_INSPECTOR" == *"$VERSION"* ]]; then
-            INSPECTOR_USER=$( (oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.username}}' || echo "") | base64 -d)
-            set +x
-            INSPECTOR_PASSWORD=$( (oc -n openshift-machine-api  get secret/metal3-ironic-inspector-password -o template --template '{{.data.password}}' || echo "") | base64 -d)
-            echo "$INSPECTOR_USER:$INSPECTOR_PASSWORD" > "$INSPECTOR_CREDS"
-            set -x
-        fi
-        CLUSTER_IRONIC_IP=$(oc get pods -n openshift-machine-api -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o jsonpath="{.items[0].status.hostIP}" || echo "")
-
-        # TODO(dtantsur): fetch the TLS public key, store it locally and link from clouds.yaml.
-
-        if [ ! -z "${CLUSTER_IRONIC_IP}" ]; then
-            if [[ "$OCP_VERSIONS_INSPECTOR" == *"$VERSION"* ]]; then
-                go run metal3-templater.go "http_basic" -ocp-version-uses-inspector -ironic-basic-auth="$IRONIC_CREDS" -inspector-basic-auth="$INSPECTOR_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_IRONIC_IP" > clouds.yaml
-            else
-                go run metal3-templater.go "http_basic" -ironic-basic-auth="$IRONIC_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_IRONIC_IP" > clouds.yaml
-            fi
+            go run metal3-templater.go "http_basic" -ocp-version-uses-inspector -ironic-basic-auth="$IRONIC_CREDS" -inspector-basic-auth="$INSPECTOR_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_IRONIC_IP" > clouds.yaml
         else
-            echo "Unable to read CLUSTER_IRONIC_IP - you may need to run generate_clouds_yaml.sh manually"
+            go run metal3-templater.go "http_basic" -ironic-basic-auth="$IRONIC_CREDS" -template-file=clouds.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_IRONIC_IP" > clouds.yaml
         fi
+    else
+        echo "Unable to read CLUSTER_IRONIC_IP - you may need to run generate_clouds_yaml.sh manually"
+    fi
 
-        BOOTSTRAP_VM_IP=$(bootstrap_ip)
-        if [ ! -z "${BOOTSTRAP_VM_IP}" ]; then
-            if ping -c 1 "${BOOTSTRAP_VM_IP}"; then
-                # From 4.7 basic_auth is also enabled on the bootstrap VM
-                # There's a clouds.yaml we can copy in that case
-                # FIXME: the sed of the URL is a workaround for
-                # https://bugzilla.redhat.com/show_bug.cgi?id=1930240
-                ($SSH "core@${BOOTSTRAP_VM_IP}" sudo cat /opt/metal3/auth/clouds.yaml || echo "") | sed "s/^clouds://" | sed "s/http:\/\/:/http:\/\/${BOOTSTRAP_VM_IP}:/" >> clouds.yaml
-            fi
+    BOOTSTRAP_VM_IP=$(bootstrap_ip)
+    if [ ! -z "${BOOTSTRAP_VM_IP}" ]; then
+        if ping -c 1 "${BOOTSTRAP_VM_IP}"; then
+            # From 4.7 basic_auth is also enabled on the bootstrap VM
+            # There's a clouds.yaml we can copy in that case
+            # FIXME: the sed of the URL is a workaround for
+            # https://bugzilla.redhat.com/show_bug.cgi?id=1930240
+            ($SSH "core@${BOOTSTRAP_VM_IP}" sudo cat /opt/metal3/auth/clouds.yaml || echo "") | sed "s/^clouds://" | sed "s/http:\/\/:/http:\/\/${BOOTSTRAP_VM_IP}:/" >> clouds.yaml
         fi
     fi
 
@@ -619,18 +608,9 @@ function generate_auth_template {
 }
 
 function generate_metal3_config {
-    MACHINE_OS_IMAGE_URL="http:///$(wrap_if_ipv6 "$MIRROR_IP")/images/${MACHINE_OS_IMAGE_NAME}?sha256=${MACHINE_OS_BOOTSTRAP_IMAGE_SHA256}"
     # metal3-config.yaml
     mkdir -p "${OCP_DIR}/deploy"
     go get github.com/apparentlymart/go-cidr/cidr github.com/openshift/installer/pkg/ipnet
-
-    if [[ "$(openshift_version "$OCP_DIR")" == "4.3" ]]; then
-      go run metal3-templater.go noauth -template-file=metal3-config.yaml.template -provisioning-interface="$CLUSTER_PRO_IF" -provisioning-network="$PROVISIONING_NETWORK" -image-url="$MACHINE_OS_IMAGE_URL" -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" -cluster-ip="$CLUSTER_PROVISIONING_IP" > "${OCP_DIR}/deploy/metal3-config.yaml"
-      cp "${OCP_DIR}/deploy/metal3-config.yaml" assets/generated/98_metal3-config.yaml
-    else
-      echo "OpenShift Version is > 4.3; skipping config map"
-    fi
-
 
     # Function to generate the bootstrap cloud information
     go run metal3-templater.go "bootstrap" -template-file=clouds.yaml.template -bootstrap-ip="$BOOTSTRAP_PROVISIONING_IP" > clouds.yaml

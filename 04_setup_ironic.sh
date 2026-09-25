@@ -195,15 +195,6 @@ for IMAGE in ${IRONIC_IMAGE} ${VBMC_IMAGE} ${SUSHY_TOOLS_IMAGE} ; do
     sudo -E podman pull --authfile "$PULL_SECRET_FILE" "$IMAGE" || echo "WARNING: Could not pull latest $IMAGE; will try to use cached images instead"
 done
 
-CACHED_MACHINE_OS_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_IMAGE_NAME}"
-if [ ! -f "${CACHED_MACHINE_OS_IMAGE}" ]; then
-  curl -g --insecure -L -o "${CACHED_MACHINE_OS_IMAGE}" "${MACHINE_OS_IMAGE_URL}"
-  echo "${MACHINE_OS_IMAGE_SHA256} $(basename "${CACHED_MACHINE_OS_IMAGE}")" | tee "${CACHED_MACHINE_OS_IMAGE}.sha256sum"
-  pushd "$(dirname "${CACHED_MACHINE_OS_IMAGE}")"
-  sha256sum --strict --check "${CACHED_MACHINE_OS_IMAGE}.sha256sum" || ( rm -f "${CACHED_MACHINE_OS_IMAGE}" ; exit 1 )
-  popd
-fi
-
 CACHED_MACHINE_OS_BOOTSTRAP_IMAGE="${IRONIC_DATA_DIR}/html/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}"
 if [ ! -f "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" ]; then
   curl -g --insecure -L -o "${CACHED_MACHINE_OS_BOOTSTRAP_IMAGE}" "${MACHINE_OS_BOOTSTRAP_IMAGE_URL}"
@@ -242,5 +233,4 @@ fi
 
 
 # Wait for images to be downloaded/ready
-while ! curl --fail -g "http://$(wrap_if_ipv6 "${PROVISIONING_HOST_IP}")/images/${MACHINE_OS_IMAGE_NAME}.sha256sum" ; do sleep 1 ; done
 while ! curl --fail -g "http://$(wrap_if_ipv6 "${PROVISIONING_HOST_IP}")/images/${MACHINE_OS_BOOTSTRAP_IMAGE_NAME}.sha256sum" ; do sleep 1 ; done
