@@ -205,11 +205,7 @@ fi
 OPENSHIFT_RELEASE_TAG="${OPENSHIFT_RELEASE_IMAGE##*:}"
 export OPENSHIFT_RELEASE_TAG
 
-# Use "ipmi" for 4.3 as it didn't support redfish, for other versions
-# use "redfish", unless its CI where we use "mixed"
-if [[ "$OPENSHIFT_VERSION" == "4.3" ]]; then
-  export BMC_DRIVER=${BMC_DRIVER:-ipmi}
-elif [[ -z "$OPENSHIFT_CI" ]]; then
+if [[ -z "$OPENSHIFT_CI" ]]; then
   export BMC_DRIVER=${BMC_DRIVER:-redfish}
 else
   export BMC_DRIVER=${BMC_DRIVER:-mixed}
@@ -226,11 +222,6 @@ export MIRROR_LOG_FILE=${REGISTRY_DIR}/${CLUSTER_NAME}-image_mirror-${OPENSHIFT_
 # Switch Container Images to upstream, Installer defaults these to the openshift version
 if [ "${UPSTREAM_IRONIC:-false}" != "false" ] ; then
     export IRONIC_LOCAL_IMAGE=${IRONIC_LOCAL_IMAGE:-"quay.io/metal3-io/ironic:main"}
-# Starting from Openshift 4.9 the ironic-inspector container is not used anymore
-    # FIXME: $OPENSHIFT_VERSION is not defined in CI
-    if is_lower_version "$OPENSHIFT_VERSION" 4.9; then
-        export IRONIC_INSPECTOR_LOCAL_IMAGE=${IRONIC_INSPECTOR_LOCAL_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
-    fi
     export IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE=${IRONIC_STATIC_IP_MANAGER_LOCAL_IMAGE:-"quay.io/metal3-io/static-ip-manager"}
     export BAREMETAL_OPERATOR_LOCAL_IMAGE=${BAREMETAL_OPERATOR_LOCAL_IMAGE:-"quay.io/metal3-io/baremetal-operator"}
 fi
