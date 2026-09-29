@@ -1,0 +1,16 @@
+---
+- name: Generate install-config.yaml
+  hosts: localhost
+  gather_facts: true
+  pre_tasks:
+    - name: Load nodes file
+      ansible.builtin.set_fact:
+        devscripts_nodes: "{{ (lookup('file', devscripts_nodes_file) | from_json).nodes }}"
+
+    - name: Resolve registry credentials path
+      ansible.builtin.set_fact:
+        devscripts_registry_creds: >-
+          {{ ansible_env.HOME }}/private-mirror-{{ devscripts_cluster_name }}.json
+
+  roles:
+    - role: "{{ playbook_dir }}/../roles/install_config"
