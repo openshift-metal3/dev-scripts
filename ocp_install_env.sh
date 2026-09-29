@@ -209,11 +209,11 @@ function bgp_vip_config() {
         # the negotiated timers and BFD state at the ToR.
         local peer_options
         peer_options="        port: 179
-        holdTime: \"${BGP_VIP_HOLD_TIME:-90s}\"
-        keepaliveTime: \"${BGP_VIP_KEEPALIVE_TIME:-30s}\"
+        holdTimeSeconds: ${BGP_VIP_HOLD_TIME_SECONDS:-90}
+        keepaliveTimeSeconds: ${BGP_VIP_KEEPALIVE_TIME_SECONDS:-30}
         password: \"${BGP_VIP_PASSWORD:-dev-scripts-bgp}\"
-        bfdEnabled: \"true\"
-        ebgpMultiHop: \"true\""
+        failureDetection: BFD
+        peerReachability: MultiHop"
 cat <<EOF
     bgpVIPConfig:
       localASN: ${BGP_CLUSTER_ASN:-64512}
