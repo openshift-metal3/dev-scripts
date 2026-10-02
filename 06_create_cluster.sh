@@ -22,6 +22,7 @@ if [[ ! -z "$INSTALLER_PROXY" ]]; then
   sudo firewall-cmd --policy=libvirt-to-host --add-port=8000/tcp      # sushy
   sudo firewall-cmd --policy=libvirt-to-host --add-port=6230-6240/udp # vbmc
   sudo firewall-cmd --policy=libvirt-to-host --add-port=123/udp       # ntp
+  sudo firewall-cmd --policy=libvirt-to-host --add-port="${LOCAL_REGISTRY_PORT}/tcp" # registry
   # And NFS if used
   if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
     sudo firewall-cmd --policy=libvirt-to-host --add-port=2049/tcp
