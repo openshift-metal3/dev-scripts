@@ -1021,6 +1021,8 @@ function write_pull_secret() {
         # credentials for the local registry when mirroring is enabled.
         if use_registry ""; then
             jq -s '.[0] * .[1]' "${REGISTRY_CREDS}" "${PERSONAL_PULL_SECRET}" > "${PULL_SECRET_FILE}"
+            # FIXME: Just for debugging
+            jq '.auths|keys' "${PULL_SECRET_FILE}"
         else
             cp "${PERSONAL_PULL_SECRET}" "${PULL_SECRET_FILE}"
         fi
