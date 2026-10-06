@@ -100,6 +100,84 @@ function custom_ntp(){
   fi
 }
 
+function copy_extra_manifests() {
+    local destination="$1"
+    local source="${ASSETS_EXTRA_FOLDER:-}"
+    local asset_list
+    local asset
+    local asset_new
+    local images
+    local image
+    local image_short
+    local image_mirrored
+    local digest
+    local digest_file
+    local mirror_images="${MIRROR_IMAGES:-}"
+    local enable_local_registry="${ENABLE_LOCAL_REGISTRY:-}"
+    local -a assets=()
+
+    [[ -n "${source}" ]] || return 0
+    if [[ ! -d "${source}" || ! -r "${source}" || ! -x "${source}" ]]; then
+      echo "Extra manifests source is not a readable directory: ${source}" >&2
+      return 1
+    fi
+
+    asset_list=$(mktemp) || return
+    if ! find "${source}" \( -name \*.yml -or -name \*.yaml \) -print0 >"${asset_list}"; then
+      rm -f "${asset_list}"
+      return 1
+    fi
+    while IFS= read -r -d '' asset; do
+      assets+=("${asset}")
+    done <"${asset_list}"
+    rm -f "${asset_list}"
+
+    if [[ -n "${mirror_images}" && "${mirror_images,,}" != "false" ]] || [[ -n "${enable_local_registry}" ]]; then
+      for asset in "${assets[@]}"; do
+        asset_new=${destination}/${asset##*/}
+        cp "${asset}" "${asset_new}" || return
+        if ! images=$(yq '.. | objects | select(has("containers")) | .containers[].image' "${asset}" -r); then
+          return 1
+        fi
+        if ! images=$(sort -u <<<"${images}"); then
+          return 1
+        fi
+        while IFS= read -r image; do
+          [[ -n "${image}" ]] || continue
+          image_short=${image##*/}
+          digest=
+          if [[ "${image_short}" == *@* ]]; then
+            digest=${image_short##*@}
+          fi
+          # Remove digest from the short name for podman push
+          image_short=${image_short%@*}
+          image_mirrored=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/assets/${image_short}
+          sudo -E podman pull --authfile "$PULL_SECRET_FILE" "$image" || return
+          if [[ -n "${digest}" ]]; then
+            digest_file=$(mktemp) || return
+            if ! sudo podman push --tls-verify=false --remove-signatures --authfile "$PULL_SECRET_FILE" --digestfile "${digest_file}" "$image" "$image_mirrored"; then
+              rm -f "${digest_file}"
+              return 1
+            fi
+            if ! digest=$(<"${digest_file}") || [[ -z "${digest}" ]]; then
+              rm -f "${digest_file}"
+              return 1
+            fi
+            rm -f "${digest_file}" || return
+            image_mirrored="${image_mirrored}@${digest}"
+          else
+            sudo podman push --tls-verify=false --remove-signatures --authfile "$PULL_SECRET_FILE" "$image" "$image_mirrored" || return
+          fi
+          sed -i -e "s%${image}%${image_mirrored}%g" "$asset_new" || return
+        done <<<"${images}"
+      done
+    else
+      for asset in "${assets[@]}"; do
+        cp "${asset}" "${destination}" || return
+      done
+    fi
+}
+
 function prepare_manifests() {
     local assets_dir="$1"
 
@@ -150,31 +228,7 @@ function prepare_manifests() {
       cp assets/metal3-cbo-deployment.yaml "${assets_dir}/openshift/."
     fi
 
-    if [ ! -z "${ASSETS_EXTRA_FOLDER:-}" ]; then
-      if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]] || [[ ! -z "${ENABLE_LOCAL_REGISTRY}" ]]; then
-        while IFS= read -r -d '' ASSET; do
-            ASSET_NEW=${assets_dir}/openshift/${ASSET##*/}
-            cp "$ASSET" "$ASSET_NEW"
-            for IMAGE in $(yq '.. | objects | select(has("containers")) | .containers[].image' "$ASSET" -r | sort | uniq) ; do
-                IMAGE_SHORT=${IMAGE##*/}
-                [[ $IMAGE_SHORT =~ "@" ]] && DIGEST=${IMAGE_SHORT##*@}
-                # Remove digest from the short name for podman push
-                IMAGE_SHORT=${IMAGE_SHORT%@*}
-                IMAGE_MIRRORED=${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/localimages/assets/${IMAGE_SHORT}
-                sudo -E podman pull --authfile "$PULL_SECRET_FILE" "$IMAGE"
-                sudo podman push --tls-verify=false --remove-signatures --authfile "$PULL_SECRET_FILE" "$IMAGE" "$IMAGE_MIRRORED"
-                if [[ -n ${DIGEST:-} ]]; then
-                  # Get digest of the pushed image
-                  DIGEST=$(podman inspect --format "{{.Digest}}" "$IMAGE_MIRRORED")
-                  IMAGE_MIRRORED="${IMAGE_MIRRORED}@${DIGEST}"
-                fi
-                sed -i -e "s%${IMAGE}%${IMAGE_MIRRORED}%g" "$ASSET_NEW"
-            done
-        done < <(find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -print0)
-      else
-        find "${ASSETS_EXTRA_FOLDER}" \( -name \*.yml -or -name \*.yaml \) -exec cp {} "${assets_dir}/openshift" \;
-      fi
-    fi
+    copy_extra_manifests "${assets_dir}/openshift"
 
     if [[ "$BMO_WATCH_ALL_NAMESPACES" == "true" ]]; then
         sed -i s/"watchAllNamespaces: false"/"watchAllNamespaces: true"/ "${assets_dir}/openshift/99_baremetal-provisioning-config.yaml"
