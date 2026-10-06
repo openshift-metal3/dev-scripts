@@ -42,6 +42,10 @@ fi
 # This must be aligned with the metal3-dev-env pinned version above, see
 # https://github.com/metal3-io/metal3-dev-env/blob/master/lib/common.sh
 export ANSIBLE_VERSION=${ANSIBLE_VERSION:-"8.7.0"}
+# pip defaults to a single attempt; PyPI stalls on large wheels (ansible)
+# otherwise fail 01_install_requirements.sh immediately.
+PIP_RETRIES=${PIP_RETRIES:-10}
+PIP_TIMEOUT=${PIP_TIMEOUT:-60}
 
 # Speed up dnf downloads
 sudo sh -c "echo 'fastestmirror=1' >> /etc/dnf/dnf.conf"
@@ -145,7 +149,7 @@ esac
 # overwrite an existing installation of the golang version, though,
 # so check if we have a yq before installing.
 if ! which yq >/dev/null 2>&1; then
-    sudo python -m pip install 'yq>=3,<4'
+    sudo python -m pip install --retries "${PIP_RETRIES}" --timeout "${PIP_TIMEOUT}" 'yq>=3,<4'
 else
     echo "Using yq from $(which yq)"
 fi
@@ -186,9 +190,9 @@ fi
 
 # Also need the 3.9 version of netaddr for ansible.netcommon
 # and lxml for the pyxpath script
-sudo python -m pip install netaddr lxml
+sudo python -m pip install --retries "${PIP_RETRIES}" --timeout "${PIP_TIMEOUT}" netaddr lxml
 
-sudo python -m pip install ansible=="${ANSIBLE_VERSION}"
+sudo python -m pip install --retries "${PIP_RETRIES}" --timeout "${PIP_TIMEOUT}" ansible=="${ANSIBLE_VERSION}"
 
 pushd "${METAL3_DEV_ENV_PATH}"
 ansible-galaxy install -r vm-setup/requirements.yml
