@@ -1,4 +1,4 @@
-.PHONY: default all agent agent_cleanup agent_build_installer agent_configure agent_create_cluster infra_only sno_bip requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
+.PHONY: default all agent agent_cleanup agent_build_installer agent_configure agent_create_cluster agent_manifest_tests infra_only sno_bip requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
 default: requirements configure build_installer ironic install_config ocp_run bell
 
 all: default
@@ -52,6 +52,9 @@ agent_gather:
 
 agent_tests:
 	./agent/agent_tests.sh
+
+agent_manifest_tests:
+	./agent/tests/test_extra_manifests.sh
 
 agent_add_extraworker_nodes:
 	./agent/07_agent_add_extraworker_nodes.sh
