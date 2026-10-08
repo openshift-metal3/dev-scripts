@@ -5,8 +5,6 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${repo_root}"
 
-# shellcheck source=/dev/null
-source "${repo_root}/utils.sh"
 # shellcheck source=agent/manifests.sh
 source "${repo_root}/agent/manifests.sh"
 
@@ -29,7 +27,7 @@ assert_file_content() {
 	fi
 }
 
-assert_command_fails() {
+assert_fails() {
 	local description="$1"
 	shift
 
@@ -38,15 +36,6 @@ assert_command_fails() {
 		return 1
 	fi
 	printf 'verified expected failure: %s\n' "${description}"
-}
-
-yq() {
-	if [[ "${mock_yq:-false}" == true ]]; then
-		[[ "${fail_yq:-false}" != true ]] || return 42
-		printf '%s\n' 'quay.io/example/a@sha256:source' 'quay.io/example/z:tag'
-	else
-		command yq "$@"
-	fi
 }
 
 assert_generated_manifests() {
@@ -68,69 +57,28 @@ assert_generated_manifests
 
 # An empty source directory is also a no-op.
 export ASSETS_EXTRA_FOLDER="${source_dir}"
-export MIRROR_IMAGES=
-export ENABLE_LOCAL_REGISTRY=
 generate_extra_cluster_manifests
 assert_generated_manifests
 
-# Match the regular flow: recurse, accept .yaml and .yml, flatten by basename,
-# ignore unrelated files, preserve contents, and let supplied files replace a
-# same-name destination. osImageStream belongs to MachineConfigPool, so use
-# complete master and worker MCPs rather than MachineConfig-shaped fixtures.
-mkdir -p "${source_dir}/nested/deeper"
-cat >"${source_dir}/nested/99-master-osimage-stream.yaml" <<'EOF'
+# Caller-supplied files are copied verbatim, including YAML/YML manifests and
+# names containing spaces.
+cat >"${source_dir}/custom-mcp.yaml" <<'EOF'
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfigPool
 metadata:
-  name: master
-  labels:
-    machineconfiguration.openshift.io/role: master
+  name: custom
 spec:
-  machineConfigSelector:
-    matchLabels:
-      machineconfiguration.openshift.io/role: master
-  nodeSelector:
-    matchLabels:
-      node-role.kubernetes.io/master: ""
-  osImageStream: custom-master
+  paused: true
 EOF
-cat >"${source_dir}/nested/deeper/99-worker-osimage-stream.yml" <<'EOF'
-apiVersion: machineconfiguration.openshift.io/v1
-kind: MachineConfigPool
-metadata:
-  name: worker
-  labels:
-    machineconfiguration.openshift.io/role: worker
-spec:
-  machineConfigSelector:
-    matchLabels:
-      machineconfiguration.openshift.io/role: worker
-  nodeSelector:
-    matchLabels:
-      node-role.kubernetes.io/worker: ""
-  osImageStream: custom-worker
-EOF
-printf '%s\n' 'ignored' >"${source_dir}/nested/deeper/README.txt"
-printf '%s\n' 'supplied collision' >"${source_dir}/nested/collision.yaml"
-printf '%s\n' 'generated collision' >"${destination}/collision.yaml"
-
-master_mcp="$(<"${source_dir}/nested/99-master-osimage-stream.yaml")"
-worker_mcp="$(<"${source_dir}/nested/deeper/99-worker-osimage-stream.yml")"
-yq -e '.apiVersion == "machineconfiguration.openshift.io/v1" and .kind == "MachineConfigPool" and .metadata.name == "master" and .spec.osImageStream == "custom-master"' \
-	"${source_dir}/nested/99-master-osimage-stream.yaml" >/dev/null
-yq -e '.apiVersion == "machineconfiguration.openshift.io/v1" and .kind == "MachineConfigPool" and .metadata.name == "worker" and .spec.osImageStream == "custom-worker"' \
-	"${source_dir}/nested/deeper/99-worker-osimage-stream.yml" >/dev/null
+printf '%s\n' 'apiVersion: v1' 'kind: ConfigMap' >"${source_dir}/other supplied.yml"
+printf '%s\n' 'supplied collision' >"${source_dir}/collision.yaml"
 
 generate_extra_cluster_manifests
 
-assert_file_content "${master_mcp}" "${destination}/99-master-osimage-stream.yaml"
-assert_file_content "${worker_mcp}" "${destination}/99-worker-osimage-stream.yml"
+cmp "${source_dir}/custom-mcp.yaml" "${destination}/custom-mcp.yaml"
+cmp "${source_dir}/other supplied.yml" "${destination}/other supplied.yml"
 assert_file_content 'supplied collision' "${destination}/collision.yaml"
 assert_generated_manifests
-if [[ -e "${destination}/README.txt" ]]; then
-	echo "unrelated file was copied" >&2
-	exit 1
-fi
 
 # Supplied files are copied last and intentionally override generated agent and
 # MCE manifests with the same basename. Non-colliding generated MCE files remain.
@@ -148,121 +96,22 @@ for generated_mce_manifest in "${repo_root}"/agent/mce/agent_mce_0_*.yaml; do
 		cmp "${generated_mce_manifest}" "${destination}/${generated_mce_manifest##*/}"
 	fi
 done
-echo "verified MachineConfigPool content and supplied generated-file overrides"
+echo "verified supplied manifests and generated-file overrides"
 
-# The same helper retains the regular flow's image mirroring and manifest
-# rewrite behavior without invoking prepare_manifests in the agent flow.
-mirror_source="${test_root}/mirror-source"
-mirror_destination="${test_root}/mirror-destination"
-mkdir -p "${mirror_source}" "${mirror_destination}"
-cat >"${mirror_source}/deployment.yaml" <<'EOF'
-containers:
-- image: quay.io/example/a@sha256:source
-- image: quay.io/example/z:tag
-EOF
-
-sudo() {
-	if [[ "$1" == "-E" ]]; then
-		shift
-	fi
-	mock_podman_rootful=true "$@"
-}
-
-podman_calls_file="${test_root}/podman-calls"
-: >"${podman_calls_file}"
-podman() {
-	local digest_file=
-	local rootful="${mock_podman_rootful:-false}"
-	printf 'rootful=%s %s\n' "${rootful}" "$*" >>"${podman_calls_file}"
-	[[ "${rootful}" == true ]] || return 44
-	case "$1" in
-	pull)
-		[[ "${fail_podman:-}" != pull ]]
-		;;
-	push)
-		[[ "${fail_podman:-}" != push ]] || return
-		while [[ "$#" -gt 0 ]]; do
-			if [[ "$1" == "--digestfile" ]]; then
-				digest_file="$2"
-				break
-			fi
-			shift
-		done
-		if [[ -n "${digest_file}" && "${fail_podman:-}" != digest_capture ]]; then
-			printf '%s\n' 'sha256:mirrored' >"${digest_file}"
-		fi
-		;;
-	inspect)
-		echo "podman inspect must not be used to retrieve a pushed digest" >&2
-		return 45
-		;;
-	esac
-}
-
-find() {
-	[[ "${fail_find:-false}" != true ]] || return 43
-	command find "$@"
-}
-
-export ASSETS_EXTRA_FOLDER="${mirror_source}"
-export MIRROR_IMAGES=true
-export LOCAL_REGISTRY_DNS_NAME=registry.example.test
-export LOCAL_REGISTRY_PORT=5000
-export PULL_SECRET_FILE="${test_root}/pull-secret.json"
-export EXTRA_MANIFESTS_PATH="${mirror_destination}"
-export AGENT_DEPLOY_MCE=
-digest_tmp_dir="${test_root}/digest-tmp"
-mkdir "${digest_tmp_dir}"
-export TMPDIR="${digest_tmp_dir}"
-mock_yq=true
-generate_extra_cluster_manifests
-assert_file_content $'containers:\n- image: registry.example.test:5000/localimages/assets/a@sha256:mirrored\n- image: registry.example.test:5000/localimages/assets/z:tag' \
-	"${mirror_destination}/deployment.yaml"
-mapfile -t podman_calls <"${podman_calls_file}"
-digest_push_prefix="rootful=true push --tls-verify=false --remove-signatures --authfile ${PULL_SECRET_FILE} --digestfile "
-digest_push_suffix=" quay.io/example/a@sha256:source registry.example.test:5000/localimages/assets/a"
-if [[ "${#podman_calls[@]}" -ne 4 ]] ||
-	[[ "${podman_calls[0]}" != "rootful=true pull --authfile ${PULL_SECRET_FILE} quay.io/example/a@sha256:source" ]] ||
-	[[ "${podman_calls[1]}" != "${digest_push_prefix}"*"${digest_push_suffix}" ]] ||
-	[[ "${podman_calls[2]}" != "rootful=true pull --authfile ${PULL_SECRET_FILE} quay.io/example/z:tag" ]] ||
-	[[ "${podman_calls[3]}" != "rootful=true push --tls-verify=false --remove-signatures --authfile ${PULL_SECRET_FILE} quay.io/example/z:tag registry.example.test:5000/localimages/assets/z:tag" ]]; then
-	echo "unexpected podman mirroring calls: ${podman_calls[*]}" >&2
-	exit 1
-fi
-digest_file="${podman_calls[1]#"${digest_push_prefix}"}"
-digest_file="${digest_file%"${digest_push_suffix}"}"
-if [[ "${digest_file}" != "${digest_tmp_dir}/"* ]] || [[ -e "${digest_file}" ]]; then
-	echo "digest file was not created safely and removed: ${digest_file}" >&2
-	exit 1
-fi
-echo "verified mixed digest/tag mirroring"
-
-# A configured source and every discovery/parsing/mirroring operation must
-# fail closed instead of silently continuing with missing or stale manifests.
+# A configured source which does not exist must fail visibly.
 export ASSETS_EXTRA_FOLDER="${test_root}/missing"
-assert_command_fails 'missing source directory' copy_extra_manifests "${mirror_destination}"
+assert_fails 'missing source directory' generate_extra_cluster_manifests
 
-export ASSETS_EXTRA_FOLDER="${mirror_source}"
-fail_find=true
-assert_command_fails 'manifest discovery' copy_extra_manifests "${mirror_destination}"
-fail_find=false
+# A direct child which cp cannot copy without recursion makes the copy fail,
+# instead of being silently ignored.
+copy_failure_source="${test_root}/copy-failure"
+mkdir -p "${copy_failure_source}/directory"
+export ASSETS_EXTRA_FOLDER="${copy_failure_source}"
+assert_fails 'copy operation' generate_extra_cluster_manifests
 
-fail_yq=true
-assert_command_fails 'YAML image inspection' copy_extra_manifests "${mirror_destination}"
-fail_yq=false
-
-for failure in pull push digest_capture; do
-	fail_podman="${failure}"
-	if [[ "${failure}" == digest_capture ]]; then
-		assert_command_fails 'pushed digest capture' copy_extra_manifests "${mirror_destination}"
-	else
-		assert_command_fails "podman ${failure}" copy_extra_manifests "${mirror_destination}"
-	fi
-	if find "${digest_tmp_dir}" -type f -print -quit | grep -q .; then
-		echo "digest temporary file leaked after ${failure} failure" >&2
-		exit 1
-	fi
-done
-unset fail_podman
+# The function remains in the configure phase, which precedes image creation.
+grep -q '^source .*agent/manifests.sh' "${repo_root}/agent/05_agent_configure.sh"
+grep -q '^  generate_extra_cluster_manifests$' "${repo_root}/agent/05_agent_configure.sh"
+grep -Eq '^agent: .*agent_configure agent_create_cluster' "${repo_root}/Makefile"
 
 echo "extra manifest copy tests passed"
