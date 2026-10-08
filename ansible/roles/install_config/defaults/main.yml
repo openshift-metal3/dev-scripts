@@ -1,0 +1,73 @@
+# Role defaults — lowest precedence; overridden by group_vars or extra-vars.
+# Variables not yet migrated to group_vars fall back to lookup('env').
+
+# Paths derived from group_vars
+devscripts_ocp_dir: "{{ devscripts_scriptdir }}/ocp/{{ devscripts_cluster_name }}"
+devscripts_scriptdir: "{{ playbook_dir }}/../.."
+devscripts_nodes_file: "{{ devscripts_working_dir }}/{{ devscripts_cluster_name }}/ironic_nodes.json"
+devscripts_baremetalhosts_file: "{{ devscripts_ocp_dir }}/baremetalhosts.json"
+devscripts_pull_secret_file: "{{ devscripts_working_dir }}/pull_secret.json"
+devscripts_cluster_domain: "{{ devscripts_cluster_name }}.{{ devscripts_base_domain }}"
+
+# Computed network values
+devscripts_provisioning_host_external_ip: >-
+  {% if devscripts_host_ip_stack in ['v6', 'v6v4'] -%}
+  {{ devscripts_external_subnet_v6 | ansible.utils.nthhost(1) }}
+  {%- else -%}
+  {{ devscripts_external_subnet_v4 | ansible.utils.nthhost(1) }}
+  {%- endif %}
+devscripts_mirror_ip: "{{ devscripts_provisioning_host_external_ip }}"
+
+# DNS VIP
+devscripts_dns_vip: >-
+  {% if devscripts_ip_stack == 'v6' -%}
+  {{ devscripts_external_subnet_v6 | ansible.utils.nthhost(2) }}
+  {%- else -%}
+  {{ devscripts_external_subnet_v4 | ansible.utils.nthhost(2) }}
+  {%- endif %}
+
+# VIPs — will be resolved in tasks from libvirt DNS or computed from subnets
+devscripts_api_vips: []
+devscripts_ingress_vips: []
+
+# Bootstrap static IP (.9 on the primary external subnet)
+devscripts_bootstrap_static_ip: >-
+  {% if devscripts_enable_bootstrap_static_ip -%}
+  {% if devscripts_ip_stack in ['v6', 'v6v4'] -%}
+  {{ devscripts_external_subnet_v6 | ansible.utils.nthhost(9) }}
+  {%- else -%}
+  {{ devscripts_external_subnet_v4 | ansible.utils.nthhost(9) }}
+  {%- endif %}
+  {%- endif %}
+
+# Provisioning IPs
+devscripts_bootstrap_provisioning_ip: >-
+  {% if devscripts_provisioning_network_profile == 'Disabled' -%}
+  {% if devscripts_host_ip_stack == 'v6' -%}
+  {{ devscripts_external_subnet_v6 | ansible.utils.nthhost(7) }}
+  {%- else -%}
+  {{ devscripts_external_subnet_v4 | ansible.utils.nthhost(7) }}
+  {%- endif %}
+  {%- else -%}
+  {{ devscripts_provisioning_network | ansible.utils.nthhost(2) }}
+  {%- endif %}
+
+devscripts_cluster_provisioning_ip: >-
+  {% if devscripts_provisioning_network_profile == 'Disabled' -%}
+  {% if devscripts_host_ip_stack == 'v6' -%}
+  {{ devscripts_external_subnet_v6 | ansible.utils.nthhost(8) }}
+  {%- else -%}
+  {{ devscripts_external_subnet_v4 | ansible.utils.nthhost(8) }}
+  {%- endif %}
+  {%- else -%}
+  {{ devscripts_provisioning_network | ansible.utils.nthhost(3) }}
+  {%- endif %}
+
+# Not yet migrated — fall back to environment variables
+devscripts_root_disk_name: "{{ lookup('env', 'ROOT_DISK_NAME') | default('/dev/sda', true) }}"
+devscripts_remote_libvirt: "{{ lookup('env', 'REMOTE_LIBVIRT') | default('0', true) }}"
+devscripts_provisioning_host_user: "{{ lookup('env', 'PROVISIONING_HOST_USER') | default(ansible_user_id, true) }}"
+devscripts_provisioning_host_ip: "{{ lookup('env', 'PROVISIONING_HOST_IP') | default(devscripts_provisioning_network | ansible.utils.nthhost(1), true) }}"
+devscripts_network_config_folder: "{{ lookup('env', 'NETWORK_CONFIG_FOLDER') | default('', true) }}"
+devscripts_enable_two_node_fencing: "{{ lookup('env', 'ENABLE_TWO_NODE_FENCING') | default('false', true) | bool }}"
+devscripts_master_hostname_format: "{{ lookup('env', 'MASTER_HOSTNAME_FORMAT') | default('master-%d', true) }}"
