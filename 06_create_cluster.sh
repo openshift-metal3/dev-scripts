@@ -91,6 +91,14 @@ if [[ -n "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
       -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
 fi
 
+# NOTE(bnemec): I don't know why this is necessary, but on v6-primary CI jobs the samples operator
+# imagestreams consistently fail to import due to a credential issue, even though the credentials seem
+# to be identical to the ones in a v4 job. If someone can get that working then feel free to
+# remove this step.
+if [[ "${IP_STACK}" == "v6v4" ]]; then
+  oc patch config.samples.operator.openshift.io/cluster --type=merge -p '{"spec":{"managementState":"Removed"}}'
+fi
+
 if [[ -n "${APPLY_EXTRA_WORKERS:-}" ]]; then
     if [[ ${NUM_EXTRA_WORKERS} -ne 0 && -s "${OCP_DIR}/extra_host_manifests.yaml" ]]; then
         # Give regular worker Machines time to claim their BMHs before
