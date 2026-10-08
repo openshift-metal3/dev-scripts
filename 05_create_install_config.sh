@@ -39,3 +39,12 @@ if [ -f "${ARM_NODES_FILE}" ]; then
     jq '.nodes' "${ARM_NODES_FILE}" | tee "${EXTRA_ARM_BAREMETALHOSTS_FILE}"
     generate_ocp_host_manifest "${OCP_DIR}" "${EXTRA_ARM_BAREMETALHOSTS_FILE}" extra_arm_host_manifests.yaml "${EXTRA_WORKERS_NAMESPACE}"
 fi
+
+# Render offline BareMetalHosts for physical workers that are managed outside
+# dev-scripts. This is independent of the libvirt VM worker counts above.
+if [ -n "${EXTERNAL_WORKERS_FILE}" ]; then
+    "${SCRIPTDIR}/scripts/generate_external_worker_manifests.sh" \
+        "${EXTERNAL_WORKERS_FILE}" \
+        "${EXTERNAL_WORKERS_MANIFEST}" \
+        "${EXTRA_WORKERS_NAMESPACE}"
+fi
