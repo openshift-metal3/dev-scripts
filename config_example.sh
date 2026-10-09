@@ -986,6 +986,11 @@ set -x
 # Default is /dev/vda (virtio disk for libvirt VMs).
 # export SNO_INSTALLATION_DISK="/dev/vda"
 
+# Skip configuring NetworkManager and libvirt dnsmasq records for the SNO node.
+# Use this when api, api-int, and *.apps DNS records are managed externally.
+# Default is false.
+# export SNO_BIP_SKIP_DNSMASQ=true
+
 ################################################################################
 ## Agent Deployment
 ##
