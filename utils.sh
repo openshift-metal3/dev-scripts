@@ -280,46 +280,48 @@ NMEOF
 
     sudo chcon -t svirt_image_t "${bip_iso}"
 
-    local master_mac
-    master_mac=$(sudo virsh dumpxml "${vm_name}" | xmllint --xpath "string(//interface[descendant::source[@bridge='${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
-
     sudo virt-xml "${vm_name}" --add-device \
         --disk "${bip_iso}",device=cdrom,target.dev=sdc
     sudo virt-xml "${vm_name}" --edit target=sda --disk="boot_order=1"
     sudo virt-xml "${vm_name}" --edit target=sdc --disk="boot_order=2" --start
 
-    # Wait for the node to get an IP via DHCP, then configure DNS to match
-    echo "Waiting for master node to obtain an IP address..."
-    local master_ip=""
-    for i in $(seq 1 60); do
-      if [[ "$IP_STACK" == "v4" ]] || [[ "$IP_STACK" == "v4v6" ]]; then
-        master_ip=$(ip -4 neigh show dev "${BAREMETAL_NETWORK_NAME}" \
-            | grep -i "${master_mac}" | awk '{print $1}' | head -1) || true
-      else
-        master_ip=$(ip -6 neigh show dev "${BAREMETAL_NETWORK_NAME}" \
-            | grep -i "${master_mac}" | grep -v '^fe80' | awk '{print $1}' | head -1) || true
-      fi
-      if [[ -n "${master_ip}" ]]; then
-        break
-      fi
-      sleep 5
-    done
+    if [[ "${SNO_BIP_SKIP_DNSMASQ}" != "true" ]]; then
+      local master_mac
+      master_mac=$(sudo virsh dumpxml "${vm_name}" | xmllint --xpath "string(//interface[descendant::source[@bridge='${BAREMETAL_NETWORK_NAME}']]/mac/@address)" -)
 
-    if [[ -z "${master_ip}" ]]; then
-      echo "ERROR: Timed out waiting for master node to get an IP address"
-      exit 1
+      # Wait for the node to get an IP via DHCP, then configure DNS to match
+      echo "Waiting for master node to obtain an IP address..."
+      local master_ip=""
+      for i in $(seq 1 60); do
+        if [[ "$IP_STACK" == "v4" ]] || [[ "$IP_STACK" == "v4v6" ]]; then
+          master_ip=$(ip -4 neigh show dev "${BAREMETAL_NETWORK_NAME}" \
+              | grep -i "${master_mac}" | awk '{print $1}' | head -1) || true
+        else
+          master_ip=$(ip -6 neigh show dev "${BAREMETAL_NETWORK_NAME}" \
+              | grep -i "${master_mac}" | grep -v '^fe80' | awk '{print $1}' | head -1) || true
+        fi
+        if [[ -n "${master_ip}" ]]; then
+          break
+        fi
+        sleep 5
+      done
+
+      if [[ -z "${master_ip}" ]]; then
+        echo "ERROR: Timed out waiting for master node to get an IP address"
+        exit 1
+      fi
+      echo "Master node IP: ${master_ip}"
+
+      configure_dnsmasq "${master_ip}" "${master_ip}"
+
+      # Add DNS entries to the libvirt network dnsmasq (the node queries this,
+      # not the NetworkManager dnsmasq on the hypervisor).
+      # Both hostnames must be in a single <host> element (libvirt rejects
+      # duplicate IPs across separate entries).
+      local net_name="${BAREMETAL_NETWORK_NAME}"
+      sudo virsh net-update "${net_name}" add dns-host \
+          "<host ip='${master_ip}'><hostname>api.${CLUSTER_DOMAIN}</hostname><hostname>api-int.${CLUSTER_DOMAIN}</hostname></host>" --live
     fi
-    echo "Master node IP: ${master_ip}"
-
-    configure_dnsmasq "${master_ip}" "${master_ip}"
-
-    # Add DNS entries to the libvirt network dnsmasq (the node queries this,
-    # not the NetworkManager dnsmasq on the hypervisor).
-    # Both hostnames must be in a single <host> element (libvirt rejects
-    # duplicate IPs across separate entries).
-    local net_name="${BAREMETAL_NETWORK_NAME}"
-    sudo virsh net-update "${net_name}" add dns-host \
-        "<host ip='${master_ip}'><hostname>api.${CLUSTER_DOMAIN}</hostname><hostname>api-int.${CLUSTER_DOMAIN}</hostname></host>" --live
 
     trap auth_template_and_removetmp EXIT
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for bootstrap-complete

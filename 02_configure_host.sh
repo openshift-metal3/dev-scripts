@@ -96,7 +96,9 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
         --add-port="${INSTALLER_PROXY_PORT}"/tcp --add-port="${AGENT_BOOT_SERVER_PORT}"/tcp \
         --add-port=3260/tcp
 
-    switch_to_internal_dns
+    if [[ "${BOOTSTRAP_IN_PLACE}" != "true" || "${SNO_BIP_SKIP_DNSMASQ}" != "true" ]]; then
+        switch_to_internal_dns
+    fi
 
     # Add a /etc/hosts entry for $LOCAL_REGISTRY_DNS_NAME
     sudo sed -i "/${LOCAL_REGISTRY_DNS_NAME}/d" /etc/hosts
@@ -500,7 +502,8 @@ if [[ "${ENABLE_NAT64}" == "true" ]]; then
 fi
 
 # Switch NetworkManager to internal DNS
-if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
+if [[ "$MANAGE_BR_BRIDGE" == "y" ]] && \
+   [[ "${BOOTSTRAP_IN_PLACE}" != "true" || "${SNO_BIP_SKIP_DNSMASQ}" != "true" ]]; then
   switch_to_internal_dns
 fi
 
