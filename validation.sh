@@ -53,6 +53,13 @@ function early_deploy_validation() {
 
     CHECK_OC_TOOL_PRESENCE=${1:-"false"}
 
+    if [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" ]] && \
+       [[ "${SNO_BIP_SKIP_DNSMASQ:-false}" == "true" ]] && \
+       [[ -z "${ADDN_DNS:-}" ]]; then
+        error "SNO BiP node-local DNS mode requires ADDN_DNS from the explicit configuration, resolv.conf, or the cached nameserver."
+        return 1
+    fi
+
     early_either_validation
     early_bgp_vip_validation
 

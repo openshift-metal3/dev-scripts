@@ -499,8 +499,11 @@ if [[ "${ENABLE_NAT64}" == "true" ]]; then
     sudo ip6tables -A FORWARD --out-interface "${BAREMETAL_NETWORK_NAME}" -m state --state RELATED,ESTABLISHED -j ACCEPT
 fi
 
-# Switch NetworkManager to internal DNS
-if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
+# SNO BiP node-local DNS mode still needs provisioner-side DNS when the
+# baremetal bridge is externally managed.
+if [[ "${MANAGE_BR_BRIDGE}" == "y" ]] || \
+    [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" && \
+       "${SNO_BIP_SKIP_DNSMASQ:-false}" == "true" ]]; then
   switch_to_internal_dns
 fi
 

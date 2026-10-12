@@ -986,6 +986,13 @@ set -x
 # Default is /dev/vda (virtio disk for libvirt VMs).
 # export SNO_INSTALLATION_DISK="/dev/vda"
 
+# Use MCO-managed CoreDNS for cluster records on the SNO node. This omits the
+# cluster domain and api/api-int/apps records from the guest-facing libvirt
+# network while retaining provisioner-facing records. ADDN_DNS must be
+# available for upstream resolution.
+# Default is false.
+# export SNO_BIP_SKIP_DNSMASQ=true
+
 ################################################################################
 ## Agent Deployment
 ##

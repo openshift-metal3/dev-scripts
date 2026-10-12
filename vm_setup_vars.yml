@@ -90,6 +90,15 @@ network_config_folder: "{{ lookup('env', 'NETWORK_CONFIG_FOLDER') | default(fals
 hosts_config: "{{ lookup('template', network_config_folder + '/hosts.yaml', errors='ignore') | default('[]', true) | from_yaml }}"
 dns_customhosts: "{{ [] if not network_config_folder else hosts_config }}"
 
+sno_bip_node_local_dns: "{{ lookup('env', 'BOOTSTRAP_IN_PLACE') == 'true' and lookup('env', 'SNO_BIP_SKIP_DNSMASQ') == 'true' }}"
+sno_bip_dns_hosts:
+  - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
+    hostnames:
+      - "ns1"
+  - ip: "{{ baremetal_network_cidr | nthhost(1) }}"
+    hostnames:
+      - "virthost"
+
 provisioning_network:
   - name: "{{ provisioning_network_name  }}"
     bridge: "{{ provisioning_network_name  }}"
@@ -120,4 +129,9 @@ external_network:
         - domain: "apps.{{ cluster_domain }}"
           addr: "127.0.0.1"
 
-networks: "{{ provisioning_network + external_network + (extra_networks | default([])) if not lookup('env', 'BOND_PRIMARY_INTERFACE') else provisioning_network + external_network + external_network + (extra_networks | default([])) }}"
+sno_bip_external_network:
+  - "{{ external_network[0] | dict2items | rejectattr('key', 'equalto', 'domain') | items2dict | combine({'dns': {'hosts': sno_bip_dns_hosts + dns_customhosts}}) }}"
+
+selected_external_network: "{{ sno_bip_external_network if sno_bip_node_local_dns else external_network }}"
+
+networks: "{{ provisioning_network + selected_external_network + (extra_networks | default([])) if not lookup('env', 'BOND_PRIMARY_INTERFACE') else provisioning_network + selected_external_network + selected_external_network + (extra_networks | default([])) }}"
