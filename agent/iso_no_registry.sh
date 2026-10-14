@@ -33,6 +33,7 @@ function build_ove_iso_script() {
     --ssh-key-file "${SSH_KEY_FILE}" \
     ${APPLIANCE_IMAGE:+--appliance-image "${APPLIANCE_IMAGE}"} \
     --dir "${asset_dir}" \
+    --fips "${FIPS_MODE:-false}" \
     ${mirror_path_arg} \
     ${registry_cert_arg}
 }
@@ -199,6 +200,13 @@ function create_agent_iso_no_registry() {
   if [[ "${AGENT_ISO_NO_REGISTRY_BUILD_METHOD}" == "script" ]]; then
     build_ove_iso_script "${asset_dir}" "${release_image_url}" "${mirror_path_arg}" "${registry_cert_arg}"
   else
+    # Only the script method can produce a FIPS ISO; the container method has
+    # no way to pass --fips through the Dockerfile. Fail rather than hand back
+    # a non-FIPS ISO to someone who asked for FIPS.
+    if [[ "${FIPS_MODE:-false}" == "true" ]]; then
+      echo "Error: FIPS_MODE=true requires AGENT_ISO_NO_REGISTRY_BUILD_METHOD=script." >&2
+      exit 1
+    fi
     build_ove_iso_container "${asset_dir}" "${release_image_url}"
   fi
 
