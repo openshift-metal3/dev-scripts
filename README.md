@@ -603,9 +603,8 @@ See [`docs/external-worker.example.json`](docs/external-worker.example.json)
 for the input format. The inventory can include an existing BMC credential
 Secret reference, labels, root-device hints, custom deploy and user-data
 references, and host-specific pre-provisioning nmstate. It must not contain BMC
-credential values. The network-data Secret key defaults to `nmstate`; set
-`preprovisioningNetworkData.dataKey` to `networkData` for releases that require
-the older key.
+credential values. For Metal3 compatibility, the generated network-data Secret
+contains the same nmstate payload under both `nmstate` and `networkData`.
 
 The generated `${OCP_DIR}/external_worker_manifests.json` contains an offline
 `BareMetalHost`, a claim-barrier ConfigMap, and, when requested, a

@@ -27,6 +27,7 @@ cat > "$test_dir/inventory.json" <<'EOF'
       },
       "preprovisioningNetworkData": {
         "name": "external-worker-0-network-data",
+        "dataKey": "networkData",
         "nmstate": {
           "interfaces": [
             {
@@ -53,6 +54,8 @@ jq -e '
     and .items[0].kind == "Secret"
     and .items[0].metadata.name == "external-worker-0-network-data"
     and (.items[0].stringData.nmstate | fromjson | .interfaces[0].name) == "eno1"
+    and (.items[0].stringData.networkData | fromjson | .interfaces[0].name) == "eno1"
+    and .items[0].stringData.nmstate == .items[0].stringData.networkData
     and .items[1].kind == "ConfigMap"
     and .items[1].metadata.name == "external-worker-0"
     and .items[1].metadata.annotations["dev-scripts.openshift.io/purpose"] == "external-worker-claim-barrier"

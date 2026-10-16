@@ -41,8 +41,6 @@ if ! jq -e '
             and ((.preprovisioningNetworkData.name // (.name + "-preprov-network"))
                 | type == "string" and length <= 253
                 and test("^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$"))
-            and ((.preprovisioningNetworkData.dataKey // "nmstate")
-                | . == "nmstate" or . == "networkData")
         else true end)
         and (has("online") | not)
     )
@@ -67,8 +65,8 @@ jq --arg namespace "$namespace" '
             },
             type: "Opaque",
             stringData: {
-                (($node.preprovisioningNetworkData.dataKey // "nmstate")):
-                    ($node.preprovisioningNetworkData.nmstate | tojson)
+                nmstate: ($node.preprovisioningNetworkData.nmstate | tojson),
+                networkData: ($node.preprovisioningNetworkData.nmstate | tojson)
             }
         };
 
