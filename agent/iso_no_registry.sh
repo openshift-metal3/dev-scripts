@@ -26,14 +26,20 @@ function build_ove_iso_script() {
   local mirror_path_arg=$3
   local registry_cert_arg=$4
 
-  # shellcheck disable=SC2086 # mirror_path_arg and registry_cert_arg intentionally unquoted for word splitting
+  # --fips is only supported by the OVE ISO builder from OCP 5.1 onwards
+  local fips_arg=""
+  if ! is_lower_version "$(openshift_version "${OCP_DIR}")" "5.1"; then
+    fips_arg="--fips ${FIPS_MODE:-false}"
+  fi
+
+  # shellcheck disable=SC2086 # mirror_path_arg, registry_cert_arg, and fips_arg intentionally unquoted for word splitting
   ./hack/build-ove-image.sh \
     --pull-secret-file "${PULL_SECRET_FILE}" \
     --release-image-url "${release_image_url}" \
     --ssh-key-file "${SSH_KEY_FILE}" \
     ${APPLIANCE_IMAGE:+--appliance-image "${APPLIANCE_IMAGE}"} \
     --dir "${asset_dir}" \
-    --fips "${FIPS_MODE:-false}" \
+    ${fips_arg} \
     ${mirror_path_arg} \
     ${registry_cert_arg}
 }
