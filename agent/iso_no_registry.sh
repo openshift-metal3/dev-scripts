@@ -30,6 +30,9 @@ function build_ove_iso_script() {
   local fips_arg=""
   if ! is_lower_version "$(openshift_version "${OCP_DIR}")" "5.1"; then
     fips_arg="--fips ${FIPS_MODE:-false}"
+  elif [[ "${FIPS_MODE:-false}" == "true" ]]; then
+    echo "Error: FIPS_MODE=true requires OCP 5.1 or later for the OVE ISO." >&2
+    exit 1
   fi
 
   # shellcheck disable=SC2086 # mirror_path_arg, registry_cert_arg, and fips_arg intentionally unquoted for word splitting
