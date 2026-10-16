@@ -938,11 +938,13 @@ case "${AGENT_E2E_TEST_BOOT_MODE}" in
 
     mkdir -p "$OCP_DIR/auth"
     rendezvousIP=$(getRendezvousIP)
-    get_vips
+    if [[ "${NUM_MASTERS}" -gt "1" ]]; then
+    	get_vips
+	fi
     # Simulate user actions as done on the webUI and start cluster installation
     ocp_dir_abs_path="$(realpath "${OCP_DIR}")"
     pushd agent/isobuilder/ui_driven_cluster_installation
-    RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$ocp_dir_abs_path INGRESS_VIPS=$INGRESS_VIPS API_VIPS=$API_VIPS go run main.go
+    RENDEZVOUS_IP=$rendezvousIP OCP_DIR=$ocp_dir_abs_path INGRESS_VIPS=${INGRESS_VIPS:-} API_VIPS=${API_VIPS:-} go run main.go
     popd
 
     # Verification step of the 'static_ip' test case: now that installation has
