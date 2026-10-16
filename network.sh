@@ -357,6 +357,12 @@ function configure_dnsmasq() {
 }
 
 function set_api_and_ingress_vip() {
+  if [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" && \
+      "${SNO_BIP_SKIP_DNSMASQ:-false}" == "true" ]]; then
+      # BiP publishes DNS after the node obtains its address via DHCP.
+      return
+  fi
+
   # NOTE: This is equivalent to the external API DNS record pointing the API to the API VIP
   if [ "$MANAGE_BR_BRIDGE" == "y" ] ; then
       get_vips

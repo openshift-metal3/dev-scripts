@@ -313,13 +313,16 @@ NMEOF
 
     configure_dnsmasq "${master_ip}" "${master_ip}"
 
-    # Add DNS entries to the libvirt network dnsmasq (the node queries this,
-    # not the NetworkManager dnsmasq on the hypervisor).
-    # Both hostnames must be in a single <host> element (libvirt rejects
-    # duplicate IPs across separate entries).
-    local net_name="${BAREMETAL_NETWORK_NAME}"
-    sudo virsh net-update "${net_name}" add dns-host \
-        "<host ip='${master_ip}'><hostname>api.${CLUSTER_DOMAIN}</hostname><hostname>api-int.${CLUSTER_DOMAIN}</hostname></host>" --live
+    if ! [[ "${BOOTSTRAP_IN_PLACE:-false}" == "true" && \
+        "${SNO_BIP_SKIP_DNSMASQ:-false}" == "true" ]]; then
+      # Add DNS entries to the libvirt network dnsmasq (the node queries this,
+      # not the NetworkManager dnsmasq on the hypervisor).
+      # Both hostnames must be in a single <host> element (libvirt rejects
+      # duplicate IPs across separate entries).
+      local net_name="${BAREMETAL_NETWORK_NAME}"
+      sudo virsh net-update "${net_name}" add dns-host \
+          "<host ip='${master_ip}'><hostname>api.${CLUSTER_DOMAIN}</hostname><hostname>api-int.${CLUSTER_DOMAIN}</hostname></host>" --live
+    fi
 
     trap auth_template_and_removetmp EXIT
     $OPENSHIFT_INSTALLER --dir "${assets_dir}" --log-level=debug wait-for bootstrap-complete

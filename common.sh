@@ -460,6 +460,7 @@ fi
 # Bootstrap-in-Place (BiP) for Single Node OpenShift
 export BOOTSTRAP_IN_PLACE=${BOOTSTRAP_IN_PLACE:-false}
 export SNO_INSTALLATION_DISK=${SNO_INSTALLATION_DISK:-/dev/sda}
+export SNO_BIP_SKIP_DNSMASQ=${SNO_BIP_SKIP_DNSMASQ:-false}
 
 if [[ "${BOOTSTRAP_IN_PLACE}" == "true" ]]; then
   if [[ ${NUM_MASTERS} -ne 1 ]] || [[ ${NUM_WORKERS} -ne 0 ]]; then
