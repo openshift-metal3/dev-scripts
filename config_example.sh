@@ -794,6 +794,21 @@ set -x
 #
 #export APPLY_EXTRA_WORKERS=true.
 
+# EXTERNAL_WORKERS_FILE -
+# Optional JSON inventory for physical workers managed outside dev-scripts.
+# This only renders offline, claim-barrier-protected BareMetalHost and
+# pre-provisioning network-data manifests; it does not apply them or start
+# provisioning.
+# See docs/external-worker.example.json.
+#
+#export EXTERNAL_WORKERS_FILE=/path/to/external-workers.json
+
+# EXTERNAL_WORKERS_MANIFEST -
+# Output path for the rendered external-worker Kubernetes List.
+# Default: ${OCP_DIR}/external_worker_manifests.json
+#
+#export EXTERNAL_WORKERS_MANIFEST=/path/to/external-worker-manifests.json
+
 # VM_EXTRADISKS - Add extradisks to VMs
 # Default: false
 #
