@@ -71,3 +71,9 @@ else
   build_installer
 fi
 
+# Install config needs mirror metadata for IPv6 mirror setups. Prepare it here
+# so SNO BiP has it before config generation, even though it skips Ironic.
+if is_mirroring; then
+  setup_release_mirror
+fi
+
