@@ -181,15 +181,38 @@ EOF
 
 function bgp_vip_config() {
     if [[ "${BGP_VIP_MANAGEMENT:-false}" == "true" ]]; then
-        local peer_address
+        local peer_address peer_address_v6
         peer_address="${BGP_VIP_PEER_ADDRESS:-$(nth_ip "${EXTERNAL_SUBNET_V4}" 1)}"
+        # Set every optional peer field so e2e exercises the full
+        # rendering path (dead fields and format bugs are invisible on
+        # the defaults-only happy path). The ToR side is configured to
+        # match by bgp/configure_bgp_tor.sh; the verify CI step asserts
+        # the negotiated timers and BFD state at the ToR.
+        local peer_options
+        peer_options="        port: 179
+        holdTimeSeconds: ${BGP_VIP_HOLD_TIME_SECONDS:-90}
+        keepaliveTimeSeconds: ${BGP_VIP_KEEPALIVE_TIME_SECONDS:-30}
+        password: \"${BGP_VIP_PASSWORD:-dev-scripts-bgp}\"
+        failureDetection: BFD
+        peerReachability: MultiHop"
 cat <<EOF
     bgpVIPConfig:
       localASN: ${BGP_CLUSTER_ASN:-64512}
       peers:
       - peerAddress: ${peer_address}
         peerASN: ${BGP_TOR_ASN:-64513}
+${peer_options}
 EOF
+        # dual-stack: peer with the ToR over IPv6 as well, so the
+        # secondary-family VIPs have a same-family BGP session
+        if [[ -n "${EXTERNAL_SUBNET_V6:-}" ]]; then
+            peer_address_v6="${BGP_VIP_PEER_ADDRESS_V6:-$(nth_ip "${EXTERNAL_SUBNET_V6}" 1)}"
+cat <<EOF
+      - peerAddress: ${peer_address_v6}
+        peerASN: ${BGP_TOR_ASN:-64513}
+${peer_options}
+EOF
+        fi
     fi
 }
 
