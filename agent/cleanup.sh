@@ -36,6 +36,10 @@ if [[ -d "${OCP_DIR}/iso_builder" ]]; then
     sudo podman rmi -f "${AGENT_ISO_BUILDER_IMAGE}" || true
 fi
 
+# Kill any leftover iso-builder-registry process so it does not hold port 5005
+# and break the next OVE ISO build.
+sudo pkill -f iso-builder-registry || true
+
 if [[ -d ${BOOT_SERVER_DIR} ]]; then
    sudo pkill agentpxeserver || true
    rm -rf "${BOOT_SERVER_DIR}"

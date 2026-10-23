@@ -4,6 +4,18 @@ set -euo pipefail
 # OVE (OpenShift Virtualization Edition) ISO building utilities
 # Functions for creating agent ISOs without embedded registry
 
+# The OVE ISO build runs an embedded registry on 127.0.0.1:5005 (it logs to
+# appliance/temp/logs/registry.log). Fail fast if the port is already taken,
+# otherwise that registry can't start and oc-mirror silently pushes the payload
+# into the stale registry, producing an OVE ISO with no images.
+function ensure_registry_port_free() {
+  if sudo ss -ltn 'sport = :5005' 2>/dev/null | grep -q LISTEN; then
+    echo "Error: 127.0.0.1:5005 is already in use. Free it and retry:" >&2
+    echo "         sudo pkill -f iso-builder-registry" >&2
+    exit 1
+  fi
+}
+
 # Check if using a custom registry (not upstream quay.io or CI registry)
 function is_custom_registry() {
   [[ ! "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" =~ quay\.io ]] && \
@@ -169,6 +181,8 @@ function fetch_agent_iso_no_registry() {
 function create_agent_iso_no_registry() {
   local asset_dir=${1}
 
+  ensure_registry_port_free
+
   # Update release_info.json as its needed by CI tests
   save_release_info "${OPENSHIFT_RELEASE_IMAGE}" "${OCP_DIR}"
 
@@ -224,11 +238,11 @@ function create_agent_iso_no_registry() {
 }
 
 # Deletes all files and directories under asset_dir
-# example, ocp/ostest/iso_builder/4.19.* 
+# example, ocp/ostest/iso_builder/4.19.*
 # except the final generated ISO file (agent-ove.${ARCH}.iso),
 # to free up disk space while preserving the built artifact.
 # Note: This optional cleanup is relevant only when the
-# AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is set as as true, 
+# AGENT_CLEANUP_ISO_BUILDER_CACHE_LOCAL_DEV is set as as true,
 function cleanup_diskspace_agent_iso_noregistry() {
  local asset_dir=${1%/}  # Remove trailing slash if present
 
