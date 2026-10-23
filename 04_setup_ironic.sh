@@ -108,8 +108,6 @@ done
 
 if [[ ! -z "${MIRROR_IMAGES}" && "${MIRROR_IMAGES,,}" != "false" ]]; then
 
-    setup_release_mirror
-
     # Build a local release image, if no *_LOCAL_IMAGE env variables are set then this is just a copy of the release image
     sudo podman image build --authfile "$PULL_SECRET_FILE" -t "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" -f "$DOCKERFILE"
     sudo podman push --tls-verify=false --authfile "$PULL_SECRET_FILE" "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"
