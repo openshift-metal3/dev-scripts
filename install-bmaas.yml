@@ -1,0 +1,5 @@
+---
+- name: Setup Bare-Metal as a Service (BMaaS)
+  hosts: localhost
+  roles:
+    - bmaas
