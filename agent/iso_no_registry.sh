@@ -25,13 +25,15 @@ function build_ove_iso_script() {
   local release_image_url=$2
   local mirror_path_arg=$3
   local registry_cert_arg=$4
+  local ocp_version=$5
 
-  # --fips is only supported by the OVE ISO builder from OCP 5.1 onwards
+  # The OVE ISO builder is extracted from a release-specific image, and --fips
+  # was only added to it in 5.1, so older releases ship a script without it.
   local fips_arg=""
-  if ! is_lower_version "$(openshift_version "${OCP_DIR}")" "5.1"; then
+  if ! is_lower_version "${ocp_version}" "5.1"; then
     fips_arg="--fips ${FIPS_MODE:-false}"
   elif [[ "${FIPS_MODE:-false}" == "true" ]]; then
-    echo "Error: FIPS_MODE=true requires OCP 5.1 or later for the OVE ISO." >&2
+    echo "Error: FIPS_MODE=true requires OCP 5.1 or later for the OVE ISO (detected ${ocp_version:-unknown})." >&2
     exit 1
   fi
 
@@ -172,6 +174,12 @@ function create_agent_iso_no_registry() {
   # Update release_info.json as its needed by CI tests
   save_release_info "${OPENSHIFT_RELEASE_IMAGE}" "${OCP_DIR}"
 
+  # Resolve the version before changing directory: OCP_DIR is relative, so
+  # openshift_version cannot find release_info.json once we are inside the
+  # ISO builder source tree.
+  local ocp_version
+  ocp_version=$(openshift_version "${OCP_DIR}")
+
   local src_dir
   if [[ -n "${OPENSHIFT_AGENT_INSTALLER_UTILS_PATH:-}" ]]; then
     src_dir="${OPENSHIFT_AGENT_INSTALLER_UTILS_PATH}/tools/iso_builder"
@@ -207,7 +215,7 @@ function create_agent_iso_no_registry() {
 
   # Build OVE ISO using selected method
   if [[ "${AGENT_ISO_NO_REGISTRY_BUILD_METHOD}" == "script" ]]; then
-    build_ove_iso_script "${asset_dir}" "${release_image_url}" "${mirror_path_arg}" "${registry_cert_arg}"
+    build_ove_iso_script "${asset_dir}" "${release_image_url}" "${mirror_path_arg}" "${registry_cert_arg}" "${ocp_version}"
   else
     # Only the script method can produce a FIPS ISO; the container method has
     # no way to pass --fips through the Dockerfile. Fail rather than hand back
