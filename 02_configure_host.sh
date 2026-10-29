@@ -91,10 +91,11 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
     sudo systemctl enable --now firewalld
     configure_chronyd
 
-    sudo firewall-cmd --zone=public --add-port=80/tcp --add-port=53/tcp --add-port=53/udp \
+    sudo firewall-cmd --permanent --zone=public --add-port=80/tcp --add-port=53/tcp --add-port=53/udp \
         --add-port=8000/tcp --add-port="${LOCAL_REGISTRY_PORT}"/tcp \
         --add-port="${INSTALLER_PROXY_PORT}"/tcp --add-port="${AGENT_BOOT_SERVER_PORT}"/tcp \
         --add-port=3260/tcp
+    sudo firewall-cmd --reload
 
     switch_to_internal_dns
 
@@ -168,7 +169,7 @@ sudo systemctl enable --now firewalld
 configure_chronyd
 
 # Open BGP port for no-overlay mode enabled for default network
-sudo firewall-cmd --zone=libvirt --add-port=179/tcp
+sudo firewall-cmd --permanent --zone=libvirt --add-port=179/tcp
 
 export VNC_CONSOLE=true
 if [[ $(uname -m) == "aarch64" ]]; then
@@ -590,7 +591,7 @@ if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
     [ -n "${EXTERNAL_SUBNET_V6:-}" ] && echo "/opt/dev-scripts/nfsshare ${EXTERNAL_SUBNET_V6}(rw,sync,no_subtree_check)" | sudo tee -a /etc/exports.d/dev-scripts.exports
     sudo chown -R nobody:nobody /opt/dev-scripts/nfsshare
     sudo chmod -R 777 /opt/dev-scripts/nfsshare
-    sudo firewall-cmd --zone=libvirt  --add-port=2049/tcp
+    sudo firewall-cmd --permanent --zone=libvirt  --add-port=2049/tcp
     sudo systemctl start nfs-server
     sudo exportfs -a
 fi
@@ -604,3 +605,4 @@ fi
 if [[ -n "${ENABLE_BGP_TOR:-}" ]]; then
     bgp/configure_bgp_tor.sh
 fi
+sudo firewall-cmd --reload

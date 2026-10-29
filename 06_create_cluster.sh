@@ -17,16 +17,17 @@ if [[ ! -z "$INSTALLER_PROXY" ]]; then
   export HTTPS_PROXY=${HTTPS_PROXY:-}
   export NO_PROXY=${NO_PROXY:-}
   # Update libvirt firewalld policy to allow the VM to connect to the proxy
-  sudo firewall-cmd --policy=libvirt-to-host --add-port="$INSTALLER_PROXY_PORT/tcp"
+  sudo firewall-cmd --permanent --policy=libvirt-to-host --add-port="$INSTALLER_PROXY_PORT/tcp"
   # Allow the bootstrap VM to talk directly to services on the bootstrap host
-  sudo firewall-cmd --policy=libvirt-to-host --add-port=8000/tcp      # sushy
-  sudo firewall-cmd --policy=libvirt-to-host --add-port=6230-6240/udp # vbmc
-  sudo firewall-cmd --policy=libvirt-to-host --add-port=123/udp       # ntp
-  sudo firewall-cmd --policy=libvirt-to-host --add-port="${LOCAL_REGISTRY_PORT}/tcp" # registry
+  sudo firewall-cmd --permanent --policy=libvirt-to-host --add-port=8000/tcp      # sushy
+  sudo firewall-cmd --permanent --policy=libvirt-to-host --add-port=6230-6240/udp # vbmc
+  sudo firewall-cmd --permanent --policy=libvirt-to-host --add-port=123/udp       # ntp
+  sudo firewall-cmd --permanent --policy=libvirt-to-host --add-port="${LOCAL_REGISTRY_PORT}/tcp" # registry
   # And NFS if used
   if [ "${PERSISTENT_IMAGEREG}" == true ] ; then
-    sudo firewall-cmd --policy=libvirt-to-host --add-port=2049/tcp
+    sudo firewall-cmd --permanent --policy=libvirt-to-host --add-port=2049/tcp
   fi
+  sudo firewall-cmd --reload
 fi
 
 if [ -n "$EXTERNAL_LOADBALANCER" ]; then
