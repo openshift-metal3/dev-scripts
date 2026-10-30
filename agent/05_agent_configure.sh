@@ -31,8 +31,10 @@ function add_dns_entry {
     ip=${1}
     hostname=${2}
 
-    # Check if this specific hostname already exists (for any IP). If doesn't exist, add it.
-    if ! sudo virsh net-dumpxml "${BAREMETAL_NETWORK_NAME}" | grep -q "<hostname>${hostname}</hostname>"; then
+    # Check if this hostname is already associated with this IP. If not, add it.
+    # The check is IP-specific so that dual-stack can register the same hostname
+    # on both an IPv4 and an IPv6 address.
+    if ! sudo virsh net-dumpxml "${BAREMETAL_NETWORK_NAME}" | xmllint --xpath "//dns/host[@ip = '${ip}']/hostname[text() = '${hostname}']" - &>/dev/null; then
       existing_hostnames=$(sudo virsh net-dumpxml "${BAREMETAL_NETWORK_NAME}" | xmllint --xpath "//dns/host[@ip = '${ip}']/hostname/text()" - 2>/dev/null | awk '{printf "<hostname>%s</hostname> ", $0}' || true)
 
       # Delete the existing host entry for the given IP (if any) so we can re-add it with merged hostnames
@@ -772,6 +774,15 @@ else
     ip=${AGENT_NODES_IPSV6[0]}
   fi
   configure_dnsmasq "${ip}" "${ip}"
+
+  # Day-two workers resolve DNS through the libvirt network dnsmasq
+  # and need api-int to download Ignition config.
+  if [[ "${NODES_PLATFORM}" != "baremetal" ]]; then
+    add_dns_entry "${ip}" "api-int"
+    if [[ "$IP_STACK" = "v4v6" || "$IP_STACK" = "v6v4" ]]; then
+      add_dns_entry "${AGENT_NODES_IPS[0]}" "api-int"
+    fi
+  fi
 fi
 
 if [[ "${AGENT_PLATFORM_TYPE}" == "external" ]] || [[ "${AGENT_PLATFORM_TYPE}" == "vsphere" ]]; then
