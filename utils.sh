@@ -271,11 +271,30 @@ NMEOF
           /iso/rhcos-live.iso
     fi
 
+    # libvirt reserves the node's DHCPv6 address by DUID-LL. The installed OS
+    # uses DUID-LL through MCO's 01-ipv6.conf; apply the same file in the live
+    # environment so both phases obtain the same IPv6 address. Skip it if the
+    # installer already provides the file; Ignition rejects duplicate paths.
+    local live_ign="${iso_dir}/bootstrap-in-place-for-live-iso.ign"
+    local nm_ipv6_conf
+    nm_ipv6_conf=$(printf '[connection]\nipv6.dhcp-duid=ll\nipv6.dhcp-iaid=mac\n' | base64 -w0)
+    jq --arg path "/etc/NetworkManager/conf.d/01-ipv6.conf" \
+        --arg source "data:text/plain;charset=utf-8;base64,${nm_ipv6_conf}" \
+        'if any(.storage.files[]?; .path == $path) then . else
+            .storage.files = ((.storage.files // []) + [{
+                path: $path,
+                mode: 420,
+                overwrite: true,
+                contents: {source: $source}
+            }])
+        end' \
+        "${assets_dir}/bootstrap-in-place-for-live-iso.ign" > "${live_ign}"
+
     local bip_iso="${iso_dir}/rhcos-bip.iso"
     sudo podman run --rm --privileged \
-        -v "${assets_dir}:/data:z" -v "${iso_dir}:/iso:z" \
+        -v "${iso_dir}:/iso:z" \
         quay.io/coreos/coreos-installer:release \
-        iso ignition embed -i /data/bootstrap-in-place-for-live-iso.ign \
+        iso ignition embed -i "/iso/$(basename "${live_ign}")" \
         -o /iso/rhcos-bip.iso /iso/rhcos-live.iso
 
     sudo chcon -t svirt_image_t "${bip_iso}"
