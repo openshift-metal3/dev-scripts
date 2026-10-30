@@ -71,3 +71,9 @@ else
   build_installer
 fi
 
+# SNO BiP skips 04_setup_ironic.sh, which mirrors the release for other flows.
+# Mirror here so install-config generation has the mirror metadata.
+if [[ "${BOOTSTRAP_IN_PLACE}" == "true" ]] && is_mirroring; then
+  setup_release_mirror
+fi
+
