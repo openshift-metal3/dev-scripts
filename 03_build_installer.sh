@@ -7,6 +7,7 @@ source network.sh
 source utils.sh
 source ocp_install_env.sh
 source validation.sh
+source oc_mirror.sh
 
 function clone_installer() {
   # Clone repo, if not already present
