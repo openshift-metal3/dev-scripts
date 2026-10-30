@@ -91,13 +91,15 @@ hosts_config: "{{ lookup('template', network_config_folder + '/hosts.yaml', erro
 dns_customhosts: "{{ [] if not network_config_folder else hosts_config }}"
 
 sno_bip_node_local_dns: "{{ lookup('env', 'BOOTSTRAP_IN_PLACE') == 'true' and lookup('env', 'SNO_BIP_SKIP_DNSMASQ') == 'true' }}"
+# The SNO BiP network has no libvirt domain, so dnsmasq does not expand
+# short names. Publish provisioner records as FQDNs.
 sno_bip_dns_hosts:
   - ip: "{{ baremetal_network_cidr | nthhost(2) }}"
     hostnames:
-      - "ns1"
+      - "ns1.{{ cluster_domain }}"
   - ip: "{{ baremetal_network_cidr | nthhost(1) }}"
     hostnames:
-      - "virthost"
+      - "virthost.{{ cluster_domain }}"
 
 provisioning_network:
   - name: "{{ provisioning_network_name  }}"
