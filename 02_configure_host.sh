@@ -108,7 +108,7 @@ if [[ "${NODES_PLATFORM}" == "baremetal" ]]; then
     [ -n "${PROVISIONING_HOST_EXTERNAL_IP_V6:-}" ] && echo "${PROVISIONING_HOST_EXTERNAL_IP_V6} ${LOCAL_REGISTRY_DNS_NAME}" | sudo tee -a /etc/hosts
 
     # When MIRROR_IMAGES is configured, the local registry must be running
-    # before 04_setup_ironic.sh attempts to mirror release images into it.
+    # before prepare_images.sh attempts to mirror release images into it.
     # This covers virtual-baremetal (sushy-emulator) CI environments that
     # set NODES_PLATFORM=baremetal together with MIRROR_IMAGES=true.
     if use_registry "podman"; then
@@ -527,7 +527,7 @@ if use_registry "podman"; then
         "${LOCAL_REGISTRY_DNS_NAME}":"${LOCAL_REGISTRY_PORT}"
     set -x
 elif ! use_registry "quay"; then
-    # Create a blank authfile in order to have something valid when we read it in 04_setup_ironic.sh
+    # Create a blank authfile in order to have something valid when we read it in prepare_images.sh
     echo '{}' | sudo dd of="${REGISTRY_CREDS}"
 fi
 # Since podman 2.2.1 the REGISTRY_CREDS file gets written out as
