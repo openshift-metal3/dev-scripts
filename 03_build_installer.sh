@@ -7,6 +7,7 @@ source network.sh
 source utils.sh
 source ocp_install_env.sh
 source validation.sh
+source oc_mirror.sh
 
 function clone_installer() {
   # Clone repo, if not already present
@@ -69,5 +70,11 @@ else
   # Clone and build the installer from source
   clone_installer
   build_installer
+fi
+
+# SNO BiP skips 04_setup_ironic.sh, which mirrors the release for other flows.
+# Mirror here so install-config generation has the mirror metadata.
+if [[ "${BOOTSTRAP_IN_PLACE}" == "true" ]] && is_mirroring; then
+  setup_release_mirror
 fi
 

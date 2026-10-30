@@ -754,7 +754,9 @@ if [[ "${MIRROR_IMAGES,,}" != "false" ]] && [[ "${MIRROR_IMAGES,,}" == "true" ||
    fi
 
    # We're going to be using a locally modified release image
-   if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
+   # Agent and SNO BiP flows do not run 04_setup_ironic.sh, which publishes the
+   # 'latest' tag, so use the tag pushed by setup_release_mirror.
+   if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]] || [[ "${BOOTSTRAP_IN_PLACE}" == "true" ]]; then
         # For the agent installer version check, a valid tag must be supplied (not 'latest').
        if [[ ${#OPENSHIFT_RELEASE_TAG} = 64 ]] && [[ ${OPENSHIFT_RELEASE_TAG} =~ [:alnum:] ]]; then
          # If the tag is a digest, let's keep the override as OPENSHIFT_RELEASE_IMAGE
