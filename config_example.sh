@@ -990,7 +990,7 @@ set -x
 
 # When enabled, deploys SNO without Ironic or a bootstrap VM.
 # The single master bootstraps itself from a RHCOS live ISO with embedded ignition.
-# Use 'make sno_bip' instead of 'make' to skip the Ironic setup step.
+# make sno_bip uses prepare_images.sh for mirroring and does not run Ironic setup.
 # Requires NUM_MASTERS=1 and NUM_WORKERS=0.
 # export BOOTSTRAP_IN_PLACE=true
 

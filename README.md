@@ -201,8 +201,15 @@ run on the bootstrap VM and deployed cluster.  It will start a webserver which
 caches the necessary images, starts virtual BMC services to control the VMs
 via IPMI or Redfish.
 
-This script also can optionally build/push custom images for Ironic and other
-components see the [Testing custom container images](#Testing-custom-container-images) section below.
+This script calls `prepare_images()` from `prepare_images.sh` to prepare custom
+images and mirrors before starting Ironic. See
+[Testing custom container images](#Testing-custom-container-images).
+
+- `./prepare_images.sh`
+
+This prepares images only when `MIRROR_IMAGES` is enabled, without starting
+Ironic or BMC services or downloading the bootstrap VM image. `make sno_bip`
+uses this step instead of `04_setup_ironic.sh`.
 
 
 - `./06_create_cluster.sh`

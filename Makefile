@@ -1,4 +1,4 @@
-.PHONY: default all agent agent_cleanup agent_build_installer agent_configure agent_create_cluster infra_only sno_bip requirements configure ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
+.PHONY: default all agent agent_cleanup agent_build_installer agent_configure agent_create_cluster infra_only sno_bip requirements configure prepare_images ironic ocp_run install_config clean ocp_cleanup ironic_cleanup host_cleanup cache_cleanup registry_cleanup proxy_cleanup workingdir_cleanup podman_cleanup bell
 default: requirements configure build_installer ironic install_config ocp_run bell
 
 all: default
@@ -13,8 +13,9 @@ agent: agent_requirements requirements configure agent_build_installer agent_pre
 # Requires at least 1 extra worker node to be configured with disk size at least 100Gß
 agent_plus_add_node: agent agent_add_extraworker_nodes
 
-# Deploy SNO cluster using Bootstrap-in-Place (no Ironic, no bootstrap VM)
-sno_bip: requirements configure build_installer install_config ocp_run bell
+# Deploy SNO cluster using Bootstrap-in-Place (no bootstrap VM).
+# Prepare mirrored images without starting Ironic.
+sno_bip: requirements configure build_installer prepare_images install_config ocp_run bell
 
 # Setup infrastructure only (VMs, networks, BMC emulation) without cluster deployment
 # Useful for testing external deployment tools
@@ -72,6 +73,9 @@ configure:
 
 build_installer:
 	./03_build_installer.sh
+
+prepare_images:
+	./prepare_images.sh
 
 ironic:
 	./04_setup_ironic.sh

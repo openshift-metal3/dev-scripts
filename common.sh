@@ -215,7 +215,7 @@ if [[ "$PROVISIONING_NETWORK_PROFILE" == "Disabled" ]]; then
   export BMC_DRIVER="redfish-virtualmedia"
 fi
 
-# Both utils.sh and 04_setup_ironic.sh use this log file, so set the
+# Both utils.sh and prepare_images.sh use this log file, so set the
 # name one time. Users should not override this.
 export MIRROR_LOG_FILE=${REGISTRY_DIR}/${CLUSTER_NAME}-image_mirror-${OPENSHIFT_RELEASE_TAG}.log
 
@@ -764,7 +764,7 @@ if [[ "${MIRROR_IMAGES,,}" != "false" ]] && [[ "${MIRROR_IMAGES,,}" == "true" ||
            export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:${OPENSHIFT_RELEASE_TAG}"
        fi
    else
-       # 04_setup_ironic requires tag to be 'latest'
+       # prepare_images.sh requires tag to be 'latest'
        export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="${LOCAL_REGISTRY_DNS_NAME}:${LOCAL_REGISTRY_PORT}/${LOCAL_IMAGE_URL_SUFFIX}:latest"
    fi
 fi
