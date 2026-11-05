@@ -71,8 +71,13 @@ spec:
   mountOptions:
     - noac
 EOF
+
+    registry_replicas=2
+    if [[ "${NUM_MASTERS}" -eq 1 && "${NUM_WORKERS}" -eq 0 ]]; then
+        registry_replicas=1
+    fi
     oc patch configs.imageregistry.operator.openshift.io \
-        cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}},"managementState":"Managed","replicas": 2}}'
+        cluster --type merge --patch "{\"spec\":{\"storage\":{\"pvc\":{\"claim\":\"\"}},\"managementState\":\"Managed\",\"replicas\":${registry_replicas}}}"
 fi
 
 if [[ -n "${ENABLE_LOCAL_REGISTRY}" ]] || [[ "${MIRROR_IMAGES,,}" != "false" && -n "${MIRROR_IMAGES}" ]]; then
