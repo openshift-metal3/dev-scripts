@@ -1,0 +1,32 @@
+# Local registry — set devscripts_enable_local_registry to true to start one
+devscripts_enable_local_registry: false
+
+# Registry backend: podman or quay
+devscripts_registry_backend: podman
+devscripts_registry_port: "5000"
+devscripts_registry_user: ocp-user
+devscripts_registry_pass: ocp-pass
+devscripts_registry_dir: "{{ devscripts_working_dir }}/registry"
+devscripts_registry_dns_name: "virthost.{{ devscripts_cluster_name }}.{{ devscripts_base_domain }}"
+devscripts_registry_crt: registry.2.crt
+
+# Image mirroring — required for IPv6, optional for IPv4
+# When left empty, defaults to true for v6 ip_stack.
+devscripts_mirror_images: >-
+  {%- if devscripts_ip_stack == 'v6' -%}
+  true
+  {%- else -%}
+  false
+  {%- endif -%}
+
+# Mirror command: oc-adm or oc-mirror
+devscripts_mirror_command: oc-adm
+
+# OLM operators to mirror (comma-separated)
+devscripts_mirror_olm: ""
+
+# Custom images to mirror (comma-separated)
+devscripts_mirror_custom_images: ""
+
+# Additional trust bundle PEM file path (leave empty to skip)
+devscripts_additional_trust_bundle: ""
