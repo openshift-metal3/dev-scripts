@@ -110,10 +110,10 @@ function early_bgp_vip_validation() {
         exit 1
     fi
     case "${FEATURE_SET:-}" in
-        DevPreviewNoUpgrade|CustomNoUpgrade)
+        TechPreviewNoUpgrade|DevPreviewNoUpgrade|CustomNoUpgrade)
             ;;
         *)
-            error "BGP_VIP_MANAGEMENT requires the BGPBasedVIPManagement feature gate; set FEATURE_SET=DevPreviewNoUpgrade (or CustomNoUpgrade with the gate enabled)"
+            error "BGP_VIP_MANAGEMENT requires the BGPBasedVIPManagement feature gate; set FEATURE_SET=TechPreviewNoUpgrade or DevPreviewNoUpgrade (or CustomNoUpgrade with the gate enabled)"
             exit 1
             ;;
     esac
