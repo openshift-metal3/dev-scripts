@@ -570,7 +570,7 @@ if [[ ! -z ${AGENT_E2E_TEST_SCENARIO} ]]; then
           export MASTER_VCPU=${MASTER_VCPU:-4}
           export MASTER_DISK=${MASTER_DISK:-100}
           export MASTER_MEMORY=${MASTER_MEMORY:-24576}
-          export NUM_WORKERS=2
+          export NUM_WORKERS=${NUM_WORKERS:-2}
           export WORKER_VCPU=${WORKER_VCPU:-4}
           export WORKER_DISK=${WORKER_DISK:-100}
           export WORKER_MEMORY=${WORKER_MEMORY:-16384}
