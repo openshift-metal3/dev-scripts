@@ -18,6 +18,12 @@ fi
 if ! jq -e '
     (.nodes | type == "array" and length > 0)
     and (([.nodes[].name] | length) == ([.nodes[].name] | unique | length))
+    and (([.nodes[].bootMACAddress | ascii_downcase] | length)
+        == ([.nodes[].bootMACAddress | ascii_downcase] | unique | length))
+    and (([.nodes[] | select(has("preprovisioningNetworkData"))
+        | (.preprovisioningNetworkData.name // (.name + "-preprov-network"))] | length)
+        == ([.nodes[] | select(has("preprovisioningNetworkData"))
+        | (.preprovisioningNetworkData.name // (.name + "-preprov-network"))] | unique | length))
     and all(.nodes[];
         (.name | type == "string" and length <= 63
             and test("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"))

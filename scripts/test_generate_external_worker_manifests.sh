@@ -78,4 +78,26 @@ if "$generator" "$test_dir/invalid.json" "$test_dir/invalid-manifests.json" open
     exit 1
 fi
 
+jq '.nodes += [(.nodes[0]
+    | .name = "external-worker-1"
+    | .bootMACAddress = "52:54:00:11:22:34"
+    | .preprovisioningNetworkData.name = "external-worker-1-network-data")]' \
+    "$test_dir/inventory.json" > "$test_dir/two-workers.json"
+"$generator" "$test_dir/two-workers.json" "$test_dir/two-worker-manifests.json" openshift-machine-api
+jq -e '.items | length == 6' "$test_dir/two-worker-manifests.json" >/dev/null
+
+jq '.nodes[1].preprovisioningNetworkData.name = .nodes[0].preprovisioningNetworkData.name' \
+    "$test_dir/two-workers.json" > "$test_dir/duplicate-network-secret.json"
+if "$generator" "$test_dir/duplicate-network-secret.json" "$test_dir/duplicate-network-secret-manifests.json" openshift-machine-api; then
+    echo "Inventory with conflicting network-data Secret names was accepted" >&2
+    exit 1
+fi
+
+jq '.nodes[1].bootMACAddress = (.nodes[0].bootMACAddress | ascii_upcase)' \
+    "$test_dir/two-workers.json" > "$test_dir/duplicate-boot-mac.json"
+if "$generator" "$test_dir/duplicate-boot-mac.json" "$test_dir/duplicate-boot-mac-manifests.json" openshift-machine-api; then
+    echo "Inventory with duplicate boot MAC addresses was accepted" >&2
+    exit 1
+fi
+
 echo "External worker manifest generator tests passed"

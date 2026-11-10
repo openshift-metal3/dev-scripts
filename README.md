@@ -605,6 +605,8 @@ Secret reference, labels, root-device hints, custom deploy and user-data
 references, and host-specific pre-provisioning nmstate. It must not contain BMC
 credential values. For Metal3 compatibility, the generated network-data Secret
 contains the same nmstate payload under both `nmstate` and `networkData`.
+Worker names and boot MAC addresses must be unique. If multiple workers provide
+pre-provisioning network data, their generated Secret names must also be unique.
 
 The generated `${OCP_DIR}/external_worker_manifests.json` contains an offline
 `BareMetalHost`, a claim-barrier ConfigMap, and, when requested, a
@@ -613,17 +615,19 @@ points to the barrier, preventing Machine API from claiming it if a Machine is
 already waiting for an available host. Metal3 can still register and inspect
 the BMH. The renderer does not apply resources, manage the external server, or
 start disk provisioning. After the cluster is healthy and the referenced BMC
-credential Secrets exist, review the output before applying it:
+credential Secrets exist, review the output before applying it. Applying an
+offline BMH is not passive: Metal3 inspection can boot an agent and power-cycle
+the server, and `online: false` can power it off. Only apply these manifests to
+hosts that are safe to take offline:
 
 ```bash
 oc apply -f "${OCP_DIR}/external_worker_manifests.json"
 ```
 
-An offline BMH may still be registered and inspected by Metal3. Confirm the
-target host, NIC, installation disk, and current Machine/MachineSet state
-before releasing its claim barrier. Removing `consumerRef` makes the inspected
-BMH eligible for matching Machines and can therefore start disk-destructive
-provisioning:
+Confirm the target host, NIC, installation disk, and current
+Machine/MachineSet state before releasing its claim barrier. Removing
+`consumerRef` makes the inspected BMH eligible for matching Machines and can
+therefore start disk-destructive provisioning:
 
 ```bash
 oc patch baremetalhost -n openshift-machine-api external-worker-0 \
