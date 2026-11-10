@@ -47,6 +47,17 @@ Considering that this is a new install on a clean OS, the next tasks should be p
 
 5. Create a config file
 
+    **Option A** - Use a pre-built template (recommended):
+
+    ```bash
+    ./use-template.sh --list              # See available templates
+    ./use-template.sh ipi-ipv4-compact    # Activate a template
+    ```
+
+    See [config-templates/](config-templates/) for all available templates.
+
+    **Option B** - Start from the full example:
+
     `cp config_example.sh config_$USER.sh`
 
 6. Configure dev-scripts working directory
@@ -60,7 +71,30 @@ Considering that this is a new install on a clean OS, the next tasks should be p
 
 ## Configuration
 
-Make a copy of the `config_example.sh` to `config_$USER.sh`.
+### Using Templates (recommended)
+
+Pre-built templates are available in [`config-templates/`](config-templates/) for common deployment scenarios. Use the helper script to activate one:
+
+```bash
+# List all templates
+./use-template.sh --list
+
+# Activate a template - creates config_$USER.sh
+./use-template.sh ipi-ipv4-compact
+
+# Or pass CI_TOKEN directly
+CI_TOKEN=sha256~xxxx ./use-template.sh agent-sno-ipv4
+```
+
+Then edit `config_$USER.sh` to set your `CI_TOKEN` if you haven't passed it via environment.
+
+### Manual Configuration
+
+Alternatively, make a copy of the `config_example.sh` to `config_$USER.sh`:
+
+```bash
+cp config_example.sh config_$USER.sh
+```
 
 Go to https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/, click on your name in the top
 right, copy the login command, extract the token from the command and
