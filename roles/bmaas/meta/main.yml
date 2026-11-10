@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  author: dev-scripts
+  description: Configure bare-metal as a service with ORAS CLI and OpenShift registry access
+  license: Apache-2.0
+  min_ansible_version: "2.9"
+  platforms:
+    - name: EL
+      versions:
+        - 8
+        - 9
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: Fedora
+      versions:
+        - 36
+        - 37
+        - 38
+
+dependencies:
+  - oras
