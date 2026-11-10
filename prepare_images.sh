@@ -87,6 +87,9 @@ function prepare_images() {
         if [ "$IMAGE_NAME" = "image-customization-controller" ]; then
             IMAGE_NAME="machine-$IMAGE_NAME"
         fi
+        if [ "$IMAGE_NAME" = "cluster-api-provider-metal3" ]; then
+            IMAGE_NAME="baremetal-cluster-api-controllers"
+        fi
         OLDIMAGE=$(sudo podman run --rm "$OPENSHIFT_RELEASE_IMAGE" image "$IMAGE_NAME")
         echo "RUN sed -i 's%$OLDIMAGE%${!IMAGE_VAR}%g' /release-manifests/*" >> "$DOCKERFILE"
     done
