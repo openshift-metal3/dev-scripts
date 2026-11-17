@@ -5,8 +5,6 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
 source "$SCRIPTDIR/agent/common.sh"
 
-ISCSI_INITIATOR_BASE="iqn.2024-01.ostest.test.metalkube.org"
-
 function agent_add_iscsi_network_to_domain() {
      local domain_name=${1}
      local host_name=${2}
