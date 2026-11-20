@@ -252,6 +252,39 @@ EOF
     cp "${SCRIPTDIR}"/agent/mce/agent_mce_0_*.yaml "${EXTRA_MANIFESTS_PATH}"
   fi
 
+  # Workaround for an MCO bug with root on iSCSI. From the second boot on, the initramfs
+  # activates the iSCSI NIC with a profile generated from ip=<mac>:ibft. MCO's
+  # NetworkManager-clean-initrd-state (opted in for baremetal) then sees a different
+  # profile for that NIC in /etc and runs "ip addr flush" on it, which cuts the iSCSI
+  # session; the root disk fails with EIO once recovery_tmo expires. Skip the unit on
+  # iSCSI roots, the same check coreos-teardown-initramfs uses. Set
+  # AGENT_ISCSI_SKIP_NM_CLEAN_INITRD_STATE=false to reproduce the bug.
+  if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" && "${AGENT_ISCSI_SKIP_NM_CLEAN_INITRD_STATE:-true}" == "true" ]]; then
+    for role in master worker; do
+cat > "${EXTRA_MANIFESTS_PATH}/99-${role}-iscsi-skip-nm-clean-initrd-state.yaml" << EOF
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: ${role}
+  name: 99-${role}-iscsi-skip-nm-clean-initrd-state
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    systemd:
+      units:
+      - name: NetworkManager-clean-initrd-state.service
+        dropins:
+        - name: 99-skip-iscsi-root.conf
+          contents: |
+            [Unit]
+            ConditionKernelCommandLine=!rd.iscsi.firmware
+            ConditionKernelCommandLine=!netroot
+EOF
+    done
+  fi
+
   if [[ -n "${ASSETS_EXTRA_FOLDER:-}" ]]; then
     if [[ ! -d "${ASSETS_EXTRA_FOLDER}" ]]; then
       echo "Extra manifests source is not a directory: ${ASSETS_EXTRA_FOLDER}" >&2
