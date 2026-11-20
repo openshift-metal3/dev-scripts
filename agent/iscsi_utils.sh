@@ -10,15 +10,15 @@ ISCSI_INITIATOR_BASE="iqn.2024-01.ostest.test.metalkube.org"
 function agent_add_iscsi_network_to_domain() {
      local domain_name=${1}
      local host_name=${2}
-     local index=${3}
+     local node_type=${3}
+     local node_num=${4}
 
-     # add the iscsi network
-     sudo virt-xml "${domain_name}" --add-device --network network=${ISCSI_NETWORK},model=virtio,"boot_order=1"
+     # add the iscsi network, with the MAC that agent-config.yaml was rendered with
+     sudo virt-xml "${domain_name}" --add-device --network network=${ISCSI_NETWORK},model=virtio,"boot_order=1",mac="$(iscsi_nic_mac "${node_type}" "${node_num}")"
 
      # add the hostname binding so that the host can resolve the 'hostname' variable in pxe file
      host_mac=$(sudo virsh domiflist  "${domain_name}" | grep ${ISCSI_NETWORK} | awk '{print $5}')
-     iscsi_addr=$((20 + index))
-     host_ip="${ISCSI_NETWORK_SUBNET}."${iscsi_addr}
+     host_ip=$(iscsi_nic_ip "${node_type}" "${node_num}")
      sudo virsh net-update ${ISCSI_NETWORK} add-last ip-dhcp-host "<host mac='${host_mac}' name='${host_name}' ip='${host_ip}'/>"
 }
 

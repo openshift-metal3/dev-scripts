@@ -3,6 +3,8 @@
 {% set ips = agent_nodes_ips.split(',') %}
 {% set ipsv6 = agent_nodes_ipsv6.split(',') %}
 {% set macs = agent_nodes_macs.split(',') %}
+{% set iscsi_macs = agent_nodes_iscsi_macs.split(',') %}
+{% set iscsi_ips = agent_nodes_iscsi_ips.split(',') %}
 {% set hostnames = agent_nodes_hostnames.split(',') %}
 {% set test_cases = agent_test_cases.split(',') %}
 apiVersion: v1alpha1
@@ -35,9 +37,31 @@ hosts:
       interfaces:
         - name: eth0
           macAddress: {{ macs[loop.index0] }}
+{% if boot_mode == "ISCSI" %}
+        - name: eth1
+          macAddress: {{ iscsi_macs[loop.index0] }}
+{% endif %}
 {% if (networking_mode != "DHCP" or agent_nmstate_dhcp == 'true') %}
       networkConfig:
         interfaces:
+{# The iSCSI root disk is reached over this NIC, which must be described here: without
+   a profile of its own, it is disturbed in the real root and the iSCSI session is lost.
+   It gets its reserved address, the same one iPXE obtains and passes on through iBFT,
+   and no gateway, routes or DNS, to leave those to eth0. #}
+{% if boot_mode == "ISCSI" %}
+          - name: eth1
+            type: ethernet
+            state: up
+            mac-address: {{ iscsi_macs[loop.index0] }}
+            ipv4:
+              enabled: true
+              dhcp: false
+              address:
+                - ip: {{ iscsi_ips[loop.index0] }}
+                  prefix-length: 24
+            ipv6:
+              enabled: false
+{% endif %}
       {{ net.interfaces("eth0", macs[loop.index0])|indent(4, True) }}
 {% if ip_stack == "v4" %}
             ipv4:
