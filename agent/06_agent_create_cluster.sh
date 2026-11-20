@@ -738,12 +738,8 @@ function agent_iscsi_update_nodes() {
       do
           local domain_name=${CLUSTER_NAME}_${1}_${n}
           local name=${1}-${n}
-          local index=${n}
-          if [[ ${1} == "worker" ]]; then
-	      index=$((NUM_MASTERS + index))
-          fi
 
-          agent_add_iscsi_network_to_domain "${domain_name}" "${name}" "${index}"
+          agent_add_iscsi_network_to_domain "${domain_name}" "${name}" "${1}" "${n}"
           domain_running=$(sudo virsh list)
           if echo "${domain_running}" | grep -q "${domain_name}"; then
               sudo virsh destroy "${domain_name}"

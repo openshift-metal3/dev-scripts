@@ -34,6 +34,39 @@ export ISCSI_NETWORK="iscsi"
 export ISCSI_NETWORK_SUBNET=${ISCSI_NETWORK_SUBNET:-"192.168.145"}
 export ISCSI_DEVICE_NAME=${ISCSI_DEVICE_NAME:-"/dev/sdb"}
 
+# Deterministic MAC for a node's iSCSI NIC. The NIC is only attached to the domain in
+# 06_agent_create_cluster.sh, after agent-config.yaml has been rendered, so libvirt's
+# generated MAC is not known in time to describe the NIC in the static networkConfig.
+# Both places derive it from here instead.
+function iscsi_nic_mac() {
+    local node_type=${1}
+    local node_num=${2}
+    local base
+    case "${node_type}" in
+        master)  base=0 ;;
+        arbiter) base=64 ;;
+        worker)  base=128 ;;
+        *)       base=192 ;;
+    esac
+    printf '52:54:00:91:45:%02x' $((base + node_num))
+}
+
+# Reserved address of a node's iSCSI NIC, on the iscsi network. Used both for the DHCP
+# reservation that iPXE (and so iBFT) gets, and for the networkConfig of the installed
+# system, so the NIC keeps the address it booted with.
+function iscsi_nic_ip() {
+    local node_type=${1}
+    local node_num=${2}
+    local offset
+    case "${node_type}" in
+        master)  offset=0 ;;
+        arbiter) offset=${NUM_MASTERS} ;;
+        worker)  offset=$((NUM_MASTERS + ${NUM_ARBITERS:-0})) ;;
+        *)       offset=$((NUM_MASTERS + ${NUM_ARBITERS:-0} + NUM_WORKERS)) ;;
+    esac
+    echo "${ISCSI_NETWORK_SUBNET}.$((20 + offset + node_num))"
+}
+
 # For OVE CI jobs, this config var may be provided directly as a dependency by the test.
 # If set, it will be used by the build_ove_iso_script. Such feature will be mainly used
 # to test the Appliance repo in the Prow CI.

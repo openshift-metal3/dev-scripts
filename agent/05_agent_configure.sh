@@ -131,6 +131,9 @@ function configure_node() {
       AGENT_NODES_IPSV6+=("$ipv6")
     fi
     AGENT_NODES_MACS+=("$node_mac")
+    # One entry per host, aligned with AGENT_NODES_HOSTNAMES
+    AGENT_NODES_ISCSI_MACS+=("$(iscsi_nic_mac "$node_type" "$node_num")")
+    AGENT_NODES_ISCSI_IPS+=("$(iscsi_nic_ip "$node_type" "$node_num")")
     if [[ "$node_type" == "master" ]]; then
       AGENT_MASTER_MACS+=("$node_mac")
     fi
@@ -155,6 +158,8 @@ function get_static_ips_and_macs() {
     AGENT_NODES_IPS=()
     AGENT_NODES_IPSV6=()
     AGENT_NODES_MACS=()
+    AGENT_NODES_ISCSI_MACS=()
+    AGENT_NODES_ISCSI_IPS=()
     AGENT_NODES_HOSTNAMES=()
     AGENT_MASTER_MACS=()
     AGENT_EXTRA_WORKERS_IPS=()
@@ -376,6 +381,10 @@ function generate_cluster_manifests() {
   export AGENT_NODES_IPSV6_STR=${nodes_ipsv6::-1}
   nodes_macs=$(printf '%s,' "${AGENT_NODES_MACS[@]}")
   export AGENT_NODES_MACS_STR=${nodes_macs::-1}
+  nodes_iscsi_macs=$(printf '%s,' "${AGENT_NODES_ISCSI_MACS[@]:-}")
+  export AGENT_NODES_ISCSI_MACS_STR=${nodes_iscsi_macs::-1}
+  nodes_iscsi_ips=$(printf '%s,' "${AGENT_NODES_ISCSI_IPS[@]:-}")
+  export AGENT_NODES_ISCSI_IPS_STR=${nodes_iscsi_ips::-1}
   nodes_hostnames=$(printf '%s,' "${AGENT_NODES_HOSTNAMES[@]}")
   export AGENT_NODES_HOSTNAMES_STR=${nodes_hostnames::-1}
 
