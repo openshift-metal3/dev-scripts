@@ -37,11 +37,17 @@ function build_ove_iso_script() {
     exit 1
   fi
 
+  # build-ove-image.sh expects a path to the SSH public key, while dev-scripts
+  # carries the key contents in SSH_PUB_KEY, so write it out to the cluster dir.
+  local ssh_key_file="${SCRIPTDIR}/${OCP_DIR}/ssh_key.pub"
+  mkdir -p "$(dirname "${ssh_key_file}")"
+  printf '%s\n' "${SSH_PUB_KEY}" > "${ssh_key_file}"
+
   # shellcheck disable=SC2086 # mirror_path_arg, registry_cert_arg, and fips_arg intentionally unquoted for word splitting
   ./hack/build-ove-image.sh \
     --pull-secret-file "${PULL_SECRET_FILE}" \
     --release-image-url "${release_image_url}" \
-    --ssh-key-file "${SSH_KEY_FILE}" \
+    --ssh-key-file "${ssh_key_file}" \
     ${APPLIANCE_IMAGE:+--appliance-image "${APPLIANCE_IMAGE}"} \
     --dir "${asset_dir}" \
     ${fips_arg} \
@@ -77,19 +83,18 @@ function build_ove_iso_container() {
 # a duplicate but it will overwrite the current key.
 function inject_ssh_key_into_ove_iso() {
   local iso="${1}"
-  local dir base tmp ssh_pub coreos_installer
+  local dir base tmp coreos_installer
 
-  if [[ ! -f "${SSH_KEY_FILE}" ]]; then
-    echo "Warning: SSH_KEY_FILE (${SSH_KEY_FILE}) not found; skipping SSH key injection." >&2
+  if [[ -z "${SSH_PUB_KEY:-}" ]]; then
+    echo "Warning: SSH_PUB_KEY is empty; skipping SSH key injection." >&2
     return 0
   fi
 
   dir=$(dirname "${iso}")
   base=$(basename "${iso}")
-  ssh_pub=$(cat "${SSH_KEY_FILE}")
   tmp=$(mktemp -d)
 
-  echo "Injecting SSH key from ${SSH_KEY_FILE} into ${iso}"
+  echo "Injecting SSH key from SSH_PUB_KEY into ${iso}"
 
   coreos_installer=(sudo podman run --privileged --rm -v /run/udev:/run/udev
     -v "${dir}:/data" -v "${tmp}:/cfg" -w /data quay.io/coreos/coreos-installer:release)
@@ -102,7 +107,7 @@ function inject_ssh_key_into_ove_iso() {
   fi
 
   # Append our key to the 'core' user (create it if absent), keeping any existing keys.
-  jq --arg key "${ssh_pub}" '
+  jq --arg key "${SSH_PUB_KEY}" '
     .passwd = (.passwd // {}) |
     .passwd.users = (.passwd.users // []) |
     if any(.passwd.users[]; .name == "core")

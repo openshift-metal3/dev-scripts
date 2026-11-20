@@ -74,7 +74,6 @@ export BAREMETAL_NETWORK_NAME=${BAREMETAL_NETWORK_NAME:-${CLUSTER_NAME}bm}
 export BASE_DOMAIN=${BASE_DOMAIN:-test.metalkube.org}
 export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export SSH_PUB_KEY="${SSH_PUB_KEY:-$(cat "$HOME/.ssh/id_rsa.pub")}"
-export SSH_KEY_FILE="${SSH_KEY_FILE:-$HOME/.ssh/id_rsa.pub}"
 
 # mirror images for installation in restricted network
 export MIRROR_IMAGES=${MIRROR_IMAGES:-}
