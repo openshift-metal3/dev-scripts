@@ -87,6 +87,46 @@ mirror:
   - name: registry.redhat.io/rhel9/support-tools:latest
 EOF
 
+   add_olm_operators_to_imageset "${imageset}"
+}
+
+# Default operator catalog for MIRROR_OLM. The 5.x releases use the 5.0 catalog,
+# matching the OVE appliance configs in agent-installer-utils.
+function default_olm_index() {
+   local stream="${OPENSHIFT_RELEASE_STREAM}"
+   if [[ "${stream}" == 5.* ]]; then
+      stream="5.0"
+   fi
+   echo "registry.redhat.io/redhat/redhat-operator-index:v${stream}"
+}
+
+# Append the operators listed in MIRROR_OLM to the imageset. Only the head of each
+# package's default channel is mirrored, to keep the mirror small.
+#
+# With ISO_NO_REGISTRY the appliance is given the mirror via --mirror-path and skips
+# its own oc-mirror run, so it never mirrors the operators in its appliance-config.
+# Without this the cluster has no CatalogSource and OLM Subscriptions never resolve.
+function add_olm_operators_to_imageset() {
+
+   imageset="$1"
+
+   if [[ -z "${MIRROR_OLM:-}" ]]; then
+      return
+   fi
+
+   local index="${MIRROR_OLM_REMOTE_INDEX:-$(default_olm_index)}"
+   echo "Mirroring OLM operator(s) ${MIRROR_OLM} from ${index}"
+
+   cat >> "${imageset}" << EOF
+  operators:
+  - catalog: ${index}
+    packages:
+EOF
+
+   local package
+   for package in ${MIRROR_OLM//,/ }; do
+      echo "    - name: ${package}" >> "${imageset}"
+   done
 }
 
 # Use the oc-mirror command to generate a tar file of the release image
