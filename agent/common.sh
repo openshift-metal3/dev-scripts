@@ -31,6 +31,7 @@ export AGENT_OVE_ISO_SOURCE=${AGENT_OVE_ISO_SOURCE:-""}
 export BOND_CONFIG=${BOND_CONFIG:-"none"}
 
 export ISCSI_NETWORK="iscsi"
+export ISCSI_INITIATOR_BASE="iqn.2024-01.ostest.test.metalkube.org"
 export ISCSI_NETWORK_SUBNET=${ISCSI_NETWORK_SUBNET:-"192.168.145"}
 export ISCSI_DEVICE_NAME=${ISCSI_DEVICE_NAME:-"/dev/sdb"}
 

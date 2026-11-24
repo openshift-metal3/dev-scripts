@@ -15,14 +15,6 @@ early_cleanup_validation
 rm -rf "${OCP_DIR}/manifests"
 rm -rf "${OCP_DIR}/output"
 
-function agent_remove_iscsi_disks() {
-    for (( n=0; n<${2}; n++ ))
-      do
-          iscsi_disk=${SCRIPTDIR}/"iscsi-${1}-${n}"
-          sudo rm -f "${iscsi_disk}"
-      done
-}
-
 if [[ -d "${OCP_DIR}/cache" && -d "${OCP_DIR}/temp" ]]; then
     sudo rm -rf "${OCP_DIR}/cache"
     sudo rm -rf "${OCP_DIR}/temp"
@@ -53,26 +45,27 @@ if [[ $NUM_MASTERS == 1 ]] && [[ $IP_STACK == "v4" || $IP_STACK == "v6" ]]; then
     sudo sed -i "/${AGENT_NODE0_IPSV6} thanos-querier-openshift-monitoring.apps.${CLUSTER_DOMAIN}/d" /etc/hosts
 fi
 
-if [[ "${AGENT_E2E_TEST_BOOT_MODE}" == "ISCSI" ]]; then
-    # Remove network created for ISCSI
-    iscsi_network=$(sudo virsh net-list)
-    if echo "${iscsi_network}" | grep -q "${ISCSI_NETWORK}"; then
-        sudo virsh net-destroy ${ISCSI_NETWORK}
-    fi
-
-    iscsi_inactive=$(sudo virsh net-list --inactive)
-    if echo "${iscsi_inactive}" | grep -q "${ISCSI_NETWORK}"; then
-       sudo virsh net-undefine ${ISCSI_NETWORK}
-    fi
-
-    # Remove ISCSI targets
-    if [[ -x "$(command -v targetcli)" ]] ; then
-        sudo targetcli clearconfig confirm=True
-    fi
-
-    agent_remove_iscsi_disks master "$NUM_MASTERS"
-    agent_remove_iscsi_disks worker "$NUM_WORKERS"
+# Remove anything left behind by an ISCSI run. This deliberately does not depend on the
+# current AGENT_E2E_TEST_BOOT_MODE. Cleaning up after the config has been switched to
+# another mode would otherwise leave the iscsi network, the targets and the backing files
+# in place, and the next ISCSI run would be built on top of them.
+if sudo virsh net-list --all | grep -q "${ISCSI_NETWORK}"; then
+    sudo virsh net-destroy "${ISCSI_NETWORK}" || true
+    sudo virsh net-undefine "${ISCSI_NETWORK}" || true
 fi
+
+# clearconfig is all or nothing, so only run it when the targets are ours. That leaves a
+# host which is also used for unrelated iscsi work alone. saveconfig persists the cleared
+# configuration, otherwise targetcli restores the stale targets on the next host reboot.
+if [[ -x "$(command -v targetcli)" ]] && \
+   sudo targetcli /iscsi ls 2>/dev/null | grep -q "${ISCSI_INITIATOR_BASE}"; then
+    sudo targetcli clearconfig confirm=True
+    sudo targetcli / saveconfig
+fi
+
+# Globbed rather than derived from NUM_MASTERS/NUM_WORKERS, which describe the current
+# config and not necessarily the run that created these files.
+sudo rm -f "${SCRIPTDIR}"/iscsi-master-* "${SCRIPTDIR}"/iscsi-worker-*
 
 if [[ -d "$(sudo buildah info --format '{{.store.GraphRoot}}')/vfs" ]] ; then
     sudo buildah rmi -f --storage-driver vfs localhost/appliance-test >/dev/null 2>&1 || true
