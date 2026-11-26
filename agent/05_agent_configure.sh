@@ -591,8 +591,7 @@ EOF
     sudo firewall-cmd --zone libvirt --add-port=${MACHINE_CONFIG_SERVER_PORT}/tcp
     sudo firewall-cmd --zone libvirt --add-port=${KUBE_API_PORT}/tcp
     sudo firewall-cmd --zone libvirt --add-port=${INGRESS_ROUTER_PORT}/tcp
-    sudo podman run -d  --net host -v "${WORKING_DIR}":/etc/haproxy/:z --entrypoint bash --name extlb quay.io/openshift/origin-haproxy-router  -c 'haproxy -f /etc/haproxy/haproxy.cfg'
-
+    sudo podman run -d --pull=missing --net host --name extlb -v "${WORKING_DIR}:/etc/haproxy:ro,z" --entrypoint /usr/sbin/haproxy quay.io/openshift/origin-haproxy-router@sha256:e7768fb68a40c9465c8bf7da13aca3b3250d456fdcb84ef2725caa3ade58cbc6 -f /etc/haproxy/haproxy.cfg
     # update api and add api-int and *.apps entries to baremetal network DNS
     # delete existing entries pointing to the wrong api ip before adding correct entry
     sudo virsh net-update "${BAREMETAL_NETWORK_NAME}" delete dns-host "<host ip='${api_ip}'> <hostname>api</hostname> </host>"  --live --config
