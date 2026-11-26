@@ -906,14 +906,25 @@ set -x
 # has no effect if MIRROR_IMAGES is false. This will not work for releases that
 # have not yet shipped. The content for the release must have been published in
 # order for mirroring to work.
-# Note - MIRROR_OLM is currently not supported when MIRROR_COMMAND=oc-mirror, it
-# must be set to oc-adm
+# When MIRROR_COMMAND=oc-mirror, only the head of each package's default channel
+# is mirrored. With AGENT_E2E_TEST_BOOT_MODE=ISO_NO_REGISTRY this is the only way
+# to get operator content into the OVE ISO, because the appliance uses the local
+# mirror (--mirror-path) and does not mirror the operators in its own config.
+# OVE always creates Subscriptions for its full operator set; any operator not
+# listed here stays unresolved.
+# With ISO_NO_REGISTRY, list packages from the OVE appliance config for the release
+# (agent-installer-utils tools/iso_builder/config/<version>/appliance-config.yaml);
+# other packages are mirrored but nothing subscribes to them. To exercise the
+# assisted-installer controller's operator handling, use one it monitors, e.g.
+# kubernetes-nmstate-operator.
 #
 #export MIRROR_OLM="local-storage-operator,kubernetes-nmstate-operator"
 
 # MIRROR_OLM_REMOTE_INDEX -
 # OLM catalog index to be used instead of a default one.
 # Default: "registry.redhat.io/redhat/redhat-operator-index:v${VERSION}"
+# With MIRROR_COMMAND=oc-mirror the default is derived from OPENSHIFT_RELEASE_STREAM,
+# and 5.x releases use the v5.0 catalog.
 #
 #export MIRROR_OLM_REMOTE_INDEX="corp.example/registry/corp-operator-index:v2"
 
