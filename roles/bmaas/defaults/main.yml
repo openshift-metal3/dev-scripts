@@ -1,0 +1,3 @@
+---
+bmaas_service_account_name: bmaas-images
+bmaas_namespace: openshift-machine-api
