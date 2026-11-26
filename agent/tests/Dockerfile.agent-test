@@ -6,6 +6,7 @@ RUN pip3 install ansible mock pytest pytest-mock pytest-xdist pytest-forked pyya
 # Set up ansible collections directories for agent
 RUN mkdir -p /code/ansible_collections/devscripts/agent
 COPY ./agent /code/ansible_collections/devscripts/agent
+COPY ./Makefile /code/ansible_collections/devscripts/Makefile
 RUN chmod -R 775 /code/ansible_collections/devscripts/agent
 WORKDIR /code/ansible_collections/devscripts/agent
 ENV ANSIBLE_COLLECTIONS_PATH=/code
