@@ -1,0 +1,47 @@
+{
+  "nodes": [
+    {
+      "name": "external-worker-0",
+      "bootMACAddress": "52:54:00:11:22:33",
+      "architecture": "aarch64",
+      "labels": {
+        "example.com/worker-class": "external"
+      },
+      "bmc": {
+        "address": "redfish-virtualmedia+https://bmc.example.test/redfish/v1/Systems/1",
+        "credentialsName": "external-worker-0-bmc",
+        "disableCertificateVerification": true
+      },
+      "rootDeviceHints": {
+        "deviceName": "/dev/nvme0n1"
+      },
+      "customDeploy": {
+        "method": "install_coreos"
+      },
+      "userData": {
+        "name": "worker-user-data-managed",
+        "namespace": "openshift-machine-api"
+      },
+      "preprovisioningNetworkData": {
+        "name": "external-worker-0-network-data",
+        "nmstate": {
+          "interfaces": [
+            {
+              "name": "eno1",
+              "type": "ethernet",
+              "state": "up",
+              "mac-address": "52:54:00:11:22:33",
+              "ipv4": {
+                "enabled": true,
+                "dhcp": true
+              },
+              "ipv6": {
+                "enabled": false
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
